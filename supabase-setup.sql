@@ -316,6 +316,7 @@ create policy "Team members can upload archived stock opname workbooks"
   with check (bucket_id = 'stock-opname-workbooks');
 
 drop policy if exists "Team members can delete archived stock opname workbooks" on storage.objects;
+drop policy if exists "Session owners and super admins can delete archived stock opname workbooks" on storage.objects;
 create policy "Session owners and super admins can delete archived stock opname workbooks"
   on storage.objects for delete to authenticated
   using (
