@@ -668,6 +668,23 @@
     .session-strip { background: linear-gradient(115deg, #174b42 0%, #176b5b 66%, #328875 100%); }
     .session-actions .button { background: #c8e5d8; color: #16473e; }
     .session-actions .button:hover { background: #dbefe6; }
+    .sidebar { box-shadow: 5px 0 24px rgba(24,59,52,.2), inset -1px 0 rgba(255,255,255,.1); }
+    .sidebar-toggle, .nav-icon, .brand-mark, .avatar, .metric-mark, .dashboard-metric-icon, .about-guide-icon, .schedule-card-number {
+      box-shadow: 0 3px 7px rgba(12,45,34,.2), inset 0 1px rgba(255,255,255,.22);
+    }
+    .nav-item.active { box-shadow: inset 3px 0 #8fbba8, 0 3px 9px rgba(8,37,27,.18); }
+    .nav-item.active .nav-icon { box-shadow: 0 4px 9px rgba(8,37,27,.3), inset 0 1px rgba(255,255,255,.2); }
+    .nav-item:hover .nav-icon, .sidebar-toggle:hover { box-shadow: 0 4px 9px rgba(8,37,27,.24), inset 0 1px rgba(255,255,255,.24); }
+    .auth-card { box-shadow: 0 4px 10px rgba(14,42,32,.12), 0 24px 64px rgba(14,42,32,.28), inset 0 1px rgba(255,255,255,.9); }
+    .auth-brand .brand-mark, .auth-loading-mark { box-shadow: 0 5px 12px rgba(8,35,28,.28), inset 0 1px rgba(255,255,255,.2); }
+    .auth-input { box-shadow: inset 0 1px 2px rgba(22,50,39,.06); }
+    .auth-submit { box-shadow: 0 3px 6px rgba(16,65,48,.2), 0 7px 14px rgba(16,65,48,.18), inset 0 1px rgba(255,255,255,.2); }
+    .auth-submit:hover { box-shadow: 0 5px 10px rgba(16,65,48,.24), 0 10px 18px rgba(16,65,48,.2), inset 0 1px rgba(255,255,255,.22); transform: translateY(-1px); }
+    .auth-theme-toggle { box-shadow: 0 3px 9px rgba(8,35,28,.2), inset 0 1px rgba(255,255,255,.7); }
+    .brand-mark img, .auth-loading-mark img { border-radius: inherit; }
+    @media (max-width: 650px) {
+      .sidebar { box-shadow: 0 -5px 16px rgba(8,37,27,.28), inset 0 1px rgba(255,255,255,.16); }
+    }
     .metric, .layout-card, .table-section, .dashboard-panel, .dashboard-metric, .history-summary, .progress-panel, .completed-detail-panel, .completed-rack, .schedule-card, .schedule-empty, .about-guide-card {
       box-shadow: 0 2px 4px rgba(25,55,50,.07), 0 10px 24px rgba(25,55,50,.09), inset 0 1px rgba(255,255,255,.72);
     }
@@ -785,7 +802,26 @@
     @media (max-width: 650px) {
       html[data-theme="dark"] .auth-screen { background: linear-gradient(0deg, rgba(8, 15, 16, .7), rgba(8, 15, 16, .42)), url("./assets/login-background.jpeg") 62% center / cover no-repeat, #111b1a; }
     }
-    html[data-theme="dark"] .auth-card { box-shadow: 0 22px 70px rgba(0,0,0,.36); }
+    html[data-theme="dark"] .sidebar { box-shadow: 5px 0 24px rgba(0,0,0,.38), inset -1px 0 rgba(255,255,255,.08); }
+    html[data-theme="dark"] .nav-icon,
+    html[data-theme="dark"] .sidebar-toggle,
+    html[data-theme="dark"] .brand-mark,
+    html[data-theme="dark"] .avatar,
+    html[data-theme="dark"] .metric-mark,
+    html[data-theme="dark"] .dashboard-metric-icon,
+    html[data-theme="dark"] .about-guide-icon,
+    html[data-theme="dark"] .schedule-card-number { box-shadow: 0 3px 8px rgba(0,0,0,.36), inset 0 1px rgba(255,255,255,.08); }
+    html[data-theme="dark"] .nav-item.active { box-shadow: inset 3px 0 #8fbba8, 0 3px 9px rgba(0,0,0,.28); }
+    html[data-theme="dark"] .nav-item.active .nav-icon { box-shadow: 0 4px 9px rgba(0,0,0,.42), inset 0 1px rgba(255,255,255,.1); }
+    html[data-theme="dark"] .auth-card { box-shadow: 0 4px 10px rgba(0,0,0,.28), 0 24px 64px rgba(0,0,0,.5), inset 0 1px rgba(255,255,255,.06); }
+    html[data-theme="dark"] .auth-brand .brand-mark,
+    html[data-theme="dark"] .auth-loading-mark { box-shadow: 0 5px 12px rgba(0,0,0,.45), inset 0 1px rgba(255,255,255,.1); }
+    html[data-theme="dark"] .auth-input { box-shadow: inset 0 1px 3px rgba(0,0,0,.28); }
+    html[data-theme="dark"] .auth-submit { box-shadow: 0 3px 7px rgba(0,0,0,.32), 0 8px 16px rgba(0,0,0,.24), inset 0 1px rgba(255,255,255,.12); }
+    html[data-theme="dark"] .auth-theme-toggle { box-shadow: 0 3px 9px rgba(0,0,0,.38), inset 0 1px rgba(255,255,255,.08); }
+    @media (max-width: 650px) {
+      html[data-theme="dark"] .sidebar { box-shadow: 0 -5px 16px rgba(0,0,0,.42), inset 0 1px rgba(255,255,255,.1); }
+    }
     html[data-theme="dark"] .auth-field label,
     html[data-theme="dark"] .form-field label,
     html[data-theme="dark"] .crumb b,
