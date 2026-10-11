@@ -607,7 +607,12 @@
       .today { display: none; }
       .top-account-email { max-width: 145px; }
       .page-head { align-items: flex-start; flex-direction: column; gap: 15px; margin-bottom: 17px; }
-      .layout-page-head { align-items: flex-start; flex-direction: column; gap: 15px; min-height: 0; padding: 18px; }
+      .layout-page-head { align-items: stretch; flex-direction: column; gap: 12px; min-height: 0; padding: 16px; }
+      .layout-page-heading, .layout-overview-metrics { width: 100%; }
+      .layout-overview-metrics { flex: none; gap: 7px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .layout-overview-metric { border-radius: 8px; padding: 7px 9px; }
+      .layout-overview-metric:last-child { grid-column: 1 / -1; }
+      .layout-overview-metric strong { font-size: 14px; }
       .layout-page-eyebrow { font-size: 9px; letter-spacing: .9px; margin-bottom: 6px; }
       .layout-page-head h1 { font-size: 25px; }
       .layout-page-head .subtitle { font-size: 11px; line-height: 1.5; max-width: 340px; }
