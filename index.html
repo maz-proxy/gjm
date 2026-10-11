@@ -155,6 +155,7 @@
     .archive-page-head .subtitle { color: #d5e9df; font-size: 12px; line-height: 1.6; margin-top: 6px; max-width: 720px; }
     .archive-page-head .category-chip { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.2); color: #fff; flex: 0 0 auto; position: relative; z-index: 1; }
     .master-page-head { min-height: 176px; }
+    .master-quantity-metrics { grid-template-columns: repeat(5, minmax(0, 1fr)); margin-top: -3px; }
     .master-page-head .archive-page-heading { align-self: flex-start; max-width: calc(100% - 215px); }
     .master-page-head .head-buttons { display: contents; }
     .master-page-head .master-delete-button,
@@ -516,6 +517,7 @@
     .dashboard-progress-line strong { color: var(--green); font-size: 10px; min-width: 34px; text-align: right; }
     .dashboard-open-button { min-height: 32px; padding: 0 10px; }
     @media (max-width: 900px) {
+     .master-quantity-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .dashboard-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .dashboard-charts { grid-template-columns: minmax(0, .9fr) minmax(0, 1.5fr); }
       .schedule-grid { grid-template-columns: minmax(0, 1fr); }
@@ -613,6 +615,7 @@
       .archive-page-head h1 { font-size: 25px; }
       .archive-page-head .subtitle { font-size: 11px; line-height: 1.5; }
       .master-page-head { min-height: 0; }
+      .master-quantity-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .master-page-head .archive-page-heading { max-width: none; }
       .master-page-head .head-buttons { align-items: center; display: grid; gap: 8px; grid-template-columns: minmax(0, 1fr) auto; position: relative; right: auto; top: auto; width: 100%; }
       .master-page-head .head-buttons .button { flex: 0 0 auto; position: static; }
@@ -1863,6 +1866,12 @@
       const canEdit = canEditActiveSession();
       const hasUploadedMaster = state.products.length > 0 && (state.workbookFiles || []).some((workbook) => workbook.sessionId === state.activeSession.id);
       const hasBrandName = Boolean(activeWorkspace()?.name.trim());
+      const laptopProducts = state.products.filter(isLaptopProduct);
+      const nonLaptopProducts = state.products.filter((product) => !isLaptopProduct(product));
+      const uploadedSerialCount = Object.keys(state.serialMaster || {}).length;
+      const laptopUnitCount = laptopProducts.reduce((total, product) => total + Number(product.stock || 0), 0);
+      const nonLaptopUnitCount = nonLaptopProducts.reduce((total, product) => total + Number(product.stock || 0), 0);
+      const totalUnitCount = laptopUnitCount + nonLaptopUnitCount;
       const query = searchTerm.toLocaleLowerCase("id-ID");
       const serialsByProduct = new Map();
       for (const [serial, master] of Object.entries(state.serialMaster || {})) {
@@ -1872,6 +1881,13 @@
       for (const serials of serialsByProduct.values()) serials.sort((a, b) => a.localeCompare(b, "id-ID"));
       const filtered = state.products.filter((product) => !query || `${product.name} ${product.sku} ${product.itemGroup || ""} ${product.brand} ${product.warehouse}`.toLocaleLowerCase("id-ID").includes(query) || (serialsByProduct.get(product.id) || []).some((serial) => serial.toLocaleLowerCase("id-ID").includes(query)));
       return `${navMarkup()}<section class="page-head archive-page-head master-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Master VEF · Data inventaris</div><h1>${escapeHtml(activeWorkspaceName())}</h1><p class="subtitle">Serial Number dipetakan ke item code, brand, dan warehouse.</p></div><div class="head-buttons">${hasUploadedMaster ? '<button class="button master-start-scan-button" type="button" data-page-link="layouts">⊞ Mulai Scan / Hitung</button>' : ""}<button class="button master-delete-button" id="delete-master-button" ${!canEdit || !state.products.length ? "disabled" : ""}>Hapus semua data</button><button class="button master-upload-button" id="import-button" ${!hasBrandName ? 'disabled title="Isi Nama Brand di Jadwal terlebih dahulu"' : !canEdit ? 'disabled title="Sesi ini hanya dapat diubah oleh pemilik atau Super Admin"' : ""}>↑ Unggah workbook</button></div></section>${renderSessionAccessNotice()}
+        <section class="metric-grid master-quantity-metrics" aria-label="Ringkasan quantity workbook Master VEF">
+          <div class="metric"><div class="metric-top">Qty Serial Number diunggah <span class="metric-mark">⌗</span></div><div class="metric-value">${formatNumber(uploadedSerialCount)} <small>SN</small></div></div>
+          <div class="metric"><div class="metric-top">Qty item VEF <span class="metric-mark">▤</span></div><div class="metric-value">${formatNumber(state.products.length)} <small>item</small></div></div>
+          <div class="metric"><div class="metric-top">Qty unit laptop <span class="metric-mark">▰</span></div><div class="metric-value">${formatNumber(laptopUnitCount)} <small>unit</small></div><div class="metric-note">${formatNumber(laptopProducts.length)} item laptop</div></div>
+          <div class="metric"><div class="metric-top">Qty unit selain laptop <span class="metric-mark">▱</span></div><div class="metric-value">${formatNumber(nonLaptopUnitCount)} <small>unit</small></div><div class="metric-note">${formatNumber(nonLaptopProducts.length)} item selain laptop</div></div>
+          <div class="metric"><div class="metric-top">Qty keseluruhan <span class="metric-mark">Σ</span></div><div class="metric-value">${formatNumber(totalUnitCount)} <small>unit</small></div><div class="metric-note">Laptop + selain laptop</div></div>
+        </section>
         <section class="table-section"><div class="table-toolbar"><div class="table-title">Master barang <span class="table-count">${filtered.length} item · ${filtered.filter(isLaptopProduct).length} laptop · ${filtered.filter((product) => !isLaptopProduct(product)).length} bukan laptop</span></div><div class="filters"><div class="search-wrap"><span class="search-icon">⌕</span><input class="search-input" id="search-input" placeholder="Cari item code atau SN" value="${escapeHtml(searchTerm)}" aria-label="Cari master"></div></div></div><div class="table-scroll"><table><thead><tr><th>Item code</th><th>Item name</th><th>Item Group</th><th>Brand</th><th>Warehouse</th><th>VEF</th><th>Serial Number</th></tr></thead><tbody>${filtered.length ? filtered.map((product) => { const serials = serialsByProduct.get(product.id) || []; const laptop = isLaptopProduct(product); return `<tr class="${laptop ? "" : "non-laptop-row"}"><td class="number-cell">${escapeHtml(product.sku)}</td><td><div class="product-name">${escapeHtml(product.name)}</div>${laptop ? "" : `<span class="row-status non-laptop">Bukan laptop</span>`}</td><td>${escapeHtml(product.itemGroup || "-")}</td><td>${escapeHtml(product.brand || "-")}</td><td>${escapeHtml(product.warehouse || "-")}</td><td>${formatNumber(product.stock)}</td><td>${serials.length ? `<details class="serial-details"><summary>${formatNumber(serials.length)} SN · tampilkan</summary><div class="serial-list">${serials.map((serial) => `<span class="serial-token">${escapeHtml(serial)}</span>`).join("")}</div></details>` : "-"}</td></tr>`; }).join("") : `<tr><td class="empty-row" colspan="7">Unggah workbook untuk memuat master VEF.</td></tr>`}</tbody></table></div><div class="table-footer"><span>${state.serialMaster ? Object.keys(state.serialMaster).length : 0} serial terdaftar</span><span>${escapeHtml(state.importFile || "Belum ada workbook")}</span></div></section>`;
     }
 
