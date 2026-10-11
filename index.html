@@ -170,12 +170,9 @@
     .master-page-head .archive-page-heading { align-self: flex-start; max-width: calc(100% - 215px); }
     .master-page-head .head-buttons { display: contents; }
     .master-page-head .master-delete-button,
-    .master-page-head .master-start-scan-button,
     .master-page-head .master-upload-button { position: absolute; right: 26px; z-index: 1; }
     .master-page-head .master-delete-button { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.34); bottom: 13px; color: #fff; font-size: 10px; min-height: 29px; padding: 0 10px; }
     .master-page-head .master-delete-button:hover:not(:disabled) { background: rgba(255,255,255,.18); border-color: rgba(255,255,255,.55); }
-    .master-page-head .master-start-scan-button { background: #d7ef9c; border-color: rgba(255,255,255,.6); border-radius: 999px; bottom: 10px; box-shadow: 0 4px 12px rgba(14,55,46,.18); color: #194a32; left: 50%; min-height: 35px; padding: 0 14px; right: auto; transform: translateX(-50%); }
-    .master-page-head .master-start-scan-button:hover { background: #e7f5bf; box-shadow: 0 5px 14px rgba(14,55,46,.24); }
     .master-page-head .master-upload-button { background: #fff; border-color: rgba(255,255,255,.75); box-shadow: 0 4px 12px rgba(14,55,46,.12); color: #285c4b; right: 26px; top: 29px; }
     .master-page-head .master-upload-button:hover:not(:disabled) { background: #eaf5ef; border-color: #fff; }
     h1 { font-family: "Space Grotesk", "Segoe UI", sans-serif; font-size: clamp(26px, 3vw, 34px); letter-spacing: 0; line-height: 1.15; margin: 0; }
@@ -630,7 +627,6 @@
       .master-page-head .archive-page-heading { max-width: none; }
       .master-page-head .head-buttons { align-items: center; display: grid; gap: 8px; grid-template-columns: minmax(0, 1fr) auto; position: relative; right: auto; top: auto; width: 100%; }
       .master-page-head .head-buttons .button { flex: 0 0 auto; position: static; }
-      .master-page-head .master-start-scan-button { justify-self: center; transform: none; }
       .master-page-head .master-delete-button { justify-self: end; }
       .master-page-head .master-upload-button { grid-column: 1 / -1; grid-row: 2; justify-self: end; }
       .layout-rack-count { align-items: center; flex-direction: row; gap: 8px; min-width: 0; padding: 8px 12px; }
@@ -725,10 +721,13 @@
     .compact-metrics .metric-note { font-size: 8px; margin-top: 2px; }
     .master-warehouse-summary { align-items: center; background: linear-gradient(100deg, #fff, #fbfdfc); border: 1px solid var(--line); border-radius: 9px; box-shadow: 0 2px 8px rgba(25,55,50,.05); display: flex; flex-wrap: wrap; gap: 7px; margin: -3px 0 10px; padding: 8px 10px; }
     .master-warehouse-title { color: var(--muted); flex: 0 0 auto; font-size: 9px; font-weight: 800; letter-spacing: .45px; text-transform: uppercase; }
+    .master-warehouse-items { align-items: center; display: flex; flex: 1 1 auto; flex-wrap: wrap; gap: 7px; min-width: 0; }
     .master-warehouse-item { align-items: baseline; background: #f2f7f5; border: 1px solid #e4eeea; border-radius: 6px; color: var(--ink); display: inline-flex; font-size: 9px; gap: 5px; max-width: 100%; padding: 4px 7px; }
     .master-warehouse-item span { overflow-wrap: anywhere; }
     .master-warehouse-item strong { color: var(--green); font-size: 10px; white-space: nowrap; }
     .master-warehouse-empty { color: var(--muted); font-size: 9px; }
+    .master-warehouse-summary .master-start-scan-button { background: #e4f1e9; border-color: #cfe3d7; border-radius: 7px; box-shadow: 0 2px 6px rgba(25,55,50,.08); color: var(--green-dark); flex: 0 0 auto; min-height: 32px; padding: 0 11px; }
+    .master-warehouse-summary .master-start-scan-button:hover { background: #d7ebe0; border-color: #bdd8c9; }
     .metric:hover, .layout-card:hover { border-color: #c4dcd3; box-shadow: 0 10px 24px rgba(25, 55, 50, .09); }
     .table-toolbar { background: linear-gradient(100deg, #fff, #f7faf9); }
     th { background: #f2f7f5; color: #627873; }
@@ -2002,7 +2001,7 @@
       }
       for (const serials of serialsByProduct.values()) serials.sort((a, b) => a.localeCompare(b, "id-ID"));
       const filtered = state.products.filter((product) => !query || `${product.name} ${product.sku} ${product.itemGroup || ""} ${product.brand} ${product.warehouse}`.toLocaleLowerCase("id-ID").includes(query) || (serialsByProduct.get(product.id) || []).some((serial) => serial.toLocaleLowerCase("id-ID").includes(query)));
-      return `${navMarkup()}<section class="page-head archive-page-head master-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Master VEF · Data inventaris</div><h1>${escapeHtml(activeWorkspaceName())}</h1><p class="subtitle">Serial Number dipetakan ke item code, brand, dan warehouse.</p></div><div class="head-buttons">${hasUploadedMaster ? '<button class="button master-start-scan-button" type="button" data-page-link="layouts">⊞ Mulai Scan / Hitung</button>' : ""}<button class="button master-delete-button" id="delete-master-button" ${!canEdit || !state.products.length ? "disabled" : ""}>Hapus semua data</button><button class="button master-upload-button" id="import-button" ${!hasBrandName ? 'disabled title="Isi Nama Brand di Jadwal terlebih dahulu"' : !canEdit ? 'disabled title="Sesi ini hanya dapat diubah oleh pemilik atau Super Admin"' : ""}>↑ Unggah workbook</button></div></section>${renderSessionAccessNotice()}
+      return `${navMarkup()}<section class="page-head archive-page-head master-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Master VEF · Data inventaris</div><h1>${escapeHtml(activeWorkspaceName())}</h1><p class="subtitle">Serial Number dipetakan ke item code, brand, dan warehouse.</p></div><div class="head-buttons"><button class="button master-delete-button" id="delete-master-button" ${!canEdit || !state.products.length ? "disabled" : ""}>Hapus semua data</button><button class="button master-upload-button" id="import-button" ${!hasBrandName ? 'disabled title="Isi Nama Brand di Jadwal terlebih dahulu"' : !canEdit ? 'disabled title="Sesi ini hanya dapat diubah oleh pemilik atau Super Admin"' : ""}>↑ Unggah workbook</button></div></section>${renderSessionAccessNotice()}
         <section class="metric-grid compact-metrics master-quantity-metrics" aria-label="Ringkasan quantity workbook Master VEF">
           <div class="metric"><div class="metric-top">Qty Serial Number diunggah <span class="metric-mark">⌗</span></div><div class="metric-value">${formatNumber(uploadedSerialCount)} <small>SN</small></div></div>
           <div class="metric"><div class="metric-top">Qty item VEF <span class="metric-mark">▤</span></div><div class="metric-value">${formatNumber(state.products.length)} <small>item</small></div></div>
@@ -2010,7 +2009,7 @@
           <div class="metric"><div class="metric-top">Qty unit selain laptop <span class="metric-mark">▱</span></div><div class="metric-value">${formatNumber(nonLaptopUnitCount)} <small>unit</small></div><div class="metric-note">${formatNumber(nonLaptopProducts.length)} item selain laptop</div></div>
           <div class="metric"><div class="metric-top">Qty keseluruhan <span class="metric-mark">Σ</span></div><div class="metric-value">${formatNumber(totalUnitCount)} <small>unit</small></div><div class="metric-note">Laptop + selain laptop</div></div>
         </section>
-        <section class="master-warehouse-summary" aria-label="Quantity Master VEF per Warehouse"><span class="master-warehouse-title">Quantity per Warehouse</span>${warehouseSummary || '<span class="master-warehouse-empty">Belum ada data Warehouse.</span>'}</section>
+        <section class="master-warehouse-summary" aria-label="Quantity Master VEF per Warehouse"><span class="master-warehouse-title">Quantity per Warehouse</span><div class="master-warehouse-items">${warehouseSummary || '<span class="master-warehouse-empty">Belum ada data Warehouse.</span>'}</div>${hasUploadedMaster ? '<button class="button master-start-scan-button" type="button" data-page-link="layouts">⊞ Mulai Scan / Hitung</button>' : ""}</section>
         <section class="table-section"><div class="table-toolbar"><div class="table-title">Master barang <span class="table-count">${filtered.length} item · ${filtered.filter(isLaptopProduct).length} laptop · ${filtered.filter((product) => !isLaptopProduct(product)).length} bukan laptop</span></div><div class="filters"><div class="search-wrap"><span class="search-icon">⌕</span><input class="search-input" id="search-input" placeholder="Cari item code atau SN" value="${escapeHtml(searchTerm)}" aria-label="Cari master"></div></div></div><div class="table-scroll"><table><thead><tr><th>Item code</th><th>Item name</th><th>Item Group</th><th>Brand</th><th>Warehouse</th><th>VEF</th><th>Serial Number</th></tr></thead><tbody>${filtered.length ? filtered.map((product) => { const serials = serialsByProduct.get(product.id) || []; const laptop = isLaptopProduct(product); return `<tr class="${laptop ? "" : "non-laptop-row"}"><td class="number-cell">${escapeHtml(product.sku)}</td><td><div class="product-name">${escapeHtml(product.name)}</div>${laptop ? "" : `<span class="row-status non-laptop">Bukan laptop</span>`}</td><td>${escapeHtml(product.itemGroup || "-")}</td><td>${escapeHtml(product.brand || "-")}</td><td>${escapeHtml(product.warehouse || "-")}</td><td>${formatNumber(product.stock)}</td><td>${serials.length ? `<details class="serial-details"><summary>${formatNumber(serials.length)} SN · tampilkan</summary><div class="serial-list">${serials.map((serial) => `<span class="serial-token">${escapeHtml(serial)}</span>`).join("")}</div></details>` : "-"}</td></tr>`; }).join("") : `<tr><td class="empty-row" colspan="7">Unggah workbook untuk memuat master VEF.</td></tr>`}</tbody></table></div><div class="table-footer"><span>${state.serialMaster ? Object.keys(state.serialMaster).length : 0} serial terdaftar</span><span>${escapeHtml(state.importFile || "Belum ada workbook")}</span></div></section>`;
     }
 
