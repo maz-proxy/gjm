@@ -668,7 +668,12 @@
     .session-strip { background: linear-gradient(115deg, #174b42 0%, #176b5b 66%, #328875 100%); }
     .session-actions .button { background: #c8e5d8; color: #16473e; }
     .session-actions .button:hover { background: #dbefe6; }
-    .metric, .layout-card, .table-section, .dashboard-panel, .history-summary { box-shadow: 0 5px 18px rgba(25, 55, 50, .045); }
+    .metric, .layout-card, .table-section, .dashboard-panel, .dashboard-metric, .history-summary, .progress-panel, .completed-detail-panel, .completed-rack, .schedule-card, .schedule-empty, .about-guide-card {
+      box-shadow: 0 2px 4px rgba(25,55,50,.07), 0 10px 24px rgba(25,55,50,.09), inset 0 1px rgba(255,255,255,.72);
+    }
+    .layout-page-head, .result-page-head, .archive-page-head, .dashboard-hero, .schedule-overview, .session-strip, .result-session-strip {
+      box-shadow: 0 3px 7px rgba(16,54,45,.13), 0 14px 30px rgba(16,54,45,.18), inset 0 1px rgba(255,255,255,.2);
+    }
     .metric:hover, .layout-card:hover { border-color: #c4dcd3; box-shadow: 0 10px 24px rgba(25, 55, 50, .09); }
     .table-toolbar { background: linear-gradient(100deg, #fff, #f7faf9); }
     th { background: #f2f7f5; color: #627873; }
@@ -740,6 +745,29 @@
       --red: #e59b93;
       --red-soft: #402a29;
       --shadow: 0 14px 38px rgba(0, 0, 0, .28);
+    }
+    html[data-theme="dark"] .metric,
+    html[data-theme="dark"] .layout-card,
+    html[data-theme="dark"] .table-section,
+    html[data-theme="dark"] .dashboard-panel,
+    html[data-theme="dark"] .dashboard-metric,
+    html[data-theme="dark"] .history-summary,
+    html[data-theme="dark"] .progress-panel,
+    html[data-theme="dark"] .completed-detail-panel,
+    html[data-theme="dark"] .completed-rack,
+    html[data-theme="dark"] .schedule-card,
+    html[data-theme="dark"] .schedule-empty,
+    html[data-theme="dark"] .about-guide-card {
+      box-shadow: 0 2px 5px rgba(0,0,0,.2), 0 10px 24px rgba(0,0,0,.28), inset 0 1px rgba(255,255,255,.035);
+    }
+    html[data-theme="dark"] .layout-page-head,
+    html[data-theme="dark"] .result-page-head,
+    html[data-theme="dark"] .archive-page-head,
+    html[data-theme="dark"] .dashboard-hero,
+    html[data-theme="dark"] .schedule-overview,
+    html[data-theme="dark"] .session-strip,
+    html[data-theme="dark"] .result-session-strip {
+      box-shadow: 0 3px 7px rgba(0,0,0,.2), 0 14px 30px rgba(0,0,0,.3), inset 0 1px rgba(255,255,255,.1);
     }
     html[data-theme="dark"] body { background: radial-gradient(ellipse at 88% 0%, rgba(39, 91, 78, .2), transparent 36%), var(--canvas); }
     html[data-theme="dark"] .auth-card,
