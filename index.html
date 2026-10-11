@@ -691,6 +691,32 @@
     .layout-page-head, .result-page-head, .archive-page-head, .dashboard-hero, .schedule-overview, .session-strip, .result-session-strip {
       box-shadow: 0 3px 7px rgba(16,54,45,.13), 0 14px 30px rgba(16,54,45,.18), inset 0 1px rgba(255,255,255,.2);
     }
+    .metric-grid.compact-metrics {
+      background: var(--line);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(25,55,50,.055), inset 0 1px rgba(255,255,255,.72);
+      gap: 1px;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      margin-bottom: 10px;
+      overflow: hidden;
+      padding: 1px;
+    }
+    .compact-metrics .metric,
+    .compact-metrics .metric:hover {
+      background: var(--paper);
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      min-height: 0;
+      padding: 8px 10px;
+      transform: none;
+    }
+    .compact-metrics .metric-top { font-size: 9px; gap: 5px; line-height: 1.3; }
+    .compact-metrics .metric-mark { box-shadow: none; flex: 0 0 18px; font-size: 9px; height: 18px; width: 18px; }
+    .compact-metrics .metric-value { font-size: 18px; margin-top: 5px; }
+    .compact-metrics .metric-value small { font-size: 8px; }
+    .compact-metrics .metric-note { font-size: 8px; margin-top: 2px; }
     .metric:hover, .layout-card:hover { border-color: #c4dcd3; box-shadow: 0 10px 24px rgba(25, 55, 50, .09); }
     .table-toolbar { background: linear-gradient(100deg, #fff, #f7faf9); }
     th { background: #f2f7f5; color: #627873; }
@@ -786,6 +812,13 @@
     html[data-theme="dark"] .result-session-strip {
       box-shadow: 0 3px 7px rgba(0,0,0,.2), 0 14px 30px rgba(0,0,0,.3), inset 0 1px rgba(255,255,255,.1);
     }
+    html[data-theme="dark"] .metric-grid.compact-metrics {
+      background: var(--line);
+      border-color: var(--line);
+      box-shadow: 0 2px 8px rgba(0,0,0,.22), inset 0 1px rgba(255,255,255,.035);
+    }
+    html[data-theme="dark"] .compact-metrics .metric,
+    html[data-theme="dark"] .compact-metrics .metric:hover { background: var(--paper); }
     html[data-theme="dark"] body { background: radial-gradient(ellipse at 88% 0%, rgba(39, 91, 78, .2), transparent 36%), var(--canvas); }
     html[data-theme="dark"] .auth-card,
     html[data-theme="dark"] .metric,
