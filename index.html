@@ -124,8 +124,11 @@
     main { min-width: 0; padding: 32px clamp(20px, 4vw, 58px) 52px; }
     .topline { align-items: center; display: flex; justify-content: space-between; margin-bottom: 31px; }
     .developer-watermark { background: rgba(255,255,255,.3); border: 1px solid rgba(111,125,114,.07); border-radius: 999px; color: rgba(116,125,116,.48); font-size: 10px; font-weight: 600; left: 254px; line-height: 1.4; opacity: .65; padding: 4px 9px; pointer-events: none; position: fixed; top: 8px; transition: left .22s ease; user-select: none; z-index: 10; }
-    .crumb { color: var(--muted); font-size: 12px; }
+    .crumb { align-items: center; color: var(--muted); display: flex; font-size: 12px; gap: 8px; min-width: 0; }
     .crumb b { color: #434a40; font-weight: 600; }
+    .workspace-context { display: inline-flex; flex: 0 1 auto; flex-direction: column; line-height: 1.25; min-width: 0; }
+    .workspace-context-brand { color: var(--ink); font-size: 11px; font-weight: 700; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .workspace-context-cycle { color: var(--muted); font-size: 9px; white-space: nowrap; }
     .top-actions { align-items: flex-end; display: flex; flex-direction: column; gap: 2px; }
     .today { color: #656c61; font-size: 12px; }
     .top-pics { color: var(--muted); font-size: 10px; text-align: right; }
@@ -608,6 +611,8 @@
       .nav-icon svg { height: 15px; width: 15px; }
       main { padding: 20px 14px 30px; }
       .topline { margin-bottom: 22px; }
+      .workspace-context { max-width: 42vw; }
+      .workspace-context-brand { max-width: 100%; }
       .today { display: none; }
       .top-account-email { max-width: 145px; }
       .page-head { align-items: flex-start; flex-direction: column; gap: 15px; margin-bottom: 17px; }
@@ -1942,7 +1947,12 @@
       const pics = activeWorkspace()?.picNames || [];
       const showPics = currentPage === "opname" || currentPage === "layouts" || currentPage === "products";
       const picMarkup = showPics && pics.some((name) => name.trim()) ? `<span class="top-pics">PIC 1: ${escapeHtml(pics[0] || "Belum diisi")} · PIC 2: ${escapeHtml(pics[1] || "Belum diisi")}</span>` : "";
-      return `<div class="topline"><div class="crumb">${escapeHtml(activeWorkspaceName())} <span> / </span> <b>${currentPage === "dashboard" ? "Dashboard" : currentPage === "opname" ? "Result SO" : currentPage === "layouts" ? "Scan Layout" : currentPage === "workspaces" ? "Jadwal" : currentPage === "products" ? "Master VEF" : currentPage === "recap" ? "Rekap selisih" : currentPage === "completed-sessions" ? "Sesi Stock Opname" : currentPage === "admin-users" ? "Kelola Akun" : currentPage === "about" ? "About" : "Riwayat Perubahan"}</b></div><div class="top-actions"><span class="today">${formatDate(new Date(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span>${picMarkup}<button class="theme-toggle" type="button" data-theme-toggle aria-label="Aktifkan dark mode" aria-pressed="false"><span class="theme-toggle-icon" aria-hidden="true">☾</span><span class="theme-toggle-label">Dark</span></button></div></div>`;
+      const workspace = activeWorkspace();
+      const showWorkspaceContext = ["opname", "layouts", "products", "recap"].includes(currentPage);
+      const workspaceContext = showWorkspaceContext
+        ? `<span class="workspace-context"><span class="workspace-context-brand">${escapeHtml(activeWorkspaceName())}</span><span class="workspace-context-cycle">${normalizeWorkspaceMonth(workspace?.month)} · ${normalizeWorkspacePeriod(workspace?.period)}</span></span>`
+        : escapeHtml(activeWorkspaceName());
+      return `<div class="topline"><div class="crumb">${workspaceContext}<span>/</span><b>${currentPage === "dashboard" ? "Dashboard" : currentPage === "opname" ? "Result SO" : currentPage === "layouts" ? "Scan Layout" : currentPage === "workspaces" ? "Jadwal" : currentPage === "products" ? "Master VEF" : currentPage === "recap" ? "Rekap selisih" : currentPage === "completed-sessions" ? "Sesi Stock Opname" : currentPage === "admin-users" ? "Kelola Akun" : currentPage === "about" ? "About" : "Riwayat Perubahan"}</b></div><div class="top-actions"><span class="today">${formatDate(new Date(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span>${picMarkup}<button class="theme-toggle" type="button" data-theme-toggle aria-label="Aktifkan dark mode" aria-pressed="false"><span class="theme-toggle-icon" aria-hidden="true">☾</span><span class="theme-toggle-label">Dark</span></button></div></div>`;
     };
     const productRows = (products) => products.length ? products.map((product, index) => {
       const included = isCountedProduct(product);
