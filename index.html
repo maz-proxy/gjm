@@ -1554,7 +1554,7 @@
         lastSyncedState = stableSerialize(state);
         sharedStateReady = true;
         syncErrorShown = false;
-        currentPage = restoreLastPage(session);
+        currentPage = freshLogin ? "dashboard" : restoreLastPage(session);
         unlockApp(session);
         render();
         refreshTimer = setInterval(refreshSharedState, 8000);
