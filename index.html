@@ -254,7 +254,6 @@
     .layout-overview-metric span { color: #d5e9df; display: block; font-size: 9px; }
     .layout-overview-metric strong { color: #fff; display: block; font-size: 15px; font-variant-numeric: tabular-nums; margin-top: 2px; }
     .layout-overview-metric em { color: #bce5d4; font-size: 8px; font-style: normal; }
-    .schedule-brand-label { color: var(--muted); display: block; font-size: 9px; font-weight: 800; letter-spacing: .7px; margin: 0 0 4px 2px; text-transform: uppercase; }
     .start-opname-button { white-space: nowrap; }
     .layout-quantity-row { align-items: center; display: flex; gap: 6px; justify-content: flex-end; }
     .layout-quantity-label { color: var(--muted); font-size: 10px; }
@@ -431,7 +430,11 @@
     .schedule-card-number svg { height: 21px; width: 21px; }
     .schedule-card-number small { align-items: center; background: #27694f; border: 2px solid var(--paper); border-radius: 99px; bottom: -5px; color: #fff; display: flex; font: 700 8px/1 "Space Grotesk", "Segoe UI", sans-serif; height: 16px; justify-content: center; min-width: 16px; padding: 0 2px; position: absolute; right: -5px; }
     .schedule-card-title { flex: 1; min-width: 0; }
+    .schedule-brand-fields { align-items: end; display: grid; gap: 8px; grid-template-columns: minmax(0, 1fr) 120px; }
+    .schedule-brand-field { display: grid; gap: 4px; min-width: 0; }
     .schedule-card-title .workspace-name-input { font-size: 13px; max-width: none; }
+    .schedule-period-select { background: #fff; border: 1px solid #dfe3db; border-radius: 5px; color: var(--ink); font: 600 11px "Segoe UI", sans-serif; height: 33px; padding: 0 7px; width: 100%; }
+    .schedule-period-select:focus { border-color: #739b7c; box-shadow: 0 0 0 2px rgba(40,93,69,.09); outline: 0; }
     .schedule-card-subtitle { color: var(--muted); font-size: 10px; margin-top: 3px; }
     .schedule-card-badges { align-items: flex-end; display: flex; flex-direction: column; gap: 5px; }
     .schedule-current-badge { background: #e7f3ed; border-radius: 99px; color: #27694f; font-size: 9px; font-weight: 700; padding: 4px 8px; white-space: nowrap; }
@@ -441,7 +444,7 @@
     .schedule-mode-title { color: var(--ink); font-size: 11px; font-weight: 700; }
     .schedule-mode-hint { color: var(--muted); font-size: 9px; line-height: 1.4; margin-top: 2px; }
     .schedule-mode-control { display: grid; flex: 0 0 145px; gap: 4px; }
-    .schedule-mode-control label, .schedule-pic-field label { color: var(--muted); font-size: 9px; font-weight: 700; }
+    .schedule-mode-control label, .schedule-pic-field label, .schedule-brand-field label { color: var(--muted); font-size: 9px; font-weight: 700; }
     .schedule-card .workspace-count-mode { border-radius: 7px; font-size: 10px; max-width: none; }
     .schedule-pics { display: grid; gap: 9px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .schedule-pic-field { display: grid; gap: 4px; min-width: 0; }
@@ -542,6 +545,7 @@
       .schedule-overview-stat { min-width: 0; padding: 8px 9px; }
       .schedule-grid { grid-template-columns: minmax(0, 1fr); }
       .schedule-card-head, .schedule-card-body { padding-left: 12px; padding-right: 12px; }
+      .schedule-brand-fields { grid-template-columns: minmax(0, 1fr) 105px; gap: 6px; }
       .schedule-card-summary { padding-left: 10px; padding-right: 10px; }
       .schedule-card-foot { align-items: flex-start; flex-direction: column; padding-left: 12px; padding-right: 12px; }
       .schedule-owner { max-width: 100%; }
@@ -885,6 +889,7 @@
     html[data-theme="dark"] .qty-input,
     html[data-theme="dark"] .note-input,
     html[data-theme="dark"] .workspace-name-input,
+    html[data-theme="dark"] .schedule-period-select,
     html[data-theme="dark"] .form-control { background: #14211f; border-color: #3a514b; color: var(--ink); }
     html[data-theme="dark"] .manual-product-options { background: var(--paper); border-color: var(--line); }
     html[data-theme="dark"] .manual-product-option:hover,
@@ -896,6 +901,7 @@
     html[data-theme="dark"] .count-input:focus,
     html[data-theme="dark"] .qty-input:focus,
     html[data-theme="dark"] .note-input:focus,
+    html[data-theme="dark"] .schedule-period-select:focus,
     html[data-theme="dark"] .form-control:focus { background: #192a27; border-color: #70b39b; }
     html[data-theme="dark"] .table-toolbar { background: linear-gradient(100deg, #1a2826, #1d302c); border-color: var(--line); }
     html[data-theme="dark"] th { background: #22332f; color: #a8bcb6; }
@@ -1142,6 +1148,8 @@
       } : {})
     });
     const DEFAULT_LAYOUTS = ["Rack 1"];
+    const WORKSPACE_PERIODS = ["Week 1", "Week 2"];
+    const normalizeWorkspacePeriod = (period) => WORKSPACE_PERIODS.includes(period) ? period : WORKSPACE_PERIODS[0];
     const initialState = () => ({ products: [], serialMaster: {}, scanEvents: [], manualEntries: [], historyEvents: [], sessions: [], workbookFiles: [], activeSession: makeSession(), countMode: "laptops", importFile: "", importMessage: "", layouts: [...DEFAULT_LAYOUTS], layoutQuantities: {}, layoutNumbers: {} });
     const emptyWorkspaceData = () => ({ products: [], serialMaster: {}, scanEvents: [], manualEntries: [], historyEvents: [], workbookFiles: [], activeSession: makeSession(), countMode: "laptops", importFile: "", importMessage: "", layouts: [...DEFAULT_LAYOUTS], layoutQuantities: {}, layoutNumbers: {} });
     const snapshotWorkspaceData = (source) => {
@@ -1162,7 +1170,7 @@
       for (const entry of manualEntries) boxTotals.set(entry.productId, (boxTotals.get(entry.productId) || 0) + Number(entry.quantity || 0));
       return { products: products.map((product) => ({ ...product, box: boxTotals.get(product.id) || 0 })), serialMaster: source.serialMaster || {}, scanEvents: source.scanEvents || [], manualEntries, historyEvents: source.historyEvents || [], workbookFiles: Array.isArray(source.workbookFiles) ? source.workbookFiles : [], activeSession: source.activeSession || makeSession(), countMode: source.countMode === "all" ? "all" : "laptops", importFile: source.importFile || "", importMessage: source.importMessage || "", layouts, layoutQuantities: source.layoutQuantities || {}, layoutNumbers: source.layoutNumbers || {} };
     };
-    const createWorkspace = (name = "", data = emptyWorkspaceData()) => ({ id: crypto.randomUUID(), name, picNames: ["", ""], data });
+    const createWorkspace = (name = "", data = emptyWorkspaceData()) => ({ id: crypto.randomUUID(), name, period: WORKSPACE_PERIODS[0], picNames: ["", ""], data });
     let state;
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -1183,6 +1191,7 @@
       state.workspaces.forEach((workspace, index) => {
         if (!workspace.id) workspace.id = crypto.randomUUID();
         if (typeof workspace.name !== "string") workspace.name = "";
+        workspace.period = normalizeWorkspacePeriod(workspace.period);
         if (!workspace.data) workspace.data = emptyWorkspaceData();
         if (workspace.data.countMode !== "all") workspace.data.countMode = "laptops";
         if (!Array.isArray(workspace.picNames)) workspace.picNames = ["", ""];
@@ -1450,6 +1459,7 @@
         normalized.workspaces.forEach((workspace, index) => {
           if (!workspace.id) workspace.id = crypto.randomUUID();
           if (typeof workspace.name !== "string") workspace.name = "";
+          workspace.period = normalizeWorkspacePeriod(workspace.period);
           workspace.data = snapshotWorkspaceData(workspace.data || emptyWorkspaceData());
           if (!Array.isArray(workspace.picNames)) workspace.picNames = ["", ""];
           workspace.picNames = [workspace.picNames[0] || "", workspace.picNames[1] || ""];
@@ -2615,6 +2625,7 @@
         const statusClass = isCompleted ? "match" : hasStarted ? "different" : "pending";
         const serials = Object.keys(data.serialMaster || {}).length;
         const countMode = data.countMode === "all" ? "all" : "laptops";
+        const period = normalizeWorkspacePeriod(workspace.period);
         const summaryPicNames = (workspace.picNames || []).filter(Boolean).map(escapeHtml).join(" & ") || "PIC belum diisi";
         const modeDisabled = !canEdit || isCompleted;
         const deleteButton = isSuperAdmin()
@@ -2622,14 +2633,16 @@
           : "";
         return `<details class="schedule-card ${isCurrent ? "current" : ""}">
           <summary class="schedule-card-summary" aria-label="${escapeHtml(workspace.name || "Nama Brand belum diisi")}, ${status}. Klik untuk melihat detail.">
-            <span class="schedule-summary-copy"><strong class="schedule-summary-title">${escapeHtml(workspace.name || "Nama Brand belum diisi")}</strong><span class="schedule-summary-meta">${countModeLabel(countMode)} · ${formatNumber(stats.countedSkus)} item · ${formatNumber(serials)} SN · ${summaryPicNames}</span></span>
+            <span class="schedule-summary-copy"><strong class="schedule-summary-title">${escapeHtml(workspace.name || "Nama Brand belum diisi")}</strong><span class="schedule-summary-meta"><span data-workspace-period-summary="${escapeHtml(workspace.id)}">${escapeHtml(period)}</span> · ${countModeLabel(countMode)} · ${formatNumber(stats.countedSkus)} item · ${formatNumber(serials)} SN · ${summaryPicNames}</span></span>
             <span class="schedule-summary-badges"><span class="row-status ${statusClass}">${status}</span>${isCurrent ? '<span class="schedule-current-badge">Sedang dipilih</span>' : ""}</span>
             <span class="schedule-summary-chevron" aria-hidden="true">⌄</span>
           </summary>
           <header class="schedule-card-head">
             <div class="schedule-card-title">
-              <label class="schedule-brand-label" for="workspace-brand-${escapeHtml(workspace.id)}">Nama Brand</label>
-              <input class="workspace-name-input" id="workspace-brand-${escapeHtml(workspace.id)}" data-workspace-name="${escapeHtml(workspace.id)}" aria-label="Nama Brand" placeholder="Masukkan nama brand" value="${escapeHtml(workspace.name)}" ${canEdit ? "" : "disabled title=\"Sesi sedang dikerjakan staf lain\""}>
+              <div class="schedule-brand-fields">
+                <div class="schedule-brand-field"><label for="workspace-brand-${escapeHtml(workspace.id)}">Nama Brand</label><input class="workspace-name-input" id="workspace-brand-${escapeHtml(workspace.id)}" data-workspace-name="${escapeHtml(workspace.id)}" aria-label="Nama Brand" placeholder="Masukkan nama brand" value="${escapeHtml(workspace.name)}" ${canEdit ? "" : 'disabled title="Sesi sedang dikerjakan staf lain"'}></div>
+                <div class="schedule-brand-field"><label for="workspace-period-${escapeHtml(workspace.id)}">Periode</label><select class="schedule-period-select" id="workspace-period-${escapeHtml(workspace.id)}" data-workspace-period="${escapeHtml(workspace.id)}" aria-label="Periode stock opname untuk ${escapeHtml(workspace.name || "Nama Brand belum diisi")}" ${!canEdit || isCompleted ? 'disabled title="Periode sesi selesai atau milik staf lain tidak dapat diubah"' : ""}>${WORKSPACE_PERIODS.map((option) => `<option value="${option}" ${period === option ? "selected" : ""}>${option}</option>`).join("")}</select></div>
+              </div>
               <div class="schedule-card-subtitle">${formatNumber(stats.countedSkus)} item masuk perhitungan</div>
             </div>
             <div class="schedule-card-badges">
@@ -2974,6 +2987,20 @@
         }
         workspace.picNames[index] = input.value.trim();
         input.value = workspace.picNames[index];
+        persist();
+      }));
+      document.querySelectorAll("[data-workspace-period]").forEach((select) => select.addEventListener("change", () => {
+        const workspace = state.workspaces.find((item) => item.id === select.dataset.workspacePeriod);
+        if (!workspace) return;
+        if (!canEditWorkspaceSession(workspace) || workspace.data.activeSession.status === "completed") {
+          notify(`Periode sesi hanya dapat diubah oleh ${sessionOwnerName(workspace.data.activeSession)} atau Super Admin.`);
+          select.value = normalizeWorkspacePeriod(workspace.period);
+          return;
+        }
+        workspace.period = normalizeWorkspacePeriod(select.value);
+        select.value = workspace.period;
+        const summary = document.querySelector(`[data-workspace-period-summary="${CSS.escape(workspace.id)}"]`);
+        if (summary) summary.textContent = workspace.period;
         persist();
       }));
       document.querySelectorAll("[data-workspace-count-mode]").forEach((select) => select.addEventListener("change", () => updateWorkspaceCountMode(select)));
