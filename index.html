@@ -124,11 +124,10 @@
     main { min-width: 0; padding: 32px clamp(20px, 4vw, 58px) 52px; }
     .topline { align-items: center; display: flex; justify-content: space-between; margin-bottom: 31px; }
     .developer-watermark { background: rgba(255,255,255,.3); border: 1px solid rgba(111,125,114,.07); border-radius: 999px; color: rgba(116,125,116,.48); font-size: 10px; font-weight: 600; left: 254px; line-height: 1.4; opacity: .65; padding: 4px 9px; pointer-events: none; position: fixed; top: 8px; transition: left .22s ease; user-select: none; z-index: 10; }
-    .crumb { align-items: center; color: var(--muted); display: flex; font-size: 12px; gap: 8px; min-width: 0; }
+    .crumb { color: var(--muted); font-size: 12px; }
     .crumb b { color: #434a40; font-weight: 600; }
-    .workspace-context { display: inline-flex; flex: 0 1 auto; flex-direction: column; line-height: 1.25; min-width: 0; }
-    .workspace-context-brand { color: var(--ink); font-size: 11px; font-weight: 700; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .workspace-context-cycle { color: var(--muted); font-size: 9px; white-space: nowrap; }
+    .workspace-page-title { align-items: baseline; display: flex; flex-wrap: wrap; gap: 9px; }
+    .workspace-period-label { color: #d5e9df; font-size: 10px; font-weight: 600; letter-spacing: .25px; }
     .top-actions { align-items: flex-end; display: flex; flex-direction: column; gap: 2px; }
     .today { color: #656c61; font-size: 12px; }
     .top-pics { color: var(--muted); font-size: 10px; text-align: right; }
@@ -611,8 +610,6 @@
       .nav-icon svg { height: 15px; width: 15px; }
       main { padding: 20px 14px 30px; }
       .topline { margin-bottom: 22px; }
-      .workspace-context { max-width: 42vw; }
-      .workspace-context-brand { max-width: 100%; }
       .today { display: none; }
       .top-account-email { max-width: 145px; }
       .page-head { align-items: flex-start; flex-direction: column; gap: 15px; margin-bottom: 17px; }
@@ -1272,6 +1269,10 @@
     }
     function activeWorkspaceName() {
       return activeWorkspace()?.name.trim() || "Nama Brand belum diisi";
+    }
+    function workspacePageTitle() {
+      const workspace = activeWorkspace();
+      return `<div class="workspace-page-title"><h1>${escapeHtml(activeWorkspaceName())}</h1><span class="workspace-period-label">${normalizeWorkspaceMonth(workspace?.month)} · ${normalizeWorkspacePeriod(workspace?.period)}</span></div>`;
     }
     function workspaceHasStarted(workspace) {
       const data = workspace?.data;
@@ -1947,12 +1948,7 @@
       const pics = activeWorkspace()?.picNames || [];
       const showPics = currentPage === "opname" || currentPage === "layouts" || currentPage === "products";
       const picMarkup = showPics && pics.some((name) => name.trim()) ? `<span class="top-pics">PIC 1: ${escapeHtml(pics[0] || "Belum diisi")} · PIC 2: ${escapeHtml(pics[1] || "Belum diisi")}</span>` : "";
-      const workspace = activeWorkspace();
-      const showWorkspaceContext = ["opname", "layouts", "products", "recap"].includes(currentPage);
-      const workspaceContext = showWorkspaceContext
-        ? `<span class="workspace-context"><span class="workspace-context-brand">${escapeHtml(activeWorkspaceName())}</span><span class="workspace-context-cycle">${normalizeWorkspaceMonth(workspace?.month)} · ${normalizeWorkspacePeriod(workspace?.period)}</span></span>`
-        : escapeHtml(activeWorkspaceName());
-      return `<div class="topline"><div class="crumb">${workspaceContext}<span>/</span><b>${currentPage === "dashboard" ? "Dashboard" : currentPage === "opname" ? "Result SO" : currentPage === "layouts" ? "Scan Layout" : currentPage === "workspaces" ? "Jadwal" : currentPage === "products" ? "Master VEF" : currentPage === "recap" ? "Rekap selisih" : currentPage === "completed-sessions" ? "Sesi Stock Opname" : currentPage === "admin-users" ? "Kelola Akun" : currentPage === "about" ? "About" : "Riwayat Perubahan"}</b></div><div class="top-actions"><span class="today">${formatDate(new Date(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span>${picMarkup}<button class="theme-toggle" type="button" data-theme-toggle aria-label="Aktifkan dark mode" aria-pressed="false"><span class="theme-toggle-icon" aria-hidden="true">☾</span><span class="theme-toggle-label">Dark</span></button></div></div>`;
+      return `<div class="topline"><div class="crumb">${escapeHtml(activeWorkspaceName())} <span> / </span> <b>${currentPage === "dashboard" ? "Dashboard" : currentPage === "opname" ? "Result SO" : currentPage === "layouts" ? "Scan Layout" : currentPage === "workspaces" ? "Jadwal" : currentPage === "products" ? "Master VEF" : currentPage === "recap" ? "Rekap selisih" : currentPage === "completed-sessions" ? "Sesi Stock Opname" : currentPage === "admin-users" ? "Kelola Akun" : currentPage === "about" ? "About" : "Riwayat Perubahan"}</b></div><div class="top-actions"><span class="today">${formatDate(new Date(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span>${picMarkup}<button class="theme-toggle" type="button" data-theme-toggle aria-label="Aktifkan dark mode" aria-pressed="false"><span class="theme-toggle-icon" aria-hidden="true">☾</span><span class="theme-toggle-label">Dark</span></button></div></div>`;
     };
     const productRows = (products) => products.length ? products.map((product, index) => {
       const included = isCountedProduct(product);
@@ -1983,7 +1979,7 @@
       });
       const latestScans = [...state.scanEvents].slice(-8).reverse();
       return `${navMarkup()}
-        <section class="page-head result-page-head"><div class="result-page-heading"><div class="result-page-eyebrow">Result SO · Rekonsiliasi inventaris</div><h1>${escapeHtml(activeWorkspaceName())}</h1><p class="subtitle">SCAN + MANUAL + PJ dibandingkan dengan VEF. Perhitungan: ${countModeLabel(state.countMode).toLocaleLowerCase("id-ID")}.</p></div><div class="head-buttons"><button class="button result-export-button" id="export-button" ${!stats.total ? "disabled" : ""}>↓ <span>Ekspor CSV</span></button></div></section>
+        <section class="page-head result-page-head"><div class="result-page-heading"><div class="result-page-eyebrow">Result SO · Rekonsiliasi inventaris</div>${workspacePageTitle()}<p class="subtitle">SCAN + MANUAL + PJ dibandingkan dengan VEF. Perhitungan: ${countModeLabel(state.countMode).toLocaleLowerCase("id-ID")}.</p></div><div class="head-buttons"><button class="button result-export-button" id="export-button" ${!stats.total ? "disabled" : ""}>↓ <span>Ekspor CSV</span></button></div></section>
         ${renderSessionAccessNotice()}
         <section class="session-strip result-session-strip"><div class="session-info"><div class="session-kicker">Sesi opname · ${escapeHtml(formatDate(state.activeSession.startedAt, { day: "numeric", month: "short", year: "numeric" }))}</div><div class="session-title">${active ? "Rekonsiliasi sedang berjalan" : "Rekonsiliasi selesai"}</div><div class="session-meta">${state.importFile ? `${escapeHtml(state.importFile)}${state.importMessage ? ` · ${escapeHtml(state.importMessage)}` : ""}` : "Unggah workbook di Master VEF untuk memulai sesi."} · Pemilik: ${escapeHtml(sessionOwnerName(state.activeSession))}</div></div><div class="session-actions"><span class="status-pill"><span class="status-dot" style="${active ? "" : "background:#fff"}"></span>${active ? "Sedang berjalan" : "Selesai"}</span>${active ? `<button class="button finish-opname-button" id="finish-button" ${!canEdit || !stats.total ? "disabled" : ""}>SO SELESAI</button>` : `<button class="button" id="new-session-button" ${!canEdit ? "disabled" : ""}><span class="icon-plus">+</span> Mulai sesi baru</button>`}</div></section>
         <section class="metric-grid compact-metrics result-metrics" aria-label="Ringkasan stock opname">
@@ -2028,7 +2024,7 @@
       }
       for (const serials of serialsByProduct.values()) serials.sort((a, b) => a.localeCompare(b, "id-ID"));
       const filtered = state.products.filter((product) => !query || `${product.name} ${product.sku} ${product.itemGroup || ""} ${product.brand} ${product.warehouse}`.toLocaleLowerCase("id-ID").includes(query) || (serialsByProduct.get(product.id) || []).some((serial) => serial.toLocaleLowerCase("id-ID").includes(query)));
-      return `${navMarkup()}<section class="page-head archive-page-head master-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Master VEF · Data inventaris</div><h1>${escapeHtml(activeWorkspaceName())}</h1><p class="subtitle">Serial Number dipetakan ke item code, brand, dan warehouse.</p></div><div class="head-buttons"><button class="button master-delete-button" id="delete-master-button" ${!canEdit || !state.products.length ? "disabled" : ""}>Hapus semua data</button><button class="button master-upload-button" id="import-button" ${!hasBrandName ? 'disabled title="Isi Nama Brand di Jadwal terlebih dahulu"' : !canEdit ? 'disabled title="Sesi ini hanya dapat diubah oleh pemilik atau Super Admin"' : ""}>↑ Unggah workbook</button></div></section>${renderSessionAccessNotice()}
+      return `${navMarkup()}<section class="page-head archive-page-head master-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Master VEF · Data inventaris</div>${workspacePageTitle()}<p class="subtitle">Serial Number dipetakan ke item code, brand, dan warehouse.</p></div><div class="head-buttons"><button class="button master-delete-button" id="delete-master-button" ${!canEdit || !state.products.length ? "disabled" : ""}>Hapus semua data</button><button class="button master-upload-button" id="import-button" ${!hasBrandName ? 'disabled title="Isi Nama Brand di Jadwal terlebih dahulu"' : !canEdit ? 'disabled title="Sesi ini hanya dapat diubah oleh pemilik atau Super Admin"' : ""}>↑ Unggah workbook</button></div></section>${renderSessionAccessNotice()}
         <section class="metric-grid compact-metrics master-quantity-metrics" aria-label="Ringkasan quantity workbook Master VEF">
           <div class="metric"><div class="metric-top">Qty Serial Number diunggah <span class="metric-mark">⌗</span></div><div class="metric-value">${formatNumber(uploadedSerialCount)} <small>SN</small></div></div>
           <div class="metric"><div class="metric-top">Qty item VEF <span class="metric-mark">▤</span></div><div class="metric-value">${formatNumber(state.products.length)} <small>item</small></div></div>
@@ -2132,7 +2128,7 @@
           <div class="layout-card-foot"><div class="layout-record-group"><div class="layout-record-heading">Scan</div><div class="layout-scan-list">${scanRows}</div></div><div class="layout-record-group"><div class="layout-record-heading">Manual</div><div class="layout-scan-list">${manualRows}</div></div></div>
         </section>`;
       }).join("");
-      return `${navMarkup()}<section class="page-head layout-page-head"><div class="layout-page-heading"><div class="layout-page-eyebrow">Pemindaian inventaris</div><h1>${escapeHtml(activeWorkspaceName())}</h1><p class="subtitle">Isi nomor Rack dan quantity target sebelum mulai scan.</p></div><div class="layout-overview-metrics" aria-label="Ringkasan quantity Scan Layout"><div class="layout-overview-metric"><span>Total Rack</span><strong>${state.layouts.length}</strong></div><div class="layout-overview-metric"><span>Total Scan</span><strong>${formatNumber(rackTotals.scan)}</strong><em>SN cocok</em></div><div class="layout-overview-metric"><span>Total Manual</span><strong>${formatNumber(rackTotals.manual)}</strong><em>unit</em></div><div class="layout-overview-metric"><span>Total Qty</span><strong>${formatNumber(rackTotals.scan + rackTotals.manual)}</strong><em>Scan + Manual</em></div><div class="layout-overview-metric"><span>Qty Master VEF</span><strong>${formatNumber(expected)}</strong><em>sesuai mode hitung</em></div></div></section>${renderSessionAccessNotice()}<section class="layout-grid">${cards || '<div class="schedule-empty">Belum ada Rack. Klik Tambah Rack untuk membuat Rack pertama.</div>'}</section><div class="schedule-add-row"><button class="button button-primary" id="add-rack-button" type="button" ${!active || !canEdit ? "disabled" : ""}>＋ Tambah Rack</button></div>`;
+      return `${navMarkup()}<section class="page-head layout-page-head"><div class="layout-page-heading"><div class="layout-page-eyebrow">Pemindaian inventaris</div>${workspacePageTitle()}<p class="subtitle">Isi nomor Rack dan quantity target sebelum mulai scan.</p></div><div class="layout-overview-metrics" aria-label="Ringkasan quantity Scan Layout"><div class="layout-overview-metric"><span>Total Rack</span><strong>${state.layouts.length}</strong></div><div class="layout-overview-metric"><span>Total Scan</span><strong>${formatNumber(rackTotals.scan)}</strong><em>SN cocok</em></div><div class="layout-overview-metric"><span>Total Manual</span><strong>${formatNumber(rackTotals.manual)}</strong><em>unit</em></div><div class="layout-overview-metric"><span>Total Qty</span><strong>${formatNumber(rackTotals.scan + rackTotals.manual)}</strong><em>Scan + Manual</em></div><div class="layout-overview-metric"><span>Qty Master VEF</span><strong>${formatNumber(expected)}</strong><em>sesuai mode hitung</em></div></div></section>${renderSessionAccessNotice()}<section class="layout-grid">${cards || '<div class="schedule-empty">Belum ada Rack. Klik Tambah Rack untuk membuat Rack pertama.</div>'}</section><div class="schedule-add-row"><button class="button button-primary" id="add-rack-button" type="button" ${!active || !canEdit ? "disabled" : ""}>＋ Tambah Rack</button></div>`;
     }
     function addRack() {
       if (!requireActiveSessionEdit()) return;
@@ -2252,7 +2248,7 @@
         const status = statusFor(product);
         return `<tr><td class="number-cell">${index + 1}</td><td><div class="product-name">${escapeHtml(product.name)}</div><div class="product-sku">${escapeHtml(product.sku)}</div></td><td><span class="category-chip">${escapeHtml(product.brand || "-")}</span></td><td>${escapeHtml(product.warehouse || "-")}</td><td class="number-cell">${formatNumber(product.stock)}</td><td class="number-cell">${formatNumber(product.count || 0)}</td><td class="number-cell">${formatNumber(product.box || 0)}</td><td class="number-cell">${formatNumber(product.pj || 0)}</td><td><span class="variance ${variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td><td><span class="row-status ${status.className}">${status.label}</span></td><td><input class="note-input" aria-label="Catatan ${escapeHtml(product.sku)}" data-note-sku="${escapeHtml(product.sku)}" placeholder="Tambah catatan" value="${escapeHtml(product.note || "")}" ${canEdit ? "" : "disabled"}></td></tr>`;
       }).join("");
-      return `${navMarkup()}<section class="page-head archive-page-head recap-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Rekap selisih · Pemeriksaan opname</div><h1>${escapeHtml(activeWorkspaceName())}</h1><p class="subtitle">Hanya item dengan hasil Check tidak sesuai yang ditampilkan. Rumus: SCAN + MANUAL + PJ dibandingkan dengan VEF.</p></div><span class="category-chip">${exceptions.length} item bermasalah</span></section>${renderSessionAccessNotice()}
+      return `${navMarkup()}<section class="page-head archive-page-head recap-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Rekap selisih · Pemeriksaan opname</div>${workspacePageTitle()}<p class="subtitle">Hanya item dengan hasil Check tidak sesuai yang ditampilkan. Rumus: SCAN + MANUAL + PJ dibandingkan dengan VEF.</p></div><span class="category-chip">${exceptions.length} item bermasalah</span></section>${renderSessionAccessNotice()}
         <section class="metric-grid compact-metrics recap-metrics" aria-label="Ringkasan ketidaksesuaian terhadap master VEF">
           <div class="metric"><div class="metric-top">Item bermasalah <span class="metric-mark issue-count">!</span></div><div class="metric-value">${exceptions.length} <small>/ ${totals.count} item</small></div></div>
           <div class="metric"><div class="metric-top">Item tidak sesuai <span class="metric-mark">%</span></div><div class="metric-value">${totals.mismatchPercent}<small>%</small></div></div>
