@@ -4,7 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f4f7f6">
-  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="icon" type="image/png" sizes="256x256" href="./assets/stock-opname-icon.png?v=1">
+  <link rel="apple-touch-icon" href="./assets/stock-opname-icon.png?v=1">
   <title>STOCK OPNAME | Rekonsiliasi SN</title>
   <style>
     :root {
@@ -38,8 +39,8 @@
     .brand-copy { min-width: 0; }
     .sidebar-toggle { align-items: center; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15); border-radius: 7px; color: #edf5ed; display: inline-flex; flex: 0 0 28px; font-size: 16px; height: 28px; justify-content: center; margin-left: auto; padding: 0; transition: background .15s ease, transform .2s ease; width: 28px; }
     .sidebar-toggle:hover { background: rgba(255,255,255,.2); }
-    .brand-mark { align-items: center; background: linear-gradient(145deg, #347a51, #194a32); border: 1px solid rgba(255,255,255,.2); border-radius: 12px 12px 12px 4px; box-shadow: 0 5px 12px rgba(15, 48, 29, .26), inset 0 1px rgba(255,255,255,.14); color: var(--lime); display: flex; height: 40px; justify-content: center; width: 40px; }
-    .brand-mark svg { filter: drop-shadow(0 1px 1px rgba(10,35,19,.25)); height: 25px; width: 25px; }
+    .brand-mark { border-radius: 11px; display: flex; flex: 0 0 40px; height: 40px; overflow: hidden; width: 40px; }
+    .brand-mark img { display: block; height: 100%; object-fit: cover; width: 100%; }
     .brand-name { font-family: "Space Grotesk", "Segoe UI", sans-serif; font-size: 15px; font-weight: 800; letter-spacing: .25px; }
     .brand-caption { color: #c3d7c5; font-size: 11px; margin-top: 1px; }
     .nav-label { color: #b3cbb7; font-size: 10px; font-weight: 800; letter-spacing: 1.2px; margin: 40px 12px 10px; text-transform: uppercase; }
@@ -70,8 +71,8 @@
     .auth-screen { align-items: center; background: radial-gradient(ellipse at 82% 10%, rgba(218,237,216,.5), transparent 35%), var(--canvas); display: flex; inset: 0; justify-content: center; padding: 20px; position: fixed; z-index: 20; }
     .auth-loading { align-items: center; background: radial-gradient(ellipse at 82% 10%, rgba(218,237,216,.16), transparent 35%), #111b1a; color: #f4f8f2; display: none; inset: 0; justify-content: center; position: fixed; z-index: 30; }
     .auth-loading-card { align-items: center; display: flex; flex-direction: column; gap: 13px; }
-    .auth-loading-mark { align-items: center; background: linear-gradient(145deg, #287c69, #124a41); border: 1px solid rgba(255,255,255,.2); border-radius: 13px; color: #b8d8c9; display: flex; height: 48px; justify-content: center; width: 48px; }
-    .auth-loading-mark svg { height: 28px; width: 28px; }
+    .auth-loading-mark { border-radius: 13px; display: flex; height: 48px; overflow: hidden; width: 48px; }
+    .auth-loading-mark img { height: 100%; object-fit: cover; width: 100%; }
     .auth-loading-text { color: #c3d7d0; font-size: 12px; }
     .auth-loading-spinner { animation: auth-loading-spin .8s linear infinite; border: 2px solid rgba(184,216,201,.22); border-radius: 50%; border-top-color: #9bd4bd; height: 17px; width: 17px; }
     @keyframes auth-loading-spin { to { transform: rotate(360deg); } }
@@ -583,7 +584,6 @@
       .sidebar { padding-left: 12px; padding-right: 12px; }
       .brand { gap: 7px; padding: 0 34px 0 0; position: relative; }
       .brand-mark { flex: 0 0 34px; height: 34px; width: 34px; }
-      .brand-mark svg { height: 22px; width: 22px; }
       .brand-name { font-size: 11px; letter-spacing: 0; }
       .brand-caption { font-size: 9px; }
       .sidebar-toggle { position: absolute; right: 0; top: 3px; }
@@ -892,12 +892,12 @@
 </head>
 <body class="auth-checking auth-locked">
   <section class="auth-loading" aria-label="Memeriksa sesi login" role="status">
-    <div class="auth-loading-card"><div class="auth-loading-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m12 3 8 4.2v9.4L12 21l-8-4.4V7.2L12 3Z" stroke="currentColor" stroke-linejoin="round" stroke-width="1.7"/><path d="m4.4 7.3 7.6 4.2 7.6-4.2M12 11.5V21" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/></svg></div><div class="auth-loading-spinner" aria-hidden="true"></div><div class="auth-loading-text">Memeriksa sesi login...</div></div>
+    <div class="auth-loading-card"><div class="auth-loading-mark" aria-hidden="true"><img src="./assets/stock-opname-icon.png" alt=""></div><div class="auth-loading-spinner" aria-hidden="true"></div><div class="auth-loading-text">Memeriksa sesi login...</div></div>
   </section>
   <section class="auth-screen" id="auth-screen" aria-label="Login">
     <button class="theme-toggle auth-theme-toggle" type="button" data-theme-toggle aria-label="Aktifkan dark mode" aria-pressed="false"><span class="theme-toggle-icon" aria-hidden="true">☾</span><span class="theme-toggle-label">Dark</span></button>
     <div class="auth-card">
-      <div class="auth-brand"><div class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m12 3 8 4.2v9.4L12 21l-8-4.4V7.2L12 3Z" stroke="currentColor" stroke-linejoin="round" stroke-width="1.7"/><path d="m4.4 7.3 7.6 4.2 7.6-4.2M12 11.5V21M8.2 5l7.7 4.3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/><path d="m9.6 15 1.5 1.5 3.4-3.5" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"/></svg></div><div><div class="brand-name">STOCK OPNAME</div><div class="brand-caption">serial number opname</div></div><span class="auth-copyright">© M-Maz</span></div>
+      <div class="auth-brand"><div class="brand-mark" aria-hidden="true"><img src="./assets/stock-opname-icon.png" alt=""></div><div><div class="brand-name">STOCK OPNAME</div><div class="brand-caption">serial number opname</div></div><span class="auth-copyright">© M-Maz</span></div>
       <h1>Login Account</h1>
       <p class="auth-description">Login menggunakan username dan password dari admin. Data stock opname dibagikan ke seluruh tim.</p>
       <form class="auth-form" id="login-form">
@@ -917,7 +917,7 @@
   <div class="app-shell">
     <aside class="sidebar">
       <div class="brand">
-        <div class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m12 3 8 4.2v9.4L12 21l-8-4.4V7.2L12 3Z" stroke="currentColor" stroke-linejoin="round" stroke-width="1.7"/><path d="m4.4 7.3 7.6 4.2 7.6-4.2M12 11.5V21M8.2 5l7.7 4.3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/><path d="m9.6 15 1.5 1.5 3.4-3.5" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"/></svg></div>
+        <div class="brand-mark" aria-hidden="true"><img src="./assets/stock-opname-icon.png" alt=""></div>
         <div class="brand-copy"><div class="brand-name">STOCK OPNAME</div><div class="brand-caption">serial number opname</div></div>
         <button class="sidebar-toggle" type="button" aria-label="Ciutkan menu" aria-expanded="true" title="Ciutkan menu">«</button>
       </div>
