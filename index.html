@@ -167,11 +167,6 @@
     .master-page-head .master-start-scan-button:hover { background: #e7f5bf; box-shadow: 0 5px 14px rgba(14,55,46,.24); }
     .master-page-head .master-upload-button { background: #fff; border-color: rgba(255,255,255,.75); box-shadow: 0 4px 12px rgba(14,55,46,.12); color: #285c4b; right: 26px; top: 29px; }
     .master-page-head .master-upload-button:hover:not(:disabled) { background: #eaf5ef; border-color: #fff; }
-    .layout-master-notice { align-items: center; background: linear-gradient(105deg, #fff, #f7faf8); border-color: #e1eae5; border-radius: 11px; gap: 12px; justify-content: flex-start; margin: 0 0 15px; padding: 14px 17px; }
-    .layout-master-notice-icon { align-items: center; background: #e7f1eb; border: 1px solid #d9e8de; border-radius: 9px; color: #347158; display: inline-flex; flex: 0 0 32px; font-size: 14px; font-weight: 800; height: 32px; justify-content: center; }
-    .layout-master-notice-copy { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-    .layout-master-notice-copy strong { color: var(--ink); font-size: 11px; }
-    .layout-master-notice-copy span { color: var(--muted); font-size: 10px; line-height: 1.5; }
     h1 { font-family: "Space Grotesk", "Segoe UI", sans-serif; font-size: clamp(26px, 3vw, 34px); letter-spacing: 0; line-height: 1.15; margin: 0; }
     .subtitle { color: var(--muted); margin: 8px 0 0; }
     .head-buttons { align-items: center; display: flex; gap: 9px; }
@@ -625,7 +620,6 @@
       .layout-rack-count { align-items: center; flex-direction: row; gap: 8px; min-width: 0; padding: 8px 12px; }
       .layout-rack-count strong { font-size: 14px; }
       .layout-rack-count-label { font-size: 10px; }
-      .layout-master-notice { align-items: flex-start; padding: 12px; }
       h1 { font-size: 27px; }
       .head-buttons { width: 100%; }
       .head-buttons .button { flex: 1; }
@@ -817,8 +811,6 @@
     html[data-theme="dark"] .category-chip,
     html[data-theme="dark"] .activity-type,
     html[data-theme="dark"] .dashboard-chart-tag { background: #203a34; border-color: #31574b; color: #a9dec9; }
-    html[data-theme="dark"] .layout-master-notice-icon { background: #203a34; border-color: #31574b; color: #a9dec9; }
-    html[data-theme="dark"] .layout-master-notice { background: linear-gradient(105deg, #192a27, #1b302b); border-color: #304440; }
     html[data-theme="dark"] .product-thumb,
     html[data-theme="dark"] .metric-mark,
     html[data-theme="dark"] .dashboard-metric-icon,
@@ -1983,7 +1975,7 @@
           <div class="layout-card-foot"><div class="layout-record-group"><div class="layout-record-heading">Scan</div><div class="layout-scan-list">${scanRows}</div></div><div class="layout-record-group"><div class="layout-record-heading">Manual</div><div class="layout-scan-list">${manualRows}</div></div></div>
         </section>`;
       }).join("");
-      return `${navMarkup()}<section class="page-head layout-page-head"><div class="layout-page-heading"><div class="layout-page-eyebrow">Pemindaian inventaris</div><h1>${escapeHtml(activeWorkspaceName())}</h1><p class="subtitle">Isi nomor Rack dan quantity target sebelum mulai scan.</p></div><div class="layout-overview-metrics" aria-label="Ringkasan quantity Scan Layout"><div class="layout-overview-metric"><span>Total Rack</span><strong>${state.layouts.length}</strong></div><div class="layout-overview-metric"><span>Total Scan</span><strong>${formatNumber(rackTotals.scan)}</strong><em>SN cocok</em></div><div class="layout-overview-metric"><span>Total Manual</span><strong>${formatNumber(rackTotals.manual)}</strong><em>unit</em></div><div class="layout-overview-metric"><span>Total Qty</span><strong>${formatNumber(rackTotals.scan + rackTotals.manual)}</strong><em>Scan + Manual</em></div><div class="layout-overview-metric"><span>Qty Master VEF</span><strong>${formatNumber(expected)}</strong><em>sesuai mode hitung</em></div></div></section>${renderSessionAccessNotice()}${!state.products.length ? `<div class="history-summary layout-master-notice" role="status"><span class="layout-master-notice-icon" aria-hidden="true">i</span><span class="layout-master-notice-copy"><strong>Master VEF belum dimuat</strong><span>Unggah workbook di halaman Master VEF sebelum mulai scan atau input manual.</span></span></div>` : ""}<section class="layout-grid">${cards || '<div class="schedule-empty">Belum ada Rack. Klik Tambah Rack untuk membuat Rack pertama.</div>'}</section><div class="schedule-add-row"><button class="button button-primary" id="add-rack-button" type="button" ${!active || !canEdit ? "disabled" : ""}>＋ Tambah Rack</button></div>`;
+      return `${navMarkup()}<section class="page-head layout-page-head"><div class="layout-page-heading"><div class="layout-page-eyebrow">Pemindaian inventaris</div><h1>${escapeHtml(activeWorkspaceName())}</h1><p class="subtitle">Isi nomor Rack dan quantity target sebelum mulai scan.</p></div><div class="layout-overview-metrics" aria-label="Ringkasan quantity Scan Layout"><div class="layout-overview-metric"><span>Total Rack</span><strong>${state.layouts.length}</strong></div><div class="layout-overview-metric"><span>Total Scan</span><strong>${formatNumber(rackTotals.scan)}</strong><em>SN cocok</em></div><div class="layout-overview-metric"><span>Total Manual</span><strong>${formatNumber(rackTotals.manual)}</strong><em>unit</em></div><div class="layout-overview-metric"><span>Total Qty</span><strong>${formatNumber(rackTotals.scan + rackTotals.manual)}</strong><em>Scan + Manual</em></div><div class="layout-overview-metric"><span>Qty Master VEF</span><strong>${formatNumber(expected)}</strong><em>sesuai mode hitung</em></div></div></section>${renderSessionAccessNotice()}<section class="layout-grid">${cards || '<div class="schedule-empty">Belum ada Rack. Klik Tambah Rack untuk membuat Rack pertama.</div>'}</section><div class="schedule-add-row"><button class="button button-primary" id="add-rack-button" type="button" ${!active || !canEdit ? "disabled" : ""}>＋ Tambah Rack</button></div>`;
     }
     function addRack() {
       if (!requireActiveSessionEdit()) return;
