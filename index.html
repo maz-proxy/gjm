@@ -195,6 +195,8 @@
     .status-dot { background: var(--lime); border-radius: 50%; height: 6px; width: 6px; }
     .session-actions .button { background: var(--lime); color: #1e3827; }
     .session-actions .button:hover { background: #d7efb8; }
+    .session-actions .finish-opname-button { background: linear-gradient(135deg, #e0f3ad, #b9dd82); color: #173d33; }
+    .session-actions .finish-opname-button:hover:not(:disabled) { background: linear-gradient(135deg, #ecf9ca, #cce99f); }
     .metric-grid { display: grid; gap: 12px; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 18px; }
     .metric { background: linear-gradient(145deg, #fff, #fbfdf9); border: 1px solid var(--line); border-radius: 11px; box-shadow: 0 4px 13px rgba(35, 59, 38, .035); min-height: 99px; padding: 16px 18px; transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease; }
     .metric:hover { border-color: #c9ddcb; box-shadow: 0 9px 20px rgba(35, 59, 38, .08); transform: translateY(-2px); }
@@ -202,6 +204,7 @@
     .metric-mark { align-items: center; background: #eaf3e9; border-radius: 7px; color: var(--green); display: flex; font-size: 12px; height: 25px; justify-content: center; width: 25px; }
     .metric-value { font-family: "Space Grotesk", "Segoe UI", sans-serif; font-size: 24px; font-weight: 700; letter-spacing: 0; line-height: 1; margin-top: 12px; }
     .metric-value small { color: var(--muted); font-family: "DM Sans", "Segoe UI", sans-serif; font-size: 11px; font-weight: 500; }
+    .metric-note { color: var(--muted); font-size: 9px; line-height: 1.4; margin-top: 5px; }
     .progress-panel { align-items: center; background: #fff; border: 1px solid var(--line); border-radius: 7px; display: flex; gap: 18px; margin-bottom: 22px; padding: 13px 17px; }
     .progress-copy { min-width: 145px; }
     .progress-copy strong { display: block; font-size: 11px; }
@@ -232,11 +235,23 @@
     .layout-card.quantity-over:focus-within { border-color: var(--red); box-shadow: 0 0 0 3px rgba(163, 75, 70, .14), 0 9px 24px rgba(105, 43, 38, .1); }
     .layout-card.quantity-over:focus-within .layout-card-head { background: var(--red-soft); }
     .layout-card-head { align-items: flex-start; background: linear-gradient(110deg, #f3f8f5, #f9fbfa); border-bottom: 1px solid var(--line); display: flex; gap: 10px; justify-content: space-between; padding: 32px 15px 12px; }
+    .rack-delete-button { align-items: center; background: #fff0ef; border: 1px solid #f0c5c2; border-radius: 50%; color: #b33e38; display: inline-flex; flex: 0 0 28px; font-size: 19px; font-weight: 700; height: 28px; justify-content: center; line-height: 1; margin-left: auto; padding: 0; position: absolute; right: 8px; top: 8px; z-index: 2; }
+    .rack-delete-button:hover:not(:disabled) { background: #f9d9d6; border-color: #df9d98; }
+    .rack-delete-button:disabled { cursor: not-allowed; opacity: .45; }
     .layout-complete-check { align-items: center; background: var(--green); border: 2px solid #fff; border-radius: 50%; box-shadow: 0 1px 4px rgba(32, 37, 30, .18); color: #fff; display: flex; font-size: 16px; font-weight: 800; height: 30px; justify-content: center; left: 50%; line-height: 1; position: absolute; top: 5px; transform: translateX(-50%); width: 30px; z-index: 1; }
     .layout-card-summary { display: grid; flex: 0 0 auto; gap: 5px; justify-items: end; max-width: 58%; }
     .layout-name { align-items: center; display: flex; font-size: 14px; font-weight: 700; gap: 5px; }
     .layout-location { color: var(--muted); font-size: 10px; margin-top: 3px; }
     .layout-count { color: var(--green); font-size: 11px; font-weight: 700; text-align: right; }
+    .rack-quantity-summary { color: var(--muted); display: flex; flex-wrap: wrap; font-size: 9px; gap: 4px 9px; justify-content: flex-end; }
+    .rack-quantity-summary strong { color: var(--ink); font-variant-numeric: tabular-nums; }
+    .layout-overview-metrics { display: grid; flex: 1; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); }
+    .layout-overview-metric { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.16); border-radius: 9px; min-width: 0; padding: 8px 10px; }
+    .layout-overview-metric span { color: #d5e9df; display: block; font-size: 9px; }
+    .layout-overview-metric strong { color: #fff; display: block; font-size: 15px; font-variant-numeric: tabular-nums; margin-top: 2px; }
+    .layout-overview-metric em { color: #bce5d4; font-size: 8px; font-style: normal; }
+    .schedule-brand-label { color: var(--muted); display: block; font-size: 9px; font-weight: 800; letter-spacing: .7px; margin: 0 0 4px 2px; text-transform: uppercase; }
+    .start-opname-button { white-space: nowrap; }
     .layout-quantity-row { align-items: center; display: flex; gap: 6px; justify-content: flex-end; }
     .layout-quantity-label { color: var(--muted); font-size: 10px; }
     .layout-quantity-input { font-size: 12px; height: 26px; width: 60px; }
@@ -438,6 +453,9 @@
     .schedule-owner { color: var(--muted); font-size: 9px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .schedule-actions { display: flex; flex: 0 0 auto; gap: 6px; }
     .schedule-actions .button { font-size: 10px; min-height: 32px; padding: 0 10px; }
+    .finish-opname-button { align-items: center; background: linear-gradient(135deg, #e0f3ad, #b9dd82); border: 0; border-radius: 999px; box-shadow: 0 7px 20px rgba(12,56,43,.25); color: #173d33; display: inline-flex; font-size: 16px; font-weight: 900; justify-content: center; letter-spacing: .8px; min-height: 62px; min-width: 176px; padding: 0 28px; }
+    .finish-opname-button:hover:not(:disabled) { background: linear-gradient(135deg, #ecf9ca, #cce99f); box-shadow: 0 9px 24px rgba(12,56,43,.32); transform: translateY(-1px); }
+    .check-success-icon { color: #16824d; display: inline-block; font-size: 15px; font-weight: 900; line-height: 1; margin-right: 5px; vertical-align: -1px; }
     .schedule-empty { background: var(--paper); border: 1px dashed var(--line); border-radius: 12px; color: var(--muted); padding: 35px 18px; text-align: center; }
     .dashboard-page { animation: dashboard-enter .32s ease both; }
     @keyframes dashboard-enter { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
@@ -928,9 +946,9 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <input class="upload-input" id="workbook-input" type="file" accept=".xlsx,.xls" aria-label="Pilih workbook stock opname">
   <dialog id="finish-dialog">
-    <div class="dialog-head"><div><div class="dialog-title">Selesaikan stock opname?</div><div class="dialog-subtitle">Hasil diarsipkan, lalu kartu sesi ini direset. Jika ada sesi lain yang berjalan, sesi itu akan dibuka untuk dilanjutkan.</div></div><button class="dialog-close" type="button" data-close="finish-dialog" aria-label="Tutup">×</button></div>
+    <div class="dialog-head"><div><div class="dialog-title">Selesaikan stock opname?</div><div class="dialog-subtitle">Hasil diarsipkan, lalu seluruh data kerja sesi ini direset. Jika ada sesi lain yang berjalan, sesi itu akan dibuka untuk dilanjutkan.</div></div><button class="dialog-close" type="button" data-close="finish-dialog" aria-label="Tutup">×</button></div>
     <div class="confirm-body" id="finish-message"></div>
-    <div class="dialog-actions"><button class="button button-secondary" type="button" data-close="finish-dialog">Kembali</button><button class="button button-primary" id="confirm-finish" type="button">Selesaikan sesi</button></div>
+    <div class="dialog-actions"><button class="button button-secondary" type="button" data-close="finish-dialog">Kembali</button><button class="button button-primary" id="confirm-finish" type="button">SO SELESAI</button></div>
   </dialog>
   <dialog id="delete-master-dialog">
     <div class="dialog-head"><div><div class="dialog-title">Hapus semua data master VEF?</div><div class="dialog-subtitle">Tindakan ini tidak dapat dibatalkan.</div></div><button class="dialog-close" type="button" data-close="delete-master-dialog" aria-label="Tutup">×</button></div>
@@ -946,6 +964,11 @@
     <div class="dialog-head"><div><div class="dialog-title">Hapus sesi workspace?</div><div class="dialog-subtitle">Data sesi dan arsip stock opname terkait akan dihapus permanen.</div></div><button class="dialog-close" type="button" data-close="delete-workspace-dialog" aria-label="Tutup">×</button></div>
     <div class="confirm-body" id="delete-workspace-message"></div>
     <div class="dialog-actions"><button class="button button-secondary" type="button" data-close="delete-workspace-dialog">Batal</button><button class="button button-danger" id="confirm-delete-workspace" type="button">Hapus sesi</button></div>
+  </dialog>
+  <dialog id="delete-rack-warning-dialog">
+    <div class="dialog-head"><div><div class="dialog-title">Rack masih berisi data</div><div class="dialog-subtitle">Data harus dikosongkan sebelum Rack dapat dihapus.</div></div><button class="dialog-close" type="button" data-close="delete-rack-warning-dialog" aria-label="Tutup">×</button></div>
+    <div class="confirm-body" id="delete-rack-warning-message"></div>
+    <div class="dialog-actions"><button class="button button-primary" type="button" data-close="delete-rack-warning-dialog">Mengerti</button></div>
   </dialog>
   <dialog id="reset-password-dialog" class="reset-password-dialog" aria-labelledby="reset-password-title">
     <div class="dialog-head"><div><div class="dialog-title" id="reset-password-title">Password berhasil direset</div><div class="dialog-subtitle">Password sementara akun staf sudah diperbarui.</div></div><button class="dialog-close" type="button" data-close="reset-password-dialog" aria-label="Tutup">×</button></div>
@@ -1003,7 +1026,7 @@
         createdByUsername: owner.user_metadata?.username || owner.email || "Pengguna"
       } : {})
     });
-    const DEFAULT_LAYOUTS = Array.from({ length: 3 }, (_, index) => `Rack ${index + 1}`);
+    const DEFAULT_LAYOUTS = ["Rack 1"];
     const initialState = () => ({ products: [], serialMaster: {}, scanEvents: [], manualEntries: [], historyEvents: [], sessions: [], workbookFiles: [], activeSession: makeSession(), countMode: "laptops", importFile: "", importMessage: "", layouts: [...DEFAULT_LAYOUTS], layoutQuantities: {}, layoutNumbers: {} });
     const emptyWorkspaceData = () => ({ products: [], serialMaster: {}, scanEvents: [], manualEntries: [], historyEvents: [], workbookFiles: [], activeSession: makeSession(), countMode: "laptops", importFile: "", importMessage: "", layouts: [...DEFAULT_LAYOUTS], layoutQuantities: {}, layoutNumbers: {} });
     const snapshotWorkspaceData = (source) => {
@@ -1024,7 +1047,7 @@
       for (const entry of manualEntries) boxTotals.set(entry.productId, (boxTotals.get(entry.productId) || 0) + Number(entry.quantity || 0));
       return { products: products.map((product) => ({ ...product, box: boxTotals.get(product.id) || 0 })), serialMaster: source.serialMaster || {}, scanEvents: source.scanEvents || [], manualEntries, historyEvents: source.historyEvents || [], workbookFiles: Array.isArray(source.workbookFiles) ? source.workbookFiles : [], activeSession: source.activeSession || makeSession(), countMode: source.countMode === "all" ? "all" : "laptops", importFile: source.importFile || "", importMessage: source.importMessage || "", layouts, layoutQuantities: source.layoutQuantities || {}, layoutNumbers: source.layoutNumbers || {} };
     };
-    const createWorkspace = (index, data = emptyWorkspaceData()) => ({ id: crypto.randomUUID(), name: `Sesi ${index}`, picNames: ["", ""], data });
+    const createWorkspace = (name = "", data = emptyWorkspaceData()) => ({ id: crypto.randomUUID(), name, picNames: ["", ""], data });
     let state;
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -1038,19 +1061,40 @@
     if (!Array.isArray(state.sessions)) state.sessions = [];
     for (const event of state.scanEvents) if (!event.id) event.id = crypto.randomUUID();
     if (!Array.isArray(state.workspaces) || !state.workspaces.length) {
-      const first = createWorkspace(1, snapshotWorkspaceData(state));
-      state.workspaces = [first, ...Array.from({ length: 4 }, (_, index) => createWorkspace(index + 2))];
+      const first = createWorkspace("", snapshotWorkspaceData(state));
+      state.workspaces = [first];
       state.currentWorkspaceId = first.id;
     } else {
-      while (state.workspaces.length < 5) state.workspaces.push(createWorkspace(state.workspaces.length + 1));
       state.workspaces.forEach((workspace, index) => {
         if (!workspace.id) workspace.id = crypto.randomUUID();
-        if (typeof workspace.name !== "string") workspace.name = `Sesi ${index + 1}`;
+        if (typeof workspace.name !== "string") workspace.name = "";
         if (!workspace.data) workspace.data = emptyWorkspaceData();
         if (workspace.data.countMode !== "all") workspace.data.countMode = "laptops";
         if (!Array.isArray(workspace.picNames)) workspace.picNames = ["", ""];
         workspace.picNames = [workspace.picNames[0] || "", workspace.picNames[1] || ""];
       });
+      const isUntouchedDefaultWorkspace = (workspace) => {
+        const data = workspace.data || {};
+        return /^Sesi \d+$/.test(workspace.name)
+          && !(data.products || []).length
+          && !(data.workbookFiles || []).length
+          && !(workspace.picNames || []).some(Boolean)
+          && !(data.scanEvents || []).length
+          && !(data.manualEntries || []).length
+          && !(data.historyEvents || []).length
+          && !(data.workbookFiles || []).length
+          && !Object.keys(data.layoutQuantities || {}).length
+          && !Object.keys(data.layoutNumbers || {}).length
+          && !(state.sessions || []).some((session) => session.workspaceId === workspace.id);
+      };
+      state.workspaces = state.workspaces.filter((workspace, index) => index === 0 || !isUntouchedDefaultWorkspace(workspace));
+      const firstWorkspace = state.workspaces[0];
+      const firstWorkspaceData = firstWorkspace?.data || {};
+      if (firstWorkspace && /^Sesi \d+$/.test(firstWorkspace.name)
+        && !(firstWorkspaceData.products || []).length
+        && !(firstWorkspaceData.scanEvents || []).length
+        && !(firstWorkspaceData.manualEntries || []).length
+        && !(firstWorkspaceData.workbookFiles || []).some((workbook) => workbook.sessionId === firstWorkspaceData.activeSession?.id)) firstWorkspace.name = "";
       if (!state.workspaces.some((workspace) => workspace.id === state.currentWorkspaceId)) state.currentWorkspaceId = state.workspaces[0].id;
       Object.assign(state, snapshotWorkspaceData(state.workspaces.find((workspace) => workspace.id === state.currentWorkspaceId).data));
     }
@@ -1284,18 +1328,38 @@
       if (!Array.isArray(normalized.workbookFiles)) normalized.workbookFiles = [];
       for (const event of normalized.scanEvents) if (!event.id) event.id = crypto.randomUUID();
       if (!Array.isArray(normalized.workspaces) || !normalized.workspaces.length) {
-        const first = createWorkspace(1, snapshotWorkspaceData(normalized));
-        normalized.workspaces = [first, ...Array.from({ length: 4 }, (_, index) => createWorkspace(index + 2))];
+        const first = createWorkspace("", snapshotWorkspaceData(normalized));
+        normalized.workspaces = [first];
         normalized.currentWorkspaceId = first.id;
       } else {
-        while (normalized.workspaces.length < 5) normalized.workspaces.push(createWorkspace(normalized.workspaces.length + 1));
         normalized.workspaces.forEach((workspace, index) => {
           if (!workspace.id) workspace.id = crypto.randomUUID();
-          if (typeof workspace.name !== "string") workspace.name = `Sesi ${index + 1}`;
+          if (typeof workspace.name !== "string") workspace.name = "";
           workspace.data = snapshotWorkspaceData(workspace.data || emptyWorkspaceData());
           if (!Array.isArray(workspace.picNames)) workspace.picNames = ["", ""];
           workspace.picNames = [workspace.picNames[0] || "", workspace.picNames[1] || ""];
         });
+        const isUntouchedDefaultWorkspace = (workspace) => {
+          const data = workspace.data || {};
+          return /^Sesi \d+$/.test(workspace.name)
+            && !(data.products || []).length
+            && !(data.workbookFiles || []).length
+            && !(workspace.picNames || []).some(Boolean)
+            && !(data.scanEvents || []).length
+            && !(data.manualEntries || []).length
+            && !(data.historyEvents || []).length
+            && !Object.keys(data.layoutQuantities || {}).length
+            && !Object.keys(data.layoutNumbers || {}).length
+            && !(normalized.sessions || []).some((session) => session.workspaceId === workspace.id);
+        };
+        normalized.workspaces = normalized.workspaces.filter((workspace, index) => index === 0 || !isUntouchedDefaultWorkspace(workspace));
+        const firstWorkspace = normalized.workspaces[0];
+        const firstWorkspaceData = firstWorkspace?.data || {};
+        if (firstWorkspace && /^Sesi \d+$/.test(firstWorkspace.name)
+          && !(firstWorkspaceData.products || []).length
+          && !(firstWorkspaceData.scanEvents || []).length
+          && !(firstWorkspaceData.manualEntries || []).length
+          && !(firstWorkspaceData.workbookFiles || []).some((workbook) => workbook.sessionId === firstWorkspaceData.activeSession?.id)) firstWorkspace.name = "";
         if (!normalized.workspaces.some((workspace) => workspace.id === normalized.currentWorkspaceId)) normalized.currentWorkspaceId = normalized.workspaces[0].id;
         Object.assign(normalized, snapshotWorkspaceData(normalized.workspaces.find((workspace) => workspace.id === normalized.currentWorkspaceId).data));
       }
@@ -1718,6 +1782,30 @@
       const nonLaptopScans = state.scanEvents.filter((event) => event.status === "non-laptop").length;
       return { total: counted.length, nonLaptop: state.products.length - counted.length, expected: counted.reduce((sum, product) => sum + Number(product.stock || 0), 0), scanned, matching, shortages, surpluses, issues, nonLaptopScans, countMode: state.countMode, percent: counted.length ? Math.round(matching / counted.length * 100) : 0 };
     };
+    function getReconciliationTotals(products = state.products, countMode = state.countMode) {
+      const counted = products.filter((product) => isCountedProduct(product, countMode));
+      const expected = counted.reduce((sum, product) => sum + Number(product.stock || 0), 0);
+      const scan = counted.reduce((sum, product) => sum + Number(product.count || 0), 0);
+      const manual = counted.reduce((sum, product) => sum + Number(product.box || 0), 0);
+      const pj = counted.reduce((sum, product) => sum + Number(product.pj || 0), 0);
+      const total = scan + manual + pj;
+      const variance = total - expected;
+      const absoluteVariance = counted.reduce((sum, product) => sum + Math.abs(varianceFor(product)), 0);
+      const mismatched = counted.filter((product) => varianceFor(product) !== 0);
+      return {
+        count: counted.length,
+        expected,
+        scan,
+        manual,
+        pj,
+        total,
+        variance,
+        absoluteVariance,
+        mismatched: mismatched.length,
+        mismatchPercent: counted.length ? Math.round(mismatched.length / counted.length * 100) : 0,
+        quantityMismatchPercent: expected ? Math.round(absoluteVariance / expected * 100) : (absoluteVariance ? 100 : 0)
+      };
+    }
     const navMarkup = () => {
       const pics = activeWorkspace()?.picNames || [];
       const showPics = currentPage === "opname" || currentPage === "layouts" || currentPage === "products";
@@ -1738,12 +1826,13 @@
         <td class="number-cell">${formatNumber(product.box || 0)}</td>
         <td>${included ? `<input class="qty-input" type="number" min="0" step="1" aria-label="Jumlah PJ ${escapeHtml(product.name)}" data-qty-id="${escapeHtml(product.id)}" data-qty-field="pj" value="${Number(product.pj || 0)}" ${state.activeSession.status !== "active" || !canEditActiveSession() ? "disabled" : ""}>` : "-"}</td>
         <td>${included ? `<span class="variance ${variance === 0 ? "zero" : variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span>` : "-"}</td>
-        <td><span class="row-status ${status.className}">${status.label}</span></td>
+        <td><span class="row-status ${status.className}">${included && variance === 0 ? '<span class="check-success-icon" aria-hidden="true">✓</span>' : ""}${status.label}</span></td>
       </tr>`;
     }).join("") : `<tr><td class="empty-row" colspan="10">${state.importFile ? "Template terbaca, tetapi tab VEF Master belum berisi Serial No dan Item Code." : "Belum ada data VEF. Unggah workbook stock opname untuk memulai."}</td></tr>`;
 
     function renderOpname() {
       const stats = getStats();
+      const totals = getReconciliationTotals();
       const active = state.activeSession.status === "active";
       const canEdit = canEditActiveSession();
       const filtered = state.products.filter((product) => {
@@ -1752,17 +1841,20 @@
       });
       const latestScans = [...state.scanEvents].slice(-8).reverse();
       return `${navMarkup()}
-        <section class="page-head result-page-head"><div class="result-page-heading"><div class="result-page-eyebrow">Result SO · Rekonsiliasi inventaris</div><h1>${escapeHtml(activeWorkspaceName())}</h1><p class="subtitle">Tinjau hasil scan per layout dan rekonsiliasi dengan VEF, Box, dan PJ. Perhitungan: ${countModeLabel(state.countMode).toLocaleLowerCase("id-ID")}.</p></div><div class="head-buttons"><button class="button result-export-button" id="export-button" ${!stats.total ? "disabled" : ""}>↓ <span>Ekspor CSV</span></button></div></section>
+        <section class="page-head result-page-head"><div class="result-page-heading"><div class="result-page-eyebrow">Result SO · Rekonsiliasi inventaris</div><h1>${escapeHtml(activeWorkspaceName())}</h1><p class="subtitle">SCAN + MANUAL + PJ dibandingkan dengan VEF. Perhitungan: ${countModeLabel(state.countMode).toLocaleLowerCase("id-ID")}.</p></div><div class="head-buttons"><button class="button result-export-button" id="export-button" ${!stats.total ? "disabled" : ""}>↓ <span>Ekspor CSV</span></button></div></section>
         ${renderSessionAccessNotice()}
-        <section class="session-strip"><div class="session-info"><div class="session-kicker">Sesi opname · ${escapeHtml(formatDate(state.activeSession.startedAt, { day: "numeric", month: "short", year: "numeric" }))}</div><div class="session-title">${active ? "Rekonsiliasi sedang berjalan" : "Rekonsiliasi selesai"}</div><div class="session-meta">${state.importFile ? `${escapeHtml(state.importFile)}${state.importMessage ? ` · ${escapeHtml(state.importMessage)}` : ""}` : "Unggah workbook di Master VEF untuk memulai sesi."} · Pemilik: ${escapeHtml(sessionOwnerName(state.activeSession))}</div></div><div class="session-actions"><span class="status-pill"><span class="status-dot" style="${active ? "" : "background:#fff"}"></span>${active ? "Sedang berjalan" : "Selesai"}</span>${active ? `<button class="button" id="finish-button" ${!canEdit || !stats.total ? "disabled" : ""}>Selesaikan opname <span>→</span></button>` : `<button class="button" id="new-session-button" ${!canEdit ? "disabled" : ""}><span class="icon-plus">+</span> Mulai sesi baru</button>`}</div></section>
+        <section class="session-strip"><div class="session-info"><div class="session-kicker">Sesi opname · ${escapeHtml(formatDate(state.activeSession.startedAt, { day: "numeric", month: "short", year: "numeric" }))}</div><div class="session-title">${active ? "Rekonsiliasi sedang berjalan" : "Rekonsiliasi selesai"}</div><div class="session-meta">${state.importFile ? `${escapeHtml(state.importFile)}${state.importMessage ? ` · ${escapeHtml(state.importMessage)}` : ""}` : "Unggah workbook di Master VEF untuk memulai sesi."} · Pemilik: ${escapeHtml(sessionOwnerName(state.activeSession))}</div></div><div class="session-actions"><span class="status-pill"><span class="status-dot" style="${active ? "" : "background:#fff"}"></span>${active ? "Sedang berjalan" : "Selesai"}</span>${active ? `<button class="button finish-opname-button" id="finish-button" ${!canEdit || !stats.total ? "disabled" : ""}>SO SELESAI</button>` : `<button class="button" id="new-session-button" ${!canEdit ? "disabled" : ""}><span class="icon-plus">+</span> Mulai sesi baru</button>`}</div></section>
         <section class="metric-grid" aria-label="Ringkasan stock opname">
           <div class="metric"><div class="metric-top">${state.countMode === "all" ? "Semua item dihitung" : "Laptop dihitung"} <span class="metric-mark">▤</span></div><div class="metric-value" id="metric-skus">${stats.total} <small>SKU</small></div></div>
           <div class="metric"><div class="metric-top">Unit VEF dihitung <span class="metric-mark">#</span></div><div class="metric-value" id="metric-expected">${formatNumber(stats.expected)} <small>unit</small></div></div>
-          <div class="metric"><div class="metric-top">SN cocok dipindai <span class="metric-mark">✓</span></div><div class="metric-value" id="metric-scanned">${formatNumber(stats.scanned)} <small>SN</small></div></div>
-          <div class="metric"><div class="metric-top">SN bermasalah <span class="metric-mark issue-count">!</span></div><div class="metric-value" id="metric-issues">${stats.issues} <small>SN</small></div></div>
+          <div class="metric"><div class="metric-top">Quantity SCAN <span class="metric-mark">⌗</span></div><div class="metric-value" id="metric-scan-qty">${formatNumber(totals.scan)} <small>unit</small></div></div>
+          <div class="metric"><div class="metric-top">Quantity MANUAL <span class="metric-mark">＋</span></div><div class="metric-value" id="metric-manual-qty">${formatNumber(totals.manual)} <small>unit</small></div></div>
+          <div class="metric"><div class="metric-top">Quantity PJ <span class="metric-mark">↗</span></div><div class="metric-value" id="metric-pj-qty">${formatNumber(totals.pj)} <small>unit</small></div></div>
+          <div class="metric"><div class="metric-top">Total Quantity SO <span class="metric-mark">Σ</span></div><div class="metric-value" id="metric-total-qty">${formatNumber(totals.total)} <small>unit</small></div><div class="metric-note">SCAN + MANUAL + PJ</div></div>
+          <div class="metric"><div class="metric-top">Selisih Quantity <span class="metric-mark issue-count">!</span></div><div class="metric-value" id="metric-variance-qty">${totals.variance > 0 ? "+" : ""}${formatNumber(totals.variance)} <small>unit</small></div><div class="metric-note" id="metric-mismatch-note">${totals.mismatched} item tidak sesuai · ${totals.mismatchPercent}%</div></div>
         </section>
-        <section class="table-section"><div class="table-toolbar"><div class="table-title">Rekonsiliasi per item <span class="table-count">${filtered.length} dari ${state.products.length} item · ${stats.total} ${state.countMode === "all" ? "item" : "laptop"} dihitung · ${stats.nonLaptop} tidak dihitung</span></div><div class="filters"><div class="search-wrap"><span class="search-icon">⌕</span><input class="search-input" id="search-input" placeholder="Cari item code atau nama" value="${escapeHtml(searchTerm)}" aria-label="Cari item"></div></div></div>
-          <div class="table-scroll"><table><thead><tr><th>No</th><th>Item / item code</th><th>Brand</th><th>Warehouse</th><th>VEF</th><th>SO</th><th>BOX</th><th>PJ</th><th>Selisih</th><th>Check</th></tr></thead><tbody>${productRows(filtered)}</tbody></table></div>
+        <section class="table-section"><div class="table-toolbar"><div class="table-title">Rekonsiliasi per item <span class="table-count">${filtered.length} dari ${state.products.length} item · ${stats.total} ${state.countMode === "all" ? "item" : "laptop"} dihitung · ${stats.nonLaptop} tidak dihitung · SCAN ${formatNumber(totals.scan)} + MANUAL ${formatNumber(totals.manual)} + PJ ${formatNumber(totals.pj)} = ${formatNumber(totals.total)} / VEF ${formatNumber(totals.expected)}</span></div><div class="filters"><div class="search-wrap"><span class="search-icon">⌕</span><input class="search-input" id="search-input" placeholder="Cari item code atau nama" value="${escapeHtml(searchTerm)}" aria-label="Cari item"></div></div></div>
+          <div class="table-scroll"><table><thead><tr><th>No</th><th>Item / item code</th><th>Brand</th><th>Warehouse</th><th>VEF</th><th>SCAN</th><th>MANUAL</th><th>PJ</th><th>Selisih</th><th>Check</th></tr></thead><tbody>${productRows(filtered)}</tbody></table></div>
           <div class="table-footer"><span class="auto-save"><span class="save-dot"></span> Tersimpan otomatis</span><span>Menampilkan ${filtered.length} barang</span></div></section>
         <section class="table-section" style="margin-top:15px"><div class="table-toolbar"><div class="table-title">Riwayat pemindaian <span class="table-count">${state.scanEvents.length} scan</span></div></div><div class="table-scroll"><table class="scan-log-table"><thead><tr><th>Waktu</th><th>Serial Number</th><th>Item code</th><th>Rack</th><th>Hasil scan</th></tr></thead><tbody>${latestScans.length ? latestScans.map((scan) => `<tr><td>${escapeHtml(formatDate(scan.scannedAt, { hour: "2-digit", minute: "2-digit", second: "2-digit" }))}</td><td class="scan-log">${escapeHtml(scan.serial)}</td><td>${escapeHtml(scan.sku || "-")}</td><td>${escapeHtml(rackLabel(scan.layout))}</td><td><span class="row-status ${scan.status === "match" ? "match" : scan.status === "non-laptop" ? "non-laptop" : "shortage"}">${scan.status === "match" ? "Cocok di VEF" : scan.status === "duplicate" ? "SN duplikat" : scan.status === "non-laptop" ? "Bukan laptop" : "Tidak ada di VEF"}</span></td></tr>`).join("") : `<tr><td class="empty-row" colspan="5">Belum ada Serial Number yang dipindai.</td></tr>`}</tbody></table></div></section>`;
     }
@@ -1770,6 +1862,7 @@
     function renderProducts() {
       const canEdit = canEditActiveSession();
       const hasUploadedMaster = state.products.length > 0 && (state.workbookFiles || []).some((workbook) => workbook.sessionId === state.activeSession.id);
+      const hasBrandName = Boolean(activeWorkspace()?.name.trim());
       const query = searchTerm.toLocaleLowerCase("id-ID");
       const serialsByProduct = new Map();
       for (const [serial, master] of Object.entries(state.serialMaster || {})) {
@@ -1778,7 +1871,7 @@
       }
       for (const serials of serialsByProduct.values()) serials.sort((a, b) => a.localeCompare(b, "id-ID"));
       const filtered = state.products.filter((product) => !query || `${product.name} ${product.sku} ${product.itemGroup || ""} ${product.brand} ${product.warehouse}`.toLocaleLowerCase("id-ID").includes(query) || (serialsByProduct.get(product.id) || []).some((serial) => serial.toLocaleLowerCase("id-ID").includes(query)));
-      return `${navMarkup()}<section class="page-head archive-page-head master-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Master VEF · Data inventaris</div><h1>${escapeHtml(activeWorkspaceName())}</h1><p class="subtitle">Serial Number dipetakan ke item code, brand, dan warehouse.</p></div><div class="head-buttons">${hasUploadedMaster ? '<button class="button master-start-scan-button" type="button" data-page-link="layouts">⊞ Mulai Scan / Hitung</button>' : ""}<button class="button master-delete-button" id="delete-master-button" ${!canEdit || !state.products.length ? "disabled" : ""}>Hapus semua data</button><button class="button master-upload-button" id="import-button" ${!canEdit ? "disabled title=\"Sesi ini hanya dapat diubah oleh pemilik atau Super Admin\"" : ""}>↑ Unggah workbook</button></div></section>${renderSessionAccessNotice()}
+      return `${navMarkup()}<section class="page-head archive-page-head master-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Master VEF · Data inventaris</div><h1>${escapeHtml(activeWorkspaceName())}</h1><p class="subtitle">Serial Number dipetakan ke item code, brand, dan warehouse.</p></div><div class="head-buttons">${hasUploadedMaster ? '<button class="button master-start-scan-button" type="button" data-page-link="layouts">⊞ Mulai Scan / Hitung</button>' : ""}<button class="button master-delete-button" id="delete-master-button" ${!canEdit || !state.products.length ? "disabled" : ""}>Hapus semua data</button><button class="button master-upload-button" id="import-button" ${!hasBrandName ? 'disabled title="Isi Nama Brand di Jadwal terlebih dahulu"' : !canEdit ? 'disabled title="Sesi ini hanya dapat diubah oleh pemilik atau Super Admin"' : ""}>↑ Unggah workbook</button></div></section>${renderSessionAccessNotice()}
         <section class="table-section"><div class="table-toolbar"><div class="table-title">Master barang <span class="table-count">${filtered.length} item · ${filtered.filter(isLaptopProduct).length} laptop · ${filtered.filter((product) => !isLaptopProduct(product)).length} bukan laptop</span></div><div class="filters"><div class="search-wrap"><span class="search-icon">⌕</span><input class="search-input" id="search-input" placeholder="Cari item code atau SN" value="${escapeHtml(searchTerm)}" aria-label="Cari master"></div></div></div><div class="table-scroll"><table><thead><tr><th>Item code</th><th>Item name</th><th>Item Group</th><th>Brand</th><th>Warehouse</th><th>VEF</th><th>Serial Number</th></tr></thead><tbody>${filtered.length ? filtered.map((product) => { const serials = serialsByProduct.get(product.id) || []; const laptop = isLaptopProduct(product); return `<tr class="${laptop ? "" : "non-laptop-row"}"><td class="number-cell">${escapeHtml(product.sku)}</td><td><div class="product-name">${escapeHtml(product.name)}</div>${laptop ? "" : `<span class="row-status non-laptop">Bukan laptop</span>`}</td><td>${escapeHtml(product.itemGroup || "-")}</td><td>${escapeHtml(product.brand || "-")}</td><td>${escapeHtml(product.warehouse || "-")}</td><td>${formatNumber(product.stock)}</td><td>${serials.length ? `<details class="serial-details"><summary>${formatNumber(serials.length)} SN · tampilkan</summary><div class="serial-list">${serials.map((serial) => `<span class="serial-token">${escapeHtml(serial)}</span>`).join("")}</div></details>` : "-"}</td></tr>`; }).join("") : `<tr><td class="empty-row" colspan="7">Unggah workbook untuk memuat master VEF.</td></tr>`}</tbody></table></div><div class="table-footer"><span>${state.serialMaster ? Object.keys(state.serialMaster).length : 0} serial terdaftar</span><span>${escapeHtml(state.importFile || "Belum ada workbook")}</span></div></section>`;
     }
 
@@ -1812,14 +1905,29 @@
       input.closest("[data-manual-form]")?.querySelector("[data-manual-quantity]")?.focus();
     }
 
+    function getRackQuantities(layout) {
+      const scan = state.scanEvents.filter((event) => event.layout === layout && event.status === "match").length;
+      const manual = state.manualEntries.filter((entry) => entry.layout === layout).reduce((sum, entry) => sum + Number(entry.quantity || 0), 0);
+      return { scan, manual, total: scan + manual };
+    }
+
     function renderLayouts() {
       const active = state.activeSession.status === "active";
       const canEdit = canEditActiveSession();
+      const rackTotals = state.layouts.reduce((totals, layout) => {
+        const quantity = getRackQuantities(layout);
+        totals.scan += quantity.scan;
+        totals.manual += quantity.manual;
+        return totals;
+      }, { scan: 0, manual: 0 });
+      const expected = getStats().expected;
       const cards = state.layouts.map((layout) => {
         const rackName = rackLabel(layout);
         const rackNumber = state.layoutNumbers[layout] || "";
         const scans = state.scanEvents.filter((event) => event.layout === layout);
         const manualEntries = state.manualEntries.filter((entry) => entry.layout === layout);
+        const quantities = getRackQuantities(layout);
+        const hasRackData = scans.length > 0 || manualEntries.length > 0;
         const target = state.layoutQuantities[layout];
         const hasTarget = Number.isSafeInteger(target) && target >= 0;
         const hasRackNumber = Number.isSafeInteger(Number(rackNumber)) && Number(rackNumber) > 0;
@@ -1847,10 +1955,19 @@
           return `<details class="manual-item-details"><summary class="manual-item-summary"><span class="manual-item-sku">${escapeHtml(sku)}</span><span class="manual-item-name">${escapeHtml(name)}</span><strong class="manual-item-total">× ${formatNumber(total)}</strong></summary><div class="manual-item-expanded"><div class="manual-item-full-name">${escapeHtml(name)}</div>${entryRows}</div></details>`;
         }).join("") : `<div class="layout-record-empty">Belum ada input manual.</div>`;
         const scanDisabled = !state.products.length || !active || !canEdit || !hasTarget || !hasRackNumber;
-        const manualDisabled = !state.products.length || !active || !canEdit;
-        return `<section class="layout-card ${cardClasses}"><div class="layout-card-head"><div><div class="layout-name"><span>Rack</span><input class="qty-input layout-number-input" id="rack-number-${escapeHtml(layout)}" type="number" min="1" step="1" inputmode="numeric" aria-label="Nomor Rack ${escapeHtml(layout)}" data-layout-number="${escapeHtml(layout)}" value="${escapeHtml(rackNumber)}" ${!active || !canEdit ? "disabled" : ""}></div><div class="layout-location">Rack pemindaian</div></div><div class="layout-card-summary"><div class="layout-quantity-row"><label class="layout-quantity-label" for="quantity-${escapeHtml(layout)}">Quantity</label><input class="qty-input layout-quantity-input" id="quantity-${escapeHtml(layout)}" type="number" min="0" step="1" inputmode="numeric" aria-label="Quantity target ${escapeHtml(rackName)}" data-layout-quantity="${escapeHtml(layout)}" value="${target ?? ""}" ${!active || !canEdit ? "disabled" : ""}></div><span class="layout-quantity-status ${quantityStatus.className}" data-layout-quantity-status="${escapeHtml(layout)}">${quantityStatus.label}</span><span class="layout-count">${matched} cocok${nonLaptopScans ? ` · ${nonLaptopScans} bukan laptop` : ""}${issues ? ` · ${issues} masalah` : ""}</span></div></div><form class="layout-form" data-layout-form="${escapeHtml(layout)}"><input class="scan-input layout-input" autocomplete="off" placeholder="${hasRackNumber && hasTarget ? `Pindai SN di ${escapeHtml(rackName)}` : !hasRackNumber ? "Isi nomor Rack dahulu" : "Isi quantity target dahulu"}" aria-label="Pindai Serial Number di ${escapeHtml(rackName)}" ${scanDisabled ? "disabled" : ""}><button class="button button-primary" type="submit" ${scanDisabled ? "disabled" : ""}>Catat Scan</button></form><form class="layout-manual-form" data-manual-form="${escapeHtml(layout)}"><div class="manual-product-picker"><input class="scan-input" type="search" data-manual-product placeholder="Cari item code atau nama barang" aria-label="Cari item dari VEF Master untuk ${escapeHtml(rackName)}" autocomplete="off" aria-autocomplete="list" aria-expanded="false" ${manualDisabled ? "disabled" : ""}><div class="manual-product-options" role="listbox" aria-label="Hasil pencarian VEF Master"></div></div><input class="scan-input" type="number" min="1" step="1" inputmode="numeric" data-manual-quantity placeholder="Qty" aria-label="Quantity manual untuk ${escapeHtml(rackName)}" ${manualDisabled ? "disabled" : ""}><button class="button button-secondary" type="submit" ${manualDisabled ? "disabled" : ""}>Catat Manual</button></form><div class="layout-card-foot"><div class="layout-record-group"><div class="layout-record-heading">Scan</div><div class="layout-scan-list">${scanRows}</div></div><div class="layout-record-group"><div class="layout-record-heading">Manual</div><div class="layout-scan-list">${manualRows}</div></div></div></section>`;
+        const manualDisabled = !state.products.length || !active || !canEdit || !hasRackNumber;
+        return `<section class="layout-card ${cardClasses}">
+          <div class="layout-card-head">
+            <div><div class="layout-name"><span>Rack</span><input class="qty-input layout-number-input" id="rack-number-${escapeHtml(layout)}" type="number" min="1" step="1" inputmode="numeric" aria-label="Nomor Rack ${escapeHtml(layout)}" data-layout-number="${escapeHtml(layout)}" value="${escapeHtml(rackNumber)}" ${!active || !canEdit ? "disabled" : ""}></div><div class="layout-location">Rack pemindaian</div></div>
+            <div class="layout-card-summary"><div class="layout-quantity-row"><label class="layout-quantity-label" for="quantity-${escapeHtml(layout)}">Target scan</label><input class="qty-input layout-quantity-input" id="quantity-${escapeHtml(layout)}" type="number" min="0" step="1" inputmode="numeric" aria-label="Quantity target ${escapeHtml(rackName)}" data-layout-quantity="${escapeHtml(layout)}" value="${target ?? ""}" ${!active || !canEdit ? "disabled" : ""}></div><span class="layout-quantity-status ${quantityStatus.className}" data-layout-quantity-status="${escapeHtml(layout)}">${quantityStatus.label}</span><span class="layout-count">${matched} cocok${nonLaptopScans ? ` · ${nonLaptopScans} bukan laptop` : ""}${issues ? ` · ${issues} masalah` : ""}</span><span class="rack-quantity-summary">Scan <strong>${formatNumber(quantities.scan)}</strong> · Manual <strong>${formatNumber(quantities.manual)}</strong> · Total <strong>${formatNumber(quantities.total)}</strong></span></div>
+            <button class="rack-delete-button" type="button" data-delete-rack="${escapeHtml(layout)}" aria-label="Hapus ${escapeHtml(rackName)}" title="${hasRackData ? "Kosongkan data rack sebelum menghapus" : "Hapus rack"}" ${!canEdit || !active ? "disabled" : ""}>−</button>
+          </div>
+          <form class="layout-form" data-layout-form="${escapeHtml(layout)}"><input class="scan-input layout-input" autocomplete="off" placeholder="${hasRackNumber && hasTarget ? `Pindai SN di ${escapeHtml(rackName)}` : !hasRackNumber ? "Isi nomor Rack dahulu" : "Isi quantity target dahulu"}" aria-label="Pindai Serial Number di ${escapeHtml(rackName)}" ${scanDisabled ? "disabled" : ""}><button class="button button-primary" type="submit" ${scanDisabled ? "disabled" : ""}>Catat Scan</button></form>
+          <form class="layout-manual-form" data-manual-form="${escapeHtml(layout)}"><div class="manual-product-picker"><input class="scan-input" type="search" data-manual-product placeholder="${hasRackNumber ? "Cari item code atau nama barang" : "Isi nomor Rack dahulu"}" aria-label="Cari item dari VEF Master untuk ${escapeHtml(rackName)}" autocomplete="off" aria-autocomplete="list" aria-expanded="false" ${manualDisabled ? "disabled" : ""}><div class="manual-product-options" role="listbox" aria-label="Hasil pencarian VEF Master"></div></div><input class="scan-input" type="number" min="1" step="1" inputmode="numeric" data-manual-quantity placeholder="Qty" aria-label="Quantity manual untuk ${escapeHtml(rackName)}" ${manualDisabled ? "disabled" : ""}><button class="button button-primary" type="submit" ${manualDisabled ? "disabled" : ""}>Catat Manual</button></form>
+          <div class="layout-card-foot"><div class="layout-record-group"><div class="layout-record-heading">Scan</div><div class="layout-scan-list">${scanRows}</div></div><div class="layout-record-group"><div class="layout-record-heading">Manual</div><div class="layout-scan-list">${manualRows}</div></div></div>
+        </section>`;
       }).join("");
-      return `${navMarkup()}<section class="page-head layout-page-head"><div class="layout-page-heading"><div class="layout-page-eyebrow">Pemindaian inventaris</div><h1>${escapeHtml(activeWorkspaceName())}</h1><p class="subtitle">Isi nomor Rack dan quantity target sebelum mulai scan.</p></div><span class="layout-rack-count"><strong>${state.layouts.length}</strong><span class="layout-rack-count-label">Total Rack</span></span></section>${renderSessionAccessNotice()}${!state.products.length ? `<div class="history-summary layout-master-notice" role="status"><span class="layout-master-notice-icon" aria-hidden="true">i</span><span class="layout-master-notice-copy"><strong>Master VEF belum dimuat</strong><span>Unggah workbook di halaman Master VEF sebelum mulai scan.</span></span></div>` : ""}<section class="layout-grid">${cards}</section><div class="schedule-add-row"><button class="button button-primary" id="add-rack-button" type="button" ${!active || !canEdit ? "disabled" : ""}>＋ Tambah Rack</button></div>`;
+      return `${navMarkup()}<section class="page-head layout-page-head"><div class="layout-page-heading"><div class="layout-page-eyebrow">Pemindaian inventaris</div><h1>${escapeHtml(activeWorkspaceName())}</h1><p class="subtitle">Isi nomor Rack dan quantity target sebelum mulai scan.</p></div><div class="layout-overview-metrics" aria-label="Ringkasan quantity Scan Layout"><div class="layout-overview-metric"><span>Total Rack</span><strong>${state.layouts.length}</strong></div><div class="layout-overview-metric"><span>Total Scan</span><strong>${formatNumber(rackTotals.scan)}</strong><em>SN cocok</em></div><div class="layout-overview-metric"><span>Total Manual</span><strong>${formatNumber(rackTotals.manual)}</strong><em>unit</em></div><div class="layout-overview-metric"><span>Total Qty</span><strong>${formatNumber(rackTotals.scan + rackTotals.manual)}</strong><em>Scan + Manual</em></div><div class="layout-overview-metric"><span>Qty Master VEF</span><strong>${formatNumber(expected)}</strong><em>sesuai mode hitung</em></div></div></section>${renderSessionAccessNotice()}${!state.products.length ? `<div class="history-summary layout-master-notice" role="status"><span class="layout-master-notice-icon" aria-hidden="true">i</span><span class="layout-master-notice-copy"><strong>Master VEF belum dimuat</strong><span>Unggah workbook di halaman Master VEF sebelum mulai scan atau input manual.</span></span></div>` : ""}<section class="layout-grid">${cards || '<div class="schedule-empty">Belum ada Rack. Klik Tambah Rack untuk membuat Rack pertama.</div>'}</section><div class="schedule-add-row"><button class="button button-primary" id="add-rack-button" type="button" ${!active || !canEdit ? "disabled" : ""}>＋ Tambah Rack</button></div>`;
     }
     function addRack() {
       if (!requireActiveSessionEdit()) return;
@@ -1866,6 +1983,26 @@
       persist();
       render();
       notify(`${rack} berhasil ditambahkan.`);
+    }
+    function deleteRack(layout) {
+      if (!requireActiveSessionEdit()) return;
+      if (state.activeSession.status !== "active" || !state.layouts.includes(layout)) return;
+      const scanCount = state.scanEvents.filter((event) => event.layout === layout).length;
+      const manualCount = state.manualEntries.filter((entry) => entry.layout === layout).length;
+      if (scanCount || manualCount) {
+        document.getElementById("delete-rack-warning-message").textContent =
+          `${rackLabel(layout)} masih berisi ${scanCount} catatan scan dan ${manualCount} input manual. Hapus semua datanya terlebih dahulu sebelum menghapus Rack.`;
+        document.getElementById("delete-rack-warning-dialog").showModal();
+        return;
+      }
+      const name = rackLabel(layout);
+      state.layouts = state.layouts.filter((item) => item !== layout);
+      delete state.layoutNumbers[layout];
+      delete state.layoutQuantities[layout];
+      recordActivity("Rack dihapus", `${name} yang kosong dihapus dari Scan Layout.`);
+      persist();
+      render();
+      notify(`${name} berhasil dihapus.`);
     }
     function getLayoutQuantityStatus(scanCount, target) {
       if (target === undefined || target === null || target === "") return { className: "pending", label: `Quantity belum diisi · ${scanCount} scan` };
@@ -1926,13 +2063,38 @@
       form?.querySelector('button[type="submit"]')?.toggleAttribute("disabled", !canScan);
       const scanInput = form?.querySelector(".layout-input");
       if (scanInput) scanInput.placeholder = !hasRackNumber ? "Isi nomor Rack dahulu" : hasTarget ? `Pindai SN di ${name}` : "Isi quantity target dahulu";
+      updateLayoutEntryControls(layout);
       persist();
     }
 
+    function updateLayoutEntryControls(layout) {
+      const form = document.querySelector(`[data-manual-form="${CSS.escape(layout)}"]`);
+      if (!form) return;
+      const hasRackNumber = Number.isSafeInteger(Number(state.layoutNumbers[layout])) && Number(state.layoutNumbers[layout]) > 0;
+      const canEnter = hasRackNumber && state.products.length > 0 && state.activeSession.status === "active" && canEditActiveSession();
+      form.querySelectorAll("[data-manual-product], [data-manual-quantity], button[type='submit']")
+        .forEach((control) => control.toggleAttribute("disabled", !canEnter));
+      const productInput = form.querySelector("[data-manual-product]");
+      if (productInput) productInput.placeholder = hasRackNumber ? "Cari item code atau nama barang" : "Isi nomor Rack dahulu";
+    }
+
     function renderRecap() {
-      const exceptions = state.products.filter((product) => isCountedProduct(product) && (varianceFor(product) !== 0 || product.note));
+      const totals = getReconciliationTotals();
+      const exceptions = state.products.filter((product) => isCountedProduct(product) && varianceFor(product) !== 0);
       const canEdit = canEditActiveSession();
-      return `${navMarkup()}<section class="page-head archive-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Rekap selisih · Pemeriksaan opname</div><h1>${escapeHtml(activeWorkspaceName())}</h1><p class="subtitle">${countModeLabel(state.countMode)} yang perlu diperiksa dengan catatan opname.</p></div><span class="category-chip">${exceptions.length} item perlu ditinjau</span></section>${renderSessionAccessNotice()}<section class="table-section"><div class="table-toolbar"><div class="table-title">Item belum balance <span class="table-count">VEF dibanding SO + BOX + PJ</span></div></div><div class="table-scroll"><table><thead><tr><th>No</th><th>Item code</th><th>Item name</th><th>VEF</th><th>SO</th><th>BOX</th><th>PJ</th><th>Check</th><th>Note</th></tr></thead><tbody>${exceptions.length ? exceptions.map((product, index) => { const variance = varianceFor(product); return `<tr><td class="number-cell">${index + 1}</td><td>${escapeHtml(product.sku)}</td><td><div class="product-name">${escapeHtml(product.name)}</div></td><td>${formatNumber(product.stock)}</td><td>${formatNumber(product.count || 0)}</td><td>${formatNumber(product.box || 0)}</td><td>${formatNumber(product.pj || 0)}</td><td><span class="variance ${variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td><td><input class="note-input" aria-label="Catatan ${escapeHtml(product.sku)}" data-note-sku="${escapeHtml(product.sku)}" placeholder="Tambah catatan" value="${escapeHtml(product.note || "")}" ${canEdit ? "" : "disabled"}></td></tr>`; }).join("") : `<tr><td class="empty-row" colspan="9">Belum ada selisih. Semua item sesuai dengan VEF.</td></tr>`}</tbody></table></div><div class="table-footer"><span class="auto-save"><span class="save-dot"></span> Catatan tersimpan otomatis</span><span>${state.products.filter((product) => isCountedProduct(product)).length} item diperiksa</span></div></section>`;
+      const rows = exceptions.map((product, index) => {
+        const variance = varianceFor(product);
+        const status = statusFor(product);
+        return `<tr><td class="number-cell">${index + 1}</td><td><div class="product-name">${escapeHtml(product.name)}</div><div class="product-sku">${escapeHtml(product.sku)}</div></td><td><span class="category-chip">${escapeHtml(product.brand || "-")}</span></td><td>${escapeHtml(product.warehouse || "-")}</td><td class="number-cell">${formatNumber(product.stock)}</td><td class="number-cell">${formatNumber(product.count || 0)}</td><td class="number-cell">${formatNumber(product.box || 0)}</td><td class="number-cell">${formatNumber(product.pj || 0)}</td><td><span class="variance ${variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td><td><span class="row-status ${status.className}">${status.label}</span></td><td><input class="note-input" aria-label="Catatan ${escapeHtml(product.sku)}" data-note-sku="${escapeHtml(product.sku)}" placeholder="Tambah catatan" value="${escapeHtml(product.note || "")}" ${canEdit ? "" : "disabled"}></td></tr>`;
+      }).join("");
+      return `${navMarkup()}<section class="page-head archive-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Rekap selisih · Pemeriksaan opname</div><h1>${escapeHtml(activeWorkspaceName())}</h1><p class="subtitle">Hanya item dengan hasil Check tidak sesuai yang ditampilkan. Rumus: SCAN + MANUAL + PJ dibandingkan dengan VEF.</p></div><span class="category-chip">${exceptions.length} item bermasalah</span></section>${renderSessionAccessNotice()}
+        <section class="metric-grid recap-metrics" aria-label="Ringkasan ketidaksesuaian terhadap master VEF">
+          <div class="metric"><div class="metric-top">Item bermasalah <span class="metric-mark issue-count">!</span></div><div class="metric-value">${exceptions.length} <small>/ ${totals.count} item</small></div></div>
+          <div class="metric"><div class="metric-top">Item tidak sesuai <span class="metric-mark">%</span></div><div class="metric-value">${totals.mismatchPercent}<small>%</small></div></div>
+          <div class="metric"><div class="metric-top">Total kuantitas selisih <span class="metric-mark">Δ</span></div><div class="metric-value">${formatNumber(totals.absoluteVariance)} <small>unit</small></div></div>
+          <div class="metric"><div class="metric-top">Selisih terhadap VEF <span class="metric-mark">#</span></div><div class="metric-value">${totals.quantityMismatchPercent}<small>%</small></div></div>
+        </section>
+        <section class="table-section"><div class="table-toolbar"><div class="table-title">Item belum sesuai <span class="table-count">${exceptions.length} dari ${totals.count} item · Total SO ${formatNumber(totals.total)} / VEF ${formatNumber(totals.expected)}</span></div></div><div class="table-scroll"><table><thead><tr><th>No</th><th>Item / item code</th><th>Brand</th><th>Warehouse</th><th>VEF</th><th>SCAN</th><th>MANUAL</th><th>PJ</th><th>Selisih</th><th>Check</th><th>Note</th></tr></thead><tbody>${rows || `<tr><td class="empty-row" colspan="11">Belum ada item bermasalah. Semua item sesuai dengan VEF.</td></tr>`}</tbody></table></div><div class="table-footer"><span class="auto-save"><span class="save-dot"></span> Catatan tersimpan otomatis</span><span>${exceptions.length} item bermasalah dari ${totals.count} item dihitung</span></div></section>`;
     }
 
     function renderHistory() {
@@ -2028,12 +2190,12 @@
         const status = included ? (variance === 0 ? { label: "Sesuai", className: "match" } : variance < 0 ? { label: "Kurang", className: "shortage" } : { label: "Lebih", className: "different" }) : { label: "Bukan laptop", className: "non-laptop" };
         return `<tr><td>${index + 1}</td><td>${escapeHtml(product.sku)}</td><td>${escapeHtml(product.name)}</td><td>${escapeHtml(product.warehouse || "-")}</td><td>${formatNumber(product.stock)}</td><td>${included ? formatNumber(product.count || 0) : "-"}</td><td>${formatNumber(product.box || 0)}</td><td>${included ? formatNumber(product.pj || 0) : "-"}</td><td>${included ? `<span class="variance ${variance === 0 ? "zero" : variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span>` : "-"}</td><td><span class="row-status ${status.className}">${status.label}</span></td><td>${escapeHtml(product.note || "-")}</td></tr>`;
       }).join("");
-      const recapProducts = products.filter((product) => isCountedProduct(product, countMode) && (reconciledQty(product) !== Number(product.stock || 0) || product.note));
+      const recapProducts = products.filter((product) => isCountedProduct(product, countMode) && reconciledQty(product) !== Number(product.stock || 0));
       const recapRows = recapProducts.map((product, index) => {
         const variance = reconciledQty(product) - Number(product.stock || 0);
-        return `<tr><td>${index + 1}</td><td>${escapeHtml(product.sku)}</td><td>${escapeHtml(product.name)}</td><td>${formatNumber(product.stock)}</td><td>${formatNumber(product.count || 0)}</td><td>${formatNumber(product.box || 0)}</td><td>${formatNumber(product.pj || 0)}</td><td><span class="variance ${variance < 0 ? "negative" : variance > 0 ? "positive" : "zero"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td><td>${escapeHtml(product.note || "-")}</td></tr>`;
+        return `<tr><td>${index + 1}</td><td>${escapeHtml(product.sku)}</td><td>${escapeHtml(product.name)}</td><td>${escapeHtml(product.warehouse || "-")}</td><td>${formatNumber(product.stock)}</td><td>${formatNumber(product.count || 0)}</td><td>${formatNumber(product.box || 0)}</td><td>${formatNumber(product.pj || 0)}</td><td><span class="variance ${variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td><td>${escapeHtml(variance < 0 ? "Kurang" : "Lebih")}</td><td>${escapeHtml(product.note || "-")}</td></tr>`;
       }).join("");
-      return `${workbookArchive}<div class="completed-export-actions"><button class="button button-primary" type="button" data-export-session="${escapeHtml(session.id)}">↓ Ekspor XLSX</button><button class="button button-secondary" type="button" data-print-session="${escapeHtml(session.id)}">▤ Print</button></div><div class="completed-detail-panel"><h3>Perhitungan: ${countModeLabel(countMode)} · Scan Layout · ${scans.length} scan</h3><div class="completed-racks">${racks || `<div class="completed-rack-meta">Tidak ada data Rack.</div>`}</div><h3>Result SO · ${products.length} item</h3><div class="table-scroll"><table class="completed-result-table"><thead><tr><th>No</th><th>Item code</th><th>Item name</th><th>Warehouse</th><th>VEF</th><th>SO</th><th>BOX</th><th>PJ</th><th>Selisih</th><th>Check</th><th>Note</th></tr></thead><tbody>${productRows || `<tr><td class="empty-row" colspan="11">Data Result SO tidak tersedia.</td></tr>`}</tbody></table></div><h3>Rekap Selisih · ${recapProducts.length} item perlu ditinjau</h3><div class="table-scroll"><table class="completed-result-table"><thead><tr><th>No</th><th>Item code</th><th>Item name</th><th>VEF</th><th>SO</th><th>BOX</th><th>PJ</th><th>Selisih</th><th>Catatan</th></tr></thead><tbody>${recapRows || `<tr><td class="empty-row" colspan="9">Belum ada selisih. Semua item sesuai dengan VEF.</td></tr>`}</tbody></table></div></div>`;
+      return `${workbookArchive}<div class="completed-export-actions"><button class="button button-primary" type="button" data-export-session="${escapeHtml(session.id)}">↓ Ekspor XLSX</button><button class="button button-secondary" type="button" data-print-session="${escapeHtml(session.id)}">▤ Print</button></div><div class="completed-detail-panel"><h3>Perhitungan: ${countModeLabel(countMode)} · Scan Layout · ${scans.length} scan</h3><div class="completed-racks">${racks || `<div class="completed-rack-meta">Tidak ada data Rack.</div>`}</div><h3>Result SO · ${products.length} item</h3><div class="table-scroll"><table class="completed-result-table"><thead><tr><th>No</th><th>Item code</th><th>Item name</th><th>Warehouse</th><th>VEF</th><th>SCAN</th><th>MANUAL</th><th>PJ</th><th>Selisih</th><th>Check</th><th>Note</th></tr></thead><tbody>${productRows || `<tr><td class="empty-row" colspan="11">Data Result SO tidak tersedia.</td></tr>`}</tbody></table></div><h3>Rekap Selisih · ${recapProducts.length} item perlu ditinjau</h3><div class="table-scroll"><table class="completed-result-table"><thead><tr><th>No</th><th>Item code</th><th>Item name</th><th>Warehouse</th><th>VEF</th><th>SCAN</th><th>MANUAL</th><th>PJ</th><th>Selisih</th><th>Check</th><th>Note</th></tr></thead><tbody>${recapRows || `<tr><td class="empty-row" colspan="11">Belum ada selisih. Semua item sesuai dengan VEF.</td></tr>`}</tbody></table></div></div>`;
     }
 
     function exportCompletedSession(sessionId) {
@@ -2081,7 +2243,7 @@
           entry.createdAt ? formatDate(entry.createdAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }) : ""
         ]);
       }
-      const resultRows = [["No", "Item Code", "Item Name", "Warehouse", "VEF", "SO", "BOX", "PJ", "Selisih", "Check", "Note"]];
+      const resultRows = [["No", "Item Code", "Item Name", "Warehouse", "VEF", "SCAN", "MANUAL", "PJ", "Selisih", "Check", "Note"]];
       (snapshot.products || []).forEach((product, index) => {
         const included = isCountedProduct(product, countMode);
         const variance = reconciledQty(product) - Number(product.stock || 0);
@@ -2099,8 +2261,27 @@
           product.note || ""
         ]);
       });
+      const recapRows = [["No", "Item Code", "Item Name", "Warehouse", "VEF", "SCAN", "MANUAL", "PJ", "Selisih", "Check", "Note"]];
+      (snapshot.products || []).filter((product) => isCountedProduct(product, countMode)
+        && reconciledQty(product) !== Number(product.stock || 0)).forEach((product, index) => {
+        const variance = reconciledQty(product) - Number(product.stock || 0);
+        recapRows.push([
+          index + 1,
+          product.sku,
+          product.name,
+          product.warehouse || "",
+          Number(product.stock || 0),
+          Number(product.count || 0),
+          Number(product.box || 0),
+          Number(product.pj || 0),
+          variance,
+          variance < 0 ? "Kurang" : "Lebih",
+          product.note || ""
+        ]);
+      });
       XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(scanRows), "Scan Layout");
       XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(resultRows), "Result SO");
+      XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(recapRows), "Rekap Selisih");
       XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(manualRows), "Input Manual");
       const safeName = String(session.workspaceName || "sesi-opname").replace(/[<>:"/\\|?*\u0000-\u001f]/g, "-").trim() || "sesi-opname";
       const date = new Date(session.finishedAt).toISOString().slice(0, 10);
@@ -2150,10 +2331,10 @@
         const status = included ? (variance === 0 ? "Sesuai" : variance < 0 ? "Kurang" : "Lebih") : "Bukan laptop";
         return `<tr><td>${index + 1}</td><td>${escapeHtml(product.sku)}</td><td>${escapeHtml(product.name)}</td><td>${escapeHtml(product.warehouse || "-")}</td><td>${formatNumber(product.stock)}</td><td>${included ? formatNumber(product.count || 0) : "-"}</td><td>${formatNumber(product.box || 0)}</td><td>${included ? formatNumber(product.pj || 0) : "-"}</td><td>${included ? `${variance > 0 ? "+" : ""}${formatNumber(variance)}` : "-"}</td><td>${status}</td><td>${escapeHtml(product.note || "-")}</td></tr>`;
       }).join("");
-      const recapProducts = products.filter((product) => isCountedProduct(product, countMode) && (reconciledQty(product) !== Number(product.stock || 0) || product.note));
+      const recapProducts = products.filter((product) => isCountedProduct(product, countMode) && reconciledQty(product) !== Number(product.stock || 0));
       const recapRows = recapProducts.map((product, index) => {
         const variance = reconciledQty(product) - Number(product.stock || 0);
-        return `<tr><td>${index + 1}</td><td>${escapeHtml(product.sku)}</td><td>${escapeHtml(product.name)}</td><td>${formatNumber(product.stock)}</td><td>${formatNumber(product.count || 0)}</td><td>${formatNumber(product.box || 0)}</td><td>${formatNumber(product.pj || 0)}</td><td>${variance > 0 ? "+" : ""}${formatNumber(variance)}</td><td>${escapeHtml(product.note || "-")}</td></tr>`;
+        return `<tr><td>${index + 1}</td><td>${escapeHtml(product.sku)}</td><td>${escapeHtml(product.name)}</td><td>${escapeHtml(product.warehouse || "-")}</td><td>${formatNumber(product.stock)}</td><td>${formatNumber(product.count || 0)}</td><td>${formatNumber(product.box || 0)}</td><td>${formatNumber(product.pj || 0)}</td><td>${variance > 0 ? "+" : ""}${formatNumber(variance)}</td><td>${escapeHtml(variance < 0 ? "Kurang" : "Lebih")}</td><td>${escapeHtml(product.note || "-")}</td></tr>`;
       }).join("");
       const printDate = escapeHtml(formatDate(new Date(), { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }));
       printWindow.addEventListener("load", () => {
@@ -2164,7 +2345,10 @@
       printWindow.document.write(`<!doctype html><html lang="id"><head><meta charset="utf-8"><title>${title} · Stock Opname</title><style>
         *{box-sizing:border-box}body{color:#20312d;font:11px/1.45 "Segoe UI",Arial,sans-serif;margin:24px}.document-header{border-bottom:3px solid #176b5b;margin-bottom:16px;padding-bottom:13px}.brand{color:#176b5b;font-size:9px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase}.document-header h1{font-size:23px;line-height:1.2;margin:5px 0}.subtitle{color:#64746f;font-size:11px;margin:0}.metadata{display:grid;gap:8px;grid-template-columns:repeat(4,1fr);margin:15px 0}.metadata div,.summary-card{background:#f3f7f5;border:1px solid #dce7e2;border-radius:6px;padding:8px 10px}.metadata span,.summary-card span{color:#63736d;display:block;font-size:8px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}.metadata strong{display:block;font-size:10px;margin-top:3px;overflow-wrap:anywhere}.summary{display:grid;gap:7px;grid-template-columns:repeat(4,1fr);margin:0 0 18px}.summary-card strong{display:block;font-size:16px;margin-top:3px}.section{margin:18px 0 0}.section h2{border-bottom:1px solid #cbd9d3;color:#176b5b;font-size:13px;margin:0 0 8px;padding-bottom:5px}.section-note{color:#63736d;font-size:9px;margin:-3px 0 8px}.table-wrap{overflow:visible}table{border-collapse:collapse;table-layout:auto;text-align:left;width:100%}thead{display:table-header-group}tr{break-inside:avoid}th,td{border:1px solid #d7e0dc;font-size:8px;padding:5px;vertical-align:top;overflow-wrap:anywhere}th{background:#eaf2ee;color:#304840;font-size:7px;letter-spacing:.3px;text-transform:uppercase}.empty{text-align:center;color:#63736d}.signatures{break-inside:avoid;display:grid;gap:18px;grid-template-columns:repeat(3,1fr);margin-top:32px}.signature{min-height:76px;text-align:center}.signature .line{border-top:1px solid #82928b;margin:48px 12px 5px}.signature strong,.signature span{display:block;font-size:9px}.signature span{color:#63736d}.footer{border-top:1px solid #d7e0dc;color:#718079;font-size:8px;margin-top:20px;padding-top:7px;text-align:right}@page{size:landscape;margin:12mm;@top-right{content:"© M-Maz";color:#718079;font:600 8px "Segoe UI",Arial,sans-serif}@bottom-left{content:"Dicetak ${printDate}";color:#718079;font:500 7px "Segoe UI",Arial,sans-serif}@bottom-right{content:counter(page) "/" counter(pages);color:#718079;font:500 7px "Segoe UI",Arial,sans-serif}}@media print{body{margin:0}.section{break-inside:auto}.section h2{break-after:avoid}.metadata div,.summary-card{background:#f3f7f5!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}th{background:#eaf2ee!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
       .signatures{margin-top:64px}
-      </style></head><body><header class="document-header"><div class="brand">Stock Opname · Rekonsiliasi Serial Number</div><h1>${title}</h1><p class="subtitle">Laporan hasil stock opname dan rekonsiliasi persediaan</p></header><section class="metadata"><div><span>Nama akun</span><strong>${owner}</strong></div><div><span>PIC 1</span><strong>${pic1}</strong></div><div><span>PIC 2</span><strong>${pic2}</strong></div><div><span>Status sesi</span><strong>Selesai</strong></div><div><span>Mulai</span><strong>${startedAt}</strong></div><div><span>Selesai</span><strong>${finishedAt}</strong></div><div><span>Jumlah item</span><strong>${formatNumber(products.length)} item</strong></div><div><span>Jumlah scan</span><strong>${formatNumber(scans.length)} scan</strong></div></section><section class="summary"><div class="summary-card"><span>Unit VEF</span><strong>${formatNumber(session.expected || 0)}</strong></div><div class="summary-card"><span>Scan cocok</span><strong>${formatNumber(session.scanned || 0)}</strong></div><div class="summary-card"><span>Item kurang</span><strong>${formatNumber(session.shortages || 0)}</strong></div><div class="summary-card"><span>Item lebih</span><strong>${formatNumber(session.surpluses || 0)}</strong></div></section><section class="section"><h2>1. Scan Layout</h2><p class="section-note">Rincian pemindaian serial number berdasarkan rack dan target quantity.</p><div class="table-wrap"><table><thead><tr><th>Rack</th><th>Target</th><th>Serial Number</th><th>Item Code</th><th>Nama Item</th><th>Hasil</th><th>Waktu Scan</th></tr></thead><tbody>${scanRows || `<tr><td class="empty" colspan="7">Belum ada data Scan Layout.</td></tr>`}</tbody></table></div></section><section class="section" style="break-before:page;page-break-before:always"><h2>2. Result SO</h2><p class="section-note">Hasil opname, data VEF, perhitungan selisih, dan status setiap item.</p><div class="table-wrap"><table><thead><tr><th>No</th><th>Item Code</th><th>Nama Item</th><th>Warehouse</th><th>VEF</th><th>SO</th><th>BOX</th><th>PJ</th><th>Selisih</th><th>Status</th><th>Catatan</th></tr></thead><tbody>${resultRows || `<tr><td class="empty" colspan="11">Data Result SO tidak tersedia.</td></tr>`}</tbody></table></div></section><section class="section" style="break-before:page;page-break-before:always"><h2>3. Rekap Selisih · ${formatNumber(recapProducts.length)} item perlu ditinjau</h2><p class="section-note">Item laptop yang memiliki selisih atau catatan tindak lanjut.</p><div class="table-wrap"><table><thead><tr><th>No</th><th>Item Code</th><th>Nama Item</th><th>VEF</th><th>SO</th><th>BOX</th><th>PJ</th><th>Selisih</th><th>Catatan</th></tr></thead><tbody>${recapRows || `<tr><td class="empty" colspan="9">Belum ada selisih. Semua item laptop sesuai dengan VEF.</td></tr>`}</tbody></table></div></section><section class="signatures"><div class="signature"><div class="line"></div><strong>${pic1}</strong><span>PIC 1</span></div><div class="signature"><div class="line"></div><strong>${pic2}</strong><span>PIC 2</span></div><div class="signature"><div class="line"></div><strong>Warehouse</strong><span>Supervisor / Manager</span></div></section><div class="footer">Dicetak ${printDate} · Stock Opname</div></body></html>`);
+      </style></head><body><header class="document-header"><div class="brand">Stock Opname · Rekonsiliasi Serial Number</div><h1>${title}</h1><p class="subtitle">Laporan hasil stock opname dan rekonsiliasi persediaan</p></header><section class="metadata"><div><span>Nama akun</span><strong>${owner}</strong></div><div><span>PIC 1</span><strong>${pic1}</strong></div><div><span>PIC 2</span><strong>${pic2}</strong></div><div><span>Status sesi</span><strong>Selesai</strong></div><div><span>Mulai</span><strong>${startedAt}</strong></div><div><span>Selesai</span><strong>${finishedAt}</strong></div><div><span>Jumlah item</span><strong>${formatNumber(products.length)} item</strong></div><div><span>Jumlah scan</span><strong>${formatNumber(scans.length)} scan</strong></div></section><section class="summary"><div class="summary-card"><span>Unit VEF</span><strong>${formatNumber(session.expected || 0)}</strong></div><div class="summary-card"><span>Scan cocok</span><strong>${formatNumber(session.scanned || 0)}</strong></div><div class="summary-card"><span>Item kurang</span><strong>${formatNumber(session.shortages || 0)}</strong></div><div class="summary-card"><span>Item lebih</span><strong>${formatNumber(session.surpluses || 0)}</strong></div></section><section class="section"><h2>1. Scan Layout</h2><p class="section-note">Rincian pemindaian serial number berdasarkan rack dan target quantity.</p><div class="table-wrap"><table><thead><tr><th>Rack</th><th>Target</th><th>Serial Number</th><th>Item Code</th><th>Nama Item</th><th>Hasil</th><th>Waktu Scan</th></tr></thead><tbody>${scanRows || `<tr><td class="empty" colspan="7">Belum ada data Scan Layout.</td></tr>`}</tbody></table></div></section><section class="section" style="break-before:page;page-break-before:always"><h2>2. Result SO</h2><p class="section-note">Hasil opname, data VEF, perhitungan selisih, dan status setiap item.</p><div class="table-wrap"><table><thead><tr><th>No</th><th>Item Code</th><th>Nama Item</th><th>Warehouse</th><th>VEF</th><th>SCAN</th><th>MANUAL</th><th>PJ</th><th>Selisih</th><th>Status</th><th>Catatan</th></tr></thead><tbody>${resultRows || `<tr><td class="empty" colspan="11">Data Result SO tidak tersedia.</td></tr>`}</tbody></table></div></section><section class="section" style="break-before:page;page-break-before:always"><h2>3. Rekap Selisih · ${formatNumber(recapProducts.length)} item perlu ditinjau</h2><p class="section-note">Item dengan selisih kuantitas dibanding VEF.</p><div class="table-wrap"><table><thead><tr><th>No</th><th>Item Code</th><th>Nama Item</th><th>Warehouse</th><th>VEF</th><th>SCAN</th><th>MANUAL</th><th>PJ</th><th>Selisih</th><th>Check</th><th>Catatan</th></tr></thead><tbody>${recapRows || `<tr><td class="empty" colspan="11">Belum ada selisih. Semua item sesuai dengan VEF.</td></tr>`}</tbody></table></div></section><section class="signatures"><div class="signature"><div class="line"></div><strong>${pic1}</strong><span>PIC 1</span></div><div class="signature"><div class="line"></div><strong>${pic2}</strong><span>PIC 2</span></div><div class="signature"><div class="line"></div><strong>Warehouse</strong><span>Supervisor / Manager</span></div></section><div class="footer">Dicetak ${printDate} · Stock Opname</div></body></html>`);
+      const printSections = printWindow.document.querySelectorAll(".section");
+      const recapHeader = printSections[2]?.querySelector("thead tr");
+      if (recapHeader) recapHeader.innerHTML = "<th>No</th><th>Item Code</th><th>Nama Item</th><th>Warehouse</th><th>VEF</th><th>SCAN</th><th>MANUAL</th><th>PJ</th><th>Selisih</th><th>Check</th><th>Catatan</th>";
       printWindow.document.close();
     }
 
@@ -2188,6 +2372,11 @@
       const progress = targetSerials ? Math.min(100, Math.round(scannedSerials / targetSerials * 100)) : 0;
       const completedProducts = countedProducts.filter((product) => Number(product.count || 0) + Number(product.box || 0) + Number(product.pj || 0) === Number(product.stock || 0)).length;
       const issues = scanEvents.filter((event) => event.status === "duplicate" || event.status === "not-found").length;
+      const expectedUnits = countedProducts.reduce((sum, product) => sum + Number(product.stock || 0), 0);
+      const scanQuantity = countedProducts.reduce((sum, product) => sum + Number(product.count || 0), 0);
+      const manualQuantity = countedProducts.reduce((sum, product) => sum + Number(product.box || 0), 0);
+      const pjQuantity = countedProducts.reduce((sum, product) => sum + Number(product.pj || 0), 0);
+      const mismatchedProducts = countedProducts.filter((product) => Number(product.count || 0) + Number(product.box || 0) + Number(product.pj || 0) !== Number(product.stock || 0));
       return {
         products: products.length,
         countedSkus: countedProducts.length,
@@ -2198,6 +2387,13 @@
         progress,
         completedProducts,
         issues,
+        expectedUnits,
+        scanQuantity,
+        manualQuantity,
+        pjQuantity,
+        totalQuantity: scanQuantity + manualQuantity + pjQuantity,
+        mismatchCount: mismatchedProducts.length,
+        absoluteVariance: mismatchedProducts.reduce((sum, product) => sum + Math.abs(Number(product.count || 0) + Number(product.box || 0) + Number(product.pj || 0) - Number(product.stock || 0)), 0),
         scans: scanEvents.length,
         layouts: Array.isArray(data.layouts) ? data.layouts.length : 0,
         isCompleted: data.activeSession?.status === "completed"
@@ -2205,31 +2401,37 @@
     }
 
     function renderDashboard() {
-      const rows = state.workspaces.map((workspace) => {
-        const stats = getWorkspaceDashboardStats(workspace);
+      const workspaceStats = state.workspaces
+        .filter((workspace) => workspace.data.activeSession.status === "active" && workspaceHasStarted(workspace))
+        .map((workspace) => ({ workspace, stats: getWorkspaceDashboardStats(workspace) }));
+      const rows = workspaceStats.map(({ workspace, stats }) => {
         const isCurrent = workspace.id === state.currentWorkspaceId;
-        const status = stats.isCompleted ? "Selesai" : stats.products ? "Berjalan" : "Belum dimulai";
-        const statusClass = stats.isCompleted ? "match" : stats.products ? "different" : "pending";
         return `<tr class="workspace-row ${isCurrent ? "current" : ""}">
           <td><strong>${escapeHtml(workspace.name || "Nama Brand belum diisi")}</strong>${isCurrent ? '<div class="dashboard-panel-subtitle">Workspace aktif</div>' : ""}</td>
           <td>${escapeHtml((workspace.picNames || []).filter(Boolean).join(" · ") || "Belum ditentukan")}</td>
           <td class="dashboard-progress-cell"><div class="dashboard-progress-line"><div class="dashboard-bar-track" role="progressbar" aria-label="Progres SN ${escapeHtml(workspace.name)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${stats.progress}"><div class="dashboard-bar-fill" style="width:${stats.progress}%"></div></div><strong>${stats.progress}%</strong></div><div class="dashboard-panel-subtitle">${formatNumber(stats.scannedSerials)} / ${formatNumber(stats.targetSerials)} SN</div></td>
-          <td>${formatNumber(stats.completedProducts)} / ${formatNumber(stats.countedSkus)} ${stats.countMode === "all" ? "item" : "laptop"} cocok</td>
-          <td><span class="row-status ${statusClass}">${status}</span></td>
+          <td>${formatNumber(stats.completedProducts)} / ${formatNumber(stats.countedSkus)} sesuai · ${formatNumber(stats.totalQuantity)} / ${formatNumber(stats.expectedUnits)} unit</td>
+          <td><span class="row-status different">Berjalan</span></td>
           <td><button class="button button-secondary dashboard-open-button" data-dashboard-workspace="${escapeHtml(workspace.id)}">${isCurrent ? "Lihat hasil" : "Buka sesi"} →</button></td>
         </tr>`;
       }).join("");
-      const workspaceStats = state.workspaces.map((workspace) => ({ workspace, stats: getWorkspaceDashboardStats(workspace) }));
       const total = workspaceStats.reduce((sum, item) => ({
-        active: sum.active + Number(!item.stats.isCompleted && item.stats.products > 0),
-        completed: sum.completed + Number(item.stats.isCompleted),
+        active: sum.active + 1,
         products: sum.products + item.stats.products,
         countedSkus: sum.countedSkus + item.stats.countedSkus,
         serials: sum.serials + item.stats.targetSerials,
         scanned: sum.scanned + item.stats.scannedSerials,
-        issues: sum.issues + item.stats.issues
-      }), { active: 0, completed: 0, products: 0, countedSkus: 0, serials: 0, scanned: 0, issues: 0 });
+        issues: sum.issues + item.stats.issues,
+        expected: sum.expected + item.stats.expectedUnits,
+        scan: sum.scan + item.stats.scanQuantity,
+        manual: sum.manual + item.stats.manualQuantity,
+        pj: sum.pj + item.stats.pjQuantity,
+        totalQty: sum.totalQty + item.stats.totalQuantity,
+        mismatched: sum.mismatched + item.stats.mismatchCount,
+        absoluteVariance: sum.absoluteVariance + item.stats.absoluteVariance
+      }), { active: 0, products: 0, countedSkus: 0, serials: 0, scanned: 0, issues: 0, expected: 0, scan: 0, manual: 0, pj: 0, totalQty: 0, mismatched: 0, absoluteVariance: 0 });
       const overallProgress = total.serials ? Math.min(100, Math.round(total.scanned / total.serials * 100)) : 0;
+      const mismatchPercent = total.countedSkus ? Math.round(total.mismatched / total.countedSkus * 100) : 0;
       const circumference = 2 * Math.PI * 38;
       const progressLength = (circumference * overallProgress / 100).toFixed(2);
       const chartRows = workspaceStats.map(({ workspace, stats }) => `<div class="dashboard-chart-row">
@@ -2238,29 +2440,33 @@
         <span class="dashboard-chart-count">${stats.progress}% · ${formatNumber(stats.scannedSerials)}/${formatNumber(stats.targetSerials)} SN</span>
       </div>`).join("");
       return `${navMarkup()}<div class="dashboard-page">
-        <section class="page-head dashboard-hero"><div class="dashboard-hero-copy"><div class="dashboard-hero-eyebrow">Ringkasan Stock Opname</div><h1>Dashboard Workspace</h1><p class="subtitle">Ringkasan aktivitas dan progres stock opname seluruh sesi.</p><div class="dashboard-overview"><p>Pantau pemindaian dan rekonsiliasi dari satu tempat.</p><span class="dashboard-date">${formatDate(new Date(), { day: "numeric", month: "long", year: "numeric" })}</span></div></div><button class="button dashboard-hero-action" data-page-link="workspaces">Kelola Jadwal →</button></section>
-        <section class="dashboard-metrics" aria-label="Statistik seluruh workspace">
-          <article class="dashboard-metric"><div class="dashboard-metric-label">Total workspace <span class="dashboard-metric-icon">▦</span></div><div class="dashboard-metric-value">${state.workspaces.length}</div><div class="dashboard-metric-note">${total.active} sesi berjalan · ${total.completed} sesi selesai</div></article>
-          <article class="dashboard-metric"><div class="dashboard-metric-label">SKU masuk perhitungan <span class="dashboard-metric-icon">▤</span></div><div class="dashboard-metric-value">${formatNumber(total.countedSkus)}</div><div class="dashboard-metric-note">${formatNumber(total.products)} item di seluruh master · sesuai mode tiap sesi</div></article>
-          <article class="dashboard-metric"><div class="dashboard-metric-label">SN cocok dipindai <span class="dashboard-metric-icon">✓</span></div><div class="dashboard-metric-value">${formatNumber(total.scanned)}<small> / ${formatNumber(total.serials)}</small></div><div class="dashboard-metric-note">Progres scan keseluruhan ${overallProgress}%</div></article>
+        <section class="page-head dashboard-hero"><div class="dashboard-hero-copy"><div class="dashboard-hero-eyebrow">Ringkasan Stock Opname · Live</div><h1>Dashboard Sesi Berjalan</h1><p class="subtitle">Statistik dan progres hanya untuk sesi opname yang masih berjalan.</p><div class="dashboard-overview"><p>${total.active} sesi aktif · pantau Scan, Manual, dan rekonsiliasi quantity.</p><span class="dashboard-date">${formatDate(new Date(), { day: "numeric", month: "long", year: "numeric" })}</span></div></div><button class="button dashboard-hero-action" data-page-link="workspaces">Kelola Jadwal →</button></section>
+        <section class="dashboard-metrics" aria-label="Statistik sesi stock opname yang berjalan">
+          <article class="dashboard-metric"><div class="dashboard-metric-label">Sesi berjalan <span class="dashboard-metric-icon">◉</span></div><div class="dashboard-metric-value">${total.active}</div><div class="dashboard-metric-note">${workspaceStats.length} brand sedang dihitung</div></article>
+          <article class="dashboard-metric"><div class="dashboard-metric-label">Item diperiksa <span class="dashboard-metric-icon">▤</span></div><div class="dashboard-metric-value">${formatNumber(total.countedSkus)}</div><div class="dashboard-metric-note">${formatNumber(total.mismatched)} item belum sesuai · ${mismatchPercent}%</div></article>
+          <article class="dashboard-metric"><div class="dashboard-metric-label">Master VEF <span class="dashboard-metric-icon">#</span></div><div class="dashboard-metric-value">${formatNumber(total.expected)}<small> unit</small></div><div class="dashboard-metric-note">${formatNumber(total.products)} item master</div></article>
+          <article class="dashboard-metric"><div class="dashboard-metric-label">Quantity SCAN <span class="dashboard-metric-icon">⌗</span></div><div class="dashboard-metric-value">${formatNumber(total.scan)}<small> unit</small></div><div class="dashboard-metric-note">${formatNumber(total.scanned)} SN cocok dari ${formatNumber(total.serials)} SN master</div></article>
+          <article class="dashboard-metric"><div class="dashboard-metric-label">Quantity MANUAL <span class="dashboard-metric-icon">＋</span></div><div class="dashboard-metric-value">${formatNumber(total.manual)}<small> unit</small></div><div class="dashboard-metric-note">Input manual seluruh sesi berjalan</div></article>
+          <article class="dashboard-metric"><div class="dashboard-metric-label">Total SO <span class="dashboard-metric-icon">Σ</span></div><div class="dashboard-metric-value">${formatNumber(total.totalQty)}<small> unit</small></div><div class="dashboard-metric-note">SCAN + MANUAL + PJ ${formatNumber(total.pj)}</div></article>
+          <article class="dashboard-metric"><div class="dashboard-metric-label">Selisih quantity <span class="dashboard-metric-icon alert">Δ</span></div><div class="dashboard-metric-value">${formatNumber(total.absoluteVariance)}<small> unit</small></div><div class="dashboard-metric-note">Akumulasi selisih absolut terhadap VEF</div></article>
           <article class="dashboard-metric"><div class="dashboard-metric-label">SN bermasalah <span class="dashboard-metric-icon alert">!</span></div><div class="dashboard-metric-value">${formatNumber(total.issues)}</div><div class="dashboard-metric-note">Duplikat atau tidak ditemukan</div></article>
         </section>
         <section class="dashboard-charts" aria-label="Grafik progres stock opname">
-          <article class="dashboard-panel"><header class="dashboard-panel-head"><div><div class="dashboard-panel-title">Progres keseluruhan</div><div class="dashboard-panel-subtitle">Serial Number laptop berhasil dipindai</div></div><span class="dashboard-chart-tag">${total.serials ? "Live" : "Menunggu data"}</span></header>
+          <article class="dashboard-panel"><header class="dashboard-panel-head"><div><div class="dashboard-panel-title">Progres keseluruhan</div><div class="dashboard-panel-subtitle">Serial Number cocok pada sesi berjalan</div></div><span class="dashboard-chart-tag">${total.active ? "Live" : "Menunggu sesi"}</span></header>
             <div class="dashboard-donut-wrap"><div class="dashboard-donut"><svg viewBox="0 0 100 100" role="img" aria-label="Progres scan keseluruhan ${overallProgress} persen"><circle class="dashboard-donut-track" cx="50" cy="50" r="38"></circle><circle class="dashboard-donut-progress" cx="50" cy="50" r="38" stroke-dasharray="${progressLength} ${circumference.toFixed(2)}"></circle></svg><div class="dashboard-donut-center"><div><strong>${overallProgress}%</strong><span>terpindai</span></div></div></div>
               <div class="dashboard-legend"><span class="dashboard-legend-item"><i class="dashboard-legend-dot"></i>${formatNumber(total.scanned)} SN dipindai</span><span class="dashboard-legend-item"><i class="dashboard-legend-dot remaining"></i>${formatNumber(Math.max(0, total.serials - total.scanned))} tersisa</span></div>
             </div>
           </article>
-          <article class="dashboard-panel"><header class="dashboard-panel-head"><div><div class="dashboard-panel-title">Progres per sesi</div><div class="dashboard-panel-subtitle">SN terpindai dibanding target sesuai mode perhitungan tiap sesi</div></div><span class="dashboard-chart-tag">${state.workspaces.length} sesi</span></header><div class="dashboard-chart-list">${chartRows}</div>${total.serials ? "" : '<div class="dashboard-empty">Unggah workbook di Master VEF untuk mulai melihat progres pemindaian.</div>'}</article>
+          <article class="dashboard-panel"><header class="dashboard-panel-head"><div><div class="dashboard-panel-title">Progres per brand</div><div class="dashboard-panel-subtitle">Sesi aktif saja · SN cocok dibanding target master</div></div><span class="dashboard-chart-tag">${workspaceStats.length} brand</span></header><div class="dashboard-chart-list">${chartRows}</div>${workspaceStats.length ? "" : '<div class="dashboard-empty">Belum ada sesi berjalan. Unggah workbook pada sesi bernama brand di Master VEF untuk memulai.</div>'}</article>
         </section>
-        <section class="table-section dashboard-table"><div class="table-toolbar"><div class="table-title">Rincian workspace <span class="table-count">${state.workspaces.length} sesi</span></div></div><div class="table-scroll"><table><thead><tr><th>Workspace</th><th>PIC</th><th>Progres scan</th><th>Rekonsiliasi</th><th>Status</th><th></th></tr></thead><tbody>${rows}</tbody></table></div><div class="table-footer"><span>Progres mengikuti mode perhitungan masing-masing sesi.</span><span>${escapeHtml(activeWorkspaceName())} dipilih</span></div></section>
+        <section class="table-section dashboard-table"><div class="table-toolbar"><div class="table-title">Rincian sesi yang berjalan <span class="table-count">${workspaceStats.length} brand aktif</span></div></div><div class="table-scroll"><table><thead><tr><th>Nama Brand</th><th>PIC</th><th>Progres scan</th><th>Rekonsiliasi</th><th>Status</th><th></th></tr></thead><tbody>${rows || '<tr><td class="empty-row" colspan="6">Tidak ada sesi stock opname yang sedang berjalan.</td></tr>'}</tbody></table></div><div class="table-footer"><span>Data sesi selesai dan sesi yang belum dimulai tidak ditampilkan.</span><span>${formatNumber(total.scan)} SCAN + ${formatNumber(total.manual)} MANUAL + ${formatNumber(total.pj)} PJ</span></div></section>
       </div>`;
     }
 
     function renderWorkspaceSchedule() {
       const completedCount = state.workspaces.filter((workspace) => workspace.data.activeSession.status === "completed").length;
       const activeCount = state.workspaces.filter((workspace) => workspaceHasStarted(workspace) && workspace.data.activeSession.status !== "completed").length;
-      const cards = state.workspaces.map((workspace, index) => {
+      const cards = state.workspaces.map((workspace) => {
         const data = workspace.data;
         const isCurrent = workspace.id === state.currentWorkspaceId;
         const canEdit = canEditWorkspaceSession(workspace);
@@ -2277,17 +2483,16 @@
           ? `<button class="button button-danger" type="button" data-delete-workspace="${escapeHtml(workspace.id)}" ${state.workspaces.length <= 1 ? 'disabled title="Minimal satu sesi harus dipertahankan."' : ""}>Hapus</button>`
           : "";
         return `<details class="schedule-card ${isCurrent ? "current" : ""}">
-          <summary class="schedule-card-summary" aria-label="Sesi ${index + 1}, ${escapeHtml(workspace.name || `Sesi ${index + 1}`)}, ${status}. Klik untuk melihat detail.">
-            <span class="schedule-card-number" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"><rect x="4" y="5.5" width="16" height="15" rx="2.2"/><path d="M8 3.5v4m8-4v4M4 10h16m-10 5 1.5 1.5L15 13"/></svg><small>${String(index + 1).padStart(2, "0")}</small></span>
-            <span class="schedule-summary-copy"><strong class="schedule-summary-title">${escapeHtml(workspace.name || `Sesi ${index + 1}`)}</strong><span class="schedule-summary-meta">${countModeLabel(countMode)} · ${formatNumber(stats.countedSkus)} item · ${formatNumber(serials)} SN · ${summaryPicNames}</span></span>
+          <summary class="schedule-card-summary" aria-label="${escapeHtml(workspace.name || "Nama Brand belum diisi")}, ${status}. Klik untuk melihat detail.">
+            <span class="schedule-summary-copy"><strong class="schedule-summary-title">${escapeHtml(workspace.name || "Nama Brand belum diisi")}</strong><span class="schedule-summary-meta">${countModeLabel(countMode)} · ${formatNumber(stats.countedSkus)} item · ${formatNumber(serials)} SN · ${summaryPicNames}</span></span>
             <span class="schedule-summary-badges"><span class="row-status ${statusClass}">${status}</span>${isCurrent ? '<span class="schedule-current-badge">Sedang dipilih</span>' : ""}</span>
             <span class="schedule-summary-chevron" aria-hidden="true">⌄</span>
           </summary>
           <header class="schedule-card-head">
-            <span class="schedule-card-number" aria-label="Sesi ${index + 1}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" aria-hidden="true"><rect x="4" y="5.5" width="16" height="15" rx="2.2"/><path d="M8 3.5v4m8-4v4M4 10h16m-10 5 1.5 1.5L15 13"/></svg><small aria-hidden="true">${String(index + 1).padStart(2, "0")}</small></span>
             <div class="schedule-card-title">
-              <input class="workspace-name-input" data-workspace-name="${escapeHtml(workspace.id)}" aria-label="Nama brand sesi ${index + 1}" placeholder="Nama brand" value="${escapeHtml(workspace.name)}" ${canEdit ? "" : "disabled title=\"Sesi sedang dikerjakan staf lain\""}>
-              <div class="schedule-card-subtitle">Sesi ${String(index + 1).padStart(2, "0")} · ${formatNumber(stats.countedSkus)} item masuk perhitungan</div>
+              <label class="schedule-brand-label" for="workspace-brand-${escapeHtml(workspace.id)}">Nama Brand</label>
+              <input class="workspace-name-input" id="workspace-brand-${escapeHtml(workspace.id)}" data-workspace-name="${escapeHtml(workspace.id)}" aria-label="Nama Brand" placeholder="Masukkan nama brand" value="${escapeHtml(workspace.name)}" ${canEdit ? "" : "disabled title=\"Sesi sedang dikerjakan staf lain\""}>
+              <div class="schedule-card-subtitle">${formatNumber(stats.countedSkus)} item masuk perhitungan</div>
             </div>
             <div class="schedule-card-badges">
               <span class="row-status ${statusClass}">${status}</span>
@@ -2297,23 +2502,23 @@
           <div class="schedule-card-body">
             <div class="schedule-mode-box">
               <div class="schedule-mode-copy"><div class="schedule-mode-title">Mode perhitungan</div><div class="schedule-mode-hint">${countMode === "all" ? "Semua jenis item dari master VEF masuk hitungan." : "Hanya item yang terdeteksi sebagai laptop yang dihitung."}</div></div>
-              <div class="schedule-mode-control"><label for="count-mode-${escapeHtml(workspace.id)}">Pilih mode</label><select class="workspace-count-mode" id="count-mode-${escapeHtml(workspace.id)}" data-workspace-count-mode="${escapeHtml(workspace.id)}" aria-label="Pilihan perhitungan untuk ${escapeHtml(workspace.name || `Sesi ${index + 1}`)}" ${modeDisabled ? 'disabled title="Mode perhitungan sesi selesai atau milik staf lain tidak dapat diubah"' : ""}><option value="laptops" ${countMode === "laptops" ? "selected" : ""}>Laptop saja</option><option value="all" ${countMode === "all" ? "selected" : ""}>Semua item</option></select></div>
+              <div class="schedule-mode-control"><label for="count-mode-${escapeHtml(workspace.id)}">Pilih mode</label><select class="workspace-count-mode" id="count-mode-${escapeHtml(workspace.id)}" data-workspace-count-mode="${escapeHtml(workspace.id)}" aria-label="Pilihan perhitungan untuk ${escapeHtml(workspace.name || "Nama Brand belum diisi")}" ${modeDisabled ? 'disabled title="Mode perhitungan sesi selesai atau milik staf lain tidak dapat diubah"' : ""}><option value="laptops" ${countMode === "laptops" ? "selected" : ""}>Laptop saja</option><option value="all" ${countMode === "all" ? "selected" : ""}>Semua item</option></select></div>
             </div>
             <div class="schedule-pics">
-              <div class="schedule-pic-field"><label for="pic-${escapeHtml(workspace.id)}-1">PIC 1</label><input class="workspace-name-input" id="pic-${escapeHtml(workspace.id)}-1" data-workspace-pic="${escapeHtml(workspace.id)}" data-pic-index="0" aria-label="PIC 1 sesi ${escapeHtml(workspace.name || index + 1)}" placeholder="Nama PIC 1" value="${escapeHtml(workspace.picNames[0])}" ${canEdit ? "" : 'disabled title="Sesi sedang dikerjakan staf lain"'}></div>
-              <div class="schedule-pic-field"><label for="pic-${escapeHtml(workspace.id)}-2">PIC 2</label><input class="workspace-name-input" id="pic-${escapeHtml(workspace.id)}-2" data-workspace-pic="${escapeHtml(workspace.id)}" data-pic-index="1" aria-label="PIC 2 sesi ${escapeHtml(workspace.name || index + 1)}" placeholder="Nama PIC 2" value="${escapeHtml(workspace.picNames[1])}" ${canEdit ? "" : 'disabled title="Sesi sedang dikerjakan staf lain"'}></div>
+              <div class="schedule-pic-field"><label for="pic-${escapeHtml(workspace.id)}-1">PIC 1</label><input class="workspace-name-input" id="pic-${escapeHtml(workspace.id)}-1" data-workspace-pic="${escapeHtml(workspace.id)}" data-pic-index="0" aria-label="PIC 1 ${escapeHtml(workspace.name || "Nama Brand belum diisi")}" placeholder="Nama PIC 1" value="${escapeHtml(workspace.picNames[0])}" ${canEdit ? "" : 'disabled title="Sesi sedang dikerjakan staf lain"'}></div>
+              <div class="schedule-pic-field"><label for="pic-${escapeHtml(workspace.id)}-2">PIC 2</label><input class="workspace-name-input" id="pic-${escapeHtml(workspace.id)}-2" data-workspace-pic="${escapeHtml(workspace.id)}" data-pic-index="1" aria-label="PIC 2 ${escapeHtml(workspace.name || "Nama Brand belum diisi")}" placeholder="Nama PIC 2" value="${escapeHtml(workspace.picNames[1])}" ${canEdit ? "" : 'disabled title="Sesi sedang dikerjakan staf lain"'}></div>
             </div>
             <div class="schedule-card-stats">
               <div class="schedule-stat"><strong>${formatNumber(stats.countedSkus)}</strong><span>${countModeLabel(countMode)}</span></div>
               <div class="schedule-stat"><strong>${formatNumber(serials)}</strong><span>SN master</span></div>
               <div class="schedule-stat"><strong>${formatNumber(data.scanEvents.length)}</strong><span>Scan · ${data.layouts.length} layout</span></div>
             </div>
-            <div class="schedule-progress"><div class="schedule-progress-head"><span>Progres serial number</span><strong>${stats.progress}% · ${formatNumber(stats.scannedSerials)} / ${formatNumber(stats.targetSerials)}</strong></div><div class="dashboard-bar-track" role="progressbar" aria-label="Progres ${escapeHtml(workspace.name || `Sesi ${index + 1}`)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${stats.progress}"><div class="dashboard-bar-fill" style="width:${stats.progress}%"></div></div></div>
+            <div class="schedule-progress"><div class="schedule-progress-head"><span>Progres serial number</span><strong>${stats.progress}% · ${formatNumber(stats.scannedSerials)} / ${formatNumber(stats.targetSerials)}</strong></div><div class="dashboard-bar-track" role="progressbar" aria-label="Progres ${escapeHtml(workspace.name || "Nama Brand belum diisi")}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${stats.progress}"><div class="dashboard-bar-fill" style="width:${stats.progress}%"></div></div></div>
           </div>
-          <footer class="schedule-card-foot"><span class="schedule-owner">Pemilik sesi · ${escapeHtml(sessionOwnerName(data.activeSession))}</span><div class="schedule-actions"><button class="button ${isCurrent ? "button-secondary" : "button-primary"}" type="button" ${isCurrent ? "disabled" : `data-open-workspace="${escapeHtml(workspace.id)}"`}>${isCurrent ? "Sesi aktif" : "Buka sesi"}${isCurrent ? "" : " →"}</button>${deleteButton}</div></footer>
+          <footer class="schedule-card-foot"><span class="schedule-owner">Pemilik sesi · ${escapeHtml(sessionOwnerName(data.activeSession))}</span><div class="schedule-actions"><button class="button button-primary start-opname-button" type="button" data-start-workspace="${escapeHtml(workspace.id)}">Mulai Stock Opname</button>${deleteButton}</div></footer>
         </details>`;
       }).join("");
-      const addButton = isSuperAdmin() ? '<button class="button button-primary" id="add-workspace-button" type="button">＋ Tambah Sesi</button>' : "";
+      const addButton = '<button class="button button-primary" id="add-workspace-button" type="button">＋ Tambah Sesi</button>';
       return `${navMarkup()}<section class="page-head"><div><h1>Jadwal Stock Opname</h1><p class="subtitle">Atur ruang lingkup hitung, penanggung jawab, dan sesi kerja untuk setiap brand.</p></div></section>
         <section class="schedule-overview" aria-label="Ringkasan jadwal stock opname"><div class="schedule-overview-copy"><div class="schedule-overview-kicker">Perencanaan stock opname</div><div class="schedule-overview-title">Semua sesi, tertata dalam satu tempat</div><div class="schedule-overview-description">Pilih mode perhitungan dan PIC untuk setiap brand. Data setiap sesi tetap terpisah.</div></div><div class="schedule-overview-stats"><div class="schedule-overview-stat"><strong>${state.workspaces.length}</strong><span>Total sesi</span></div><div class="schedule-overview-stat"><strong>${activeCount}</strong><span>Berjalan</span></div><div class="schedule-overview-stat"><strong>${completedCount}</strong><span>Selesai</span></div></div></section>
         <section class="schedule-grid" aria-label="Daftar sesi stock opname">${cards || '<div class="schedule-empty">Belum ada sesi stock opname.</div>'}</section>
@@ -2355,18 +2560,12 @@
     }
 
     function addWorkspace() {
-      if (!isSuperAdmin()) {
-        notify("Hanya Super Admin yang dapat menambah sesi.");
-        return;
-      }
-      let index = 1;
-      const existingNames = new Set(state.workspaces.map((workspace) => workspace.name));
-      while (existingNames.has(`Sesi ${index}`)) index++;
-      const workspace = createWorkspace(index);
+      const workspace = createWorkspace();
       state.workspaces.push(workspace);
       persist();
       render();
-      notify(`${workspace.name} berhasil ditambahkan.`);
+      document.querySelector(`[data-workspace-name="${CSS.escape(workspace.id)}"]`)?.focus();
+      notify("Sesi baru ditambahkan. Isi Nama Brand untuk melanjutkan.");
     }
 
     function requestDeleteWorkspace(workspaceId) {
@@ -2563,6 +2762,7 @@
       document.getElementById("import-button")?.addEventListener("click", () => document.getElementById("workbook-input").click());
       document.getElementById("delete-master-button")?.addEventListener("click", () => document.getElementById("delete-master-dialog").showModal());
       document.getElementById("add-rack-button")?.addEventListener("click", addRack);
+      document.querySelectorAll("[data-delete-rack]").forEach((button) => button.addEventListener("click", () => deleteRack(button.dataset.deleteRack)));
       document.getElementById("export-button")?.addEventListener("click", exportCsv);
       document.getElementById("finish-button")?.addEventListener("click", openFinishDialog);
       document.getElementById("new-session-button")?.addEventListener("click", startNewSession);
@@ -2574,6 +2774,13 @@
         });
       }));
       document.querySelectorAll("[data-open-workspace]").forEach((button) => button.addEventListener("click", () => switchWorkspace(button.dataset.openWorkspace, "products")));
+      document.querySelectorAll("[data-start-workspace]").forEach((button) => button.addEventListener("click", () => {
+        const workspaceId = button.dataset.startWorkspace;
+        if (workspaceId === state.currentWorkspaceId) {
+          currentPage = "products";
+          render();
+        } else switchWorkspace(workspaceId, "products");
+      }));
       document.querySelectorAll("[data-delete-workspace]").forEach((button) => button.addEventListener("click", () => requestDeleteWorkspace(button.dataset.deleteWorkspace)));
       document.querySelectorAll("[data-dashboard-workspace]").forEach((button) => button.addEventListener("click", () => {
         const workspaceId = button.dataset.dashboardWorkspace;
@@ -2599,7 +2806,13 @@
       document.querySelectorAll("[data-export-session]").forEach((button) => button.addEventListener("click", () => exportCompletedSession(button.dataset.exportSession)));
       document.querySelectorAll("[data-print-session]").forEach((button) => button.addEventListener("click", () => printCompletedSession(button)));
       document.querySelectorAll("[data-download-workbook]").forEach((button) => button.addEventListener("click", () => downloadArchivedWorkbook(button.dataset.downloadSession, button.dataset.downloadWorkbook)));
-      document.querySelectorAll("[data-workspace-name]").forEach((input) => input.addEventListener("change", () => {
+      document.querySelectorAll("[data-workspace-name]").forEach((input) => {
+        input.addEventListener("input", () => {
+          const brand = input.value.trim();
+          const summary = input.closest(".schedule-card")?.querySelector(".schedule-summary-title");
+          if (summary) summary.textContent = brand || "Nama Brand belum diisi";
+        });
+        input.addEventListener("change", () => {
         const workspace = state.workspaces.find((item) => item.id === input.dataset.workspaceName);
         if (!workspace) return;
         if (!canEditWorkspaceSession(workspace)) {
@@ -2610,7 +2823,8 @@
         workspace.name = input.value.trim();
         input.value = workspace.name;
         persist();
-      }));
+        });
+      });
       document.querySelectorAll("[data-workspace-pic]").forEach((input) => input.addEventListener("change", () => {
         const workspace = state.workspaces.find((item) => item.id === input.dataset.workspacePic);
         const index = Number(input.dataset.picIndex);
@@ -2708,9 +2922,16 @@
       varianceCell.textContent = `${variance > 0 ? "+" : ""}${formatNumber(variance)}`;
       const statusCell = row.querySelector(".row-status");
       statusCell.className = `row-status ${status.className}`;
-      statusCell.textContent = status.label;
+      statusCell.innerHTML = status.className === "match" ? '<span class="check-success-icon" aria-hidden="true">✓</span>Sesuai' : status.label;
       const stats = getStats();
       document.getElementById("metric-expected").innerHTML = `${formatNumber(stats.expected)} <small>unit</small>`;
+      const totals = getReconciliationTotals();
+      document.getElementById("metric-scan-qty").innerHTML = `${formatNumber(totals.scan)} <small>unit</small>`;
+      document.getElementById("metric-manual-qty").innerHTML = `${formatNumber(totals.manual)} <small>unit</small>`;
+      document.getElementById("metric-pj-qty").innerHTML = `${formatNumber(totals.pj)} <small>unit</small>`;
+      document.getElementById("metric-total-qty").innerHTML = `${formatNumber(totals.total)} <small>unit</small>`;
+      document.getElementById("metric-variance-qty").innerHTML = `${totals.variance > 0 ? "+" : ""}${formatNumber(totals.variance)} <small>unit</small>`;
+      document.getElementById("metric-mismatch-note").textContent = `${totals.mismatched} item tidak sesuai · ${totals.mismatchPercent}%`;
     }
 
     function addScanEvent(serial, scanEvents = state.scanEvents, layout = "") {
@@ -2733,25 +2954,26 @@
       const audioContext = new AudioContextClass();
       const warning = status === "duplicate";
       const tones = warning
-        ? [{ frequency: 360, offset: 0 }, { frequency: 260, offset: 0.16 }]
+        ? [{ frequency: 420, offset: 0 }, { frequency: 280, offset: 0.18 }, { frequency: 420, offset: 0.36 }]
         : status === "match"
-          ? [{ frequency: 880, offset: 0 }, { frequency: 1174, offset: 0.09 }]
+          ? [{ frequency: 880, offset: 0 }, { frequency: 1174, offset: 0.12 }]
           : [{ frequency: 660, offset: 0 }];
+      if (audioContext.state === "suspended") audioContext.resume().catch((error) => console.warn("Audio scan tidak dapat diaktifkan:", error));
       tones.forEach(({ frequency, offset }) => {
         const oscillator = audioContext.createOscillator();
         const gain = audioContext.createGain();
         const startAt = audioContext.currentTime + offset;
-        const duration = warning ? 0.13 : 0.15;
-        oscillator.type = warning ? "square" : "sine";
+        const duration = warning ? 0.17 : 0.22;
+        oscillator.type = warning ? "triangle" : "sine";
         oscillator.frequency.value = frequency;
-        gain.gain.setValueAtTime(warning ? 0.12 : 0.11, startAt);
+        gain.gain.setValueAtTime(warning ? 0.36 : 0.3, startAt);
         gain.gain.exponentialRampToValueAtTime(0.001, startAt + duration);
         oscillator.connect(gain);
         gain.connect(audioContext.destination);
         oscillator.start(startAt);
         oscillator.stop(startAt + duration);
       });
-      setTimeout(() => audioContext.close(), warning ? 500 : 400);
+      setTimeout(() => audioContext.close(), warning ? 800 : 500);
     }
 
     function handleLayoutScanSubmit(event) {
@@ -2762,6 +2984,10 @@
       const serial = input.value.trim();
       if (!serial) return;
       const layout = form.dataset.layoutForm;
+      if (!state.products.length || state.activeSession.status !== "active") {
+        notify("Muat Master VEF dan gunakan sesi yang masih berjalan sebelum mencatat scan.");
+        return;
+      }
       const hasTarget = Number.isSafeInteger(state.layoutQuantities[layout]) && state.layoutQuantities[layout] >= 0;
       const hasRackNumber = Number.isSafeInteger(Number(state.layoutNumbers[layout])) && Number(state.layoutNumbers[layout]) > 0;
       if (!hasTarget || !hasRackNumber) {
@@ -2786,6 +3012,12 @@
       const form = event.currentTarget;
       const productInput = form.querySelector("[data-manual-product]");
       const quantityInput = form.querySelector("[data-manual-quantity]");
+      const layout = form.dataset.manualForm;
+      const hasRackNumber = Number.isSafeInteger(Number(state.layoutNumbers[layout])) && Number(state.layoutNumbers[layout]) > 0;
+      if (!state.products.length || state.activeSession.status !== "active" || !hasRackNumber) {
+        notify(!state.products.length ? "Muat Master VEF terlebih dahulu." : !hasRackNumber ? "Isi nomor Rack sebelum mencatat manual." : "Input manual hanya tersedia pada sesi yang berjalan.");
+        return;
+      }
       const product = state.products.find((item) => item.id === productInput.dataset.selectedProductId);
       if (!product) {
         notify("Pilih item dari dropdown hasil pencarian VEF Master terlebih dahulu.");
@@ -2803,7 +3035,6 @@
         quantityInput.focus();
         return;
       }
-      const layout = form.dataset.manualForm;
       state.manualEntries.push({
         id: crypto.randomUUID(),
         productId: product.id,
@@ -2882,6 +3113,12 @@
       event.target.value = "";
       if (!file) return;
       if (!requireActiveSessionEdit()) return;
+      if (!activeWorkspace()?.name.trim()) {
+        notify("Isi Nama Brand di halaman Jadwal sebelum mengunggah workbook.");
+        currentPage = "workspaces";
+        render();
+        return;
+      }
       if (typeof XLSX === "undefined") { notify("Parser Excel tidak termuat. Periksa koneksi internet lalu muat ulang aplikasi."); return; }
       if (!/\.(xlsx|xls)$/i.test(file.name)) { notify("Pilih file Excel berformat .xlsx atau .xls."); return; }
       if (file.size > 50 * 1024 * 1024) { notify("Ukuran file Excel melebihi batas arsip 50 MB."); return; }
@@ -3039,13 +3276,9 @@
       state.sessions.push({ ...stats, id: state.activeSession.id, workspaceId: state.currentWorkspaceId, workspaceName, picNames: [...(workspace?.picNames || ["", ""])], createdByUserId: state.activeSession.createdByUserId || authSession?.user?.id || "", createdByUsername: state.activeSession.createdByUsername || authSession?.user?.user_metadata?.username || authSession?.user?.email || "", startedAt: state.activeSession.startedAt, finishedAt, snapshot, workbooks });
       recordActivity("Sesi diselesaikan", `Stock opname ${workspaceName} diselesaikan dan diarsipkan.`);
       const completedWorkspace = workspace;
-      const completedWorkspaceIndex = state.workspaces.indexOf(completedWorkspace);
-      const otherWorkspaceNames = new Set(state.workspaces.filter((item) => item !== completedWorkspace).map((item) => item.name));
-      let defaultNameIndex = Math.max(1, completedWorkspaceIndex + 1);
-      while (otherWorkspaceNames.has(`Sesi ${defaultNameIndex}`)) defaultNameIndex++;
-      completedWorkspace.name = `Sesi ${defaultNameIndex}`;
+      completedWorkspace.name = "";
       completedWorkspace.picNames = ["", ""];
-      completedWorkspace.data = { ...emptyWorkspaceData(), historyEvents: state.historyEvents, workbookFiles: unarchivedWorkbooks };
+      completedWorkspace.data = { ...emptyWorkspaceData(), activeSession: makeSession(authSession?.user || null), historyEvents: state.historyEvents, workbookFiles: unarchivedWorkbooks };
       const nextRunningWorkspace = state.workspaces.find((item) => item !== completedWorkspace
         && item.data.activeSession.status === "active"
         && workspaceHasStarted(item));
@@ -3114,7 +3347,7 @@
     }
 
     function exportCsv() {
-      const header = ["Item Code", "Item Name", "Item Group", "Brand", "Warehouse", "Jenis", "VEF", "SO", "BOX", "PJ", "Selisih", "Check"];
+      const header = ["Item Code", "Item Name", "Item Group", "Brand", "Warehouse", "Jenis", "VEF", "SCAN", "MANUAL", "PJ", "Selisih", "Check"];
       const rows = state.products.map((product) => {
         const laptop = isLaptopProduct(product);
         const included = isCountedProduct(product);

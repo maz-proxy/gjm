@@ -61,6 +61,7 @@ as $$
 declare
   old_workspace_ids text[];
   new_workspace_ids text[];
+  removed_workspace jsonb;
 begin
   select array_agg(workspace.value ->> 'id' order by workspace.value ->> 'id')
     into old_workspace_ids
@@ -74,8 +75,42 @@ begin
       coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') <> 'super_admin'
       or coalesce(auth.jwt() -> 'app_metadata' ->> 'owner_username', '') <> 'indra'
     ) then
-    raise exception 'Only the workspace super admin can add or remove workspaces.'
-      using errcode = '42501';
+    for removed_workspace in
+      select old_workspace.value
+        from jsonb_array_elements(coalesce(old.data -> 'workspaces', '[]'::jsonb)) as old_workspace(value)
+       where not exists (
+         select 1
+           from jsonb_array_elements(coalesce(new.data -> 'workspaces', '[]'::jsonb)) as new_workspace(value)
+          where new_workspace.value ->> 'id' = old_workspace.value ->> 'id'
+       )
+    loop
+      if coalesce(removed_workspace ->> 'name', '') !~ '^Sesi [0-9]+$'
+        or jsonb_array_length(coalesce(removed_workspace -> 'data' -> 'products', '[]'::jsonb)) > 0
+        or jsonb_array_length(coalesce(removed_workspace -> 'data' -> 'scanEvents', '[]'::jsonb)) > 0
+        or jsonb_array_length(coalesce(removed_workspace -> 'data' -> 'manualEntries', '[]'::jsonb)) > 0
+        or jsonb_array_length(coalesce(removed_workspace -> 'data' -> 'historyEvents', '[]'::jsonb)) > 0
+        or jsonb_array_length(coalesce(removed_workspace -> 'data' -> 'workbookFiles', '[]'::jsonb)) > 0
+        or jsonb_object_length(coalesce(removed_workspace -> 'data' -> 'layoutQuantities', '{}'::jsonb)) > 0
+        or jsonb_object_length(coalesce(removed_workspace -> 'data' -> 'layoutNumbers', '{}'::jsonb)) > 0
+        or exists (
+          select 1
+            from jsonb_array_elements_text(coalesce(removed_workspace -> 'data' -> 'layouts', '[]'::jsonb)) as layout(value)
+           where layout.value !~ '^Rack ([1-9]|10)$'
+        )
+        or exists (
+          select 1
+            from jsonb_array_elements(coalesce(removed_workspace -> 'picNames', '[]'::jsonb)) as pic(value)
+           where btrim(pic.value #>> '{}') <> ''
+        )
+        or exists (
+          select 1
+            from jsonb_array_elements(coalesce(old.data -> 'sessions', '[]'::jsonb)) as session(value)
+           where session.value ->> 'workspaceId' = removed_workspace ->> 'id'
+        ) then
+        raise exception 'Only the workspace super admin can remove workspaces with data; staff may remove only untouched default sessions.'
+          using errcode = '42501';
+      end if;
+    end loop;
   end if;
 
   return new;
@@ -111,6 +146,7 @@ declare
   old_archive jsonb;
   new_archive jsonb;
   archive_workspace jsonb;
+  previous_archive_workspace jsonb;
   workspace_id text;
   archive_id text;
 begin
@@ -216,8 +252,17 @@ begin
         or archive_workspace -> 'data' -> 'activeSession' ->> 'id' is distinct from archive_id
         or archive_workspace -> 'data' -> 'activeSession' ->> 'status' is distinct from 'completed'
         or archive_workspace -> 'data' -> 'activeSession' ->> 'createdByUserId' is distinct from current_user_id then
-        raise exception 'A stock opname archive must match a completed session owned by the current user.'
-          using errcode = '42501';
+        select value into previous_archive_workspace
+          from jsonb_array_elements(coalesce(old.data -> 'workspaces', '[]'::jsonb))
+          where value ->> 'id' = new_archive ->> 'workspaceId'
+          limit 1;
+        if previous_archive_workspace is null
+          or previous_archive_workspace -> 'data' -> 'activeSession' ->> 'id' is distinct from archive_id
+          or previous_archive_workspace -> 'data' -> 'activeSession' ->> 'status' is distinct from 'active'
+          or previous_archive_workspace -> 'data' -> 'activeSession' ->> 'createdByUserId' is distinct from current_user_id then
+          raise exception 'A stock opname archive must match a completed session owned by the current user.'
+            using errcode = '42501';
+        end if;
       end if;
     end if;
   end loop;
