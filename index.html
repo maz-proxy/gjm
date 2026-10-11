@@ -723,6 +723,12 @@
     .compact-metrics .metric-value { font-size: 18px; margin-top: 5px; }
     .compact-metrics .metric-value small { font-size: 8px; }
     .compact-metrics .metric-note { font-size: 8px; margin-top: 2px; }
+    .master-warehouse-summary { align-items: center; background: linear-gradient(100deg, #fff, #fbfdfc); border: 1px solid var(--line); border-radius: 9px; box-shadow: 0 2px 8px rgba(25,55,50,.05); display: flex; flex-wrap: wrap; gap: 7px; margin: -3px 0 10px; padding: 8px 10px; }
+    .master-warehouse-title { color: var(--muted); flex: 0 0 auto; font-size: 9px; font-weight: 800; letter-spacing: .45px; text-transform: uppercase; }
+    .master-warehouse-item { align-items: baseline; background: #f2f7f5; border: 1px solid #e4eeea; border-radius: 6px; color: var(--ink); display: inline-flex; font-size: 9px; gap: 5px; max-width: 100%; padding: 4px 7px; }
+    .master-warehouse-item span { overflow-wrap: anywhere; }
+    .master-warehouse-item strong { color: var(--green); font-size: 10px; white-space: nowrap; }
+    .master-warehouse-empty { color: var(--muted); font-size: 9px; }
     .metric:hover, .layout-card:hover { border-color: #c4dcd3; box-shadow: 0 10px 24px rgba(25, 55, 50, .09); }
     .table-toolbar { background: linear-gradient(100deg, #fff, #f7faf9); }
     th { background: #f2f7f5; color: #627873; }
@@ -825,6 +831,8 @@
     }
     html[data-theme="dark"] .compact-metrics .metric,
     html[data-theme="dark"] .compact-metrics .metric:hover { background: var(--paper); }
+    html[data-theme="dark"] .master-warehouse-summary { background: var(--paper); border-color: var(--line); box-shadow: 0 2px 8px rgba(0,0,0,.22); }
+    html[data-theme="dark"] .master-warehouse-item { background: #203832; border-color: #304b40; }
     html[data-theme="dark"] body { background: radial-gradient(ellipse at 88% 0%, rgba(39, 91, 78, .2), transparent 36%), var(--canvas); }
     html[data-theme="dark"] .auth-card,
     html[data-theme="dark"] .metric,
@@ -1977,6 +1985,15 @@
       const laptopUnitCount = laptopProducts.reduce((total, product) => total + Number(product.stock || 0), 0);
       const nonLaptopUnitCount = nonLaptopProducts.reduce((total, product) => total + Number(product.stock || 0), 0);
       const totalUnitCount = laptopUnitCount + nonLaptopUnitCount;
+      const warehouseTotals = new Map();
+      for (const product of state.products) {
+        const warehouse = String(product.warehouse || "").trim() || "Tanpa Warehouse";
+        warehouseTotals.set(warehouse, (warehouseTotals.get(warehouse) || 0) + Number(product.stock || 0));
+      }
+      const warehouseSummary = [...warehouseTotals.entries()]
+        .sort(([a], [b]) => a.localeCompare(b, "id-ID"))
+        .map(([warehouse, quantity]) => `<span class="master-warehouse-item"><span>${escapeHtml(warehouse)}</span><strong>${formatNumber(quantity)} unit</strong></span>`)
+        .join("");
       const query = searchTerm.toLocaleLowerCase("id-ID");
       const serialsByProduct = new Map();
       for (const [serial, master] of Object.entries(state.serialMaster || {})) {
@@ -1993,6 +2010,7 @@
           <div class="metric"><div class="metric-top">Qty unit selain laptop <span class="metric-mark">▱</span></div><div class="metric-value">${formatNumber(nonLaptopUnitCount)} <small>unit</small></div><div class="metric-note">${formatNumber(nonLaptopProducts.length)} item selain laptop</div></div>
           <div class="metric"><div class="metric-top">Qty keseluruhan <span class="metric-mark">Σ</span></div><div class="metric-value">${formatNumber(totalUnitCount)} <small>unit</small></div><div class="metric-note">Laptop + selain laptop</div></div>
         </section>
+        <section class="master-warehouse-summary" aria-label="Quantity Master VEF per Warehouse"><span class="master-warehouse-title">Quantity per Warehouse</span>${warehouseSummary || '<span class="master-warehouse-empty">Belum ada data Warehouse.</span>'}</section>
         <section class="table-section"><div class="table-toolbar"><div class="table-title">Master barang <span class="table-count">${filtered.length} item · ${filtered.filter(isLaptopProduct).length} laptop · ${filtered.filter((product) => !isLaptopProduct(product)).length} bukan laptop</span></div><div class="filters"><div class="search-wrap"><span class="search-icon">⌕</span><input class="search-input" id="search-input" placeholder="Cari item code atau SN" value="${escapeHtml(searchTerm)}" aria-label="Cari master"></div></div></div><div class="table-scroll"><table><thead><tr><th>Item code</th><th>Item name</th><th>Item Group</th><th>Brand</th><th>Warehouse</th><th>VEF</th><th>Serial Number</th></tr></thead><tbody>${filtered.length ? filtered.map((product) => { const serials = serialsByProduct.get(product.id) || []; const laptop = isLaptopProduct(product); return `<tr class="${laptop ? "" : "non-laptop-row"}"><td class="number-cell">${escapeHtml(product.sku)}</td><td><div class="product-name">${escapeHtml(product.name)}</div>${laptop ? "" : `<span class="row-status non-laptop">Bukan laptop</span>`}</td><td>${escapeHtml(product.itemGroup || "-")}</td><td>${escapeHtml(product.brand || "-")}</td><td>${escapeHtml(product.warehouse || "-")}</td><td>${formatNumber(product.stock)}</td><td>${serials.length ? `<details class="serial-details"><summary>${formatNumber(serials.length)} SN · tampilkan</summary><div class="serial-list">${serials.map((serial) => `<span class="serial-token">${escapeHtml(serial)}</span>`).join("")}</div></details>` : "-"}</td></tr>`; }).join("") : `<tr><td class="empty-row" colspan="7">Unggah workbook untuk memuat master VEF.</td></tr>`}</tbody></table></div><div class="table-footer"><span>${state.serialMaster ? Object.keys(state.serialMaster).length : 0} serial terdaftar</span><span>${escapeHtml(state.importFile || "Belum ada workbook")}</span></div></section>`;
     }
 
