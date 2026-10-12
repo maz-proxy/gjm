@@ -29,7 +29,19 @@ create policy "Team members can read shared stock opname state"
 drop policy if exists "Team members can create shared stock opname state" on public.stock_opname_state;
 create policy "Team members can create shared stock opname state"
   on public.stock_opname_state for insert to authenticated
-  with check (auth.uid() = updated_by);
+  with check (
+    auth.uid() = updated_by
+    and (
+      (
+        coalesce(data -> 'resources' -> 'brands', '[]'::jsonb) = '[]'::jsonb
+        and coalesce(data -> 'resources' -> 'picNames', '[]'::jsonb) = '[]'::jsonb
+      )
+      or (
+        coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'super_admin'
+        and coalesce(auth.jwt() -> 'app_metadata' ->> 'owner_username', '') = 'indra'
+      )
+    )
+  );
 
 drop policy if exists "Team members can update shared stock opname state" on public.stock_opname_state;
 create policy "Team members can update shared stock opname state"
@@ -63,6 +75,17 @@ declare
   new_workspace_ids text[];
   removed_workspace jsonb;
 begin
+  if (
+    coalesce(old.data -> 'resources' -> 'brands', '[]'::jsonb) is distinct from coalesce(new.data -> 'resources' -> 'brands', '[]'::jsonb)
+    or coalesce(old.data -> 'resources' -> 'picNames', '[]'::jsonb) is distinct from coalesce(new.data -> 'resources' -> 'picNames', '[]'::jsonb)
+  ) and (
+    coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') <> 'super_admin'
+    or coalesce(auth.jwt() -> 'app_metadata' ->> 'owner_username', '') <> 'indra'
+  ) then
+    raise exception 'Only the workspace super admin can manage shared stock opname resources.'
+      using errcode = '42501';
+  end if;
+
   select array_agg(workspace.value ->> 'id' order by workspace.value ->> 'id')
     into old_workspace_ids
     from jsonb_array_elements(coalesce(old.data -> 'workspaces', '[]'::jsonb)) as workspace(value);
@@ -70,11 +93,7 @@ begin
     into new_workspace_ids
     from jsonb_array_elements(coalesce(new.data -> 'workspaces', '[]'::jsonb)) as workspace(value);
 
-  if old_workspace_ids is distinct from new_workspace_ids
-    and (
-      coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') <> 'super_admin'
-      or coalesce(auth.jwt() -> 'app_metadata' ->> 'owner_username', '') <> 'indra'
-    ) then
+  if old_workspace_ids is distinct from new_workspace_ids then
     for removed_workspace in
       select old_workspace.value
         from jsonb_array_elements(coalesce(old.data -> 'workspaces', '[]'::jsonb)) as old_workspace(value)
@@ -84,30 +103,18 @@ begin
           where new_workspace.value ->> 'id' = old_workspace.value ->> 'id'
        )
     loop
-      if coalesce(removed_workspace ->> 'name', '') !~ '^Sesi [0-9]+$'
+      if coalesce(removed_workspace ->> 'startedAt', '') <> ''
+        or coalesce(removed_workspace -> 'data' -> 'activeSession' ->> 'status', 'active') <> 'active'
         or jsonb_array_length(coalesce(removed_workspace -> 'data' -> 'products', '[]'::jsonb)) > 0
         or jsonb_array_length(coalesce(removed_workspace -> 'data' -> 'scanEvents', '[]'::jsonb)) > 0
         or jsonb_array_length(coalesce(removed_workspace -> 'data' -> 'manualEntries', '[]'::jsonb)) > 0
-        or jsonb_array_length(coalesce(removed_workspace -> 'data' -> 'historyEvents', '[]'::jsonb)) > 0
         or jsonb_array_length(coalesce(removed_workspace -> 'data' -> 'workbookFiles', '[]'::jsonb)) > 0
-        or jsonb_object_length(coalesce(removed_workspace -> 'data' -> 'layoutQuantities', '{}'::jsonb)) > 0
-        or jsonb_object_length(coalesce(removed_workspace -> 'data' -> 'layoutNumbers', '{}'::jsonb)) > 0
-        or exists (
-          select 1
-            from jsonb_array_elements_text(coalesce(removed_workspace -> 'data' -> 'layouts', '[]'::jsonb)) as layout(value)
-           where layout.value !~ '^Rack ([1-9]|10)$'
-        )
-        or exists (
-          select 1
-            from jsonb_array_elements(coalesce(removed_workspace -> 'picNames', '[]'::jsonb)) as pic(value)
-           where btrim(pic.value #>> '{}') <> ''
-        )
         or exists (
           select 1
             from jsonb_array_elements(coalesce(old.data -> 'sessions', '[]'::jsonb)) as session(value)
            where session.value ->> 'workspaceId' = removed_workspace ->> 'id'
         ) then
-        raise exception 'Only the workspace super admin can remove workspaces with data; staff may remove only untouched default sessions.'
+        raise exception 'Schedule cards can only be removed while empty or before stock opname starts.'
           using errcode = '42501';
       end if;
     end loop;
@@ -297,7 +304,8 @@ values (
   52428800,
   array[
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    'application/vnd.ms-excel'
+    'application/vnd.ms-excel',
+    'text/csv'
   ]
 )
 on conflict (id) do update
