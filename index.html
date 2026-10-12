@@ -1079,10 +1079,16 @@
     .recorded-view-tabs .active { background: var(--green); border-color: var(--green); color: #fff; }
     .recorded-sheet-content { max-height: 62vh; overflow: auto; }
     .recorded-sheet-content .completed-racks { margin: 0; }
-    .recorded-brand-picker { align-items: end; background: linear-gradient(130deg, #f5faf7, #edf5f1); border: 1px solid var(--line); border-radius: 14px; display: grid; gap: 14px; grid-template-columns: minmax(220px, 1fr) auto; margin-top: 18px; padding: 20px; }
-    .recorded-brand-picker .auth-field { margin: 0; }
-    .recorded-brand-picker select, .schedule-picker, .schedule-period-select, .workspace-count-mode { appearance: none; background-color: var(--paper); background-image: linear-gradient(45deg, transparent 50%, #60766f 50%), linear-gradient(135deg, #60766f 50%, transparent 50%); background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%; background-repeat: no-repeat; background-size: 5px 5px, 5px 5px; border: 1px solid #cedbd5; border-radius: 10px; color: var(--ink); min-height: 42px; padding: 0 34px 0 12px; width: 100%; }
-    .recorded-brand-picker .button { min-height: 42px; }
+    .recorded-brand-picker { align-items: end; background: linear-gradient(130deg, #f5faf7, #edf5f1); border: 1px solid var(--line); border-radius: 14px; display: grid; gap: 14px; grid-template-columns: minmax(220px, 1fr) auto; margin-top: 18px; padding: 18px 20px; }
+    .recorded-brand-picker .auth-field { gap: 8px; margin: 0; }
+    .recorded-brand-picker .auth-field > span { color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: .65px; text-transform: uppercase; }
+    .recorded-brand-picker select, .schedule-picker, .schedule-period-select, .workspace-count-mode { appearance: none; background-color: var(--paper); background-image: linear-gradient(45deg, transparent 50%, var(--green) 50%), linear-gradient(135deg, var(--green) 50%, transparent 50%); background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%; background-repeat: no-repeat; background-size: 5px 5px, 5px 5px; border: 1px solid #cedbd5; border-radius: 10px; color: var(--ink); min-height: 42px; padding: 0 38px 0 13px; width: 100%; }
+    .recorded-brand-picker select { border-color: var(--line); border-radius: 11px; box-shadow: 0 2px 5px rgba(25,55,50,.05), inset 0 1px rgba(255,255,255,.8); cursor: pointer; font-size: 12px; font-weight: 650; min-height: 46px; transition: border-color .16s ease, box-shadow .16s ease, background-color .16s ease; }
+    .recorded-brand-picker select:hover:not(:disabled) { border-color: color-mix(in srgb, var(--green) 45%, var(--line)); }
+    .recorded-brand-picker select:focus-visible { border-color: var(--green); box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 16%, transparent); outline: 0; }
+    .recorded-brand-picker select:disabled { cursor: not-allowed; opacity: .65; }
+    .recorded-brand-picker select option { background: var(--paper); color: var(--ink); }
+    .recorded-brand-picker .button { min-height: 46px; }
     .dashboard-warehouse-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
     .dashboard-warehouse-chip { background: #edf5f1; border: 1px solid #dfeae4; border-radius: 7px; color: #35594a; font-size: 10px; padding: 3px 7px; white-space: nowrap; }
     .dashboard-warehouse-chip strong { margin-left: 3px; }
@@ -1207,6 +1213,11 @@
     .pj-entry-button { background: #f4f7f6; border: 1px solid var(--line); border-radius: 8px; color: var(--green-dark); cursor: pointer; font-size: 12px; font-weight: 700; min-width: 80px; padding: 7px 9px; }
     .pj-entry-button:disabled { cursor: not-allowed; opacity: .55; }
     html[data-theme="dark"] .recorded-brand-picker { background: linear-gradient(130deg, #182b26, #1c322b); }
+    html[data-theme="dark"] .recorded-brand-picker select { background-color: #14211f; border-color: #3a514b; box-shadow: 0 2px 5px rgba(0,0,0,.16), inset 0 1px rgba(255,255,255,.03); color: var(--ink); }
+    html[data-accent="burgundy"] .recorded-brand-picker { background: linear-gradient(130deg, #fff5f8, #f6e8ed); }
+    html[data-accent="burgundy"] .recorded-brand-picker select { border-color: #e4cbd3; }
+    html[data-theme="dark"][data-accent="burgundy"] .recorded-brand-picker { background: linear-gradient(130deg, #302127, #261b20); }
+    html[data-theme="dark"][data-accent="burgundy"] .recorded-brand-picker select { background-color: #21171b; border-color: #523a43; }
     html[data-theme="dark"] .resource-create-form .auth-input,
     html[data-theme="dark"] .resource-row .auth-input { background: #14211f; border-color: #3a514b; color: var(--ink); }
     html[data-theme="dark"] .dashboard-warehouse-chip { background: #263a33; border-color: #354a41; color: #d8e8dd; }
