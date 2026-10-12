@@ -89,9 +89,10 @@
     .auth-copyright { color: #929a91; font-size: 11px; font-weight: 600; margin-left: auto; white-space: nowrap; }
     .auth-footer { bottom: 22px; color: #929a91; font-size: 10px; position: fixed; right: 26px; text-align: right; z-index: 21; }
     body:not(.auth-locked) .auth-footer, body.auth-checking .auth-footer { display: none; }
-    .about-workspace { align-items: center; display: flex; flex-direction: column; justify-content: center; min-height: calc(100vh - 130px); padding: 32px 16px 74px; position: relative; text-align: center; }
-    .about-workspace-message { color: var(--green-dark); font-family: "Space Grotesk", "Segoe UI", sans-serif; font-size: clamp(26px, 4vw, 42px); font-weight: 700; letter-spacing: -.5px; line-height: 1.25; max-width: 760px; }
-    .about-workspace-footer { bottom: 15px; color: var(--muted); font-size: 12px; font-weight: 700; left: 0; position: absolute; right: 0; }
+    .about-workspace { align-items: center; display: flex; flex-direction: column; justify-content: flex-start; min-height: calc(100vh - 190px); padding: 0 16px 48px; position: relative; text-align: center; }
+    .about-workspace-character { flex: 0 0 auto; height: clamp(260px, 49vh, 380px); margin-top: -100px; object-fit: contain; width: auto; }
+    .about-workspace-message { color: var(--green-dark); font-family: "Space Grotesk", "Segoe UI", sans-serif; font-size: clamp(24px, 3.2vw, 34px); font-weight: 700; letter-spacing: -.5px; line-height: 1.25; margin: 18px 0 0; max-width: 760px; }
+    .about-workspace-footer { bottom: 7px; color: var(--muted); font-size: 12px; font-weight: 700; left: calc(50% + 120px); position: fixed; transform: translateX(-50%); z-index: 2; }
     .about-workspace-footer small { display: block; font-size: 10px; font-weight: 400; margin-top: 4px; }
     body.auth-locked .developer-watermark { display: none; }
     .auth-card h1 { font-size: 25px; }
@@ -792,7 +793,14 @@
       .about-intro { border-radius: 12px; min-height: 290px; padding-bottom: 22px; }
       .about-intro-copy { max-width: calc(100% - 110px); }
       .about-character { height: 230px; right: 12px; }
+      .about-workspace { min-height: calc(100vh - 175px); padding-left: 8px; padding-right: 8px; }
+      .about-workspace-character { height: clamp(220px, 38vh, 300px); margin-top: -65px; max-width: 90vw; }
+      .about-workspace-message { font-size: clamp(22px, 6vw, 29px); }
+      .about-workspace-footer { bottom: calc(68px + env(safe-area-inset-bottom, 0px)); left: 50%; }
       .auth-footer { bottom: 13px; right: 14px; }
+    }
+    @media (min-width: 651px) and (max-width: 900px) {
+      .about-workspace-footer { left: calc(50% + 95px); }
     }
     .theme-toggle { align-items: center; background: rgba(255,255,255,.76); border: 1px solid var(--line); border-radius: 7px; color: var(--ink); display: inline-flex; flex: 0 0 auto; font-size: 10px; font-weight: 700; gap: 5px; justify-content: center; min-height: 29px; padding: 4px 8px; transition: background .2s ease, border-color .2s ease, color .2s ease; }
     .theme-toggle:hover { background: #fff; border-color: #b8cfc6; }
@@ -3420,7 +3428,7 @@
     }
 
     function renderAboutWorkspace() {
-      return `${navMarkup()}<section class="about-workspace"><p class="about-workspace-message">Aktifitas Stock Opname lebih mudah cepat dan informatif.</p><footer class="about-workspace-footer">Developed by M-Maz<small>© 2026 M-Maz. All rights reserved.</small></footer></section>`;
+      return `${navMarkup()}<section class="about-workspace"><img class="about-workspace-character" src="./assets/about-workspace-character.png" alt="Maskot M-Maz memberi tanda jempol"><p class="about-workspace-message">Aktifitas Stock Opname lebih mudah cepat dan informatif.</p><footer class="about-workspace-footer">Developed by M-Maz<small>© 2026 M-Maz. All rights reserved.</small></footer></section>`;
     }
 
     function renderDataResourceList(type, title, description) {
