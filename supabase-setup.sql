@@ -136,11 +136,6 @@ begin
         or jsonb_array_length(coalesce(removed_workspace -> 'data' -> 'scanEvents', '[]'::jsonb)) > 0
         or jsonb_array_length(coalesce(removed_workspace -> 'data' -> 'manualEntries', '[]'::jsonb)) > 0
         or jsonb_array_length(coalesce(removed_workspace -> 'data' -> 'workbookFiles', '[]'::jsonb)) > 0
-        or exists (
-          select 1
-            from jsonb_array_elements(coalesce(old.data -> 'sessions', '[]'::jsonb)) as session(value)
-           where session.value ->> 'workspaceId' = removed_workspace ->> 'id'
-        )
       ) and not (
         coalesce(removed_workspace -> 'data' -> 'activeSession' ->> 'status', 'active') = 'active'
         and (
@@ -158,13 +153,8 @@ begin
             from jsonb_array_elements(coalesce(old.data -> 'workbookFiles', '[]'::jsonb)) as workbook(value)
            where workbook.value ->> 'sessionId' = removed_session_id
         )
-        and not exists (
-          select 1
-            from jsonb_array_elements(coalesce(old.data -> 'sessions', '[]'::jsonb)) as session(value)
-           where session.value ->> 'workspaceId' = removed_workspace ->> 'id'
-        )
       ) then
-        raise exception 'Schedule cards can only be removed before workbook upload or before stock opname starts.'
+        raise exception 'Schedule cards can only be removed by their owner while the active session has no uploaded workbook.'
           using errcode = '42501';
       end if;
     end loop;

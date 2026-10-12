@@ -1778,8 +1778,7 @@
         && !(data.products || []).length
         && !(data.scanEvents || []).length
         && !(data.manualEntries || []).length
-        && !(data.workbookFiles || []).length
-        && !state.sessions.some((session) => session.workspaceId === workspace.id));
+        && !(data.workbookFiles || []).length);
       return removableBeforeStart || canDeleteUnuploadedWorkspace(workspace) || canCancelEmptyStartedWorkspace(workspace);
     }
     function workspaceHasActiveWorkbook(workspace) {
@@ -1810,7 +1809,6 @@
       return Boolean(workspace
         && session?.status === "active"
         && !workspaceHasActiveWorkbook(workspace)
-        && !state.sessions.some((item) => item.workspaceId === workspace.id)
         && (isSuperAdmin() || workspaceIsOwnedByCurrentUser(workspace)));
     }
     function canCancelEmptyStartedWorkspace(workspace) {
@@ -1832,8 +1830,7 @@
         && !data.importDownloadedAt
         && !data.importUploadedAt
         && !Object.keys(data.layoutQuantities || {}).length
-        && !Object.keys(data.layoutNumbers || {}).length
-        && !state.sessions.some((session) => session.workspaceId === workspace.id));
+        && !Object.keys(data.layoutNumbers || {}).length);
     }
     function workspaceHasStarted(workspace) {
       const data = workspace?.data;
@@ -3809,10 +3806,10 @@
         ? canCancelEmptyStartedWorkspace(workspace)
           ? `Sesi "${workspace.name || "Tanpa nama"}" berstatus berjalan tetapi belum memiliki data VEF, scan, manual, PJ, atau arsip. Sesi kosong ini akan dibatalkan dan dihapus permanen.`
           : canDeleteUnuploadedWorkspace(workspace)
-            ? `Sesi "${workspace.name || "Tanpa nama"}" belum memiliki file VEF pada sesi aktif. Seluruh data sesi dan arsip terkait akan dihapus permanen.`
+            ? `Kartu sesi "${workspace.name || "Tanpa nama"}" belum memiliki file VEF. Kartu dan data sesi aktif akan dihapus; arsip stock opname yang telah selesai tetap tersimpan.`
           : `Sesi "${workspace.name || "Tanpa nama"}", seluruh data master, scan, aktivitas, arsip stock opname, dan file XLSX terkait akan dihapus permanen. Tindakan ini tidak dapat dibatalkan.`
         : canDeleteUnuploadedWorkspace(workspace)
-          ? `Sesi "${workspace.name || "Tanpa nama"}" belum memiliki file VEF pada sesi aktif. Seluruh data di kartu sesi ini akan dihapus permanen.`
+          ? `Kartu sesi "${workspace.name || "Tanpa nama"}" belum memiliki file VEF. Kartu dan data sesi aktif akan dihapus; arsip stock opname yang telah selesai tetap tersimpan.`
           : `Kartu Jadwal "${workspace.name || "Tanpa nama"}" yang belum dimulai akan dihapus.`;
       document.getElementById("delete-workspace-dialog").showModal();
     }
@@ -3834,26 +3831,13 @@
         workspace.scheduleOwnerUsername = authSession.user.user_metadata?.username || authSession.user.email || "";
       }
       if (wasCurrentWorkspace) persist();
-      const archivedWorkbooks = [
-        ...(workspace.data.workbookFiles || []),
-        ...state.sessions.filter((session) => session.workspaceId === workspaceId).flatMap((session) => session.workbooks || [])
-      ];
-      try {
-        await removeArchivedWorkbookFiles(archivedWorkbooks);
-      } catch (error) {
-        notify(error instanceof Error ? error.message : "File arsip gagal dihapus.");
-        return;
-      }
-      const deletedSessionIds = new Set(state.sessions.filter((session) => session.workspaceId === workspaceId).map((session) => session.id));
       state.workspaces = state.workspaces.filter((item) => item.id !== workspaceId);
-      state.sessions = state.sessions.filter((session) => session.workspaceId !== workspaceId);
       normalizeWorkspaceScheduleCards(state.workspaces, state.sessions);
       if (wasCurrentWorkspace || !state.workspaces.some((item) => item.id === state.currentWorkspaceId)) {
         const nextWorkspace = state.workspaces.find((item) => !item.schedulePlaceholder) || state.workspaces.find((item) => item.schedulePlaceholder);
         state.currentWorkspaceId = nextWorkspace.id;
         Object.assign(state, snapshotWorkspaceData(nextWorkspace.data));
       }
-      if (deletedSessionIds.has(selectedCompletedSessionId)) selectedCompletedSessionId = "";
       pendingWorkspaceDeletionId = "";
       document.getElementById("delete-workspace-dialog").close();
       persist();
