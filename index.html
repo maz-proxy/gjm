@@ -1639,13 +1639,36 @@
     }
     function canRemoveWorkspace(workspace) {
       const data = workspace?.data || {};
-      return Boolean(workspace
+      const removableBeforeStart = Boolean(workspace
         && !workspaceHasStarted(workspace)
         && data.activeSession?.status !== "completed"
         && !(data.products || []).length
         && !(data.scanEvents || []).length
         && !(data.manualEntries || []).length
         && !(data.workbookFiles || []).length
+        && !state.sessions.some((session) => session.workspaceId === workspace.id));
+      return removableBeforeStart || canCancelEmptyStartedWorkspace(workspace);
+    }
+    function canCancelEmptyStartedWorkspace(workspace) {
+      const data = workspace?.data || {};
+      const sessionId = data.activeSession?.id;
+      return Boolean(isSuperAdmin()
+        && workspace
+        && data.activeSession?.status === "active"
+        && workspace.startedAt
+        && !(data.products || []).length
+        && !Object.keys(data.serialMaster || {}).length
+        && !(data.scanEvents || []).length
+        && !(data.manualEntries || []).length
+        && !(data.pjEntries || []).length
+        && !(data.workbookFiles || []).length
+        && !(state.workbookFiles || []).some((workbook) => workbook.sessionId === sessionId)
+        && !data.importFile
+        && !data.importMessage
+        && !data.importDownloadedAt
+        && !data.importUploadedAt
+        && !Object.keys(data.layoutQuantities || {}).length
+        && !Object.keys(data.layoutNumbers || {}).length
         && !state.sessions.some((session) => session.workspaceId === workspace.id));
     }
     function workspaceHasStarted(workspace) {
@@ -3231,8 +3254,8 @@
         const period = normalizeWorkspacePeriod(workspace.period);
         const summaryPicNames = (workspace.picNames || []).filter(Boolean).map(escapeHtml).join(" & ") || "PIC belum diisi";
         const modeDisabled = !canEdit || isCompleted;
-        const canDelete = canRemoveWorkspace(workspace) && state.workspaces.length > 1;
-        const deleteButton = `<button class="rack-delete-button schedule-delete-button" type="button" data-delete-workspace="${escapeHtml(workspace.id)}" aria-label="Hapus kartu ${escapeHtml(workspace.name || "Jadwal")}" title="${state.workspaces.length <= 1 ? "Minimal satu sesi harus dipertahankan." : canDelete ? "Hapus kartu yang belum dimulai" : "Kartu hanya dapat dihapus sebelum stock opname dimulai"}" ${canDelete ? "" : "disabled"}>−</button>`;
+        const canDelete = canRemoveWorkspace(workspace) && (state.workspaces.length > 1 || canCancelEmptyStartedWorkspace(workspace));
+        const deleteButton = `<button class="rack-delete-button schedule-delete-button" type="button" data-delete-workspace="${escapeHtml(workspace.id)}" aria-label="${canCancelEmptyStartedWorkspace(workspace) ? "Batalkan sesi kosong" : "Hapus kartu"} ${escapeHtml(workspace.name || "Jadwal")}" title="${canDelete ? canCancelEmptyStartedWorkspace(workspace) ? "Batalkan sesi berjalan yang belum memiliki data" : "Hapus kartu yang belum dimulai" : state.workspaces.length <= 1 ? "Minimal satu sesi harus dipertahankan." : "Kartu hanya dapat dihapus sebelum stock opname dimulai"}" ${canDelete ? "" : "disabled"}>−</button>`;
         return `<details class="schedule-card ${isCurrent ? "current" : ""}">
           <summary class="schedule-card-summary" aria-label="${escapeHtml(workspace.name || "Nama Brand belum diisi")}, ${status}. Klik untuk melihat detail.">
             <span class="schedule-summary-copy"><strong class="schedule-summary-title">${escapeHtml(workspace.name || "Nama Brand belum diisi")}</strong><span class="schedule-summary-meta"><span data-workspace-schedule-summary="${escapeHtml(workspace.id)}">${month} · ${period}</span> · ${countModeLabel(countMode)} · ${formatNumber(stats.countedSkus)} item · ${formatNumber(serials)} SN · ${summaryPicNames}</span></span>
@@ -3409,13 +3432,15 @@
         notify("Kartu hanya dapat dihapus saat kosong atau sebelum stock opname dimulai.");
         return;
       }
-      if (state.workspaces.length <= 1) {
+      if (state.workspaces.length <= 1 && !canCancelEmptyStartedWorkspace(workspace)) {
         notify("Minimal satu sesi harus dipertahankan.");
         return;
       }
       pendingWorkspaceDeletionId = workspaceId;
       document.getElementById("delete-workspace-message").textContent = isSuperAdmin()
-        ? `Sesi "${workspace.name || "Tanpa nama"}", seluruh data master, scan, aktivitas, arsip stock opname, dan file XLSX terkait akan dihapus permanen. Tindakan ini tidak dapat dibatalkan.`
+        ? canCancelEmptyStartedWorkspace(workspace)
+          ? `Sesi "${workspace.name || "Tanpa nama"}" berstatus berjalan tetapi belum memiliki data VEF, scan, manual, PJ, atau arsip. Sesi kosong ini akan dibatalkan dan dihapus permanen.`
+          : `Sesi "${workspace.name || "Tanpa nama"}", seluruh data master, scan, aktivitas, arsip stock opname, dan file XLSX terkait akan dihapus permanen. Tindakan ini tidak dapat dibatalkan.`
         : `Kartu Jadwal "${workspace.name || "Tanpa nama"}" yang belum dimulai akan dihapus.`;
       document.getElementById("delete-workspace-dialog").showModal();
     }
@@ -3428,7 +3453,7 @@
         notify("Kartu ini tidak dapat dihapus karena stock opname sudah dimulai.");
         return;
       }
-      if (!workspace || state.workspaces.length <= 1) {
+      if (!workspace || (state.workspaces.length <= 1 && !canCancelEmptyStartedWorkspace(workspace))) {
         pendingWorkspaceDeletionId = "";
         document.getElementById("delete-workspace-dialog").close();
         notify(workspace ? "Minimal satu sesi harus dipertahankan." : "Sesi tidak ditemukan. Daftar sesi tidak berubah.");
@@ -3447,7 +3472,11 @@
         return;
       }
       if (workspaceId === state.currentWorkspaceId) {
-        const nextWorkspace = state.workspaces.find((item) => item.id !== workspaceId);
+        let nextWorkspace = state.workspaces.find((item) => item.id !== workspaceId);
+        if (!nextWorkspace) {
+          nextWorkspace = createWorkspace("", emptyWorkspaceData(), true);
+          state.workspaces.push(nextWorkspace);
+        }
         state.currentWorkspaceId = nextWorkspace.id;
         Object.assign(state, snapshotWorkspaceData(nextWorkspace.data));
       }
