@@ -1299,10 +1299,6 @@
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <input class="upload-input" id="workbook-input" type="file" accept=".xlsx,.xls,.csv" aria-label="Pilih workbook atau file CSV stock opname">
-  <dialog id="recorded-brand-dialog" class="feature-dialog">
-    <div class="dialog-head"><div><div class="dialog-title">Pilih Nama Brand</div><div class="dialog-subtitle">Pilih brand untuk melihat arsip stock opname yang sudah selesai.</div></div><button class="dialog-close" type="button" data-close="recorded-brand-dialog" aria-label="Tutup">×</button></div>
-    <form id="recorded-brand-form" class="feature-dialog-form"><label class="auth-field"><span>Nama Brand</span><select class="select-input" id="recorded-brand-name" required></select></label><div class="dialog-actions"><button class="button button-secondary" type="button" data-close="recorded-brand-dialog">Batal</button><button class="button button-primary" type="submit">Pilih periode</button></div></form>
-  </dialog>
   <dialog id="recorded-period-dialog" class="feature-dialog">
     <div class="dialog-head"><div><div class="dialog-title" id="recorded-period-title">Nama Brand</div><div class="dialog-subtitle">Tentukan bulan dan week sesi yang ingin ditinjau.</div></div><button class="dialog-close" type="button" data-close="recorded-period-dialog" aria-label="Tutup">×</button></div>
     <form id="recorded-period-form" class="feature-dialog-form"><label class="auth-field"><span>Bulan</span><select class="select-input" id="recorded-period-month" required></select></label><label class="auth-field"><span>Week</span><select class="select-input" id="recorded-period-week" required><option value="Week 1">Week 1</option><option value="Week 2">Week 2</option></select></label><div class="dialog-actions"><button class="button button-secondary" type="button" data-close="recorded-period-dialog">Kembali</button><button class="button button-primary" type="submit">View</button></div></form>
@@ -1562,6 +1558,7 @@
     Object.assign(state, snapshotWorkspaceData(state));
     let currentPage = "opname";
     let selectedCompletedSessionId = "";
+    let selectedRecordedBrand = "";
     let selectedRecordedSessionId = "";
     let selectedRecordedSheet = "layouts";
     let pendingPjProductId = "";
@@ -3356,20 +3353,30 @@
       const emptyMessage = sheet === "recap" ? "Belum ada item bermasalah. Semua item sesuai dengan VEF." : "Data Result SO tidak tersedia.";
       return `<section class="table-section"><div class="table-toolbar"><div class="table-title">${title} <span class="table-count">${visibleProducts.length} item · hanya-baca</span></div></div><div class="table-scroll"><table><thead><tr><th>No</th><th>Item / item code</th><th>Brand</th><th>Warehouse</th><th>VEF</th><th>SCAN</th><th>MANUAL</th><th>PJ</th><th>Selisih</th><th>Check</th><th>Note</th></tr></thead><tbody>${rows || `<tr><td class="empty-row" colspan="11">${emptyMessage}</td></tr>`}</tbody></table></div></section>`;
     }
-    function openRecordedBrandDialog() {
-      const brands = [...new Set(state.sessions.map((session) => session.workspaceName).filter(Boolean))].sort((a, b) => a.localeCompare(b, "id-ID"));
-      const select = document.getElementById("recorded-brand-name");
-      select.innerHTML = brands.map((brand) => `<option value="${escapeHtml(brand)}">${escapeHtml(brand)}</option>`).join("");
-      const selected = document.getElementById("recorded-brand-select")?.value;
-      if (selected && brands.includes(selected)) select.value = selected;
-      if (!brands.length) {
-        notify("Belum ada arsip stock opname yang selesai.");
+    function openRecordedPeriodDialog() {
+      const brand = document.getElementById("recorded-brand-select")?.value;
+      if (!brand) {
+        notify("Pilih Nama Brand terlebih dahulu.");
+        document.getElementById("recorded-brand-select")?.focus();
         return;
       }
-      document.getElementById("recorded-brand-dialog").showModal();
+      const sessions = state.sessions
+        .filter((session) => session.workspaceName === brand && session.snapshot)
+        .sort((a, b) => new Date(b.finishedAt) - new Date(a.finishedAt));
+      if (!sessions.length) {
+        notify(`Belum ada arsip selesai untuk ${brand}.`);
+        return;
+      }
+      selectedRecordedBrand = brand;
+      document.getElementById("recorded-period-title").textContent = brand;
+      const monthSelect = document.getElementById("recorded-period-month");
+      monthSelect.innerHTML = WORKSPACE_MONTHS.map((month) => `<option value="${month}">${month}</option>`).join("");
+      monthSelect.value = archivedSessionMonth(sessions[0]);
+      document.getElementById("recorded-period-week").value = archivedSessionWeek(sessions[0]);
+      document.getElementById("recorded-period-dialog").showModal();
     }
     function showRecordedSession() {
-      const brand = document.getElementById("recorded-brand-name").value;
+      const brand = selectedRecordedBrand;
       const month = document.getElementById("recorded-period-month").value;
       const week = document.getElementById("recorded-period-week").value;
       const session = state.sessions.filter((item) => item.workspaceName === brand && archivedSessionMonth(item) === month && archivedSessionWeek(item) === week && item.snapshot).sort((a, b) => new Date(b.finishedAt) - new Date(a.finishedAt))[0];
@@ -3908,7 +3915,7 @@
       document.getElementById("finish-button")?.addEventListener("click", openFinishDialog);
       document.getElementById("new-session-button")?.addEventListener("click", startNewSession);
       document.getElementById("workbook-input").addEventListener("change", importWorkbook);
-      document.getElementById("open-recorded-brand")?.addEventListener("click", openRecordedBrandDialog);
+      document.getElementById("open-recorded-brand")?.addEventListener("click", openRecordedPeriodDialog);
       document.querySelectorAll("[data-pj-product]").forEach((button) => button.addEventListener("click", () => openPjEntryDialog(button.dataset.pjProduct)));
       document.querySelectorAll(".schedule-card-summary").forEach((summary) => summary.addEventListener("click", () => {
         const selectedCard = summary.closest("details.schedule-card");
@@ -4683,22 +4690,6 @@
       if (toggle) applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark", true);
       const accentToggle = event.target.closest("[data-accent-toggle]");
       if (accentToggle) applyAccent(document.documentElement.dataset.accent === "burgundy" ? "green" : "burgundy", true);
-    });
-    document.getElementById("recorded-brand-form").addEventListener("submit", (event) => {
-      event.preventDefault();
-      const brand = document.getElementById("recorded-brand-name").value;
-      const sessions = state.sessions.filter((session) => session.workspaceName === brand).sort((a, b) => new Date(b.finishedAt) - new Date(a.finishedAt));
-      if (!sessions.length) {
-        notify("Belum ada arsip selesai untuk brand ini.");
-        return;
-      }
-      document.getElementById("recorded-period-title").textContent = brand;
-      const monthSelect = document.getElementById("recorded-period-month");
-      monthSelect.innerHTML = WORKSPACE_MONTHS.map((month) => `<option value="${month}">${month}</option>`).join("");
-      monthSelect.value = archivedSessionMonth(sessions[0]);
-      document.getElementById("recorded-period-week").value = archivedSessionWeek(sessions[0]);
-      document.getElementById("recorded-brand-dialog").close();
-      document.getElementById("recorded-period-dialog").showModal();
     });
     document.getElementById("recorded-period-form").addEventListener("submit", (event) => {
       event.preventDefault();
