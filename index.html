@@ -3706,7 +3706,7 @@
       const audioContext = new AudioContextClass();
       const warning = status === "duplicate" || status === "not-found";
       const tones = warning
-        ? [{ frequency: 880, offset: 0 }, { frequency: 698, offset: 0.16 }, { frequency: 587, offset: 0.32 }]
+        ? [{ frequency: 155, offset: 0 }, { frequency: 146, offset: 0 }]
         : status === "match"
           ? [{ frequency: 1046, offset: 0 }, { frequency: 1568, offset: 0.12 }, { frequency: 1318, offset: 0.25 }]
           : [{ frequency: 660, offset: 0 }];
@@ -3715,10 +3715,10 @@
         const oscillator = audioContext.createOscillator();
         const gain = audioContext.createGain();
         const startAt = audioContext.currentTime + offset;
-        const duration = warning ? 0.24 : 0.3;
-        oscillator.type = warning ? "triangle" : "sine";
+        const duration = warning ? 0.55 : 0.3;
+        oscillator.type = warning ? "sawtooth" : "sine";
         oscillator.frequency.value = frequency;
-        gain.gain.setValueAtTime(warning ? 0.8 : 0.48, startAt);
+        gain.gain.setValueAtTime(warning ? 0.4 : 0.48, startAt);
         gain.gain.exponentialRampToValueAtTime(0.001, startAt + duration);
         oscillator.connect(gain);
         gain.connect(audioContext.destination);
