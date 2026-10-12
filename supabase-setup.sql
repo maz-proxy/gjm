@@ -77,12 +77,11 @@ set search_path = ''
 as $$
 declare
   current_user_id text := auth.uid()::text;
-  current_user_name text := lower(coalesce(
-    nullif(btrim(auth.jwt() -> 'user_metadata' ->> 'username'), ''),
-    nullif(btrim(auth.jwt() -> 'app_metadata' ->> 'username'), ''),
-    nullif(btrim(auth.jwt() ->> 'email'), ''),
-    ''
-  ));
+  current_user_names text[] := array_remove(array[
+    lower(nullif(btrim(auth.jwt() -> 'user_metadata' ->> 'username'), '')),
+    lower(nullif(btrim(auth.jwt() -> 'app_metadata' ->> 'username'), '')),
+    lower(nullif(btrim(auth.jwt() ->> 'email'), ''))
+  ], null);
   is_workspace_super_admin boolean :=
     coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'super_admin'
     and coalesce(auth.jwt() -> 'app_metadata' ->> 'owner_username', '') = 'indra';
@@ -91,7 +90,7 @@ declare
   removed_workspace jsonb;
   removed_session_id text;
   removed_owner_id text;
-  removed_owner_name text;
+  removed_owner_names text[];
 begin
   if (
     coalesce(old.data -> 'resources' -> 'brands', '[]'::jsonb) is distinct from coalesce(new.data -> 'resources' -> 'brands', '[]'::jsonb)
@@ -126,11 +125,10 @@ begin
         nullif(removed_workspace -> 'data' -> 'activeSession' ->> 'createdByUserId', ''),
         nullif(removed_workspace ->> 'scheduleOwnerUserId', '')
       );
-      removed_owner_name := lower(coalesce(
-        nullif(btrim(removed_workspace -> 'data' -> 'activeSession' ->> 'createdByUsername'), ''),
-        nullif(btrim(removed_workspace ->> 'scheduleOwnerUsername'), ''),
-        ''
-      ));
+      removed_owner_names := array_remove(array[
+        lower(nullif(btrim(removed_workspace -> 'data' -> 'activeSession' ->> 'createdByUsername'), '')),
+        lower(nullif(btrim(removed_workspace ->> 'scheduleOwnerUsername'), ''))
+      ], null);
       if (
         coalesce(removed_workspace ->> 'startedAt', '') <> ''
         or coalesce(removed_workspace -> 'data' -> 'activeSession' ->> 'status', 'active') <> 'active'
@@ -148,7 +146,7 @@ begin
         and (
           is_workspace_super_admin
           or coalesce(removed_owner_id = current_user_id, false)
-          or (removed_owner_id is null and removed_owner_name <> '' and removed_owner_name = current_user_name)
+          or (removed_owner_id is null and removed_owner_names && current_user_names)
         )
         and not exists (
           select 1
