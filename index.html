@@ -1231,6 +1231,7 @@
     const THEME_STORAGE_KEY = "ruangstok-theme";
     const PAGE_STORAGE_KEY = "ruangstok-last-page:";
     const warningScanAudio = new Audio("./assets/warning-duplicate.mp3");
+    const matchedScanAudio = new Audio("./assets/scan-match.mp3");
     const RESTORABLE_PAGES = new Set(["opname", "dashboard", "workspaces", "products", "layouts", "recap", "about", "admin-users", "data-resources", "completed-sessions", "history"]);
     const applyTheme = (theme, persist = false) => {
       const activeTheme = theme === "dark" ? "dark" : "light";
@@ -3700,10 +3701,11 @@
 
     function playScanBeep(status) {
       const warning = status === "duplicate" || status === "not-found";
-      if (warning) {
-        warningScanAudio.pause();
-        warningScanAudio.currentTime = 0;
-        warningScanAudio.play().catch((error) => console.warn("Bunyi peringatan scan tidak dapat diputar:", error));
+      if (warning || status === "match") {
+        const audio = warning ? warningScanAudio : matchedScanAudio;
+        audio.pause();
+        audio.currentTime = 0;
+        audio.play().catch((error) => console.warn("Bunyi scan tidak dapat diputar:", error));
         return;
       }
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -3712,9 +3714,7 @@
         return;
       }
       const audioContext = new AudioContextClass();
-      const tones = status === "match"
-        ? [{ frequency: 1046, offset: 0 }, { frequency: 1568, offset: 0.12 }, { frequency: 1318, offset: 0.25 }]
-        : [{ frequency: 660, offset: 0 }];
+      const tones = [{ frequency: 660, offset: 0 }];
       if (audioContext.state === "suspended") audioContext.resume().catch((error) => console.warn("Audio scan tidak dapat diaktifkan:", error));
       tones.forEach(({ frequency, offset }) => {
         const oscillator = audioContext.createOscillator();
