@@ -1408,6 +1408,8 @@
       } : {})
     });
     const DEFAULT_LAYOUTS = ["Rack 1"];
+    const EMPTY_WORKSPACE_TIMEOUT_MS = 5 * 60 * 1000;
+    const WORKSPACE_CLEANUP_INTERVAL_MS = 15 * 1000;
     const initialState = () => ({ products: [], serialMaster: {}, scanEvents: [], manualEntries: [], pjEntries: [], historyEvents: [], sessions: [], workbookFiles: [], resources: { brands: [], picNames: [] }, activeSession: makeSession(), countMode: "laptops", importFile: "", importMessage: "", importDownloadedAt: "", importUploadedAt: "", layouts: [...DEFAULT_LAYOUTS], layoutQuantities: {}, layoutNumbers: {} });
     const emptyWorkspaceData = () => ({ products: [], serialMaster: {}, scanEvents: [], manualEntries: [], pjEntries: [], historyEvents: [], workbookFiles: [], activeSession: makeSession(), countMode: "laptops", importFile: "", importMessage: "", importDownloadedAt: "", importUploadedAt: "", layouts: [...DEFAULT_LAYOUTS], layoutQuantities: {}, layoutNumbers: {} });
     const snapshotWorkspaceData = (source) => {
@@ -1428,7 +1430,54 @@
       for (const entry of manualEntries) boxTotals.set(entry.productId, (boxTotals.get(entry.productId) || 0) + Number(entry.quantity || 0));
       return { products: products.map((product) => ({ ...product, box: boxTotals.get(product.id) || 0 })), serialMaster: source.serialMaster || {}, scanEvents: source.scanEvents || [], manualEntries, pjEntries: Array.isArray(source.pjEntries) ? source.pjEntries : [], historyEvents: source.historyEvents || [], workbookFiles: Array.isArray(source.workbookFiles) ? source.workbookFiles : [], activeSession: source.activeSession || makeSession(), countMode: source.countMode === "all" ? "all" : "laptops", importFile: source.importFile || "", importMessage: source.importMessage || "", importDownloadedAt: source.importDownloadedAt || "", importUploadedAt: source.importUploadedAt || "", layouts, layoutQuantities: source.layoutQuantities || {}, layoutNumbers: source.layoutNumbers || {} };
     };
-    const createWorkspace = (name = "", data = emptyWorkspaceData()) => ({ id: crypto.randomUUID(), name, month: normalizeWorkspaceMonth(""), period: normalizeWorkspacePeriod(""), picNames: ["", ""], startedAt: "", data });
+    const createWorkspace = (name = "", data = emptyWorkspaceData(), schedulePlaceholder = false) => ({ id: crypto.randomUUID(), name, month: normalizeWorkspaceMonth(""), period: normalizeWorkspacePeriod(""), picNames: ["", ""], startedAt: "", scheduleCreatedAt: "", schedulePlaceholder, data });
+    const isEmptyScheduleWorkspace = (workspace, sessions = []) => {
+      const data = workspace?.data || {};
+      return Boolean(workspace
+        && !workspace.name?.trim()
+        && !(workspace.picNames || []).some((name) => name?.trim())
+        && !workspace.startedAt
+        && data.activeSession?.status !== "completed"
+        && !(data.products || []).length
+        && !Object.keys(data.serialMaster || {}).length
+        && !(data.scanEvents || []).length
+        && !(data.manualEntries || []).length
+        && !(data.pjEntries || []).length
+        && !(data.historyEvents || []).length
+        && !(data.workbookFiles || []).length
+        && !data.importFile
+        && !data.importDownloadedAt
+        && !data.importUploadedAt
+        && !data.importMessage
+        && data.countMode !== "all"
+        && normalizeWorkspaceMonth(workspace.month) === normalizeWorkspaceMonth("")
+        && normalizeWorkspacePeriod(workspace.period) === normalizeWorkspacePeriod("")
+        && !sessions.some((session) => session.workspaceId === workspace.id)
+        && !Object.keys(data.layoutQuantities || {}).length
+        && !Object.keys(data.layoutNumbers || {}).length
+        && (data.layouts || DEFAULT_LAYOUTS).length === DEFAULT_LAYOUTS.length
+        && (data.layouts || DEFAULT_LAYOUTS).every((layout, index) => layout === DEFAULT_LAYOUTS[index]));
+    };
+    const normalizeWorkspaceScheduleCards = (workspaces, sessions = []) => {
+      for (const workspace of workspaces) {
+        workspace.scheduleCreatedAt = typeof workspace.scheduleCreatedAt === "string" ? workspace.scheduleCreatedAt : "";
+        workspace.schedulePlaceholder = workspace.schedulePlaceholder === true;
+        if (workspace.schedulePlaceholder && !isEmptyScheduleWorkspace(workspace, sessions)) workspace.schedulePlaceholder = false;
+      }
+      let placeholder = workspaces.find((workspace) => workspace.schedulePlaceholder);
+      if (!placeholder) {
+        placeholder = workspaces.find((workspace) => !workspace.scheduleCreatedAt && isEmptyScheduleWorkspace(workspace, sessions));
+        if (placeholder) placeholder.schedulePlaceholder = true;
+      }
+      for (const workspace of workspaces) {
+        if (workspace === placeholder) {
+          workspace.schedulePlaceholder = true;
+          workspace.scheduleCreatedAt = "";
+        } else if (!workspace.schedulePlaceholder && !workspace.scheduleCreatedAt && isEmptyScheduleWorkspace(workspace, sessions)) {
+          workspace.scheduleCreatedAt = new Date().toISOString();
+        }
+      }
+    };
     let state;
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -1446,7 +1495,7 @@
     if (!Array.isArray(state.resources.picNames)) state.resources.picNames = [];
     for (const event of state.scanEvents) if (!event.id) event.id = crypto.randomUUID();
     if (!Array.isArray(state.workspaces) || !state.workspaces.length) {
-      const first = createWorkspace("", snapshotWorkspaceData(state));
+      const first = createWorkspace("", snapshotWorkspaceData(state), true);
       state.workspaces = [first];
       state.currentWorkspaceId = first.id;
     } else {
@@ -1484,9 +1533,11 @@
         && !(firstWorkspaceData.scanEvents || []).length
         && !(firstWorkspaceData.manualEntries || []).length
         && !(firstWorkspaceData.workbookFiles || []).some((workbook) => workbook.sessionId === firstWorkspaceData.activeSession?.id)) firstWorkspace.name = "";
+      normalizeWorkspaceScheduleCards(state.workspaces, state.sessions);
       if (!state.workspaces.some((workspace) => workspace.id === state.currentWorkspaceId)) state.currentWorkspaceId = state.workspaces[0].id;
       Object.assign(state, snapshotWorkspaceData(state.workspaces.find((workspace) => workspace.id === state.currentWorkspaceId).data));
     }
+    normalizeWorkspaceScheduleCards(state.workspaces, state.sessions);
     Object.assign(state, snapshotWorkspaceData(state));
     let currentPage = "opname";
     let selectedCompletedSessionId = "";
@@ -1517,6 +1568,7 @@
     let lastSyncedState = "";
     let syncTimer = null;
     let refreshTimer = null;
+    let workspaceCleanupTimer = null;
     let refreshInProgress = false;
     let syncErrorShown = false;
 
@@ -1795,7 +1847,7 @@
       if (!Array.isArray(normalized.resources.picNames)) normalized.resources.picNames = [];
       for (const event of normalized.scanEvents) if (!event.id) event.id = crypto.randomUUID();
       if (!Array.isArray(normalized.workspaces) || !normalized.workspaces.length) {
-        const first = createWorkspace("", snapshotWorkspaceData(normalized));
+        const first = createWorkspace("", snapshotWorkspaceData(normalized), true);
         normalized.workspaces = [first];
         normalized.currentWorkspaceId = first.id;
       } else {
@@ -1831,9 +1883,11 @@
           && !(firstWorkspaceData.scanEvents || []).length
           && !(firstWorkspaceData.manualEntries || []).length
           && !(firstWorkspaceData.workbookFiles || []).some((workbook) => workbook.sessionId === firstWorkspaceData.activeSession?.id)) firstWorkspace.name = "";
+        normalizeWorkspaceScheduleCards(normalized.workspaces, normalized.sessions);
         if (!normalized.workspaces.some((workspace) => workspace.id === normalized.currentWorkspaceId)) normalized.currentWorkspaceId = normalized.workspaces[0].id;
         Object.assign(normalized, snapshotWorkspaceData(normalized.workspaces.find((workspace) => workspace.id === normalized.currentWorkspaceId).data));
       }
+      normalizeWorkspaceScheduleCards(normalized.workspaces, normalized.sessions);
       if (!normalized.activeSession || typeof normalized.activeSession !== "object") normalized.activeSession = makeSession();
       Object.assign(normalized, snapshotWorkspaceData(normalized));
       return normalized;
@@ -1844,8 +1898,10 @@
       sharedStateReady = false;
       clearTimeout(syncTimer);
       clearInterval(refreshTimer);
+      clearInterval(workspaceCleanupTimer);
       clearInterval(idleCheckTimer);
       refreshTimer = null;
+      workspaceCleanupTimer = null;
       idleCheckTimer = null;
       if (idleActivityStorageKey) {
         try {
@@ -2018,6 +2074,7 @@
           state = normalizeSharedState(created.data);
           remoteUpdatedAt = created.updated_at;
         }
+        const removedExpiredEmptyWorkspaces = removeExpiredEmptyWorkspaces();
         normalizeWorkspaceClassifications();
         persistLocalState();
         lastSyncedState = stableSerialize(state);
@@ -2027,6 +2084,14 @@
         unlockApp(session);
         render();
         refreshTimer = setInterval(refreshSharedState, 8000);
+        workspaceCleanupTimer = setInterval(() => {
+          if (refreshInProgress || syncTimer) return;
+          if (removeExpiredEmptyWorkspaces()) {
+            persist();
+            render();
+          }
+        }, WORKSPACE_CLEANUP_INTERVAL_MS);
+        if (removedExpiredEmptyWorkspaces) persist();
       } catch (error) {
         document.body.classList.remove("auth-checking");
         showAuthMessage(databaseSetupHint(error));
@@ -3148,9 +3213,10 @@
     }
 
     function renderWorkspaceSchedule() {
-      const completedCount = state.workspaces.filter((workspace) => workspace.data.activeSession.status === "completed").length;
-      const activeCount = state.workspaces.filter((workspace) => workspaceHasStarted(workspace) && workspace.data.activeSession.status !== "completed").length;
-      const cards = state.workspaces.map((workspace) => {
+      const scheduleWorkspaces = state.workspaces.filter((workspace) => !workspace.schedulePlaceholder);
+      const completedCount = scheduleWorkspaces.filter((workspace) => workspace.data.activeSession.status === "completed").length;
+      const activeCount = scheduleWorkspaces.filter((workspace) => workspaceHasStarted(workspace) && workspace.data.activeSession.status !== "completed").length;
+      const cards = scheduleWorkspaces.map((workspace) => {
         const data = workspace.data;
         const isCurrent = workspace.id === state.currentWorkspaceId;
         const canEdit = canEditWorkspaceSession(workspace);
@@ -3208,7 +3274,7 @@
       }).join("");
       const addButton = '<button class="button button-primary" id="add-workspace-button" type="button">＋ Tambah Sesi</button>';
       return `${navMarkup()}<section class="page-head"><div><h1>Jadwal Stock Opname</h1><p class="subtitle">Atur ruang lingkup hitung, penanggung jawab, dan sesi kerja untuk setiap brand.</p></div></section>
-        <section class="schedule-overview" aria-label="Ringkasan jadwal stock opname"><div class="schedule-overview-copy"><div class="schedule-overview-kicker">Perencanaan stock opname</div><div class="schedule-overview-title">Semua sesi, tertata dalam satu tempat</div><div class="schedule-overview-description">Pilih mode perhitungan dan PIC untuk setiap brand. Data setiap sesi tetap terpisah.</div></div><div class="schedule-overview-stats"><div class="schedule-overview-stat"><strong>${state.workspaces.length}</strong><span>Total sesi</span></div><div class="schedule-overview-stat"><strong>${activeCount}</strong><span>Berjalan</span></div><div class="schedule-overview-stat"><strong>${completedCount}</strong><span>Selesai</span></div></div></section>
+        <section class="schedule-overview" aria-label="Ringkasan jadwal stock opname"><div class="schedule-overview-copy"><div class="schedule-overview-kicker">Perencanaan stock opname</div><div class="schedule-overview-title">Semua sesi, tertata dalam satu tempat</div><div class="schedule-overview-description">Pilih mode perhitungan dan PIC untuk setiap brand. Data setiap sesi tetap terpisah.</div></div><div class="schedule-overview-stats"><div class="schedule-overview-stat"><strong>${scheduleWorkspaces.length}</strong><span>Total sesi</span></div><div class="schedule-overview-stat"><strong>${activeCount}</strong><span>Berjalan</span></div><div class="schedule-overview-stat"><strong>${completedCount}</strong><span>Selesai</span></div></div></section>
         <section class="schedule-grid" aria-label="Daftar sesi stock opname">${cards || '<div class="schedule-empty">Belum ada sesi stock opname.</div>'}</section>
         ${addButton ? `<div class="schedule-add-row">${addButton}</div>` : ""}`;
     }
@@ -3265,8 +3331,30 @@
       persist();
     }
 
+    function removeExpiredEmptyWorkspaces(now = Date.now()) {
+      const expiredIds = new Set(state.workspaces
+        .filter((workspace) => !workspace.schedulePlaceholder
+          && isEmptyScheduleWorkspace(workspace, state.sessions)
+          && Number.isFinite(Date.parse(workspace.scheduleCreatedAt))
+          && now - Date.parse(workspace.scheduleCreatedAt) >= EMPTY_WORKSPACE_TIMEOUT_MS)
+        .map((workspace) => workspace.id));
+      if (!expiredIds.size) return false;
+      state.workspaces = state.workspaces.filter((workspace) => !expiredIds.has(workspace.id));
+      if (expiredIds.has(state.currentWorkspaceId)) {
+        let placeholder = state.workspaces.find((workspace) => workspace.schedulePlaceholder);
+        if (!placeholder) {
+          placeholder = createWorkspace("", emptyWorkspaceData(), true);
+          state.workspaces.push(placeholder);
+        }
+        state.currentWorkspaceId = placeholder.id;
+        Object.assign(state, snapshotWorkspaceData(placeholder.data));
+      }
+      return true;
+    }
+
     function addWorkspace() {
       const workspace = createWorkspace();
+      workspace.scheduleCreatedAt = new Date().toISOString();
       state.workspaces.push(workspace);
       persist();
       render();
