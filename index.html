@@ -409,7 +409,7 @@
     .schedule-overview::after { background: rgba(205,236,202,.12); border: 1px solid rgba(255,255,255,.12); border-radius: 50%; content: ""; height: 230px; position: absolute; right: 18%; top: -164px; width: 230px; }
     .schedule-overview-copy, .schedule-overview-stats { position: relative; z-index: 1; }
     .schedule-overview-kicker { color: #c5e0d4; font-size: 10px; font-weight: 800; letter-spacing: 1.1px; text-transform: uppercase; }
-    .schedule-overview-title { font-size: 18px; font-weight: 700; margin-top: 4px; }
+    .schedule-overview-title { color: #fff; font-size: clamp(26px, 3vw, 34px); font-weight: 700; letter-spacing: 0; line-height: 1.15; margin: 4px 0 0; }
     .schedule-overview-description { color: #d5e9df; font-size: 11px; margin-top: 3px; }
     .schedule-overview-stats { align-items: stretch; background: rgba(255,255,255,.13); border: 1px solid rgba(255,255,255,.22); border-radius: 11px; box-shadow: inset 0 1px rgba(255,255,255,.16), 0 4px 12px rgba(12,48,38,.12); display: grid; flex: 0 0 auto; grid-template-columns: repeat(3, minmax(76px, 1fr)); gap: 0; overflow: hidden; padding: 0; }
     .schedule-overview-stat { align-content: center; background: transparent; border: 0; border-radius: 0; box-shadow: none; min-width: 76px; padding: 9px 13px; text-align: center; }
@@ -3273,8 +3273,7 @@
         </details>`;
       }).join("");
       const addButton = '<button class="button button-primary" id="add-workspace-button" type="button">＋ Tambah Sesi</button>';
-      return `${navMarkup()}<section class="page-head"><div><h1>Jadwal Stock Opname</h1><p class="subtitle">Atur ruang lingkup hitung, penanggung jawab, dan sesi kerja untuk setiap brand.</p></div></section>
-        <section class="schedule-overview" aria-label="Ringkasan jadwal stock opname"><div class="schedule-overview-copy"><div class="schedule-overview-kicker">Perencanaan stock opname</div><div class="schedule-overview-title">Semua sesi, tertata dalam satu tempat</div><div class="schedule-overview-description">Pilih mode perhitungan dan PIC untuk setiap brand. Data setiap sesi tetap terpisah.</div></div><div class="schedule-overview-stats"><div class="schedule-overview-stat"><strong>${scheduleWorkspaces.length}</strong><span>Total sesi</span></div><div class="schedule-overview-stat"><strong>${activeCount}</strong><span>Berjalan</span></div><div class="schedule-overview-stat"><strong>${completedCount}</strong><span>Selesai</span></div></div></section>
+      return `${navMarkup()}<section class="schedule-overview" aria-label="Ringkasan jadwal stock opname"><div class="schedule-overview-copy"><div class="schedule-overview-kicker">Perencanaan stock opname</div><h1 class="schedule-overview-title">Jadwal Stock Opname</h1><div class="schedule-overview-description">Atur ruang lingkup hitung, penanggung jawab, dan sesi kerja untuk setiap brand.</div></div><div class="schedule-overview-stats"><div class="schedule-overview-stat"><strong>${scheduleWorkspaces.length}</strong><span>Total sesi</span></div><div class="schedule-overview-stat"><strong>${activeCount}</strong><span>Berjalan</span></div><div class="schedule-overview-stat"><strong>${completedCount}</strong><span>Selesai</span></div></div></section>
         <section class="schedule-grid" aria-label="Daftar sesi stock opname">${cards || '<div class="schedule-empty">Belum ada sesi stock opname.</div>'}</section>
         ${addButton ? `<div class="schedule-add-row">${addButton}</div>` : ""}`;
     }
