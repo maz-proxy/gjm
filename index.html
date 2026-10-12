@@ -581,6 +581,22 @@
     .form-field label { color: #596056; font-size: 10px; font-weight: 700; }
     .form-control { background: #fff; border: 1px solid #dfe3db; border-radius: 5px; height: 36px; outline: 0; padding: 0 9px; width: 100%; }
     .dialog-actions { background: #fafbf8; border-top: 1px solid var(--line); display: flex; gap: 8px; justify-content: flex-end; padding: 13px 21px; }
+    .recorded-period-dialog { background: #fff; border: 1px solid var(--line); border-radius: 15px; box-shadow: 0 24px 80px rgba(22,31,23,.24); overflow: hidden; }
+    .recorded-period-dialog .dialog-head { padding: 22px 25px 16px; }
+    .recorded-period-dialog .dialog-title { font-size: 17px; letter-spacing: -.2px; }
+    .recorded-period-dialog .dialog-close { align-items: center; border: 1px solid transparent; border-radius: 7px; display: inline-flex; height: 30px; justify-content: center; transition: background .15s ease, border-color .15s ease; width: 30px; }
+    .recorded-period-dialog .dialog-close:hover { background: var(--green-soft); border-color: var(--line); color: var(--green); }
+    .recorded-period-dialog .feature-dialog-form { display: grid; gap: 15px; padding: 18px 25px 0; }
+    .recorded-period-dialog .auth-field { gap: 7px; }
+    .recorded-period-dialog .auth-field > span { color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; }
+    .recorded-period-dialog .select-input { appearance: none; background-color: var(--paper); background-image: linear-gradient(45deg, transparent 50%, var(--green) 50%), linear-gradient(135deg, var(--green) 50%, transparent 50%); background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%; background-repeat: no-repeat; background-size: 5px 5px, 5px 5px; border-color: var(--line); border-radius: 10px; font-size: 12px; font-weight: 600; height: 42px; padding: 0 36px 0 12px; transition: border-color .15s ease, box-shadow .15s ease; }
+    .recorded-period-dialog .select-input:focus-visible { border-color: var(--green); box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 16%, transparent); outline: 0; }
+    .recorded-period-dialog .dialog-actions { margin: 2px 0 0; padding: 13px 0 18px; }
+    .recorded-period-dialog .dialog-actions { margin-left: -25px; margin-right: -25px; padding-left: 25px; padding-right: 25px; }
+    .recorded-period-availability { align-items: flex-start; background: #f1f7f4; border: 1px solid #dcebe3; border-radius: 9px; color: #3e6756; display: flex; font-size: 11px; gap: 9px; line-height: 1.5; padding: 10px 12px; }
+    .recorded-period-availability[hidden] { display: none; }
+    .recorded-period-availability::before { background: currentColor; border-radius: 50%; content: ""; flex: 0 0 7px; height: 7px; margin-top: 5px; }
+    .recorded-period-availability.empty { background: #fbf1f2; border-color: #efd9dc; color: #8b3a4a; }
     .confirm-body { color: #5f665c; font-size: 12px; line-height: 1.6; padding: 20px 21px; }
     .confirm-body strong { color: var(--ink); }
     .reset-password-dialog { overflow: hidden; }
@@ -1002,6 +1018,9 @@
     html[data-theme="dark"] .dialog-head { border-color: var(--line); }
     html[data-theme="dark"] dialog { background: var(--paper); color: var(--ink); }
     html[data-theme="dark"] .dialog-actions { background: #162320; border-color: var(--line); }
+    html[data-theme="dark"] .recorded-period-dialog .select-input { background-color: #14211f; border-color: var(--line); color: var(--ink); }
+    html[data-theme="dark"] .recorded-period-availability { background: #1c3029; border-color: #355347; color: #b7decb; }
+    html[data-theme="dark"] .recorded-period-availability.empty { background: #392428; border-color: #67404a; color: #f0aeba; }
     html[data-theme="dark"] .confirm-body { color: var(--muted); }
     html[data-theme="dark"] .theme-toggle { background: #22332f; border-color: #3a514b; color: #e3eeea; }
     html[data-theme="dark"] .theme-toggle:hover { background: #2a403a; border-color: #527467; }
@@ -1132,6 +1151,46 @@
     html[data-accent="burgundy"] .auth-card { background: #fff5f8; border-color: #e7cbd4; box-shadow: 0 22px 70px rgba(78,25,46,.2); }
     html[data-accent="burgundy"] .auth-input { background: #fffafb; border-color: #e4cbd3; }
     html[data-accent="burgundy"] .auth-input:focus { background: #fff; border-color: #b96a84; box-shadow: 0 0 0 3px rgba(132,43,75,.12); }
+    html[data-accent="burgundy"] .recorded-period-dialog { background: #fff9fb; border-color: #ead1d9; box-shadow: 0 24px 80px rgba(78,25,46,.24); }
+    html[data-accent="burgundy"] .recorded-period-dialog .dialog-head { border-color: #ead1d9; }
+    html[data-accent="burgundy"] .recorded-period-dialog .dialog-actions { background: #fdf7f9; border-color: #ead1d9; }
+    html[data-accent="burgundy"] .recorded-period-dialog .button-secondary { background: #fff; border-color: #ead1d9; color: #64273c; }
+    html[data-accent="burgundy"] .recorded-period-dialog .button-secondary:hover { background: #f8e9ee; border-color: #d9adba; }
+    html[data-accent="burgundy"] .recorded-period-availability { background: #f5e9ed; border-color: #ead1d9; color: #6b3447; }
+    html[data-accent="burgundy"] .recorded-period-availability.empty { background: #fbebee; border-color: #eccbd2; color: #8b3046; }
+    html[data-accent="burgundy"] .schedule-card,
+    html[data-accent="burgundy"] .schedule-empty { background: linear-gradient(155deg, #fff9fb, #f9eef2); border-color: #ead1d9; }
+    html[data-accent="burgundy"] .schedule-card:hover { border-color: #d9adba; box-shadow: 0 10px 25px rgba(78,25,46,.1); }
+    html[data-accent="burgundy"] .schedule-card.current { border-color: #b96a84; box-shadow: 0 0 0 2px rgba(132,43,75,.1), 0 8px 22px rgba(78,25,46,.08); }
+    html[data-accent="burgundy"] .schedule-card-head,
+    html[data-accent="burgundy"] .schedule-card-foot { border-color: #eadde1; }
+    html[data-accent="burgundy"] .schedule-card[open] > .schedule-card-summary { background: #f5e7ec; border-color: #ead1d9; color: #5d1c35; }
+    html[data-accent="burgundy"] .schedule-card[open] > .schedule-card-summary .schedule-summary-title { color: #5d1c35; }
+    html[data-accent="burgundy"] .schedule-card-number { background: linear-gradient(145deg, #fbecf1, #f2dfe6); border-color: #ead1d9; color: #842b4b; }
+    html[data-accent="burgundy"] .schedule-card-number small { background: #842b4b; }
+    html[data-accent="burgundy"] .schedule-current-badge { background: #f2e0e6; color: #742542; }
+    html[data-accent="burgundy"] .schedule-mode-box { background: linear-gradient(110deg, #f8ebef, #fff7f9); border-color: #ead8de; }
+    html[data-accent="burgundy"] .schedule-stat { background: #fff7f9; border-color: #efdee4; }
+    html[data-accent="burgundy"] .schedule-period-select,
+    html[data-accent="burgundy"] .schedule-card .workspace-count-mode,
+    html[data-accent="burgundy"] .schedule-card .workspace-name-input,
+    html[data-accent="burgundy"] .schedule-pic-field .workspace-name-input { background-color: #fffafb; border-color: #e4cbd3; color: #432431; }
+    html[data-accent="burgundy"] .schedule-period-select:focus,
+    html[data-accent="burgundy"] .schedule-card .workspace-count-mode:focus,
+    html[data-accent="burgundy"] .schedule-card .workspace-name-input:focus { border-color: #b96a84; box-shadow: 0 0 0 2px rgba(132,43,75,.1); }
+    html[data-accent="burgundy"] .layout-card { background: linear-gradient(145deg, #fffafb, #fdf4f7); border-color: #ead1d9; }
+    html[data-accent="burgundy"] .layout-card:hover { border-color: #d9adba; box-shadow: 0 10px 24px rgba(78,25,46,.1); }
+    html[data-accent="burgundy"] .layout-card-head { background: linear-gradient(110deg, #f8eaf0, #fff7f9); border-color: #ead8de; }
+    html[data-accent="burgundy"] .layout-card:focus-within .layout-card-head { background: #f2e1e7; }
+    html[data-accent="burgundy"] .layout-card.quantity-matched { background: linear-gradient(145deg, #fbf0f4, #f5e7ec); border-color: #ddbdc8; }
+    html[data-accent="burgundy"] .layout-card.quantity-matched .layout-card-head { background: linear-gradient(110deg, #f2e1e7, #fbf2f5); }
+    html[data-accent="burgundy"] .layout-card-foot { background: #fcf4f6; border-color: #ead8de; }
+    html[data-accent="burgundy"] .layout-form,
+    html[data-accent="burgundy"] .layout-manual-form { background: #fcf4f6; }
+    html[data-accent="burgundy"] .layout-scan-row,
+    html[data-accent="burgundy"] .layout-record-group + .layout-record-group { border-color: #ead8de; }
+    html[data-accent="burgundy"] .layout-quantity-status.match { color: #842b4b; }
+    html[data-accent="burgundy"] .manual-item-entry.is-latest { background: #f5e7ec; box-shadow: 0 0 0 2px rgba(132,43,75,.15); }
     html[data-accent="burgundy"] .sidebar { background: linear-gradient(180deg, #76233f 0%, #4e192e 100%); border-color: #4e192e; }
     html[data-accent="burgundy"] .nav-item.active { background: linear-gradient(100deg, #f4dfe7, #fbf0f3); box-shadow: inset 3px 0 #d9a1b4; color: #531a30; }
     html[data-accent="burgundy"] .nav-item.active .nav-icon { background: linear-gradient(145deg, #9a3b5e, #5d1c35); color: #f8dce6; }
@@ -1172,6 +1231,47 @@
     html[data-accent="burgundy"][data-theme="dark"] .auth-card { background: #302127; border-color: #523a43; }
     html[data-accent="burgundy"][data-theme="dark"] .auth-input { background: #21171b; border-color: #523a43; color: #f4dce4; }
     html[data-accent="burgundy"][data-theme="dark"] .auth-input:focus { background: #281b20; border-color: #b96a84; }
+    html[data-theme="dark"][data-accent="burgundy"] .recorded-period-dialog { background: #302127; border-color: #523a43; }
+    html[data-theme="dark"][data-accent="burgundy"] .recorded-period-dialog .dialog-head,
+    html[data-theme="dark"][data-accent="burgundy"] .recorded-period-dialog .dialog-actions { background: #281d22; border-color: #523a43; }
+    html[data-theme="dark"][data-accent="burgundy"] .recorded-period-dialog .select-input { background-color: #21171b; border-color: #634452; color: #f4dce4; }
+    html[data-theme="dark"][data-accent="burgundy"] .recorded-period-dialog .button-secondary { background: #3b2830; border-color: #634452; color: #f4dce4; }
+    html[data-theme="dark"][data-accent="burgundy"] .recorded-period-dialog .button-secondary:hover { background: #4a2e39; border-color: #9a5369; }
+    html[data-theme="dark"][data-accent="burgundy"] .recorded-period-availability { background: #392630; border-color: #634452; color: #ecc3d0; }
+    html[data-theme="dark"][data-accent="burgundy"] .recorded-period-availability.empty { background: #40252b; border-color: #76434e; color: #f0aeba; }
+    html[data-theme="dark"][data-accent="burgundy"] .schedule-card,
+    html[data-theme="dark"][data-accent="burgundy"] .schedule-empty { background: linear-gradient(155deg, #302127, #281d22); border-color: #523a43; }
+    html[data-theme="dark"][data-accent="burgundy"] .schedule-card:hover { border-color: #825264; box-shadow: 0 10px 25px rgba(0,0,0,.34); }
+    html[data-theme="dark"][data-accent="burgundy"] .schedule-card.current { border-color: #b96a84; box-shadow: 0 0 0 2px rgba(215,134,160,.12), 0 8px 22px rgba(0,0,0,.28); }
+    html[data-theme="dark"][data-accent="burgundy"] .schedule-card-head,
+    html[data-theme="dark"][data-accent="burgundy"] .schedule-card-foot { border-color: #523a43; }
+    html[data-theme="dark"][data-accent="burgundy"] .schedule-card[open] > .schedule-card-summary { background: #482b37; border-color: #523a43; color: #f4dce4; }
+    html[data-theme="dark"][data-accent="burgundy"] .schedule-card[open] > .schedule-card-summary .schedule-summary-title { color: #f4dce4; }
+    html[data-theme="dark"][data-accent="burgundy"] .schedule-card-number { background: linear-gradient(145deg, #482a36, #38232b); border-color: #634452; color: #f0b6c7; }
+    html[data-theme="dark"][data-accent="burgundy"] .schedule-card-number small { background: #d786a0; color: #321421; }
+    html[data-theme="dark"][data-accent="burgundy"] .schedule-current-badge { background: #482b37; color: #f0b6c7; }
+    html[data-theme="dark"][data-accent="burgundy"] .schedule-mode-box { background: linear-gradient(110deg, #392630, #302127); border-color: #523a43; }
+    html[data-theme="dark"][data-accent="burgundy"] .schedule-stat { background: #281d22; border-color: #523a43; }
+    html[data-theme="dark"][data-accent="burgundy"] .schedule-period-select,
+    html[data-theme="dark"][data-accent="burgundy"] .schedule-card .workspace-count-mode,
+    html[data-theme="dark"][data-accent="burgundy"] .schedule-card .workspace-name-input,
+    html[data-theme="dark"][data-accent="burgundy"] .schedule-pic-field .workspace-name-input { background-color: #21171b; border-color: #634452; color: #f4dce4; }
+    html[data-theme="dark"][data-accent="burgundy"] .schedule-period-select:focus,
+    html[data-theme="dark"][data-accent="burgundy"] .schedule-card .workspace-count-mode:focus,
+    html[data-theme="dark"][data-accent="burgundy"] .schedule-card .workspace-name-input:focus { background-color: #281b20; border-color: #b96a84; }
+    html[data-theme="dark"][data-accent="burgundy"] .layout-card { background: linear-gradient(145deg, #302127, #281d22); border-color: #523a43; }
+    html[data-theme="dark"][data-accent="burgundy"] .layout-card:hover { border-color: #825264; }
+    html[data-theme="dark"][data-accent="burgundy"] .layout-card-head { background: linear-gradient(110deg, #392630, #302127); border-color: #523a43; }
+    html[data-theme="dark"][data-accent="burgundy"] .layout-card:focus-within .layout-card-head { background: #482b37; }
+    html[data-theme="dark"][data-accent="burgundy"] .layout-card.quantity-matched { background: linear-gradient(145deg, #392630, #302127); border-color: #765064; }
+    html[data-theme="dark"][data-accent="burgundy"] .layout-card.quantity-matched .layout-card-head { background: linear-gradient(110deg, #482b37, #392630); }
+    html[data-theme="dark"][data-accent="burgundy"] .layout-card-foot,
+    html[data-theme="dark"][data-accent="burgundy"] .layout-form,
+    html[data-theme="dark"][data-accent="burgundy"] .layout-manual-form { background: #281d22; border-color: #523a43; }
+    html[data-theme="dark"][data-accent="burgundy"] .layout-scan-row,
+    html[data-theme="dark"][data-accent="burgundy"] .layout-record-group + .layout-record-group { border-color: #523a43; }
+    html[data-theme="dark"][data-accent="burgundy"] .layout-quantity-status.match { color: #f0b6c7; }
+    html[data-theme="dark"][data-accent="burgundy"] .manual-item-entry.is-latest { background: #482b37; }
     html[data-accent="burgundy"][data-theme="dark"] .sidebar { background: linear-gradient(180deg, #4a1a2d 0%, #321421 100%); border-color: #321421; }
     html[data-accent="burgundy"][data-theme="dark"] .nav-item.active { background: linear-gradient(100deg, #482330, #3a1d29); color: #f4dce4; }
     html[data-accent="burgundy"][data-theme="dark"] .button-primary,
@@ -1299,9 +1399,9 @@
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <input class="upload-input" id="workbook-input" type="file" accept=".xlsx,.xls,.csv" aria-label="Pilih workbook atau file CSV stock opname">
-  <dialog id="recorded-period-dialog" class="feature-dialog">
+  <dialog id="recorded-period-dialog" class="feature-dialog recorded-period-dialog">
     <div class="dialog-head"><div><div class="dialog-title" id="recorded-period-title">Nama Brand</div><div class="dialog-subtitle">Tentukan bulan dan week sesi yang ingin ditinjau.</div></div><button class="dialog-close" type="button" data-close="recorded-period-dialog" aria-label="Tutup">×</button></div>
-    <form id="recorded-period-form" class="feature-dialog-form"><label class="auth-field"><span>Bulan</span><select class="select-input" id="recorded-period-month" required></select></label><label class="auth-field"><span>Week</span><select class="select-input" id="recorded-period-week" required><option value="Week 1">Week 1</option><option value="Week 2">Week 2</option></select></label><div class="dialog-actions"><button class="button button-secondary" type="button" data-close="recorded-period-dialog">Kembali</button><button class="button button-primary" type="submit">View</button></div></form>
+    <form id="recorded-period-form" class="feature-dialog-form"><label class="auth-field"><span>Bulan</span><select class="select-input" id="recorded-period-month" required></select></label><label class="auth-field"><span>Week</span><select class="select-input" id="recorded-period-week" required><option value="Week 1">Week 1</option><option value="Week 2">Week 2</option></select></label><div id="recorded-period-availability" class="recorded-period-availability" role="status" aria-live="polite" hidden></div><div class="dialog-actions"><button class="button button-secondary" type="button" data-close="recorded-period-dialog">Kembali</button><button class="button button-primary" type="submit">View</button></div></form>
   </dialog>
   <dialog id="recorded-view-dialog" class="feature-dialog recorded-view-dialog">
     <div class="dialog-head"><div><div class="dialog-title" id="recorded-view-title">Stock Opname Recorded</div><div class="dialog-subtitle" id="recorded-view-subtitle"></div></div><button class="dialog-close" type="button" data-close="recorded-view-dialog" aria-label="Tutup">×</button></div>
@@ -3373,7 +3473,23 @@
       monthSelect.innerHTML = WORKSPACE_MONTHS.map((month) => `<option value="${month}">${month}</option>`).join("");
       monthSelect.value = archivedSessionMonth(sessions[0]);
       document.getElementById("recorded-period-week").value = archivedSessionWeek(sessions[0]);
+      updateRecordedPeriodAvailability();
       document.getElementById("recorded-period-dialog").showModal();
+    }
+    function updateRecordedPeriodAvailability() {
+      const notice = document.getElementById("recorded-period-availability");
+      const month = document.getElementById("recorded-period-month").value;
+      const week = document.getElementById("recorded-period-week").value;
+      const count = state.sessions.filter((session) => session.workspaceName === selectedRecordedBrand
+        && archivedSessionMonth(session) === month
+        && archivedSessionWeek(session) === week
+        && session.snapshot).length;
+      notice.hidden = false;
+      notice.classList.toggle("empty", count === 0);
+      notice.textContent = count
+        ? `${count} arsip selesai tersedia untuk ${selectedRecordedBrand} · ${month} · ${week}.`
+        : `Belum ada data arsip untuk ${selectedRecordedBrand} · ${month} · ${week}. Pilih periode lain atau selesaikan stock opname terlebih dahulu.`;
+      return count;
     }
     function showRecordedSession() {
       const brand = selectedRecordedBrand;
@@ -3381,7 +3497,8 @@
       const week = document.getElementById("recorded-period-week").value;
       const session = state.sessions.filter((item) => item.workspaceName === brand && archivedSessionMonth(item) === month && archivedSessionWeek(item) === week && item.snapshot).sort((a, b) => new Date(b.finishedAt) - new Date(a.finishedAt))[0];
       if (!session) {
-        notify(`Arsip ${brand} untuk ${month} · ${week} tidak ditemukan.`);
+        updateRecordedPeriodAvailability();
+        notify(`Data arsip ${brand} · ${month} · ${week} tidak tersedia.`);
         return;
       }
       selectedRecordedSessionId = session.id;
@@ -4695,6 +4812,8 @@
       event.preventDefault();
       showRecordedSession();
     });
+    document.getElementById("recorded-period-month").addEventListener("change", updateRecordedPeriodAvailability);
+    document.getElementById("recorded-period-week").addEventListener("change", updateRecordedPeriodAvailability);
     document.querySelectorAll("[data-recorded-sheet]").forEach((button) => button.addEventListener("click", () => {
       selectedRecordedSheet = button.dataset.recordedSheet;
       renderRecordedSheetView();
