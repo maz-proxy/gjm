@@ -2048,6 +2048,9 @@
       && authSession?.user?.app_metadata?.owner_username === "indra";
     function databaseSetupHint(error) {
       const message = `${error.message || ""} ${error.details || ""}`;
+      if (/jsonb_object_length/i.test(message)) {
+        return "Fungsi trigger database masih versi lama dan memakai jsonb_object_length yang tidak tersedia. Jalankan ulang seluruh file supabase-setup.sql di Supabase → SQL Editor untuk memperbarui trigger, lalu muat ulang aplikasi.";
+      }
       if (error.code === "PGRST205" || error.code === "42P01" || /stock_opname_state.*(not found|does not exist)|schema cache/i.test(message)) {
         return "Tabel database belum dibuat. Jalankan file supabase-setup.sql di Supabase → SQL Editor, lalu login kembali.";
       }
@@ -2061,7 +2064,16 @@
         if (/only the stock opname session owner|must be created by its authenticated owner/i.test(message)) {
           return "Aksi ditolak. Hanya pemilik sesi opname atau Super Admin yang dapat mengubah data ini.";
         }
-        return "Akses database ditolak. Pastikan supabase-setup.sql sudah dijalankan dan akun Anda sudah diundang.";
+        if (/only the workspace super admin can manage shared stock opname resources/i.test(message)) {
+          return "Perubahan Data Resource hanya dapat dilakukan oleh Super Admin. Data terbaru telah dimuat ulang.";
+        }
+        if (/schedule cards can only be removed while empty or before stock opname starts/i.test(message)) {
+          return "Kartu Jadwal tidak dapat dihapus karena stock opname sudah dimulai atau kartu berisi data. Data terbaru telah dimuat ulang.";
+        }
+        if (/new row violates row-level security policy/i.test(message)) {
+          return "Database menolak pembuatan data workspace. Pastikan supabase-setup.sql sudah dijalankan. Jika ini login pertama atau data workspace belum ada, minta Super Admin login terlebih dahulu.";
+        }
+        return `Akses database ditolak: ${error.message || "akun tidak memiliki izin untuk operasi ini."} Pastikan supabase-setup.sql sudah dijalankan dan akun Anda sudah diundang.`;
       }
       return `Gagal menyambungkan data bersama: ${error.message || "kesalahan tidak diketahui"}`;
     }
@@ -2141,7 +2153,8 @@
           syncTimer = setTimeout(saveSharedState, 100);
         }
       } catch (error) {
-        if (error?.code === "42501" && /stock opname session|stock opname archive/i.test(error.message || "")) {
+        console.error("Gagal menyimpan data workspace bersama:", error);
+        if (error?.code === "42501" || /row-level security|permission denied/i.test(error?.message || "")) {
           try {
             const { data: row, error: readError } = await readSharedState();
             if (readError) throw readError;
