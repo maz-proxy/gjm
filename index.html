@@ -1077,6 +1077,22 @@
     .schedule-resource-option::before { background: var(--green-soft); border-radius: 6px; color: var(--green); content: "✓"; flex: 0 0 23px; font-size: 10px; font-weight: 800; height: 23px; line-height: 23px; margin-right: 9px; text-align: center; }
     .schedule-resource-option:hover, .schedule-resource-option:focus-visible { background: var(--green-soft); color: var(--green-dark); outline: 0; }
     .schedule-resource-options-empty { color: var(--muted); font-size: 11px; line-height: 1.5; padding: 12px 10px; }
+    .schedule-select-picker { min-width: 0; position: relative; width: 100%; }
+    .schedule-native-select { height: 1px; left: 1px; opacity: 0; pointer-events: none; position: absolute; top: 1px; width: 1px; }
+    .schedule-select-trigger { align-items: center; background: var(--paper); border: 1px solid #cedbd5; border-radius: 9px; color: var(--ink); cursor: pointer; display: flex; font: 600 11px/1.3 "DM Sans", "Segoe UI", sans-serif; gap: 8px; justify-content: space-between; min-height: 40px; padding: 0 11px; text-align: left; transition: border-color .15s ease, box-shadow .15s ease, background .15s ease; width: 100%; }
+    .schedule-select-trigger:hover:not(:disabled) { border-color: #9db9ab; }
+    .schedule-select-trigger:focus-visible, .schedule-select-picker.open .schedule-select-trigger { border-color: var(--green); box-shadow: 0 0 0 3px rgba(40,93,69,.1); outline: 0; }
+    .schedule-select-trigger:disabled { cursor: not-allowed; opacity: .58; }
+    .schedule-select-trigger > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .schedule-select-chevron { color: var(--muted); flex: 0 0 auto; font-size: 13px; transition: transform .15s ease; }
+    .schedule-select-picker.open .schedule-select-chevron { transform: rotate(180deg); }
+    .schedule-select-options { min-width: 100%; }
+    .schedule-select-option { justify-content: space-between; }
+    .schedule-select-option::before { display: none; }
+    .schedule-select-option[aria-selected="true"] { background: var(--green-soft); color: var(--green-dark); }
+    .schedule-select-option[aria-selected="true"]::after { color: var(--green); content: "✓"; font-size: 12px; font-weight: 800; margin-left: 12px; }
+    html[data-theme="dark"] .schedule-select-trigger { background: #14211f; border-color: #3a514b; color: var(--ink); }
+    html[data-theme="dark"] .schedule-select-option[aria-selected="true"] { background: #203b35; color: #d9f1e4; }
     @keyframes dropdown-enter { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
     .schedule-card.schedule-resource-open { overflow: visible; position: relative; z-index: 8; }
     .master-start-scan-button { background: #fde7ee; border-color: #f3bfd0; color: #a30d3b; }
@@ -1442,6 +1458,15 @@
       input.value = name;
       closeScheduleResourceOptions(input);
       input.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+    function renderScheduleDropdown(triggerId, label, selectClass, attributes, options, selectedValue, disabled = false) {
+      const optionMarkup = options.map(([value, text]) => `<button class="schedule-resource-option schedule-select-option" type="button" role="option" data-schedule-select-option="${escapeHtml(value)}" aria-selected="${value === selectedValue}">${escapeHtml(text)}</button>`).join("");
+      return `<div class="schedule-select-picker"><select class="${selectClass} schedule-native-select" ${attributes} aria-hidden="true" tabindex="-1" ${disabled ? "disabled" : ""}>${options.map(([value, text]) => `<option value="${escapeHtml(value)}" ${value === selectedValue ? "selected" : ""}>${escapeHtml(text)}</option>`).join("")}</select><button class="schedule-select-trigger" id="${escapeHtml(triggerId)}" type="button" aria-label="${escapeHtml(label)}" aria-haspopup="listbox" aria-expanded="false" aria-controls="${escapeHtml(triggerId)}-options" ${disabled ? "disabled" : ""}><span data-schedule-select-label>${escapeHtml(options.find(([value]) => value === selectedValue)?.[1] || selectedValue)}</span><span class="schedule-select-chevron" aria-hidden="true">⌄</span></button><div class="schedule-resource-options schedule-select-options" id="${escapeHtml(triggerId)}-options" role="listbox" aria-label="${escapeHtml(label)}"><div class="schedule-resource-options-heading">${escapeHtml(label)}</div>${optionMarkup}</div></div>`;
+    }
+    function closeScheduleDropdown(picker) {
+      picker?.classList.remove("open");
+      picker?.closest(".schedule-card")?.classList.remove("schedule-resource-open");
+      picker?.querySelector(".schedule-select-trigger")?.setAttribute("aria-expanded", "false");
     }
     function workspaceScheduleIsComplete(workspace) {
       return Boolean(workspace?.name.trim() && workspace.picNames?.[0]?.trim() && workspace.picNames?.[1]?.trim());
@@ -3039,8 +3064,8 @@
             <div class="schedule-card-title">
               <div class="schedule-brand-fields">
                 <div class="schedule-brand-field"><label for="workspace-brand-${escapeHtml(workspace.id)}">Nama Brand</label><div class="schedule-resource-picker"><input class="workspace-name-input schedule-picker" id="workspace-brand-${escapeHtml(workspace.id)}" data-workspace-name="${escapeHtml(workspace.id)}" data-workspace-resource="brands" data-workspace-id="${escapeHtml(workspace.id)}" aria-label="Nama Brand" placeholder="${state.resources.brands.length ? "Cari dan pilih brand" : "Nama Brand belum tersedia"}" value="${escapeHtml(workspace.name)}" autocomplete="off" aria-autocomplete="list" aria-expanded="false" ${canEdit && !hasStarted && !isCompleted ? "" : 'disabled title="Brand sesi berjalan atau selesai tidak dapat diubah"'}><div class="schedule-resource-options" role="listbox" aria-label="Pilihan Nama Brand"></div></div></div>
-                <div class="schedule-brand-field"><label for="workspace-month-${escapeHtml(workspace.id)}">Bulan</label><select class="schedule-period-select" id="workspace-month-${escapeHtml(workspace.id)}" data-workspace-schedule-field="month" data-workspace-id="${escapeHtml(workspace.id)}" aria-label="Bulan stock opname untuk ${escapeHtml(workspace.name || "Nama Brand belum diisi")}" ${!canEdit || hasStarted || isCompleted ? 'disabled title="Bulan sesi berjalan atau selesai tidak dapat diubah"' : ""}>${WORKSPACE_MONTHS.map((option) => `<option value="${option}" ${month === option ? "selected" : ""}>${option}</option>`).join("")}</select></div>
-                <div class="schedule-brand-field"><label for="workspace-period-${escapeHtml(workspace.id)}">Week</label><select class="schedule-period-select" id="workspace-period-${escapeHtml(workspace.id)}" data-workspace-schedule-field="period" data-workspace-id="${escapeHtml(workspace.id)}" aria-label="Week stock opname untuk ${escapeHtml(workspace.name || "Nama Brand belum diisi")}" ${!canEdit || hasStarted || isCompleted ? 'disabled title="Week sesi berjalan atau selesai tidak dapat diubah"' : ""}>${WORKSPACE_PERIODS.map((option) => `<option value="${option}" ${period === option ? "selected" : ""}>${option}</option>`).join("")}</select></div>
+                <div class="schedule-brand-field"><label for="workspace-month-trigger-${escapeHtml(workspace.id)}">Bulan</label>${renderScheduleDropdown(`workspace-month-trigger-${workspace.id}`, `Bulan stock opname untuk ${workspace.name || "Nama Brand belum diisi"}`, "schedule-period-select", `id="workspace-month-${escapeHtml(workspace.id)}" data-workspace-schedule-field="month" data-workspace-id="${escapeHtml(workspace.id)}"`, WORKSPACE_MONTHS.map((option) => [option, option]), month, !canEdit || hasStarted || isCompleted)}</div>
+                <div class="schedule-brand-field"><label for="workspace-period-trigger-${escapeHtml(workspace.id)}">Week</label>${renderScheduleDropdown(`workspace-period-trigger-${workspace.id}`, `Week stock opname untuk ${workspace.name || "Nama Brand belum diisi"}`, "schedule-period-select", `id="workspace-period-${escapeHtml(workspace.id)}" data-workspace-schedule-field="period" data-workspace-id="${escapeHtml(workspace.id)}"`, WORKSPACE_PERIODS.map((option) => [option, option]), period, !canEdit || hasStarted || isCompleted)}</div>
               </div>
               <div class="schedule-card-subtitle">${formatNumber(stats.countedSkus)} item masuk perhitungan</div>
             </div>
@@ -3052,7 +3077,7 @@
           <div class="schedule-card-body">
             <div class="schedule-mode-box">
               <div class="schedule-mode-copy"><div class="schedule-mode-title">Mode perhitungan</div><div class="schedule-mode-hint">${countMode === "all" ? "Semua jenis item dari master VEF masuk hitungan." : "Hanya item yang terdeteksi sebagai laptop yang dihitung."}</div></div>
-              <div class="schedule-mode-control"><label for="count-mode-${escapeHtml(workspace.id)}">Pilih mode</label><select class="workspace-count-mode" id="count-mode-${escapeHtml(workspace.id)}" data-workspace-count-mode="${escapeHtml(workspace.id)}" aria-label="Pilihan perhitungan untuk ${escapeHtml(workspace.name || "Nama Brand belum diisi")}" ${modeDisabled ? 'disabled title="Mode perhitungan sesi selesai atau milik staf lain tidak dapat diubah"' : ""}><option value="laptops" ${countMode === "laptops" ? "selected" : ""}>Laptop saja</option><option value="all" ${countMode === "all" ? "selected" : ""}>Semua item</option></select></div>
+              <div class="schedule-mode-control"><label for="count-mode-trigger-${escapeHtml(workspace.id)}">Pilih mode</label>${renderScheduleDropdown(`count-mode-trigger-${workspace.id}`, `Pilihan perhitungan untuk ${workspace.name || "Nama Brand belum diisi"}`, "workspace-count-mode", `id="count-mode-${escapeHtml(workspace.id)}" data-workspace-count-mode="${escapeHtml(workspace.id)}"`, [["laptops", "Laptop saja"], ["all", "Semua item"]], countMode, modeDisabled)}</div>
             </div>
             <div class="schedule-pics">
               <div class="schedule-pic-field"><label for="pic-${escapeHtml(workspace.id)}-1">PIC 1</label><div class="schedule-resource-picker"><input class="workspace-name-input schedule-picker" id="pic-${escapeHtml(workspace.id)}-1" data-workspace-pic="${escapeHtml(workspace.id)}" data-workspace-resource="picNames" data-workspace-id="${escapeHtml(workspace.id)}" data-pic-index="0" aria-label="PIC 1 ${escapeHtml(workspace.name || "Nama Brand belum diisi")}" placeholder="${state.resources.picNames.length ? "Cari dan pilih PIC 1" : "Nama PIC belum tersedia"}" value="${escapeHtml(workspace.picNames[0])}" autocomplete="off" aria-autocomplete="list" aria-expanded="false" ${canEdit && !hasStarted && !isCompleted ? "" : 'disabled title="PIC sesi berjalan atau selesai tidak dapat diubah"'}><div class="schedule-resource-options" role="listbox" aria-label="Pilihan PIC 1"></div></div></div>
@@ -3588,6 +3613,61 @@
         options?.addEventListener("click", (event) => {
           const option = event.target.closest("[data-schedule-resource-option]");
           if (option) selectScheduleResource(input, option.dataset.scheduleResourceOption);
+        });
+      });
+      document.querySelectorAll(".schedule-select-picker").forEach((picker) => {
+        const select = picker.querySelector(".schedule-native-select");
+        const trigger = picker.querySelector(".schedule-select-trigger");
+        const options = picker.querySelector(".schedule-select-options");
+        if (!select || !trigger || !options) return;
+        const close = () => closeScheduleDropdown(picker);
+        trigger.addEventListener("click", () => {
+          if (picker.classList.contains("open")) {
+            close();
+            return;
+          }
+          document.querySelectorAll(".schedule-select-picker.open").forEach((openPicker) => closeScheduleDropdown(openPicker));
+          picker.classList.add("open");
+          picker.closest(".schedule-card")?.classList.add("schedule-resource-open");
+          trigger.setAttribute("aria-expanded", "true");
+        });
+        trigger.addEventListener("keydown", (event) => {
+          if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+          event.preventDefault();
+          if (!picker.classList.contains("open")) trigger.click();
+          const choices = [...options.querySelectorAll("[data-schedule-select-option]")];
+          const selectedIndex = choices.findIndex((option) => option.getAttribute("aria-selected") === "true");
+          const direction = event.key === "ArrowDown" ? 1 : -1;
+          choices[Math.max(0, Math.min(choices.length - 1, selectedIndex + direction))]?.focus();
+        });
+        options.addEventListener("click", (event) => {
+          const option = event.target.closest("[data-schedule-select-option]");
+          if (!option) return;
+          select.value = option.dataset.scheduleSelectOption;
+          close();
+          select.dispatchEvent(new Event("change", { bubbles: true }));
+          trigger.focus({ preventScroll: true });
+        });
+        options.addEventListener("keydown", (event) => {
+          if (event.key === "Escape") {
+            event.preventDefault();
+            close();
+            trigger.focus({ preventScroll: true });
+            return;
+          }
+          if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+          event.preventDefault();
+          const choices = [...options.querySelectorAll("[data-schedule-select-option]")];
+          const currentIndex = choices.indexOf(event.target.closest("[data-schedule-select-option]"));
+          const direction = event.key === "ArrowDown" ? 1 : -1;
+          choices[Math.max(0, Math.min(choices.length - 1, currentIndex + direction))]?.focus();
+        });
+        picker.addEventListener("focusout", () => setTimeout(() => {
+          if (!picker.contains(document.activeElement)) close();
+        }, 0));
+        select.addEventListener("change", () => {
+          const label = picker.querySelector("[data-schedule-select-label]");
+          if (label) label.textContent = select.selectedOptions[0]?.textContent || "";
         });
       });
       document.querySelectorAll("[data-workspace-count-mode]").forEach((select) => select.addEventListener("change", () => updateWorkspaceCountMode(select)));
