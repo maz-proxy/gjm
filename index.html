@@ -3132,7 +3132,10 @@
       const workspace = state.workspaces.find((item) => item.id === workspaceId);
       if (!workspace) return;
       if (workspaceHasStarted(workspace)) {
-        switchWorkspace(workspaceId, "layouts");
+        if (workspaceId === state.currentWorkspaceId) {
+          currentPage = "layouts";
+          render();
+        } else switchWorkspace(workspaceId, "layouts");
         return;
       }
       if (!canEditWorkspaceSession(workspace)) {
