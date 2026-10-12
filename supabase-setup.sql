@@ -2,8 +2,12 @@ create table if not exists public.stock_opname_state (
   id text primary key check (id = 'stock-opname-team'),
   data jsonb not null,
   updated_at timestamptz not null default now(),
+  version bigint not null default 1,
   updated_by uuid not null references auth.users(id)
 );
+
+alter table public.stock_opname_state
+  add column if not exists version bigint not null default 1;
 
 create table if not exists public.stock_opname_usernames (
   username text primary key check (username = lower(username) and username ~ '^[a-z0-9][a-z0-9._-]{2,29}$'),
@@ -56,6 +60,7 @@ set search_path = ''
 as $$
 begin
   new.updated_at = now();
+  new.version = old.version + 1;
   return new;
 end;
 $$;

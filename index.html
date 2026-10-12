@@ -1565,11 +1565,13 @@
     let adminNoticeType = "success";
     let sharedStateReady = false;
     let remoteUpdatedAt = "";
+    let remoteVersion = null;
     let lastSyncedState = "";
     let syncTimer = null;
     let refreshTimer = null;
     let workspaceCleanupTimer = null;
     let refreshInProgress = false;
+    let saveInProgress = false;
     let syncErrorShown = false;
 
     const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
@@ -1825,6 +1827,74 @@
         }, {});
       });
     }
+    function mergeSharedValue(base, local, remote, path = "") {
+      const clone = (value) => value === undefined ? undefined : JSON.parse(JSON.stringify(value));
+      const baseValue = stableSerialize(base);
+      const localValue = stableSerialize(local);
+      const remoteValue = stableSerialize(remote);
+      if (localValue === baseValue) return clone(remote);
+      if (remoteValue === baseValue || localValue === remoteValue) return clone(local);
+
+      const isObject = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
+      if (isObject(local) && isObject(remote) && (isObject(base) || base === undefined)) {
+        const merged = {};
+        const keys = new Set([...Object.keys(base || {}), ...Object.keys(local), ...Object.keys(remote)]);
+        for (const key of keys) {
+          const value = mergeSharedValue(base?.[key], local[key], remote[key], path ? `${path}.${key}` : key);
+          if (value !== undefined) merged[key] = value;
+        }
+        return merged;
+      }
+
+      if (Array.isArray(local) && Array.isArray(remote) && (Array.isArray(base) || base === undefined)) {
+        const allArrays = [base || [], local, remote];
+        const keyed = allArrays.some((items) => items.length > 0)
+          && allArrays.every((items) => items.every((item) => isObject(item) && typeof item.id === "string"));
+        if (keyed) {
+          const baseById = new Map((base || []).map((item) => [item.id, item]));
+          const localById = new Map(local.map((item) => [item.id, item]));
+          const remoteById = new Map(remote.map((item) => [item.id, item]));
+          const ids = [...new Set([
+            ...(base || []).map((item) => item.id),
+            ...remote.map((item) => item.id),
+            ...local.map((item) => item.id)
+          ])];
+          return ids.flatMap((id) => {
+            const baseItem = baseById.get(id);
+            const localItem = localById.get(id);
+            const remoteItem = remoteById.get(id);
+            if (baseItem && !localItem) return remoteItem && stableSerialize(remoteItem) !== stableSerialize(baseItem) ? [clone(remoteItem)] : [];
+            if (baseItem && !remoteItem) return [];
+            if (!localItem) return [clone(remoteItem)];
+            if (!remoteItem) return [clone(localItem)];
+            return [mergeSharedValue(baseItem, localItem, remoteItem, path)];
+          });
+        }
+
+        if (["resources.brands", "resources.picNames"].includes(path)
+          || path === "layouts"
+          || path.endsWith(".layouts")) {
+          if (allArrays.every((items) => items.every((item) => ["string", "number", "boolean"].includes(typeof item)))) {
+            const localSet = new Set(local);
+            const remoteSet = new Set(remote);
+            const removed = new Set([...(base || [])].filter((item) => !localSet.has(item) || !remoteSet.has(item)));
+            return [...new Set([...local, ...remote])].filter((item) => !removed.has(item));
+          }
+        }
+      }
+
+      return clone(remote);
+    }
+    function mergeSharedState(base, local, remote) {
+      const merged = mergeSharedValue(base, local, remote);
+      const preferredWorkspaceId = local.currentWorkspaceId;
+      if (merged.workspaces.some((workspace) => workspace.id === preferredWorkspaceId)) {
+        merged.currentWorkspaceId = preferredWorkspaceId;
+      }
+      const workspace = merged.workspaces.find((item) => item.id === merged.currentWorkspaceId);
+      if (workspace) Object.assign(merged, snapshotWorkspaceData(workspace.data));
+      return normalizeSharedState(merged);
+    }
     function setLoginBusy(busy) {
       const button = document.getElementById("login-submit");
       button.disabled = busy;
@@ -2048,6 +2118,9 @@
       && authSession?.user?.app_metadata?.owner_username === "indra";
     function databaseSetupHint(error) {
       const message = `${error.message || ""} ${error.details || ""}`;
+      if (/column .*version.*does not exist|version.*schema cache/i.test(message)) {
+        return "Database belum mendukung penyimpanan bersama yang aman. Minta Super Admin menjalankan ulang seluruh supabase-setup.sql di Supabase → SQL Editor, lalu muat ulang aplikasi.";
+      }
       if (/jsonb_object_length/i.test(message)) {
         return "Fungsi trigger database masih versi lama dan memakai jsonb_object_length yang tidak tersedia. Jalankan ulang seluruh file supabase-setup.sql di Supabase → SQL Editor untuk memperbarui trigger, lalu muat ulang aplikasi.";
       }
@@ -2078,7 +2151,7 @@
       return `Gagal menyambungkan data bersama: ${error.message || "kesalahan tidak diketahui"}`;
     }
     async function readSharedState() {
-      return supabaseClient.from(SHARED_STATE_TABLE).select("data, updated_at").eq("id", SHARED_STATE_ROW_ID).maybeSingle();
+      return supabaseClient.from(SHARED_STATE_TABLE).select("data, updated_at, version").eq("id", SHARED_STATE_ROW_ID).maybeSingle();
     }
     async function startAuthenticatedSession(session, freshLogin = false) {
       if (!session?.user) return;
@@ -2099,15 +2172,27 @@
         if (row) {
           state = normalizeSharedState(row.data);
           remoteUpdatedAt = row.updated_at;
+          remoteVersion = row.version;
         } else {
           state = normalizeSharedState(state);
           persistLocalState();
           const { data: created, error: createError } = await supabaseClient.from(SHARED_STATE_TABLE)
-            .upsert({ id: SHARED_STATE_ROW_ID, data: state, updated_by: session.user.id }, { onConflict: "id" })
-            .select("data, updated_at").single();
-          if (createError) throw createError;
-          state = normalizeSharedState(created.data);
-          remoteUpdatedAt = created.updated_at;
+            .insert({ id: SHARED_STATE_ROW_ID, data: state, updated_by: session.user.id })
+            .select("data, updated_at, version").maybeSingle();
+          if (createError?.code === "23505") {
+            const { data: existing, error: existingError } = await readSharedState();
+            if (existingError) throw existingError;
+            if (!existing) throw createError;
+            state = normalizeSharedState(existing.data);
+            remoteUpdatedAt = existing.updated_at;
+            remoteVersion = existing.version;
+          } else {
+            if (createError) throw createError;
+            if (!created) throw new Error("Data workspace tidak dikembalikan setelah dibuat.");
+            state = normalizeSharedState(created.data);
+            remoteUpdatedAt = created.updated_at;
+            remoteVersion = created.version;
+          }
         }
         const removedExpiredEmptyWorkspaces = removeExpiredEmptyWorkspaces();
         normalizeWorkspaceClassifications();
@@ -2138,29 +2223,71 @@
     async function saveSharedState() {
       syncTimer = null;
       if (!authSession || !sharedStateReady) return;
-      persistLocalState();
-      const serializedState = stableSerialize(state);
+      if (saveInProgress) return;
+      saveInProgress = true;
+      const savingUserId = authSession.user.id;
       try {
-        const { data, error } = await supabaseClient.from(SHARED_STATE_TABLE)
-          .upsert({ id: SHARED_STATE_ROW_ID, data: JSON.parse(serializedState), updated_by: authSession.user.id }, { onConflict: "id" })
-          .select("updated_at").single();
-        if (error) throw error;
-        remoteUpdatedAt = data.updated_at;
-        lastSyncedState = serializedState;
-        syncErrorShown = false;
-        if (stableSerialize(state) !== serializedState) {
-          clearTimeout(syncTimer);
-          syncTimer = setTimeout(saveSharedState, 100);
+        persistLocalState();
+        let pendingState = normalizeSharedState(JSON.parse(stableSerialize(state)));
+        for (let attempt = 0; attempt < 5; attempt++) {
+          if (authSession?.user?.id !== savingUserId || !sharedStateReady) return;
+          const serializedState = stableSerialize(pendingState);
+          const { data: saved, error } = await supabaseClient.from(SHARED_STATE_TABLE)
+            .update({ data: JSON.parse(serializedState), updated_by: savingUserId })
+            .eq("id", SHARED_STATE_ROW_ID)
+            .eq("version", remoteVersion)
+            .select("updated_at, version")
+            .maybeSingle();
+          if (authSession?.user?.id !== savingUserId || !sharedStateReady) return;
+          if (error) throw error;
+          if (saved) {
+            remoteUpdatedAt = saved.updated_at;
+            remoteVersion = saved.version;
+            lastSyncedState = serializedState;
+            syncErrorShown = false;
+            if (stableSerialize(state) !== serializedState) {
+              clearTimeout(syncTimer);
+              syncTimer = setTimeout(saveSharedState, 100);
+            }
+            return;
+          }
+
+          const { data: row, error: readError } = await readSharedState();
+          if (authSession?.user?.id !== savingUserId || !sharedStateReady) return;
+          if (readError) throw readError;
+          if (!row) throw new Error("Data workspace bersama tidak ditemukan saat menggabungkan perubahan.");
+          const previousActiveData = stableSerialize(activeWorkspace()?.data || {});
+          const remoteState = normalizeSharedState(row.data);
+          const localState = normalizeSharedState(JSON.parse(stableSerialize(state)));
+          state = mergeSharedState(JSON.parse(lastSyncedState), localState, remoteState);
+          persistLocalState();
+          pendingState = normalizeSharedState(JSON.parse(stableSerialize(state)));
+          remoteUpdatedAt = row.updated_at;
+          remoteVersion = row.version;
+          lastSyncedState = stableSerialize(remoteState);
+          if (stableSerialize(activeWorkspace()?.data || {}) !== previousActiveData) {
+            render();
+            notify("Perubahan bersamaan digabungkan. Data sesi aktif diperbarui dari server.");
+          }
         }
+        syncTimer = setTimeout(saveSharedState, 1500);
+        throw new Error("Workspace sedang menerima banyak perubahan bersamaan. Perubahan Anda tetap tersimpan di browser dan sedang dicoba kembali.");
       } catch (error) {
+        if (authSession?.user?.id !== savingUserId || !sharedStateReady) return;
         console.error("Gagal menyimpan data workspace bersama:", error);
         if (error?.code === "42501" || /row-level security|permission denied/i.test(error?.message || "")) {
           try {
             const { data: row, error: readError } = await readSharedState();
             if (readError) throw readError;
             if (!row) throw new Error("Data workspace bersama tidak ditemukan setelah penolakan perubahan.");
+            const selectedWorkspaceId = state.currentWorkspaceId;
             state = normalizeSharedState(row.data);
+            if (state.workspaces.some((workspace) => workspace.id === selectedWorkspaceId)) {
+              state.currentWorkspaceId = selectedWorkspaceId;
+              Object.assign(state, snapshotWorkspaceData(activeWorkspace().data));
+            }
             remoteUpdatedAt = row.updated_at;
+            remoteVersion = row.version;
             lastSyncedState = stableSerialize(state);
             persistLocalState();
             render();
@@ -2173,25 +2300,39 @@
         }
         if (!syncErrorShown) notify(databaseSetupHint(error));
         syncErrorShown = true;
+      } finally {
+        saveInProgress = false;
       }
     }
     async function refreshSharedState() {
       if (!authSession || !sharedStateReady || refreshInProgress || syncTimer) return;
       refreshInProgress = true;
+      const refreshingUserId = authSession.user.id;
       try {
         const { data: row, error } = await readSharedState();
+        if (authSession?.user?.id !== refreshingUserId || !sharedStateReady) return;
         if (error) throw error;
         if (!row) throw new Error("Data workspace bersama tidak ditemukan.");
         syncErrorShown = false;
-        if (row.updated_at !== remoteUpdatedAt && stableSerialize(row.data) !== lastSyncedState) {
+        if (row.version !== remoteVersion && stableSerialize(row.data) !== lastSyncedState) {
+          const selectedWorkspaceId = state.currentWorkspaceId;
           state = normalizeSharedState(row.data);
+          if (state.workspaces.some((workspace) => workspace.id === selectedWorkspaceId)) {
+            state.currentWorkspaceId = selectedWorkspaceId;
+            Object.assign(state, snapshotWorkspaceData(activeWorkspace().data));
+          }
           remoteUpdatedAt = row.updated_at;
+          remoteVersion = row.version;
           lastSyncedState = stableSerialize(state);
           persistLocalState();
           render();
           notify("Data workspace diperbarui oleh anggota tim.");
-        } else remoteUpdatedAt = row.updated_at;
+        } else {
+          remoteUpdatedAt = row.updated_at;
+          remoteVersion = row.version;
+        }
       } catch (error) {
+        if (authSession?.user?.id !== refreshingUserId || !sharedStateReady) return;
         if (!syncErrorShown) notify(databaseSetupHint(error));
         syncErrorShown = true;
       } finally {
