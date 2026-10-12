@@ -76,7 +76,7 @@
     .auth-loading-text { color: #c3d7d0; font-size: 12px; }
     .auth-loading-spinner { animation: auth-loading-spin .8s linear infinite; border: 2px solid rgba(184,216,201,.22); border-radius: 50%; border-top-color: #9bd4bd; height: 17px; width: 17px; }
     @keyframes auth-loading-spin { to { transform: rotate(360deg); } }
-    body.auth-checking .auth-screen, body.auth-checking .app-shell, body.auth-checking .toast, body.auth-checking > dialog, body.auth-checking .developer-watermark { display: none; }
+    body.auth-checking .auth-screen, body.auth-checking .app-shell, body.auth-checking .toast, body.auth-checking > dialog { display: none; }
     body.auth-checking .auth-loading { display: flex; }
     .auth-card { animation: dashboard-enter .28s ease both; background: #fff; border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 22px 70px rgba(29,53,36,.13); max-width: 420px; padding: 32px; width: 100%; }
     @media (min-width: 851px) {
@@ -94,7 +94,6 @@
     .about-workspace-message { color: var(--green-dark); font-family: "Space Grotesk", "Segoe UI", sans-serif; font-size: clamp(24px, 3.2vw, 34px); font-weight: 700; letter-spacing: -.5px; line-height: 1.25; margin: 18px 0 0; max-width: 760px; }
     .about-workspace-footer { bottom: 55px; color: var(--muted); font-size: 12px; font-weight: 700; left: calc(50% + 120px); position: fixed; transform: translateX(-50%); z-index: 2; }
     .about-workspace-footer small { display: block; font-size: 10px; font-weight: 400; margin-top: 4px; }
-    body.auth-locked .developer-watermark { display: none; }
     .auth-card h1 { font-size: 25px; }
     .auth-description { color: var(--muted); font-size: 12px; margin: 8px 0 22px; }
     .auth-form { display: grid; gap: 13px; }
@@ -130,7 +129,6 @@
     }
     main { min-width: 0; padding: 32px clamp(20px, 4vw, 58px) 52px; }
     .topline { align-items: center; display: flex; justify-content: space-between; margin-bottom: 31px; }
-    .developer-watermark { background: rgba(255,255,255,.3); border: 1px solid rgba(111,125,114,.07); border-radius: 999px; color: rgba(116,125,116,.48); font-size: 10px; font-weight: 600; left: 50%; line-height: 1.4; opacity: .65; padding: 4px 9px; pointer-events: none; position: fixed; top: 8px; transform: translateX(-50%); user-select: none; z-index: 10; }
 
     .crumb { color: var(--muted); font-size: 12px; }
     .crumb b { color: #434a40; font-weight: 600; }
@@ -1005,7 +1003,6 @@
     html[data-theme="dark"] dialog { background: var(--paper); color: var(--ink); }
     html[data-theme="dark"] .dialog-actions { background: #162320; border-color: var(--line); }
     html[data-theme="dark"] .confirm-body { color: var(--muted); }
-    html[data-theme="dark"] .developer-watermark { background: rgba(22,36,33,.58); border-color: rgba(169,201,189,.1); color: rgba(191,211,203,.4); }
     html[data-theme="dark"] .theme-toggle { background: #22332f; border-color: #3a514b; color: #e3eeea; }
     html[data-theme="dark"] .theme-toggle:hover { background: #2a403a; border-color: #527467; }
     html[data-theme="dark"] .accent-toggle { background: #22332f; border-color: #3a514b; color: #e3eeea; }
@@ -1279,7 +1276,6 @@
     </aside>
     <main id="main-content"></main>
   </div>
-  <div class="developer-watermark" aria-hidden="true">Developed by M-Maz</div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <input class="upload-input" id="workbook-input" type="file" accept=".xlsx,.xls,.csv" aria-label="Pilih workbook atau file CSV stock opname">
   <dialog id="recorded-brand-dialog" class="feature-dialog">
