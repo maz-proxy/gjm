@@ -1465,6 +1465,7 @@
     }
     function closeScheduleDropdown(picker) {
       picker?.classList.remove("open");
+      picker?.querySelector(".schedule-select-options")?.classList.remove("open");
       picker?.closest(".schedule-card")?.classList.remove("schedule-resource-open");
       picker?.querySelector(".schedule-select-trigger")?.setAttribute("aria-expanded", "false");
     }
@@ -3628,6 +3629,7 @@
           }
           document.querySelectorAll(".schedule-select-picker.open").forEach((openPicker) => closeScheduleDropdown(openPicker));
           picker.classList.add("open");
+          options.classList.add("open");
           picker.closest(".schedule-card")?.classList.add("schedule-resource-open");
           trigger.setAttribute("aria-expanded", "true");
         });
