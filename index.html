@@ -1114,12 +1114,18 @@
     html[data-theme="dark"] .schedule-select-trigger { background: #14211f; border-color: #3a514b; color: var(--ink); }
     html[data-theme="dark"] .schedule-select-option[aria-selected="true"] { background: #203b35; color: #d9f1e4; }
     html[data-accent="burgundy"] {
+      --line: #ead8de;
+      --canvas: #f8eef1;
+      --paper: #fff8fa;
       --green: #842b4b;
       --green-dark: #5d1c35;
       --green-soft: #f5e7ec;
       --lime: #dfb0bf;
     }
-    html[data-accent="burgundy"] body { background-image: radial-gradient(ellipse at 88% 0%, rgba(232,207,216,.46), transparent 36%); }
+    html[data-accent="burgundy"] body { background-image: radial-gradient(ellipse at 88% 0%, rgba(232,207,216,.62), transparent 36%); }
+    html[data-accent="burgundy"] .auth-card { background: #fff5f8; border-color: #e7cbd4; box-shadow: 0 22px 70px rgba(78,25,46,.2); }
+    html[data-accent="burgundy"] .auth-input { background: #fffafb; border-color: #e4cbd3; }
+    html[data-accent="burgundy"] .auth-input:focus { background: #fff; border-color: #b96a84; box-shadow: 0 0 0 3px rgba(132,43,75,.12); }
     html[data-accent="burgundy"] .sidebar { background: linear-gradient(180deg, #76233f 0%, #4e192e 100%); border-color: #4e192e; }
     html[data-accent="burgundy"] .nav-item.active { background: linear-gradient(100deg, #f4dfe7, #fbf0f3); box-shadow: inset 3px 0 #d9a1b4; color: #531a30; }
     html[data-accent="burgundy"] .nav-item.active .nav-icon { background: linear-gradient(145deg, #9a3b5e, #5d1c35); color: #f8dce6; }
@@ -1148,12 +1154,18 @@
     html[data-accent="burgundy"] .about-intro { background: radial-gradient(circle at 96% 0%, rgba(255,255,255,.07) 0 115px, transparent 116px), linear-gradient(120deg, #4e192e, #842b4b); }
     html[data-accent="burgundy"] .accent-swatch { background: #842b4b; }
     html[data-accent="burgundy"][data-theme="dark"] {
+      --line: #523a43;
+      --canvas: #21171b;
+      --paper: #302127;
       --green: #d786a0;
       --green-dark: #f0b6c7;
       --green-soft: #422632;
       --lime: #b96a84;
     }
-    html[data-accent="burgundy"][data-theme="dark"] body { background-image: radial-gradient(ellipse at 88% 0%, rgba(105,48,69,.22), transparent 36%); }
+    html[data-accent="burgundy"][data-theme="dark"] body { background-image: radial-gradient(ellipse at 88% 0%, rgba(105,48,69,.3), transparent 36%); }
+    html[data-accent="burgundy"][data-theme="dark"] .auth-card { background: #302127; border-color: #523a43; }
+    html[data-accent="burgundy"][data-theme="dark"] .auth-input { background: #21171b; border-color: #523a43; color: #f4dce4; }
+    html[data-accent="burgundy"][data-theme="dark"] .auth-input:focus { background: #281b20; border-color: #b96a84; }
     html[data-accent="burgundy"][data-theme="dark"] .sidebar { background: linear-gradient(180deg, #4a1a2d 0%, #321421 100%); border-color: #321421; }
     html[data-accent="burgundy"][data-theme="dark"] .nav-item.active { background: linear-gradient(100deg, #482330, #3a1d29); color: #f4dce4; }
     html[data-accent="burgundy"][data-theme="dark"] .button-primary,
