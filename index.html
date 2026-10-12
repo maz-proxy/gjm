@@ -1230,6 +1230,7 @@
     const STORAGE_KEY = "ruangstok-sn-v2";
     const THEME_STORAGE_KEY = "ruangstok-theme";
     const PAGE_STORAGE_KEY = "ruangstok-last-page:";
+    const warningScanAudio = new Audio("./assets/warning-duplicate.mp3");
     const RESTORABLE_PAGES = new Set(["opname", "dashboard", "workspaces", "products", "layouts", "recap", "about", "admin-users", "data-resources", "completed-sessions", "history"]);
     const applyTheme = (theme, persist = false) => {
       const activeTheme = theme === "dark" ? "dark" : "light";
@@ -3698,34 +3699,38 @@
     }
 
     function playScanBeep(status) {
+      const warning = status === "duplicate" || status === "not-found";
+      if (warning) {
+        warningScanAudio.pause();
+        warningScanAudio.currentTime = 0;
+        warningScanAudio.play().catch((error) => console.warn("Bunyi peringatan scan tidak dapat diputar:", error));
+        return;
+      }
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
       if (!AudioContextClass) {
         notify("Browser ini tidak mendukung bunyi scan.");
         return;
       }
       const audioContext = new AudioContextClass();
-      const warning = status === "duplicate" || status === "not-found";
-      const tones = warning
-        ? [{ frequency: 880, offset: 0 }, { frequency: 660, offset: 0.3 }]
-        : status === "match"
-          ? [{ frequency: 1046, offset: 0 }, { frequency: 1568, offset: 0.12 }, { frequency: 1318, offset: 0.25 }]
-          : [{ frequency: 660, offset: 0 }];
+      const tones = status === "match"
+        ? [{ frequency: 1046, offset: 0 }, { frequency: 1568, offset: 0.12 }, { frequency: 1318, offset: 0.25 }]
+        : [{ frequency: 660, offset: 0 }];
       if (audioContext.state === "suspended") audioContext.resume().catch((error) => console.warn("Audio scan tidak dapat diaktifkan:", error));
       tones.forEach(({ frequency, offset }) => {
         const oscillator = audioContext.createOscillator();
         const gain = audioContext.createGain();
         const startAt = audioContext.currentTime + offset;
-        const duration = warning ? 0.26 : 0.3;
-        oscillator.type = warning ? "square" : "sine";
+        const duration = 0.3;
+        oscillator.type = "sine";
         oscillator.frequency.value = frequency;
-        gain.gain.setValueAtTime(warning ? 0.85 : 0.48, startAt);
+        gain.gain.setValueAtTime(0.48, startAt);
         gain.gain.exponentialRampToValueAtTime(0.001, startAt + duration);
         oscillator.connect(gain);
         gain.connect(audioContext.destination);
         oscillator.start(startAt);
         oscillator.stop(startAt + duration);
       });
-      setTimeout(() => audioContext.close(), warning ? 1000 : 800);
+      setTimeout(() => audioContext.close(), 800);
     }
 
     function handleLayoutScanSubmit(event) {
