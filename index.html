@@ -735,8 +735,8 @@
     .master-warehouse-item span { overflow-wrap: anywhere; }
     .master-warehouse-item strong { color: var(--green); font-size: 10px; white-space: nowrap; }
     .master-warehouse-empty { color: var(--muted); font-size: 9px; }
-    .master-warehouse-summary .master-start-scan-button { background: #e4f1e9; border-color: #cfe3d7; border-radius: 7px; box-shadow: 0 2px 6px rgba(25,55,50,.08); color: var(--green-dark); flex: 0 0 auto; min-height: 32px; padding: 0 11px; }
-    .master-warehouse-summary .master-start-scan-button:hover { background: #d7ebe0; border-color: #bdd8c9; }
+    .master-warehouse-summary .master-start-scan-button { background: #fde7ee; border-color: #e9aebe; border-radius: 7px; box-shadow: 0 2px 6px rgba(25,55,50,.08); color: #761632; flex: 0 0 auto; min-height: 32px; padding: 0 11px; }
+    .master-warehouse-summary .master-start-scan-button:hover:not(:disabled) { background: #fad5e1; border-color: #d77b98; color: #5c1028; }
     .metric:hover, .layout-card:hover { border-color: #c4dcd3; box-shadow: 0 10px 24px rgba(25, 55, 50, .09); }
     .table-toolbar { background: linear-gradient(100deg, #fff, #f7faf9); }
     th { background: #f2f7f5; color: #627873; }
@@ -1047,6 +1047,8 @@
     }
     .vef-timestamps { border-left: 3px solid var(--green); color: var(--muted); display: grid; font-size: 11px; gap: 3px; margin-top: 12px; padding: 4px 0 4px 10px; }
     .vef-timestamps strong { color: var(--ink); font-weight: 700; }
+    .master-page-head .vef-timestamps { border-left-color: #a7dfc7; color: #e2f3ec; }
+    .master-page-head .vef-timestamps strong { color: #fff; }
     .recorded-view-dialog { max-width: min(1280px, calc(100vw - 28px)); }
     .recorded-view-actions { align-items: center; display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; margin: 18px 0; }
     .recorded-view-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -1089,6 +1091,10 @@
     html[data-theme="dark"] .resource-create-form .auth-input,
     html[data-theme="dark"] .resource-row .auth-input { background: #14211f; border-color: #3a514b; color: var(--ink); }
     html[data-theme="dark"] .dashboard-warehouse-chip { background: #263a33; border-color: #354a41; color: #d8e8dd; }
+    html[data-theme="dark"] .master-page-head .vef-timestamps { border-left-color: #9bd7c0; color: #d5e9df; }
+    html[data-theme="dark"] .master-page-head .vef-timestamps strong { color: #fff; }
+    html[data-theme="dark"] .master-warehouse-summary .master-start-scan-button { background: #482331; border-color: #9a5369; color: #ffe2e9; }
+    html[data-theme="dark"] .master-warehouse-summary .master-start-scan-button:hover:not(:disabled) { background: #5a2a3a; border-color: #c16b83; color: #fff; }
     html[data-theme="dark"] .layout-card.duplicate-warning .layout-card-head { background: #402624; }
     html[data-theme="dark"] .manual-item-entry.is-latest { background: #233b31; }
     @media (max-width: 640px) {
