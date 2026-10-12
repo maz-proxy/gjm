@@ -87,6 +87,12 @@
     .auth-brand .brand-name { color: var(--ink); font-size: 16px; }
     .auth-brand .brand-caption { color: var(--muted); }
     .auth-copyright { color: #929a91; font-size: 11px; font-weight: 600; margin-left: auto; white-space: nowrap; }
+    .auth-footer { bottom: 22px; color: #929a91; font-size: 10px; position: fixed; right: 26px; text-align: right; z-index: 21; }
+    body:not(.auth-locked) .auth-footer, body.auth-checking .auth-footer { display: none; }
+    .about-workspace { align-items: center; display: flex; flex-direction: column; justify-content: center; min-height: calc(100vh - 130px); padding: 32px 16px 74px; position: relative; text-align: center; }
+    .about-workspace-message { color: var(--green-dark); font-family: "Space Grotesk", "Segoe UI", sans-serif; font-size: clamp(26px, 4vw, 42px); font-weight: 700; letter-spacing: -.5px; line-height: 1.25; max-width: 760px; }
+    .about-workspace-footer { bottom: 15px; color: var(--muted); font-size: 12px; font-weight: 700; left: 0; position: absolute; right: 0; }
+    .about-workspace-footer small { display: block; font-size: 10px; font-weight: 400; margin-top: 4px; }
     body.auth-locked .developer-watermark { display: none; }
     .auth-card h1 { font-size: 25px; }
     .auth-description { color: var(--muted); font-size: 12px; margin: 8px 0 22px; }
@@ -123,7 +129,8 @@
     }
     main { min-width: 0; padding: 32px clamp(20px, 4vw, 58px) 52px; }
     .topline { align-items: center; display: flex; justify-content: space-between; margin-bottom: 31px; }
-    .developer-watermark { background: rgba(255,255,255,.3); border: 1px solid rgba(111,125,114,.07); border-radius: 999px; color: rgba(116,125,116,.48); font-size: 10px; font-weight: 600; left: 254px; line-height: 1.4; opacity: .65; padding: 4px 9px; pointer-events: none; position: fixed; top: 8px; transition: left .22s ease; user-select: none; z-index: 10; }
+    .developer-watermark { background: rgba(255,255,255,.3); border: 1px solid rgba(111,125,114,.07); border-radius: 999px; color: rgba(116,125,116,.48); font-size: 10px; font-weight: 600; left: 50%; line-height: 1.4; opacity: .65; padding: 4px 9px; pointer-events: none; position: fixed; top: 8px; transform: translateX(-50%); user-select: none; z-index: 10; }
+
     .crumb { color: var(--muted); font-size: 12px; }
     .crumb b { color: #434a40; font-weight: 600; }
     .workspace-page-title { align-items: baseline; display: flex; flex-wrap: wrap; gap: 9px; }
@@ -785,15 +792,22 @@
       .about-intro { border-radius: 12px; min-height: 290px; padding-bottom: 22px; }
       .about-intro-copy { max-width: calc(100% - 110px); }
       .about-character { height: 230px; right: 12px; }
+      .auth-footer { bottom: 13px; right: 14px; }
     }
     .theme-toggle { align-items: center; background: rgba(255,255,255,.76); border: 1px solid var(--line); border-radius: 7px; color: var(--ink); display: inline-flex; flex: 0 0 auto; font-size: 10px; font-weight: 700; gap: 5px; justify-content: center; min-height: 29px; padding: 4px 8px; transition: background .2s ease, border-color .2s ease, color .2s ease; }
     .theme-toggle:hover { background: #fff; border-color: #b8cfc6; }
     .theme-toggle-icon { font-size: 13px; line-height: 1; }
+    .accent-toggle { align-items: center; background: rgba(255,255,255,.76); border: 1px solid var(--line); border-radius: 7px; color: var(--ink); display: inline-flex; font-size: 10px; font-weight: 700; gap: 6px; min-height: 29px; padding: 4px 8px; }
+    .accent-toggle:hover { border-color: #b8cfc6; }
+    .accent-swatch { background: var(--green); border: 1px solid rgba(0,0,0,.12); border-radius: 50%; height: 12px; width: 12px; }
     .auth-theme-toggle { position: absolute; right: 20px; top: 18px; }
+    .auth-accent-toggle { position: absolute; right: 82px; top: 18px; }
     @media (max-width: 650px) {
       .theme-toggle { min-height: 27px; padding: 4px 7px; }
       .theme-toggle-label { display: none; }
+      .accent-toggle { min-height: 27px; padding: 4px 7px; }
       .auth-theme-toggle { right: 12px; top: 12px; }
+      .auth-accent-toggle { right: 62px; top: 12px; }
       .top-account { gap: 6px; }
     }
     html[data-theme="dark"] {
@@ -986,6 +1000,7 @@
     html[data-theme="dark"] .developer-watermark { background: rgba(22,36,33,.58); border-color: rgba(169,201,189,.1); color: rgba(191,211,203,.4); }
     html[data-theme="dark"] .theme-toggle { background: #22332f; border-color: #3a514b; color: #e3eeea; }
     html[data-theme="dark"] .theme-toggle:hover { background: #2a403a; border-color: #527467; }
+    html[data-theme="dark"] .accent-toggle { background: #22332f; border-color: #3a514b; color: #e3eeea; }
     html[data-theme="dark"] .nav-item.active { background: linear-gradient(100deg, #28483e, #203a34); box-shadow: inset 3px 0 #83c6ae; color: #e1f1eb; }
     html[data-theme="dark"] .auth-message.success { background: #203b35; border-color: #36594d; color: #9edbc3; }
     html[data-theme="dark"] .auth-message:not(.success) { background: #402a29; border-color: #67403c; color: #efaaa1; }
@@ -1093,6 +1108,41 @@
     .schedule-select-option[aria-selected="true"]::after { color: var(--green); content: "✓"; font-size: 12px; font-weight: 800; margin-left: 12px; }
     html[data-theme="dark"] .schedule-select-trigger { background: #14211f; border-color: #3a514b; color: var(--ink); }
     html[data-theme="dark"] .schedule-select-option[aria-selected="true"] { background: #203b35; color: #d9f1e4; }
+    html[data-accent="burgundy"] {
+      --green: #842b4b;
+      --green-dark: #5d1c35;
+      --green-soft: #f5e7ec;
+      --lime: #dfb0bf;
+    }
+    html[data-accent="burgundy"] body { background-image: radial-gradient(ellipse at 88% 0%, rgba(232,207,216,.46), transparent 36%); }
+    html[data-accent="burgundy"] .auth-screen { background: radial-gradient(ellipse at 82% 10%, rgba(232,207,216,.46), transparent 35%), var(--canvas); }
+    html[data-accent="burgundy"] .sidebar { background: linear-gradient(180deg, #76233f 0%, #4e192e 100%); border-color: #4e192e; }
+    html[data-accent="burgundy"] .nav-item.active { background: linear-gradient(100deg, #f4dfe7, #fbf0f3); box-shadow: inset 3px 0 #d9a1b4; color: #531a30; }
+    html[data-accent="burgundy"] .nav-item.active .nav-icon { background: linear-gradient(145deg, #9a3b5e, #5d1c35); color: #f8dce6; }
+    html[data-accent="burgundy"] .button-primary,
+    html[data-accent="burgundy"] .auth-submit { background: linear-gradient(135deg, #9a3b5e, #742542); }
+    html[data-accent="burgundy"] .button-primary:hover,
+    html[data-accent="burgundy"] .auth-submit:hover { background: #5d1c35; }
+    html[data-accent="burgundy"] .session-strip,
+    html[data-accent="burgundy"] .dashboard-hero,
+    html[data-accent="burgundy"] .schedule-overview { background: linear-gradient(115deg, #4e192e, #76233f 62%, #9a3b5e); }
+    html[data-accent="burgundy"] .about-intro { background: radial-gradient(circle at 96% 0%, rgba(255,255,255,.07) 0 115px, transparent 116px), linear-gradient(120deg, #4e192e, #842b4b); }
+    html[data-accent="burgundy"] .accent-swatch { background: #842b4b; }
+    html[data-accent="burgundy"][data-theme="dark"] {
+      --green: #d786a0;
+      --green-dark: #f0b6c7;
+      --green-soft: #422632;
+      --lime: #b96a84;
+    }
+    html[data-accent="burgundy"][data-theme="dark"] body { background-image: radial-gradient(ellipse at 88% 0%, rgba(105,48,69,.22), transparent 36%); }
+    html[data-accent="burgundy"][data-theme="dark"] .auth-screen { background: radial-gradient(ellipse at 82% 10%, rgba(105,48,69,.22), transparent 35%), var(--canvas); }
+    html[data-accent="burgundy"][data-theme="dark"] .sidebar { background: linear-gradient(180deg, #4a1a2d 0%, #321421 100%); border-color: #321421; }
+    html[data-accent="burgundy"][data-theme="dark"] .nav-item.active { background: linear-gradient(100deg, #482330, #3a1d29); color: #f4dce4; }
+    html[data-accent="burgundy"][data-theme="dark"] .button-primary,
+    html[data-accent="burgundy"][data-theme="dark"] .auth-submit { background: linear-gradient(135deg, #94405b, #67273d); color: #fff; }
+    html[data-accent="burgundy"][data-theme="dark"] .session-strip,
+    html[data-accent="burgundy"][data-theme="dark"] .dashboard-hero,
+    html[data-accent="burgundy"][data-theme="dark"] .schedule-overview { background: linear-gradient(115deg, #321421, #572238 62%, #76304d); }
     @keyframes dropdown-enter { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
     .schedule-card.schedule-resource-open { overflow: visible; position: relative; z-index: 8; }
     .master-start-scan-button { background: #fde7ee; border-color: #f3bfd0; color: #a30d3b; }
@@ -1134,8 +1184,9 @@
   </section>
   <section class="auth-screen" id="auth-screen" aria-label="Login">
     <button class="theme-toggle auth-theme-toggle" type="button" data-theme-toggle aria-label="Aktifkan dark mode" aria-pressed="false"><span class="theme-toggle-icon" aria-hidden="true">☾</span><span class="theme-toggle-label">Dark</span></button>
+    <button class="accent-toggle auth-accent-toggle" type="button" data-accent-toggle aria-label="Ganti tema warna ke burgundy"><span class="accent-swatch" aria-hidden="true"></span><span data-accent-label>Burgundy</span></button>
     <div class="auth-card">
-      <div class="auth-brand"><div class="brand-mark" aria-hidden="true"><img src="./assets/stock-opname-icon.png" alt=""></div><div><div class="brand-name">STOCK OPNAME</div><div class="brand-caption">serial number opname</div></div><span class="auth-copyright">© M-Maz</span></div>
+      <div class="auth-brand"><div class="brand-mark" aria-hidden="true"><img src="./assets/stock-opname-icon.png" alt=""></div><div><div class="brand-name">STOCK OPNAME</div><div class="brand-caption">serial number opname</div></div><span class="auth-copyright">© 2026 M-Maz</span></div>
       <h1>Login Account</h1>
       <p class="auth-description">Login menggunakan username dan password dari admin. Data stock opname dibagikan ke seluruh tim.</p>
       <form class="auth-form" id="login-form">
@@ -1152,6 +1203,7 @@
       <p class="auth-help">Akun dibuat oleh admin. Saat pertama kali masuk, Anda akan diminta mengganti password sementara. Jika lupa password, hubungi admin.</p>
     </div>
   </section>
+  <div class="auth-footer">© 2026 M-Maz. All rights reserved.</div>
   <div class="app-shell">
     <aside class="sidebar">
       <div class="brand">
@@ -1174,6 +1226,7 @@
         <button class="nav-item" data-page="completed-sessions"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 4h12a2 2 0 0 1 2 2v14H4V6a2 2 0 0 1 2-2Z"/><path d="M8 4V2h8v2m-8 7 2.5 2.5L16 8"/></svg></span><span>Sesi Stock Opname</span></button>
       </nav>
       <nav class="nav-list" aria-label="Bantuan" style="margin-top: 18px">
+        <button class="nav-item" data-page="about-info"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9"/><path d="M8 12h8m-4-4v8"/></svg></span><span>About</span></button>
         <button class="nav-item" data-page="about"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/></svg></span><span>Panduan</span></button>
       </nav>
       <div class="nav-label" id="admin-nav-label" hidden>Super Admin</div>
@@ -1187,7 +1240,7 @@
     </aside>
     <main id="main-content"></main>
   </div>
-  <div class="developer-watermark" aria-hidden="true">Developer by M-Maz</div>
+  <div class="developer-watermark" aria-hidden="true">Developed by M-Maz</div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <input class="upload-input" id="workbook-input" type="file" accept=".xlsx,.xls,.csv" aria-label="Pilih workbook atau file CSV stock opname">
   <dialog id="recorded-brand-dialog" class="feature-dialog">
@@ -1251,7 +1304,7 @@
     const PAGE_STORAGE_KEY = "ruangstok-last-page:";
     const warningScanAudio = new Audio("./assets/warning-duplicate.mp3");
     const matchedScanAudio = new Audio("./assets/scan-match.mp3");
-    const RESTORABLE_PAGES = new Set(["opname", "dashboard", "workspaces", "products", "layouts", "recap", "about", "admin-users", "data-resources", "completed-sessions", "history"]);
+    const RESTORABLE_PAGES = new Set(["opname", "dashboard", "workspaces", "products", "layouts", "recap", "about", "about-info", "admin-users", "data-resources", "completed-sessions", "history"]);
     const applyTheme = (theme, persist = false) => {
       const activeTheme = theme === "dark" ? "dark" : "light";
       document.documentElement.dataset.theme = activeTheme;
@@ -1274,6 +1327,31 @@
     } catch (error) {
       console.warn("Preferensi tema tidak dapat dibaca:", error);
       applyTheme("light");
+    }
+    const ACCENT_STORAGE_KEY = "ruangstok-accent";
+    const applyAccent = (accent, persist = false) => {
+      const activeAccent = accent === "burgundy" ? "burgundy" : "green";
+      document.documentElement.dataset.accent = activeAccent;
+      document.querySelectorAll("[data-accent-toggle]").forEach((button) => {
+        const nextAccent = activeAccent === "green" ? "burgundy" : "green";
+        button.setAttribute("aria-label", `Ganti tema warna ke ${nextAccent === "green" ? "hijau" : "burgundy"}`);
+        button.setAttribute("title", `Ganti tema warna ke ${nextAccent === "green" ? "hijau" : "burgundy"}`);
+        const label = button.querySelector("[data-accent-label]");
+        if (label) label.textContent = activeAccent === "green" ? "Burgundy" : "Hijau";
+      });
+      if (persist) {
+        try {
+          localStorage.setItem(ACCENT_STORAGE_KEY, activeAccent);
+        } catch (error) {
+          console.warn("Preferensi warna tidak dapat disimpan:", error);
+        }
+      }
+    };
+    try {
+      applyAccent(localStorage.getItem(ACCENT_STORAGE_KEY) || "green");
+    } catch (error) {
+      console.warn("Preferensi warna tidak dapat dibaca:", error);
+      applyAccent("green");
     }
     const SUPABASE_URL = "https://kdeculjdbmhhhnqaonzb.supabase.co";
     const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_w2fpQZE11m9h00HAXNNFTA_5L7i_Jlf";
@@ -1757,7 +1835,6 @@
       authSession = session;
       document.body.classList.remove("auth-checking");
       document.body.classList.remove("auth-locked");
-      positionDeveloperWatermark();
       const username = session.user.user_metadata?.username || session.user.email || "Pengguna";
       document.getElementById("profile-email").textContent = username;
       document.getElementById("profile-avatar").textContent = username.slice(0, 2).toLocaleUpperCase("id-ID");
@@ -2231,7 +2308,7 @@
       const pics = activeWorkspace()?.picNames || [];
       const showPics = currentPage === "opname" || currentPage === "layouts" || currentPage === "products";
       const picMarkup = showPics && pics.some((name) => name.trim()) ? `<span class="top-pics">PIC 1: ${escapeHtml(pics[0] || "Belum diisi")} · PIC 2: ${escapeHtml(pics[1] || "Belum diisi")}</span>` : "";
-      return `<div class="topline"><div class="crumb">${escapeHtml(activeWorkspaceName())} <span> / </span> <b>${currentPage === "dashboard" ? "Dashboard" : currentPage === "opname" ? "Result SO" : currentPage === "layouts" ? "Scan Layout" : currentPage === "workspaces" ? "Jadwal" : currentPage === "products" ? "Master VEF" : currentPage === "recap" ? "Rekap selisih" : currentPage === "completed-sessions" ? "Sesi Stock Opname" : currentPage === "admin-users" ? "Kelola Akun" : currentPage === "data-resources" ? "Data Resource" : currentPage === "about" ? "Panduan" : "Riwayat Perubahan"}</b></div><div class="top-actions"><span class="today">${formatDate(new Date(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span>${picMarkup}<button class="theme-toggle" type="button" data-theme-toggle aria-label="Aktifkan dark mode" aria-pressed="false"><span class="theme-toggle-icon" aria-hidden="true">☾</span><span class="theme-toggle-label">Dark</span></button></div></div>`;
+      return `<div class="topline"><div class="crumb">${escapeHtml(activeWorkspaceName())} <span> / </span> <b>${currentPage === "dashboard" ? "Dashboard" : currentPage === "opname" ? "Result SO" : currentPage === "layouts" ? "Scan Layout" : currentPage === "workspaces" ? "Jadwal" : currentPage === "products" ? "Master VEF" : currentPage === "recap" ? "Rekap selisih" : currentPage === "completed-sessions" ? "Sesi Stock Opname" : currentPage === "admin-users" ? "Kelola Akun" : currentPage === "data-resources" ? "Data Resource" : currentPage === "about-info" ? "About" : currentPage === "about" ? "Panduan" : "Riwayat Perubahan"}</b></div><div class="top-actions"><span class="today">${formatDate(new Date(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span>${picMarkup}<button class="accent-toggle" type="button" data-accent-toggle aria-label="Ganti tema warna ke burgundy"><span class="accent-swatch" aria-hidden="true"></span><span data-accent-label>Burgundy</span></button><button class="theme-toggle" type="button" data-theme-toggle aria-label="Aktifkan dark mode" aria-pressed="false"><span class="theme-toggle-icon" aria-hidden="true">☾</span><span class="theme-toggle-label">Dark</span></button></div></div>`;
     };
     const productRows = (products, active, canEdit) => products.length ? products.map((product, index) => {
       const included = isCountedProduct(product);
@@ -3275,7 +3352,7 @@
       }
       document.querySelectorAll(".nav-item").forEach((item) => item.classList.toggle("active", item.dataset.page === currentPage));
       const main = document.getElementById("main-content");
-      main.innerHTML = currentPage === "dashboard" ? renderDashboard() : currentPage === "opname" ? renderOpname() : currentPage === "layouts" ? renderLayouts() : currentPage === "workspaces" ? renderWorkspaceSchedule() : currentPage === "products" ? renderProducts() : currentPage === "recap" ? renderRecap() : currentPage === "about" ? renderAbout() : currentPage === "admin-users" ? renderAdminUsers() : currentPage === "data-resources" ? renderDataResources() : currentPage === "completed-session-detail" ? renderCompletedSessionView() : currentPage === "completed-sessions" ? renderCompletedSessions() : renderHistory();
+      main.innerHTML = currentPage === "dashboard" ? renderDashboard() : currentPage === "opname" ? renderOpname() : currentPage === "layouts" ? renderLayouts() : currentPage === "workspaces" ? renderWorkspaceSchedule() : currentPage === "products" ? renderProducts() : currentPage === "recap" ? renderRecap() : currentPage === "about-info" ? renderAboutWorkspace() : currentPage === "about" ? renderAbout() : currentPage === "admin-users" ? renderAdminUsers() : currentPage === "data-resources" ? renderDataResources() : currentPage === "completed-session-detail" ? renderCompletedSessionView() : currentPage === "completed-sessions" ? renderCompletedSessions() : renderHistory();
       bindPageEvents();
       if (window.matchMedia("(max-width: 650px)").matches) {
         document.querySelector(".nav-item.active")?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
@@ -3309,6 +3386,10 @@
           ${isSuperAdmin() ? guide("Admin", "▧", "Data Resource", "Tambahkan, ubah, atau hapus pilihan Nama Brand dan Nama PIC. Daftar ini dibagikan kepada semua akun dan menjadi sumber pencarian pada kartu Jadwal. Pastikan nama sudah benar sebelum staf memulai sesi.", "data-resources", "Data Resource") : ""}
           ${isSuperAdmin() ? guide("Admin", "♙", "Kelola Akun", "Buat akun staf, reset password, dan aktifkan atau nonaktifkan akses akun.", "admin-users", "Kelola Akun") : ""}
         </section>`;
+    }
+
+    function renderAboutWorkspace() {
+      return `${navMarkup()}<section class="about-workspace"><p class="about-workspace-message">Aktifitas Stock Opname lebih mudah cepat dan informatif.</p><footer class="about-workspace-footer">Developed by M-Maz<small>© 2026 M-Maz. All rights reserved.</small></footer></section>`;
     }
 
     function renderDataResourceList(type, title, description) {
@@ -4234,14 +4315,6 @@
     const appShell = document.querySelector(".app-shell");
     const sidebar = document.querySelector(".sidebar");
     const sidebarToggle = document.querySelector(".sidebar-toggle");
-    const developerWatermark = document.querySelector(".developer-watermark");
-    function positionDeveloperWatermark() {
-      const main = document.getElementById("main-content");
-      const mainStyle = getComputedStyle(main);
-      developerWatermark.style.left = `${Math.round(main.getBoundingClientRect().left + parseFloat(mainStyle.paddingLeft))}px`;
-    }
-    positionDeveloperWatermark();
-    window.addEventListener("resize", positionDeveloperWatermark);
     for (const eventName of ["pointerdown", "pointermove", "keydown", "scroll", "touchstart", "click"]) {
       document.addEventListener(eventName, recordUserActivity, { passive: true });
     }
@@ -4251,13 +4324,9 @@
     window.addEventListener("storage", (event) => {
       if (event.key === idleActivityStorageKey && event.newValue) checkIdleSession();
     });
-    appShell.addEventListener("transitionend", (event) => {
-      if (event.propertyName === "grid-template-columns") positionDeveloperWatermark();
-    });
     sidebarToggle.addEventListener("click", () => {
       const collapsed = appShell.classList.toggle("sidebar-collapsed");
       appShell.classList.remove("sidebar-expanded");
-      positionDeveloperWatermark();
       sidebarToggle.setAttribute("aria-expanded", String(!collapsed));
       sidebarToggle.setAttribute("aria-label", collapsed ? "Lebarkan menu" : "Ciutkan menu");
       sidebarToggle.title = collapsed ? "Lebarkan menu" : "Ciutkan menu";
@@ -4266,12 +4335,10 @@
     sidebar.addEventListener("pointerenter", () => {
       if (appShell.classList.contains("sidebar-collapsed")) {
         appShell.classList.add("sidebar-expanded");
-        positionDeveloperWatermark();
       }
     });
     sidebar.addEventListener("pointerleave", () => {
       appShell.classList.remove("sidebar-expanded");
-      positionDeveloperWatermark();
     });
     document.querySelectorAll(".nav-item").forEach((item) => {
       const label = item.querySelector("span:last-child").textContent.trim();
@@ -4288,6 +4355,8 @@
     document.addEventListener("click", (event) => {
       const toggle = event.target.closest("[data-theme-toggle]");
       if (toggle) applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark", true);
+      const accentToggle = event.target.closest("[data-accent-toggle]");
+      if (accentToggle) applyAccent(document.documentElement.dataset.accent === "burgundy" ? "green" : "burgundy", true);
     });
     document.getElementById("recorded-brand-form").addEventListener("submit", (event) => {
       event.preventDefault();
