@@ -76,9 +76,14 @@ language plpgsql
 set search_path = ''
 as $$
 declare
+  current_user_id text := auth.uid()::text;
+  is_workspace_super_admin boolean :=
+    coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'super_admin'
+    and coalesce(auth.jwt() -> 'app_metadata' ->> 'owner_username', '') = 'indra';
   old_workspace_ids text[];
   new_workspace_ids text[];
   removed_workspace jsonb;
+  removed_session_id text;
 begin
   if (
     coalesce(old.data -> 'resources' -> 'brands', '[]'::jsonb) is distinct from coalesce(new.data -> 'resources' -> 'brands', '[]'::jsonb)
@@ -108,7 +113,9 @@ begin
           where new_workspace.value ->> 'id' = old_workspace.value ->> 'id'
        )
     loop
-      if coalesce(removed_workspace ->> 'startedAt', '') <> ''
+      removed_session_id := removed_workspace -> 'data' -> 'activeSession' ->> 'id';
+      if (
+        coalesce(removed_workspace ->> 'startedAt', '') <> ''
         or coalesce(removed_workspace -> 'data' -> 'activeSession' ->> 'status', 'active') <> 'active'
         or jsonb_array_length(coalesce(removed_workspace -> 'data' -> 'products', '[]'::jsonb)) > 0
         or jsonb_array_length(coalesce(removed_workspace -> 'data' -> 'scanEvents', '[]'::jsonb)) > 0
@@ -118,8 +125,28 @@ begin
           select 1
             from jsonb_array_elements(coalesce(old.data -> 'sessions', '[]'::jsonb)) as session(value)
            where session.value ->> 'workspaceId' = removed_workspace ->> 'id'
-        ) then
-        raise exception 'Schedule cards can only be removed while empty or before stock opname starts.'
+        )
+      ) and not (
+        coalesce(removed_workspace -> 'data' -> 'activeSession' ->> 'status', 'active') = 'active'
+        and (is_workspace_super_admin
+          or removed_workspace -> 'data' -> 'activeSession' ->> 'createdByUserId' = current_user_id)
+        and not exists (
+          select 1
+            from jsonb_array_elements(coalesce(removed_workspace -> 'data' -> 'workbookFiles', '[]'::jsonb)) as workbook(value)
+           where workbook.value ->> 'sessionId' = removed_session_id
+        )
+        and not exists (
+          select 1
+            from jsonb_array_elements(coalesce(old.data -> 'workbookFiles', '[]'::jsonb)) as workbook(value)
+           where workbook.value ->> 'sessionId' = removed_session_id
+        )
+        and not exists (
+          select 1
+            from jsonb_array_elements(coalesce(old.data -> 'sessions', '[]'::jsonb)) as session(value)
+           where session.value ->> 'workspaceId' = removed_workspace ->> 'id'
+        )
+      ) then
+        raise exception 'Schedule cards can only be removed before workbook upload or before stock opname starts.'
           using errcode = '42501';
       end if;
     end loop;

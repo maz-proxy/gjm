@@ -1525,7 +1525,7 @@
       } : {})
     });
     const DEFAULT_LAYOUTS = ["Rack 1"];
-    const EMPTY_WORKSPACE_TIMEOUT_MS = 5 * 60 * 1000;
+    const UNUPLOADED_WORKSPACE_TIMEOUT_MS = 5 * 60 * 1000;
     const WORKSPACE_CLEANUP_INTERVAL_MS = 15 * 1000;
     const initialState = () => ({ products: [], serialMaster: {}, scanEvents: [], manualEntries: [], pjEntries: [], historyEvents: [], sessions: [], workbookFiles: [], resources: { brands: [], picNames: [] }, activeSession: makeSession(), countMode: "laptops", importFile: "", importMessage: "", importDownloadedAt: "", importUploadedAt: "", layouts: [...DEFAULT_LAYOUTS], layoutQuantities: {}, layoutNumbers: {} });
     const emptyWorkspaceData = () => ({ products: [], serialMaster: {}, scanEvents: [], manualEntries: [], pjEntries: [], historyEvents: [], workbookFiles: [], activeSession: makeSession(), countMode: "laptops", importFile: "", importMessage: "", importDownloadedAt: "", importUploadedAt: "", layouts: [...DEFAULT_LAYOUTS], layoutQuantities: {}, layoutNumbers: {} });
@@ -1547,7 +1547,7 @@
       for (const entry of manualEntries) boxTotals.set(entry.productId, (boxTotals.get(entry.productId) || 0) + Number(entry.quantity || 0));
       return { products: products.map((product) => ({ ...product, box: boxTotals.get(product.id) || 0 })), serialMaster: source.serialMaster || {}, scanEvents: source.scanEvents || [], manualEntries, pjEntries: Array.isArray(source.pjEntries) ? source.pjEntries : [], historyEvents: source.historyEvents || [], workbookFiles: Array.isArray(source.workbookFiles) ? source.workbookFiles : [], activeSession: source.activeSession || makeSession(), countMode: source.countMode === "all" ? "all" : "laptops", importFile: source.importFile || "", importMessage: source.importMessage || "", importDownloadedAt: source.importDownloadedAt || "", importUploadedAt: source.importUploadedAt || "", layouts, layoutQuantities: source.layoutQuantities || {}, layoutNumbers: source.layoutNumbers || {} };
     };
-    const createWorkspace = (name = "", data = emptyWorkspaceData(), schedulePlaceholder = false) => ({ id: crypto.randomUUID(), name, month: normalizeWorkspaceMonth(""), period: normalizeWorkspacePeriod(""), picNames: ["", ""], startedAt: "", scheduleCreatedAt: "", schedulePlaceholder, data });
+    const createWorkspace = (name = "", data = emptyWorkspaceData(), schedulePlaceholder = false) => ({ id: crypto.randomUUID(), name, month: normalizeWorkspaceMonth(""), period: normalizeWorkspacePeriod(""), picNames: ["", ""], startedAt: "", scheduleCreatedAt: "", scheduleOwnerUserId: "", uploadActivityAt: "", schedulePlaceholder, data });
     const isEmptyScheduleWorkspace = (workspace, sessions = []) => {
       const data = workspace?.data || {};
       return Boolean(workspace
@@ -1578,6 +1578,10 @@
     const normalizeWorkspaceScheduleCards = (workspaces, sessions = []) => {
       for (const workspace of workspaces) {
         workspace.scheduleCreatedAt = typeof workspace.scheduleCreatedAt === "string" ? workspace.scheduleCreatedAt : "";
+        workspace.scheduleOwnerUserId = (typeof workspace.scheduleOwnerUserId === "string" ? workspace.scheduleOwnerUserId : "")
+          || workspace.data?.activeSession?.createdByUserId
+          || "";
+        workspace.uploadActivityAt = typeof workspace.uploadActivityAt === "string" ? workspace.uploadActivityAt : "";
         workspace.schedulePlaceholder = workspace.schedulePlaceholder === true;
         if (workspace.schedulePlaceholder && !isEmptyScheduleWorkspace(workspace, sessions)) workspace.schedulePlaceholder = false;
       }
@@ -1688,6 +1692,7 @@
     let syncTimer = null;
     let refreshTimer = null;
     let workspaceCleanupTimer = null;
+    const pendingWorkbookUploads = new Set();
     let refreshInProgress = false;
     let saveInProgress = false;
     let syncErrorShown = false;
@@ -1758,6 +1763,7 @@
       return Boolean(workspace?.name.trim() && workspace.picNames?.[0]?.trim() && workspace.picNames?.[1]?.trim());
     }
     function canRemoveWorkspace(workspace) {
+      if (!workspace || pendingWorkbookUploads.has(workspace.id)) return false;
       const data = workspace?.data || {};
       const removableBeforeStart = Boolean(workspace
         && !workspaceHasStarted(workspace)
@@ -1767,7 +1773,23 @@
         && !(data.manualEntries || []).length
         && !(data.workbookFiles || []).length
         && !state.sessions.some((session) => session.workspaceId === workspace.id));
-      return removableBeforeStart || canCancelEmptyStartedWorkspace(workspace);
+      return removableBeforeStart || canDeleteUnuploadedWorkspace(workspace) || canCancelEmptyStartedWorkspace(workspace);
+    }
+    function workspaceHasActiveWorkbook(workspace) {
+      const sessionId = workspace?.data?.activeSession?.id;
+      if (!sessionId) return false;
+      const workspaceFiles = workspace?.data?.workbookFiles || [];
+      const activeFiles = workspace.id === state.currentWorkspaceId ? state.workbookFiles || [] : [];
+      return [...workspaceFiles, ...activeFiles].some((workbook) => workbook.sessionId === sessionId);
+    }
+    function canDeleteUnuploadedWorkspace(workspace) {
+      const session = workspace?.data?.activeSession;
+      const ownerId = session?.createdByUserId || workspace?.scheduleOwnerUserId;
+      return Boolean(workspace
+        && session?.status === "active"
+        && !workspaceHasActiveWorkbook(workspace)
+        && !state.sessions.some((item) => item.workspaceId === workspace.id)
+        && (isSuperAdmin() || (authSession?.user?.id && ownerId === authSession.user.id)));
     }
     function canCancelEmptyStartedWorkspace(workspace) {
       const data = workspace?.data || {};
@@ -1828,6 +1850,10 @@
       return session?.createdByUsername || (session?.createdByUserId ? "Staf" : "Belum ditetapkan");
     }
     function requireActiveSessionEdit() {
+      if (activeWorkspace() && pendingWorkbookUploads.has(state.currentWorkspaceId)) {
+        notify("Tunggu unggahan file VEF untuk sesi ini selesai sebelum melanjutkan.");
+        return false;
+      }
       if (canEditActiveSession()) return true;
       const owner = activeWorkspace()?.data?.activeSession;
       notify(`Sesi ini hanya dapat diedit oleh ${sessionOwnerName(owner)} atau Super Admin.`);
@@ -2258,8 +2284,8 @@
         if (/only the workspace super admin can manage shared stock opname resources/i.test(message)) {
           return "Perubahan Data Resource hanya dapat dilakukan oleh Super Admin. Data terbaru telah dimuat ulang.";
         }
-        if (/schedule cards can only be removed while empty or before stock opname starts/i.test(message)) {
-          return "Kartu Jadwal tidak dapat dihapus karena stock opname sudah dimulai atau kartu berisi data. Data terbaru telah dimuat ulang.";
+        if (/schedule cards can only be removed while empty or before stock opname starts|schedule cards can only be removed before workbook upload or before stock opname starts/i.test(message)) {
+          return "Kartu Jadwal hanya dapat dihapus pemilik sesi sebelum workbook VEF diunggah, atau sebelum stock opname dimulai. Data terbaru telah dimuat ulang.";
         }
         if (/new row violates row-level security policy/i.test(message)) {
           return "Database menolak pembuatan data workspace. Pastikan supabase-setup.sql sudah dijalankan. Jika ini login pertama atau data workspace belum ada, minta Super Admin login terlebih dahulu.";
@@ -2312,7 +2338,7 @@
             remoteVersion = created.version;
           }
         }
-        const removedExpiredEmptyWorkspaces = removeExpiredEmptyWorkspaces();
+        const removedExpiredUnuploadedWorkspaces = removeExpiredUnuploadedWorkspaces();
         normalizeWorkspaceClassifications();
         persistLocalState();
         lastSyncedState = stableSerialize(state);
@@ -2324,12 +2350,12 @@
         refreshTimer = setInterval(refreshSharedState, 8000);
         workspaceCleanupTimer = setInterval(() => {
           if (refreshInProgress || syncTimer) return;
-          if (removeExpiredEmptyWorkspaces()) {
+          if (removeExpiredUnuploadedWorkspaces()) {
             persist();
             render();
           }
         }, WORKSPACE_CLEANUP_INTERVAL_MS);
-        if (removedExpiredEmptyWorkspaces) persist();
+        if (removedExpiredUnuploadedWorkspaces) persist();
       } catch (error) {
         document.body.classList.remove("auth-checking");
         showAuthMessage(databaseSetupHint(error));
@@ -3553,8 +3579,9 @@
         const period = normalizeWorkspacePeriod(workspace.period);
         const summaryPicNames = (workspace.picNames || []).filter(Boolean).map(escapeHtml).join(" & ") || "PIC belum diisi";
         const modeDisabled = !canEdit || isCompleted;
-        const canDelete = canRemoveWorkspace(workspace) && (state.workspaces.length > 1 || canCancelEmptyStartedWorkspace(workspace));
-        const deleteButton = `<button class="rack-delete-button schedule-delete-button" type="button" data-delete-workspace="${escapeHtml(workspace.id)}" aria-label="${canCancelEmptyStartedWorkspace(workspace) ? "Batalkan sesi kosong" : "Hapus kartu"} ${escapeHtml(workspace.name || "Jadwal")}" title="${canDelete ? canCancelEmptyStartedWorkspace(workspace) ? "Batalkan sesi berjalan yang belum memiliki data" : "Hapus kartu yang belum dimulai" : state.workspaces.length <= 1 ? "Minimal satu sesi harus dipertahankan." : "Kartu hanya dapat dihapus sebelum stock opname dimulai"}" ${canDelete ? "" : "disabled"}>−</button>`;
+        const canDeleteWithoutUpload = canDeleteUnuploadedWorkspace(workspace);
+        const canDelete = canRemoveWorkspace(workspace) && (state.workspaces.length > 1 || canCancelEmptyStartedWorkspace(workspace) || canDeleteWithoutUpload);
+        const deleteButton = `<button class="rack-delete-button schedule-delete-button" type="button" data-delete-workspace="${escapeHtml(workspace.id)}" aria-label="${canCancelEmptyStartedWorkspace(workspace) ? "Batalkan sesi kosong" : "Hapus kartu"} ${escapeHtml(workspace.name || "Jadwal")}" title="${canDelete ? canDeleteWithoutUpload ? "Hapus sesi pemilik karena file VEF belum diunggah" : canCancelEmptyStartedWorkspace(workspace) ? "Batalkan sesi berjalan yang belum memiliki data" : "Hapus kartu yang belum dimulai" : state.workspaces.length <= 1 ? "Minimal satu sesi harus dipertahankan." : "Kartu hanya dapat dihapus sebelum stock opname dimulai atau sebelum file VEF diunggah"}" ${canDelete ? "" : "disabled"}>−</button>`;
         return `<details class="schedule-card ${isCurrent ? "current" : ""}">
           <summary class="schedule-card-summary" aria-label="${escapeHtml(workspace.name || "Nama Brand belum diisi")}, ${status}. Klik untuk melihat detail.">
             <span class="schedule-summary-copy"><strong class="schedule-summary-title">${escapeHtml(workspace.name || "Nama Brand belum diisi")}</strong><span class="schedule-summary-meta"><span data-workspace-schedule-summary="${escapeHtml(workspace.id)}">${month} · ${period}</span> · ${countModeLabel(countMode)} · ${formatNumber(stats.countedSkus)} item · ${formatNumber(serials)} SN · ${summaryPicNames}</span></span>
@@ -3652,13 +3679,23 @@
       persist();
     }
 
-    function removeExpiredEmptyWorkspaces(now = Date.now()) {
-      const expiredIds = new Set(state.workspaces
-        .filter((workspace) => !workspace.schedulePlaceholder
-          && isEmptyScheduleWorkspace(workspace, state.sessions)
-          && Number.isFinite(Date.parse(workspace.scheduleCreatedAt))
-          && now - Date.parse(workspace.scheduleCreatedAt) >= EMPTY_WORKSPACE_TIMEOUT_MS)
-        .map((workspace) => workspace.id));
+    function removeExpiredUnuploadedWorkspaces(now = Date.now()) {
+      const expiredWorkspaces = state.workspaces
+        .filter((workspace) => {
+          const session = workspace.data?.activeSession;
+          const ownerId = session?.createdByUserId || workspace.scheduleOwnerUserId;
+          const activityAt = workspace.uploadActivityAt || session?.startedAt || workspace.scheduleCreatedAt;
+          const activityTime = Date.parse(activityAt);
+          return !workspace.schedulePlaceholder
+            && !pendingWorkbookUploads.has(workspace.id)
+            && ownerId === authSession?.user?.id
+            && session?.status === "active"
+            && !workspaceHasActiveWorkbook(workspace)
+            && !state.sessions.some((item) => item.workspaceId === workspace.id)
+            && Number.isFinite(activityTime)
+            && now - activityTime >= UNUPLOADED_WORKSPACE_TIMEOUT_MS;
+        });
+      const expiredIds = new Set(expiredWorkspaces.map((workspace) => workspace.id));
       if (!expiredIds.size) return false;
       state.workspaces = state.workspaces.filter((workspace) => !expiredIds.has(workspace.id));
       if (expiredIds.has(state.currentWorkspaceId)) {
@@ -3670,12 +3707,17 @@
         state.currentWorkspaceId = placeholder.id;
         Object.assign(state, snapshotWorkspaceData(placeholder.data));
       }
+      const expiredNames = expiredWorkspaces.map((workspace) => workspace.name || "Sesi tanpa nama");
+      notify(expiredNames.length === 1
+        ? `${expiredNames[0]} dihapus otomatis karena file VEF tidak diunggah selama 5 menit.`
+        : `${expiredNames.length} sesi dihapus otomatis karena file VEF tidak diunggah selama 5 menit.`);
       return true;
     }
 
     function addWorkspace() {
       const workspace = createWorkspace();
       workspace.scheduleCreatedAt = new Date().toISOString();
+      workspace.scheduleOwnerUserId = authSession?.user?.id || "";
       state.workspaces.push(workspace);
       persist();
       render();
@@ -3686,6 +3728,10 @@
     function startWorkspace(workspaceId) {
       const workspace = state.workspaces.find((item) => item.id === workspaceId);
       if (!workspace) return;
+      if (pendingWorkbookUploads.has(workspaceId)) {
+        notify("Tunggu unggahan file VEF untuk sesi ini selesai sebelum memulai.");
+        return;
+      }
       if (workspaceHasStarted(workspace)) {
         if (workspaceId === state.currentWorkspaceId) {
           currentPage = "layouts";
@@ -3703,6 +3749,9 @@
       }
       const startedAt = new Date().toISOString();
       workspace.startedAt = startedAt;
+      workspace.scheduleCreatedAt = startedAt;
+      workspace.scheduleOwnerUserId = authSession?.user?.id || "";
+      workspace.uploadActivityAt = "";
       workspace.data.activeSession = { ...makeSession(authSession?.user || null), startedAt };
       workspace.data.historyEvents = [...(workspace.data.historyEvents || []), {
         id: crypto.randomUUID(),
@@ -3727,11 +3776,15 @@
         notify("Sesi tidak ditemukan. Daftar sesi tidak berubah.");
         return;
       }
+      if (pendingWorkbookUploads.has(workspaceId)) {
+        notify("Tunggu unggahan file VEF selesai sebelum menghapus sesi.");
+        return;
+      }
       if (!canRemoveWorkspace(workspace)) {
         notify("Kartu hanya dapat dihapus saat kosong atau sebelum stock opname dimulai.");
         return;
       }
-      if (state.workspaces.length <= 1 && !canCancelEmptyStartedWorkspace(workspace)) {
+      if (state.workspaces.length <= 1 && !canCancelEmptyStartedWorkspace(workspace) && !canDeleteUnuploadedWorkspace(workspace)) {
         notify("Minimal satu sesi harus dipertahankan.");
         return;
       }
@@ -3739,8 +3792,12 @@
       document.getElementById("delete-workspace-message").textContent = isSuperAdmin()
         ? canCancelEmptyStartedWorkspace(workspace)
           ? `Sesi "${workspace.name || "Tanpa nama"}" berstatus berjalan tetapi belum memiliki data VEF, scan, manual, PJ, atau arsip. Sesi kosong ini akan dibatalkan dan dihapus permanen.`
+          : canDeleteUnuploadedWorkspace(workspace)
+            ? `Sesi "${workspace.name || "Tanpa nama"}" belum memiliki file VEF pada sesi aktif. Seluruh data sesi dan arsip terkait akan dihapus permanen.`
           : `Sesi "${workspace.name || "Tanpa nama"}", seluruh data master, scan, aktivitas, arsip stock opname, dan file XLSX terkait akan dihapus permanen. Tindakan ini tidak dapat dibatalkan.`
-        : `Kartu Jadwal "${workspace.name || "Tanpa nama"}" yang belum dimulai akan dihapus.`;
+        : canDeleteUnuploadedWorkspace(workspace)
+          ? `Sesi "${workspace.name || "Tanpa nama"}" belum memiliki file VEF pada sesi aktif. Seluruh data di kartu sesi ini akan dihapus permanen.`
+          : `Kartu Jadwal "${workspace.name || "Tanpa nama"}" yang belum dimulai akan dihapus.`;
       document.getElementById("delete-workspace-dialog").showModal();
     }
 
@@ -3752,7 +3809,7 @@
         notify("Kartu ini tidak dapat dihapus karena stock opname sudah dimulai.");
         return;
       }
-      if (!workspace || (state.workspaces.length <= 1 && !canCancelEmptyStartedWorkspace(workspace))) {
+      if (!workspace || (state.workspaces.length <= 1 && !canCancelEmptyStartedWorkspace(workspace) && !canDeleteUnuploadedWorkspace(workspace))) {
         pendingWorkspaceDeletionId = "";
         document.getElementById("delete-workspace-dialog").close();
         notify(workspace ? "Minimal satu sesi harus dipertahankan." : "Sesi tidak ditemukan. Daftar sesi tidak berubah.");
@@ -4267,6 +4324,10 @@
     function switchWorkspace(id, destinationPage = "opname") {
       const workspace = state.workspaces.find((item) => item.id === id);
       if (!workspace || workspace.id === state.currentWorkspaceId) return;
+      if (pendingWorkbookUploads.has(state.currentWorkspaceId)) {
+        notify("Tunggu unggahan file VEF selesai sebelum berpindah sesi.");
+        return;
+      }
       persist();
       state.currentWorkspaceId = workspace.id;
       Object.assign(state, snapshotWorkspaceData(workspace.data));
@@ -4512,8 +4573,42 @@
       if (!/\.(xlsx|xls|csv)$/i.test(file.name)) { notify("Pilih file Excel .xlsx/.xls atau CSV."); return; }
       if (file.size > 50 * 1024 * 1024) { notify("Ukuran file melebihi batas arsip 50 MB."); return; }
       if (state.products.length && (state.scanEvents.length || state.manualEntries.length) && !window.confirm("Workbook baru akan mengganti data sesi yang sedang berjalan. Lanjutkan?")) return;
+      const uploadWorkspace = activeWorkspace();
+      if (!uploadWorkspace) {
+        notify("Sesi aktif tidak ditemukan. File tidak diunggah.");
+        return;
+      }
+      if (pendingWorkbookUploads.has(uploadWorkspace.id)) {
+        notify("Unggahan file VEF untuk sesi ini sedang diproses.");
+        return;
+      }
+      const uploadWorkspaceId = uploadWorkspace.id;
+      const uploadSessionId = state.activeSession.id;
+      const uploadUserId = authSession?.user?.id;
+      if (!uploadUserId) {
+        notify("Login tidak ditemukan. File tidak diunggah.");
+        return;
+      }
+      pendingWorkbookUploads.add(uploadWorkspaceId);
+      uploadWorkspace.scheduleOwnerUserId = uploadUserId;
+      uploadWorkspace.uploadActivityAt = new Date().toISOString();
+      if (!state.activeSession.createdByUserId) {
+        state.activeSession = {
+          ...state.activeSession,
+          createdByUserId: uploadUserId,
+          createdByUsername: authSession.user.user_metadata?.username || authSession.user.email || "Pengguna"
+        };
+      }
+      uploadWorkspace.data.activeSession = state.activeSession;
+      persist();
       try {
         const workbook = XLSX.read(await file.arrayBuffer(), { type: "array", cellDates: true, codepage: 65001 });
+        if (state.currentWorkspaceId !== uploadWorkspaceId
+          || state.activeSession.id !== uploadSessionId
+          || authSession?.user?.id !== uploadUserId) {
+          notify("Sesi atau akun berubah saat file diproses. Unggahan dibatalkan agar data sesi lain tidak berubah.");
+          return;
+        }
         const isCsv = /\.csv$/i.test(file.name);
         const downloadedAt = originalFileTimestamp(file, workbook);
         const uploadedAt = new Date().toISOString();
@@ -4609,7 +4704,11 @@
           state.importDownloadedAt = downloadedAt;
           state.importUploadedAt = uploadedAt;
           state.activeSession = newSession;
-          if (activeWorkspace()) activeWorkspace().startedAt = newSession.startedAt;
+          if (activeWorkspace()) {
+            activeWorkspace().startedAt = newSession.startedAt;
+            activeWorkspace().scheduleOwnerUserId = authSession.user.id;
+            activeWorkspace().uploadActivityAt = uploadedAt;
+          }
           state.workbookFiles = [...(state.workbookFiles || []), archivedWorkbook];
           persist();
           render();
@@ -4634,7 +4733,11 @@
         state.importUploadedAt = uploadedAt;
         state.lastScan = null;
         state.activeSession = newSession;
-        if (activeWorkspace()) activeWorkspace().startedAt = newSession.startedAt;
+        if (activeWorkspace()) {
+          activeWorkspace().startedAt = newSession.startedAt;
+          activeWorkspace().scheduleOwnerUserId = authSession.user.id;
+          activeWorkspace().uploadActivityAt = uploadedAt;
+        }
         state.workbookFiles = [...(state.workbookFiles || []), archivedWorkbook];
         persist();
         render();
@@ -4642,6 +4745,8 @@
       } catch (error) {
         console.error(error);
         notify(error instanceof Error ? error.message : "Workbook tidak dapat diproses atau diarsipkan.");
+      } finally {
+        pendingWorkbookUploads.delete(uploadWorkspaceId);
       }
     }
 
@@ -4699,7 +4804,12 @@
       if (!requireActiveSessionEdit()) return;
       recordActivity("Sesi baru", "Sesi opname baru dimulai; quantity SO, BOX, dan PJ direset.");
       state.activeSession = makeSession(authSession?.user || null);
-      if (activeWorkspace()) activeWorkspace().startedAt = state.activeSession.startedAt;
+      if (activeWorkspace()) {
+        activeWorkspace().startedAt = state.activeSession.startedAt;
+        activeWorkspace().scheduleCreatedAt = state.activeSession.startedAt;
+        activeWorkspace().scheduleOwnerUserId = authSession?.user?.id || "";
+        activeWorkspace().uploadActivityAt = "";
+      }
       state.scanEvents = [];
       state.manualEntries = [];
       state.pjEntries = [];
@@ -4737,7 +4847,13 @@
       state.layoutQuantities = {};
       state.layoutNumbers = {};
       state.activeSession = makeSession(authSession?.user || null);
-      if (activeWorkspace()) activeWorkspace().startedAt = "";
+      if (activeWorkspace()) {
+        const removedAt = new Date().toISOString();
+        activeWorkspace().startedAt = "";
+        activeWorkspace().scheduleCreatedAt = removedAt;
+        activeWorkspace().scheduleOwnerUserId = authSession?.user?.id || "";
+        activeWorkspace().uploadActivityAt = removedAt;
+      }
       persist();
       document.getElementById("delete-master-dialog").close();
       currentPage = "products";
