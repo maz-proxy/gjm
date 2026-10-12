@@ -77,6 +77,12 @@ set search_path = ''
 as $$
 declare
   current_user_id text := auth.uid()::text;
+  current_user_name text := lower(coalesce(
+    nullif(btrim(auth.jwt() -> 'user_metadata' ->> 'username'), ''),
+    nullif(btrim(auth.jwt() -> 'app_metadata' ->> 'username'), ''),
+    nullif(btrim(auth.jwt() ->> 'email'), ''),
+    ''
+  ));
   is_workspace_super_admin boolean :=
     coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'super_admin'
     and coalesce(auth.jwt() -> 'app_metadata' ->> 'owner_username', '') = 'indra';
@@ -84,6 +90,8 @@ declare
   new_workspace_ids text[];
   removed_workspace jsonb;
   removed_session_id text;
+  removed_owner_id text;
+  removed_owner_name text;
 begin
   if (
     coalesce(old.data -> 'resources' -> 'brands', '[]'::jsonb) is distinct from coalesce(new.data -> 'resources' -> 'brands', '[]'::jsonb)
@@ -114,6 +122,15 @@ begin
        )
     loop
       removed_session_id := removed_workspace -> 'data' -> 'activeSession' ->> 'id';
+      removed_owner_id := coalesce(
+        nullif(removed_workspace -> 'data' -> 'activeSession' ->> 'createdByUserId', ''),
+        nullif(removed_workspace ->> 'scheduleOwnerUserId', '')
+      );
+      removed_owner_name := lower(coalesce(
+        nullif(btrim(removed_workspace -> 'data' -> 'activeSession' ->> 'createdByUsername'), ''),
+        nullif(btrim(removed_workspace ->> 'scheduleOwnerUsername'), ''),
+        ''
+      ));
       if (
         coalesce(removed_workspace ->> 'startedAt', '') <> ''
         or coalesce(removed_workspace -> 'data' -> 'activeSession' ->> 'status', 'active') <> 'active'
@@ -128,8 +145,11 @@ begin
         )
       ) and not (
         coalesce(removed_workspace -> 'data' -> 'activeSession' ->> 'status', 'active') = 'active'
-        and (is_workspace_super_admin
-          or removed_workspace -> 'data' -> 'activeSession' ->> 'createdByUserId' = current_user_id)
+        and (
+          is_workspace_super_admin
+          or coalesce(removed_owner_id = current_user_id, false)
+          or (removed_owner_id is null and removed_owner_name <> '' and removed_owner_name = current_user_name)
+        )
         and not exists (
           select 1
             from jsonb_array_elements(coalesce(removed_workspace -> 'data' -> 'workbookFiles', '[]'::jsonb)) as workbook(value)

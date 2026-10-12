@@ -1547,7 +1547,7 @@
       for (const entry of manualEntries) boxTotals.set(entry.productId, (boxTotals.get(entry.productId) || 0) + Number(entry.quantity || 0));
       return { products: products.map((product) => ({ ...product, box: boxTotals.get(product.id) || 0 })), serialMaster: source.serialMaster || {}, scanEvents: source.scanEvents || [], manualEntries, pjEntries: Array.isArray(source.pjEntries) ? source.pjEntries : [], historyEvents: source.historyEvents || [], workbookFiles: Array.isArray(source.workbookFiles) ? source.workbookFiles : [], activeSession: source.activeSession || makeSession(), countMode: source.countMode === "all" ? "all" : "laptops", importFile: source.importFile || "", importMessage: source.importMessage || "", importDownloadedAt: source.importDownloadedAt || "", importUploadedAt: source.importUploadedAt || "", layouts, layoutQuantities: source.layoutQuantities || {}, layoutNumbers: source.layoutNumbers || {} };
     };
-    const createWorkspace = (name = "", data = emptyWorkspaceData(), schedulePlaceholder = false) => ({ id: crypto.randomUUID(), name, month: normalizeWorkspaceMonth(""), period: normalizeWorkspacePeriod(""), picNames: ["", ""], startedAt: "", scheduleCreatedAt: "", scheduleOwnerUserId: "", uploadActivityAt: "", schedulePlaceholder, data });
+    const createWorkspace = (name = "", data = emptyWorkspaceData(), schedulePlaceholder = false) => ({ id: crypto.randomUUID(), name, month: normalizeWorkspaceMonth(""), period: normalizeWorkspacePeriod(""), picNames: ["", ""], startedAt: "", scheduleCreatedAt: "", scheduleOwnerUserId: "", scheduleOwnerUsername: "", uploadActivityAt: "", schedulePlaceholder, data });
     const isEmptyScheduleWorkspace = (workspace, sessions = []) => {
       const data = workspace?.data || {};
       return Boolean(workspace
@@ -1580,6 +1580,9 @@
         workspace.scheduleCreatedAt = typeof workspace.scheduleCreatedAt === "string" ? workspace.scheduleCreatedAt : "";
         workspace.scheduleOwnerUserId = (typeof workspace.scheduleOwnerUserId === "string" ? workspace.scheduleOwnerUserId : "")
           || workspace.data?.activeSession?.createdByUserId
+          || "";
+        workspace.scheduleOwnerUsername = (typeof workspace.scheduleOwnerUsername === "string" ? workspace.scheduleOwnerUsername : "")
+          || workspace.data?.activeSession?.createdByUsername
           || "";
         workspace.uploadActivityAt = typeof workspace.uploadActivityAt === "string" ? workspace.uploadActivityAt : "";
         workspace.schedulePlaceholder = workspace.schedulePlaceholder === true;
@@ -1786,14 +1789,29 @@
       const activeFiles = workspace.id === state.currentWorkspaceId ? state.workbookFiles || [] : [];
       return [...workspaceFiles, ...activeFiles].some((workbook) => workbook.sessionId === sessionId);
     }
+    function workspaceIsOwnedByCurrentUser(workspace) {
+      const user = authSession?.user;
+      if (!workspace || !user) return false;
+      const ownerId = workspace.data?.activeSession?.createdByUserId || workspace.scheduleOwnerUserId;
+      if (ownerId) return ownerId === user.id;
+      const ownerNames = [
+        workspace.data?.activeSession?.createdByUsername,
+        workspace.scheduleOwnerUsername
+      ].filter(Boolean).map((name) => String(name).trim().toLocaleLowerCase("id-ID"));
+      const currentNames = [
+        user.user_metadata?.username,
+        user.app_metadata?.username,
+        user.email
+      ].filter(Boolean).map((name) => String(name).trim().toLocaleLowerCase("id-ID"));
+      return ownerNames.some((name) => currentNames.includes(name));
+    }
     function canDeleteUnuploadedWorkspace(workspace) {
       const session = workspace?.data?.activeSession;
-      const ownerId = session?.createdByUserId || workspace?.scheduleOwnerUserId;
       return Boolean(workspace
         && session?.status === "active"
         && !workspaceHasActiveWorkbook(workspace)
         && !state.sessions.some((item) => item.workspaceId === workspace.id)
-        && (isSuperAdmin() || (authSession?.user?.id && ownerId === authSession.user.id)));
+        && (isSuperAdmin() || workspaceIsOwnedByCurrentUser(workspace)));
     }
     function canCancelEmptyStartedWorkspace(workspace) {
       const data = workspace?.data || {};
@@ -2272,6 +2290,9 @@
       if (/jsonb_object_length/i.test(message)) {
         return "Fungsi trigger database masih versi lama dan memakai jsonb_object_length yang tidak tersedia. Jalankan ulang seluruh file supabase-setup.sql di Supabase → SQL Editor untuk memperbarui trigger, lalu muat ulang aplikasi.";
       }
+      if (/schedule cards can only be removed/i.test(message)) {
+        return "Database menolak penghapusan kartu. Jalankan ulang supabase-setup.sql di Supabase → SQL Editor agar izin pemilik dan placeholder terbaru aktif, lalu muat ulang aplikasi.";
+      }
       if (error.code === "PGRST205" || error.code === "42P01" || /stock_opname_state.*(not found|does not exist)|schema cache/i.test(message)) {
         return "Tabel database belum dibuat. Jalankan file supabase-setup.sql di Supabase → SQL Editor, lalu login kembali.";
       }
@@ -2287,9 +2308,6 @@
         }
         if (/only the workspace super admin can manage shared stock opname resources/i.test(message)) {
           return "Perubahan Data Resource hanya dapat dilakukan oleh Super Admin. Data terbaru telah dimuat ulang.";
-        }
-        if (/schedule cards can only be removed while empty or before stock opname starts|schedule cards can only be removed before workbook upload or before stock opname starts/i.test(message)) {
-          return "Kartu Jadwal hanya dapat dihapus pemilik sesi sebelum workbook VEF diunggah, atau sebelum stock opname dimulai. Data terbaru telah dimuat ulang.";
         }
         if (/new row violates row-level security policy/i.test(message)) {
           return "Database menolak pembuatan data workspace. Pastikan supabase-setup.sql sudah dijalankan. Jika ini login pertama atau data workspace belum ada, minta Super Admin login terlebih dahulu.";
@@ -3752,6 +3770,7 @@
       workspace.startedAt = startedAt;
       workspace.scheduleCreatedAt = startedAt;
       workspace.scheduleOwnerUserId = authSession?.user?.id || "";
+      workspace.scheduleOwnerUsername = authSession?.user?.user_metadata?.username || authSession?.user?.email || "";
       workspace.uploadActivityAt = "";
       workspace.data.activeSession = { ...makeSession(authSession?.user || null), startedAt };
       workspace.data.historyEvents = [...(workspace.data.historyEvents || []), {
@@ -3808,6 +3827,12 @@
       }
       const workspaceId = workspace.id;
       const wasCurrentWorkspace = workspaceId === state.currentWorkspaceId;
+      if (workspaceIsOwnedByCurrentUser(workspace) && !workspace.scheduleOwnerUserId) {
+        workspace.scheduleOwnerUserId = authSession.user.id;
+      }
+      if (workspaceIsOwnedByCurrentUser(workspace) && !workspace.scheduleOwnerUsername) {
+        workspace.scheduleOwnerUsername = authSession.user.user_metadata?.username || authSession.user.email || "";
+      }
       if (wasCurrentWorkspace) persist();
       const archivedWorkbooks = [
         ...(workspace.data.workbookFiles || []),
@@ -4696,6 +4721,7 @@
           if (activeWorkspace()) {
             activeWorkspace().startedAt = newSession.startedAt;
             activeWorkspace().scheduleOwnerUserId = authSession.user.id;
+            activeWorkspace().scheduleOwnerUsername = newSession.createdByUsername;
             activeWorkspace().uploadActivityAt = uploadedAt;
           }
           state.workbookFiles = [...(state.workbookFiles || []), archivedWorkbook];
@@ -4725,6 +4751,7 @@
         if (activeWorkspace()) {
           activeWorkspace().startedAt = newSession.startedAt;
           activeWorkspace().scheduleOwnerUserId = authSession.user.id;
+          activeWorkspace().scheduleOwnerUsername = newSession.createdByUsername;
           activeWorkspace().uploadActivityAt = uploadedAt;
         }
         state.workbookFiles = [...(state.workbookFiles || []), archivedWorkbook];
