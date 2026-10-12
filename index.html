@@ -1428,9 +1428,9 @@
     <div class="dialog-actions"><button class="button button-secondary" type="button" data-close="delete-completed-session-dialog">Batal</button><button class="button button-danger" id="confirm-delete-completed-session" type="button">Hapus sesi</button></div>
   </dialog>
   <dialog id="delete-workspace-dialog">
-    <div class="dialog-head"><div><div class="dialog-title">Hapus sesi workspace?</div><div class="dialog-subtitle">Data sesi dan arsip stock opname terkait akan dihapus permanen.</div></div><button class="dialog-close" type="button" data-close="delete-workspace-dialog" aria-label="Tutup">×</button></div>
+    <div class="dialog-head"><div><div class="dialog-title">Hapus kartu sesi?</div><div class="dialog-subtitle">Hanya kartu ini dan data sesi miliknya yang dihapus. Halaman Jadwal dan kartu sesi lainnya tetap aman.</div></div><button class="dialog-close" type="button" data-close="delete-workspace-dialog" aria-label="Tutup">×</button></div>
     <div class="confirm-body" id="delete-workspace-message"></div>
-    <div class="dialog-actions"><button class="button button-secondary" type="button" data-close="delete-workspace-dialog">Batal</button><button class="button button-danger" id="confirm-delete-workspace" type="button">Hapus sesi</button></div>
+    <div class="dialog-actions"><button class="button button-secondary" type="button" data-close="delete-workspace-dialog">Batal</button><button class="button button-danger" id="confirm-delete-workspace" type="button">Hapus kartu sesi</button></div>
   </dialog>
   <dialog id="delete-rack-warning-dialog">
     <div class="dialog-head"><div><div class="dialog-title">Rack masih berisi data</div><div class="dialog-subtitle">Data harus dikosongkan sebelum Rack dapat dihapus.</div></div><button class="dialog-close" type="button" data-close="delete-rack-warning-dialog" aria-label="Tutup">×</button></div>
@@ -3822,7 +3822,7 @@
       if (!workspace || !canRemoveWorkspace(workspace)) {
         pendingWorkspaceDeletionId = "";
         document.getElementById("delete-workspace-dialog").close();
-        notify("Kartu ini tidak dapat dihapus karena stock opname sudah dimulai.");
+        notify("Kartu sesi ini tidak dapat dihapus karena stock opname sudah dimulai atau datanya berubah.");
         return;
       }
       const workspaceId = workspace.id;
@@ -3858,7 +3858,7 @@
       document.getElementById("delete-workspace-dialog").close();
       persist();
       render();
-      notify(`Sesi ${workspace.name || "workspace"} dan arsip terkait berhasil dihapus.`);
+      notify(`Kartu sesi ${workspace.name || "ini"} beserta data miliknya berhasil dihapus. Kartu sesi lainnya tetap aman.`);
     }
 
     function render() {
