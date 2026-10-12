@@ -3706,7 +3706,7 @@
       const audioContext = new AudioContextClass();
       const warning = status === "duplicate" || status === "not-found";
       const tones = warning
-        ? [{ frequency: 420, offset: 0 }, { frequency: 280, offset: 0.18 }, { frequency: 420, offset: 0.36 }]
+        ? [{ frequency: 880, offset: 0 }, { frequency: 698, offset: 0.16 }, { frequency: 587, offset: 0.32 }]
         : status === "match"
           ? [{ frequency: 1046, offset: 0 }, { frequency: 1568, offset: 0.12 }, { frequency: 1318, offset: 0.25 }]
           : [{ frequency: 660, offset: 0 }];
