@@ -12,6 +12,16 @@ Static web application for stock-opname reconciliation. GitHub Actions publishes
 
 The workflow packages `index.html` and the login background image from `assets/` for publishing. The spreadsheet parser is loaded from jsDelivr, so users need an internet connection to use workbook import/export features.
 
+## Build the Android APK
+
+The Android app uses Capacitor to package the existing web workspace in a native Android shell. It keeps using the same Supabase project and requires an internet connection for login, shared data, and spreadsheet parsing. **Build Android APK** runs on each relevant push to `main` and can also be started manually from the GitHub Actions tab; download the `stock-opname-debug-apk` artifact from the completed run.
+
+1. To build locally, install Node.js 22 or newer, Java 21, Android Studio, and the Android SDK components requested by the Gradle project.
+2. In PowerShell, run `npm.cmd ci`, then `npm.cmd run android:apk`. The debug APK is created at `android\app\build\outputs\apk\debug\app-debug.apk`; install it on a test device before distributing it.
+3. Deploy the updated `login-with-username` and `admin-users` Supabase Edge Functions so their CORS allowlist accepts the Android WebView origin `https://localhost`.
+
+The debug APK is for testing. A release APK intended for distribution must be signed with a private release key; do not commit the key or its passwords.
+
 ## Supabase authentication and shared data
 
 The browser app uses the Supabase project URL and publishable key in `index.html`. A publishable key is intended for browser use; never put a Supabase secret or `service_role` key in this repository.

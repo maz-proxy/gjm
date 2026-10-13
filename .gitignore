@@ -11,3 +11,15 @@ supabase/.temp/
 
 # Workspace settings
 *.code-workspace
+
+# Android wrapper build output
+node_modules/
+www/
+android/.gradle/
+android/local.properties
+android/build/
+android/app/build/
+android/app/src/main/res/drawable-nodpi/stock_opname_icon.png
+*.jks
+*.keystore
+key.properties
