@@ -17,9 +17,9 @@ The workflow packages `index.html` and the login background image from `assets/`
 The browser app uses the Supabase project URL and publishable key in `index.html`. A publishable key is intended for browser use; never put a Supabase secret or `service_role` key in this repository.
 
 1. In Supabase **Authentication → Settings**, disable public sign-ups.
-2. In **Authentication → URL Configuration**, set **Site URL** to `https://projectme-maz.github.io/gjm/` and add that same address under **Redirect URLs**.
+2. In **Authentication → URL Configuration**, set **Site URL** to `https://m-maz.vercel.app/` and add it under **Redirect URLs**. Keep `https://projectme-maz.github.io/gjm/` there too if that address is still used.
 3. In **SQL Editor → New query**, paste the contents of [`supabase-setup.sql`](./supabase-setup.sql), and click **Run**. This creates the shared-state table and a private username-to-auth-account mapping table. Re-run the full script after application updates that change shared-state protections or accepted workbook file types.
-4. Install the [Supabase CLI](https://supabase.com/docs/guides/cli), then open a terminal in this project folder and deploy both Edge Functions:
+4. Install the [Supabase CLI](https://supabase.com/docs/guides/cli), then open a terminal in this project folder and deploy the Edge Functions. The browser origins `https://m-maz.vercel.app` and `https://projectme-maz.github.io` are explicitly allowed; redeploy these functions after changing their origin allowlists:
 
    ```powershell
    npx.cmd --yes supabase login
