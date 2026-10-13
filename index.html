@@ -2558,9 +2558,13 @@
         await startAuthenticatedSession(data.session, true);
       } catch (error) {
         const message = await getFunctionErrorMessage(error) || "Login gagal. Periksa username dan password.";
-        showAuthMessage(/failed to send a request|function .*not found|failed to fetch/i.test(message)
-          ? "Login username belum aktif. Minta admin memasang Edge Function Supabase mengikuti README."
-          : message);
+        if (error?.name === "FunctionsFetchError" || /failed to send a request|failed to fetch/i.test(message)) {
+          showAuthMessage("Browser gagal terhubung ke layanan login. Periksa koneksi internet, VPN/proxy, atau pemblokir jaringan, lalu muat ulang halaman. Jika berlanjut, minta admin memeriksa Edge Function login-with-username.");
+        } else if (error?.context?.status === 404 || /function .*not found|function not found/i.test(message)) {
+          showAuthMessage("Edge Function login-with-username tidak ditemukan di project Supabase. Minta admin deploy fungsi tersebut mengikuti README.");
+        } else {
+          showAuthMessage(message);
+        }
       } finally {
         setLoginBusy(false);
       }
