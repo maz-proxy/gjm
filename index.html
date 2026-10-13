@@ -1501,47 +1501,54 @@
     const brandEmblemSource = new Image();
     brandEmblemSource.src = "./assets/brand-emblem-source.png";
     const updateBrandFavicon = async () => {
-      const color = getComputedStyle(document.documentElement).getPropertyValue("--green").trim() || "#176b5b";
+      const colors = {
+        primary: getComputedStyle(document.documentElement).getPropertyValue("--green").trim() || "#176b5b",
+        sidebar: getComputedStyle(document.documentElement).getPropertyValue("--lime").trim() || "#b8d8c9"
+      };
       const surface = getComputedStyle(document.documentElement).getPropertyValue("--paper").trim() || "#ffffff";
       try {
         await brandEmblemSource.decode();
-        const canvas = document.createElement("canvas");
-        canvas.width = 256;
-        canvas.height = 256;
-        const context = canvas.getContext("2d", { willReadFrequently: true });
-        if (!context) throw new Error("Canvas 2D tidak tersedia untuk menyesuaikan warna ikon.");
-        const scale = Math.min(canvas.width / brandEmblemSource.naturalWidth, canvas.height / brandEmblemSource.naturalHeight);
-        const width = brandEmblemSource.naturalWidth * scale;
-        const height = brandEmblemSource.naturalHeight * scale;
-        context.drawImage(brandEmblemSource, (canvas.width - width) / 2, (canvas.height - height) / 2, width, height);
-        const pixels = context.getImageData(0, 0, canvas.width, canvas.height);
         const colorCanvas = document.createElement("canvas");
         colorCanvas.width = 1;
         colorCanvas.height = 1;
         const colorContext = colorCanvas.getContext("2d", { willReadFrequently: true });
         if (!colorContext) throw new Error("Canvas 2D tidak tersedia untuk membaca warna tema.");
-        colorContext.fillStyle = color;
-        colorContext.fillRect(0, 0, 1, 1);
-        const [themeRed, themeGreen, themeBlue] = colorContext.getImageData(0, 0, 1, 1).data;
         colorContext.fillStyle = surface;
         colorContext.fillRect(0, 0, 1, 1);
         const [surfaceRed, surfaceGreen, surfaceBlue] = colorContext.getImageData(0, 0, 1, 1).data;
-        for (let i = 0; i < pixels.data.length; i += 4) {
-          if (pixels.data[i + 3] === 0) continue;
-          const luminance = (pixels.data[i] * .2126 + pixels.data[i + 1] * .7152 + pixels.data[i + 2] * .0722) / 255;
-          const coverage = 1 - luminance;
-          pixels.data[i] = Math.round(surfaceRed * (1 - coverage) + themeRed * coverage);
-          pixels.data[i + 1] = Math.round(surfaceGreen * (1 - coverage) + themeGreen * coverage);
-          pixels.data[i + 2] = Math.round(surfaceBlue * (1 - coverage) + themeBlue * coverage);
-        }
-        context.putImageData(pixels, 0, 0);
-        const iconUrl = canvas.toDataURL("image/png");
+        const createThemedEmblem = (color) => {
+          const canvas = document.createElement("canvas");
+          canvas.width = 256;
+          canvas.height = 256;
+          const context = canvas.getContext("2d", { willReadFrequently: true });
+          if (!context) throw new Error("Canvas 2D tidak tersedia untuk menyesuaikan warna ikon.");
+          const scale = Math.min(canvas.width / brandEmblemSource.naturalWidth, canvas.height / brandEmblemSource.naturalHeight);
+          const width = brandEmblemSource.naturalWidth * scale;
+          const height = brandEmblemSource.naturalHeight * scale;
+          context.drawImage(brandEmblemSource, (canvas.width - width) / 2, (canvas.height - height) / 2, width, height);
+          const pixels = context.getImageData(0, 0, canvas.width, canvas.height);
+          colorContext.fillStyle = color;
+          colorContext.fillRect(0, 0, 1, 1);
+          const [themeRed, themeGreen, themeBlue] = colorContext.getImageData(0, 0, 1, 1).data;
+          for (let i = 0; i < pixels.data.length; i += 4) {
+            if (pixels.data[i + 3] === 0) continue;
+            const luminance = (pixels.data[i] * .2126 + pixels.data[i + 1] * .7152 + pixels.data[i + 2] * .0722) / 255;
+            const coverage = 1 - luminance;
+            pixels.data[i] = Math.round(surfaceRed * (1 - coverage) + themeRed * coverage);
+            pixels.data[i + 1] = Math.round(surfaceGreen * (1 - coverage) + themeGreen * coverage);
+            pixels.data[i + 2] = Math.round(surfaceBlue * (1 - coverage) + themeBlue * coverage);
+          }
+          context.putImageData(pixels, 0, 0);
+          return canvas.toDataURL("image/png");
+        };
+        const primaryEmblem = createThemedEmblem(colors.primary);
+        const sidebarEmblem = createThemedEmblem(colors.sidebar);
         document.querySelectorAll("[data-brand-emblem]").forEach((image) => {
-          image.src = iconUrl;
+          image.src = image.closest(".auth-brand") ? primaryEmblem : sidebarEmblem;
         });
         document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]').forEach((link) => {
           link.type = "image/png";
-          link.href = iconUrl;
+          link.href = primaryEmblem;
         });
       } catch (error) {
         console.error("Ikon brand tidak dapat disesuaikan dengan tema:", error);
