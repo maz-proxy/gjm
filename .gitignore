@@ -1,0 +1,13 @@
+﻿# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Supabase temporary files
+supabase/.temp/
+
+# VS Code local settings
+.vscode/
+
+# Workspace settings
+*.code-workspace
