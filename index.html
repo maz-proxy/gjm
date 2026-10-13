@@ -135,9 +135,11 @@
     }
     main { min-width: 0; padding: 32px clamp(20px, 4vw, 58px) 52px; }
     .topline { align-items: center; display: flex; justify-content: space-between; margin-bottom: 31px; }
-
+    .topline-heading { display: grid; gap: 5px; min-width: 0; }
     .crumb { color: var(--muted); font-size: 12px; }
     .crumb b { color: #434a40; font-weight: 600; }
+    .online-account { align-items: center; color: var(--muted); display: inline-flex; font-size: 10px; gap: 6px; line-height: 1.2; }
+    .online-account-dot { background: #39c985; border-radius: 50%; box-shadow: 0 0 0 2px rgba(57,201,133,.16); flex: 0 0 7px; height: 7px; }
     .workspace-page-title { align-items: baseline; display: flex; flex-wrap: wrap; gap: 9px; }
     .workspace-period-label { color: #d5e9df; font-size: 10px; font-weight: 600; letter-spacing: .25px; }
     .top-actions { align-items: flex-end; display: flex; flex-direction: column; gap: 2px; }
@@ -2797,7 +2799,9 @@
       const pics = activeWorkspace()?.picNames || [];
       const showPics = currentPage === "opname" || currentPage === "layouts" || currentPage === "products";
       const picMarkup = showPics && pics.some((name) => name.trim()) ? `<span class="top-pics">PIC 1: ${escapeHtml(pics[0] || "Belum diisi")} · PIC 2: ${escapeHtml(pics[1] || "Belum diisi")}</span>` : "";
-      return `<div class="topline"><div class="crumb">${escapeHtml(activeWorkspaceName())} <span> / </span> <b>${currentPage === "dashboard" ? "Dashboard" : currentPage === "opname" ? "Result SO" : currentPage === "layouts" ? "Scan Layout" : currentPage === "workspaces" ? "Jadwal" : currentPage === "products" ? "Master VEF" : currentPage === "recap" ? "Rekap selisih" : currentPage === "completed-sessions" ? "Sesi Stock Opname" : currentPage === "admin-users" ? "Kelola Akun" : currentPage === "data-resources" ? "Data Resource" : currentPage === "about-info" ? "About" : currentPage === "about" ? "Panduan" : "Riwayat Perubahan"}</b></div><div class="top-actions"><span class="today">${formatDate(new Date(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span>${picMarkup}<button class="accent-toggle" type="button" data-accent-toggle aria-label="Ganti tema warna ke burgundy"><span class="accent-swatch" aria-hidden="true"></span><span data-accent-label>Burgundy</span></button><button class="theme-toggle" type="button" data-theme-toggle aria-label="Aktifkan dark mode" aria-pressed="false"><span class="theme-toggle-icon" aria-hidden="true">☾</span><span class="theme-toggle-label">Dark</span></button></div></div>`;
+      const loggedInUsername = authSession?.user?.user_metadata?.username || authSession?.user?.email || "Pengguna";
+      const loggedInName = formatDisplayName(loggedInUsername);
+      return `<div class="topline"><div class="topline-heading"><div class="crumb">${escapeHtml(activeWorkspaceName())} <span> / </span> <b>${currentPage === "dashboard" ? "Dashboard" : currentPage === "opname" ? "Result SO" : currentPage === "layouts" ? "Scan Layout" : currentPage === "workspaces" ? "Jadwal" : currentPage === "products" ? "Master VEF" : currentPage === "recap" ? "Rekap selisih" : currentPage === "completed-sessions" ? "Sesi Stock Opname" : currentPage === "admin-users" ? "Kelola Akun" : currentPage === "data-resources" ? "Data Resource" : currentPage === "about-info" ? "About" : currentPage === "about" ? "Panduan" : "Riwayat Perubahan"}</b></div><div class="online-account" aria-label="Akun yang sedang login: ${escapeHtml(loggedInName)}"><span class="online-account-dot" aria-hidden="true"></span><span>${escapeHtml(loggedInName)}</span></div></div><div class="top-actions"><span class="today">${formatDate(new Date(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span>${picMarkup}<button class="accent-toggle" type="button" data-accent-toggle aria-label="Ganti tema warna ke burgundy"><span class="accent-swatch" aria-hidden="true"></span><span data-accent-label>Burgundy</span></button><button class="theme-toggle" type="button" data-theme-toggle aria-label="Aktifkan dark mode" aria-pressed="false"><span class="theme-toggle-icon" aria-hidden="true">☾</span><span class="theme-toggle-label">Dark</span></button></div></div>`;
     };
     const productRows = (products, active, canEdit) => products.length ? products.map((product, index) => {
       const included = isCountedProduct(product);
