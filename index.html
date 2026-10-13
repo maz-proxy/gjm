@@ -618,6 +618,7 @@
     .upload-success-dialog { max-width: min(440px, calc(100vw - 32px)); overflow: hidden; padding: 0; }
     .upload-success-content { padding: 24px 25px 20px; text-align: center; }
     .upload-success-icon { align-items: center; background: var(--green-soft); border: 1px solid var(--line); border-radius: 50%; color: var(--green); display: flex; font-size: 24px; font-weight: 800; height: 54px; justify-content: center; margin: 0 auto 14px; width: 54px; }
+    .upload-success-icon.error { background: var(--red-soft); border-color: color-mix(in srgb, var(--red) 22%, transparent); color: var(--red); }
     .upload-success-message { color: var(--muted); font-size: 12px; line-height: 1.65; margin: 0; overflow-wrap: anywhere; }
     .upload-success-dialog .dialog-actions { justify-content: center; }
     .upload-success-dialog .button { min-width: 120px; }
@@ -2004,9 +2005,12 @@
       clearTimeout(toastTimer);
       toastTimer = setTimeout(() => toast.classList.remove("visible"), 2300);
     };
-    function showWorkbookUploadSuccess(title, message) {
+    function showWorkbookUploadResult(title, message, success = true) {
       document.getElementById("workbook-upload-success-title").textContent = title;
       document.getElementById("workbook-upload-success-message").textContent = message;
+      const icon = document.querySelector("#workbook-upload-success-dialog .upload-success-icon");
+      icon.textContent = success ? "✓" : "!";
+      icon.classList.toggle("error", !success);
       document.getElementById("workbook-upload-success-dialog").showModal();
     }
     function showAuthMessage(message) {
@@ -4597,7 +4601,7 @@
     }
 
     function getSheetRows(workbook, targetName) {
-      const sheetName = workbook.SheetNames.find((name) => name.toLocaleLowerCase("id-ID") === targetName.toLocaleLowerCase("id-ID"));
+      const sheetName = workbook.SheetNames.find((name) => normalizeField(name) === normalizeField(targetName));
       return sheetName ? XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, defval: "", raw: false }) : [];
     }
     function originalFileTimestamp(file, workbook) {
@@ -4672,9 +4676,9 @@
         const isCsv = /\.csv$/i.test(file.name);
         const downloadedAt = originalFileTimestamp(file, workbook);
         const uploadedAt = new Date().toISOString();
-        const sheetNames = workbook.SheetNames.map((name) => name.toLocaleLowerCase("id-ID"));
-        const isDailyWorkbook = sheetNames.includes("vef master") && sheetNames.includes("scan sn");
-        const isSerialMaster = sheetNames.includes("serial no") || isCsv;
+        const sheetNames = workbook.SheetNames.map(normalizeField);
+        const isDailyWorkbook = sheetNames.includes("vefmaster") && sheetNames.includes("scansn");
+        const isSerialMaster = sheetNames.includes("serialno") || isCsv;
         if (!isDailyWorkbook && !isSerialMaster) { notify("Workbook perlu memiliki sheet Serial No atau pasangan VEF Master dan Scan SN."); return; }
         const scanRows = getSheetRows(workbook, "Scan SN");
         const layoutHeaders = scanRows[1]?.slice(6, 16) || [];
@@ -4685,17 +4689,44 @@
           return label || (hasScans ? `Rack ${index + 1}` : "");
         }).filter(Boolean);
         const importedLayouts = [...new Set(columnLayouts.length ? columnLayouts : DEFAULT_LAYOUTS)];
-        const vefRows = isCsv
-          ? XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1, defval: "", raw: false })
-          : getSheetRows(workbook, isDailyWorkbook ? "VEF Master" : "Serial No");
-        const vefHeader = findHeader(vefRows, [["serial no", "serial number", "sn"], ["item code"], ["brand"], ["warehouse"], ["item name"]]);
+        const preferredVefSheets = isCsv
+          ? [workbook.SheetNames[0]]
+          : isDailyWorkbook
+            ? ["VEF Master", "Serial No"]
+            : ["Serial No", "VEF Master"];
+        const nonMasterSheets = new Set(["scansn", "reconciliation", "recap"]);
+        const vefSheetCandidates = [...new Set([
+          ...preferredVefSheets
+            .map((targetName) => workbook.SheetNames.find((name) => normalizeField(name) === normalizeField(targetName)))
+            .filter(Boolean),
+          ...workbook.SheetNames.filter((name) => !nonMasterSheets.has(normalizeField(name)))
+        ])];
+        let vefRows = [];
+        let vefHeader = null;
+        for (const sheetName of vefSheetCandidates) {
+          const rows = isCsv
+            ? XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, defval: "", raw: false })
+            : getSheetRows(workbook, sheetName);
+          const header = findHeader(rows, [["serial no", "serial number", "serial", "sn"], ["item code", "sku"]]);
+          if (!header) continue;
+          vefRows = rows;
+          vefHeader = header;
+          break;
+        }
         const productsByCode = new Map();
         const serialMaster = {};
         if (vefHeader) {
-          const [serialIndex, codeIndex, brandIndex, warehouseIndex, nameIndex] = vefHeader.indexes;
+          const [serialIndex, codeIndex] = vefHeader.indexes;
           const vefColumns = vefRows[vefHeader.rowIndex].map(normalizeField);
           const statusIndex = vefColumns.indexOf("status");
-          const groupIndex = vefColumns.findIndex((value) => value === "itemgroup");
+          const findOptionalColumn = (aliases) => vefColumns.findIndex((value) => aliases.some((alias) => {
+            const normalizedAlias = normalizeField(alias);
+            return value === normalizedAlias || value.includes(normalizedAlias);
+          }));
+          const optionalBrandIndex = findOptionalColumn(["brand"]);
+          const optionalWarehouseIndex = findOptionalColumn(["warehouse"]);
+          const optionalNameIndex = findOptionalColumn(["item name", "product name", "description"]);
+          const groupIndex = findOptionalColumn(["item group", "category"]);
           for (const row of vefRows.slice(vefHeader.rowIndex + 1)) {
             const recordStatus = statusIndex >= 0 ? normalizeField(row[statusIndex]) : "";
             if (recordStatus && recordStatus !== "active") continue;
@@ -4704,12 +4735,24 @@
             if (!serial || !sku) continue;
             const key = normalizeSerial(serial);
             if (serialMaster[key]) continue;
-            const warehouse = String(row[warehouseIndex] ?? "").trim();
+            const warehouse = String(row[optionalWarehouseIndex >= 0 ? optionalWarehouseIndex : warehouseIndex] ?? "").trim();
             const itemGroup = groupIndex >= 0 ? String(row[groupIndex] ?? "").trim() : "";
             const productId = `${sku}::${warehouse}`;
             let product = productsByCode.get(productId);
             if (!product) {
-              product = { id: productId, sku, name: String(row[nameIndex] ?? "").trim(), itemGroup, brand: String(row[brandIndex] ?? "").trim(), warehouse, stock: 0, count: 0, box: 0, pj: 0, note: "" };
+              product = {
+                id: productId,
+                sku,
+                name: String(row[optionalNameIndex >= 0 ? optionalNameIndex : nameIndex] ?? "").trim(),
+                itemGroup,
+                brand: String(row[optionalBrandIndex >= 0 ? optionalBrandIndex : brandIndex] ?? "").trim(),
+                warehouse,
+                stock: 0,
+                count: 0,
+                box: 0,
+                pj: 0,
+                note: ""
+              };
               productsByCode.set(productId, product);
             }
             if (!product.itemGroup) product.itemGroup = itemGroup;
@@ -4749,34 +4792,10 @@
           }
         }
         if (!productsByCode.size) {
-          const newSession = makeSession(authSession.user);
-          const archivedWorkbook = await uploadWorkbookArchive(file, newSession.id);
-          state.products = [];
-          state.serialMaster = {};
-          state.scanEvents = [];
-          state.manualEntries = [];
-          state.pjEntries = [];
-          state.layouts = importedLayouts;
-          state.layoutQuantities = {};
-          state.layoutNumbers = {};
-          state.importFile = file.name;
-          state.importMessage = "Template dikenali, tetapi belum ada baris data VEF.";
-          state.importDownloadedAt = downloadedAt;
-          state.importUploadedAt = uploadedAt;
-          state.activeSession = newSession;
-          if (activeWorkspace()) {
-            activeWorkspace().startedAt = newSession.startedAt;
-            activeWorkspace().scheduleOwnerUserId = authSession.user.id;
-            activeWorkspace().scheduleOwnerUsername = newSession.createdByUsername;
-            activeWorkspace().uploadActivityAt = uploadedAt;
-          }
-          state.workbookFiles = [...(state.workbookFiles || []), archivedWorkbook];
-          persist();
-          render();
-          showWorkbookUploadSuccess(
-            "File template berhasil diunggah",
-            `${file.name} berhasil diarsipkan. Lengkapi kolom Serial No dan Item Code pada tab VEF Master, lalu unggah ulang agar data item siap dipakai.`
-          );
+          const hasRequiredHeaders = Boolean(vefHeader);
+          showWorkbookUploadResult("Data VEF belum diimpor", hasRequiredHeaders
+            ? "Header Serial No dan Item Code ditemukan, tetapi tidak ada baris dengan Serial No serta Item Code yang terisi. File belum diimpor; periksa isi data di bawah header."
+            : "Kolom Serial No dan Item Code tidak ditemukan pada sheet data. File belum diimpor; pastikan kedua header ada pada baris yang sama di sheet VEF Master atau Serial No.", false);
           return;
         }
         const newSession = makeSession(authSession.user);
@@ -4806,7 +4825,7 @@
         state.workbookFiles = [...(state.workbookFiles || []), archivedWorkbook];
         persist();
         render();
-        showWorkbookUploadSuccess(
+        showWorkbookUploadResult(
           "File Master VEF berhasil diunggah",
           `${file.name} berhasil diproses dan diarsipkan: ${formatNumber(state.products.length)} item per warehouse dan ${formatNumber(Object.keys(serialMaster).length)} serial number.`
         );
