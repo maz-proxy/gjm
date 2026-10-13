@@ -1495,6 +1495,7 @@
     const STORAGE_KEY = "ruangstok-sn-v2";
     const THEME_STORAGE_KEY = "ruangstok-theme";
     const PAGE_STORAGE_KEY = "ruangstok-last-page:";
+    const WORKSPACE_STORAGE_KEY = "ruangstok-current-workspace:";
     const warningScanAudio = new Audio("./assets/warning-duplicate.mp3");
     const matchedScanAudio = new Audio("./assets/scan-match.mp3");
     const RESTORABLE_PAGES = new Set(["opname", "dashboard", "workspaces", "products", "layouts", "recap", "about", "about-info", "admin-users", "data-resources", "completed-sessions", "history"]);
@@ -1608,6 +1609,7 @@
     const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_wquuvlF0t0GklKqit4LDCg_KnPG002M";
     const SHARED_STATE_ROW_ID = "stock-opname-team";
     const SHARED_STATE_TABLE = "stock_opname_state";
+    const SHARED_STATE_CHANNEL_NAME = "stock-opname-state:stock-opname-team";
     const WORKBOOK_ARCHIVE_BUCKET = "stock-opname-workbooks";
     const ONLINE_USERS_CHANNEL_NAME = "online-users:stock-opname-team";
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
@@ -1875,6 +1877,8 @@
     let adminNotice = "";
     let adminNoticeType = "success";
     let sharedStateReady = false;
+    let sharedStateChannel = null;
+    let refreshPending = false;
     let remoteUpdatedAt = "";
     let remoteVersion = null;
     let lastSyncedState = "";
@@ -2146,6 +2150,7 @@
     function persistLocalState() {
       const workspace = activeWorkspace();
       if (workspace) workspace.data = snapshotWorkspaceData(state);
+      storeLocalWorkspaceId(state.currentWorkspaceId);
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
       catch { notify("Penyimpanan browser penuh. Ekspor hasil agar data tetap aman."); }
     }
@@ -2184,6 +2189,43 @@
           return sorted;
         }, {});
       });
+    }
+    function getLocalWorkspaceId(userId = authSession?.user?.id) {
+      if (!userId) return "";
+      try {
+        return localStorage.getItem(`${WORKSPACE_STORAGE_KEY}${userId}`) || "";
+      } catch (error) {
+        console.error("Pilihan workspace lokal tidak dapat dibaca:", error);
+        return "";
+      }
+    }
+    function storeLocalWorkspaceId(workspaceId, userId = authSession?.user?.id) {
+      if (!userId || !workspaceId) return;
+      try {
+        localStorage.setItem(`${WORKSPACE_STORAGE_KEY}${userId}`, workspaceId);
+      } catch (error) {
+        console.error("Pilihan workspace lokal tidak dapat disimpan:", error);
+      }
+    }
+    function applyLocalWorkspacePreference(targetState, userId = authSession?.user?.id) {
+      const preferredId = getLocalWorkspaceId(userId);
+      const workspace = targetState.workspaces?.find((item) => item.id === preferredId);
+      if (!workspace) return false;
+      targetState.currentWorkspaceId = workspace.id;
+      Object.assign(targetState, snapshotWorkspaceData(workspace.data));
+      return true;
+    }
+    function serializeSharedState(value = state) {
+      const shared = JSON.parse(JSON.stringify(value));
+      if (authSession && lastSyncedState) {
+        const canonicalId = JSON.parse(lastSyncedState).currentWorkspaceId;
+        const workspace = shared.workspaces?.find((item) => item.id === canonicalId);
+        if (workspace) {
+          shared.currentWorkspaceId = workspace.id;
+          Object.assign(shared, snapshotWorkspaceData(workspace.data));
+        }
+      }
+      return shared;
     }
     function mergeSharedValue(base, local, remote, path = "") {
       const clone = (value) => value === undefined ? undefined : JSON.parse(JSON.stringify(value));
@@ -2346,6 +2388,7 @@
     function lockApp() {
       authSession = null;
       stopPresenceChannel();
+      stopSharedStateChannel();
       document.body.classList.remove("auth-checking");
       sharedStateReady = false;
       clearTimeout(syncTimer);
@@ -2353,6 +2396,7 @@
       clearInterval(workspaceCleanupTimer);
       clearInterval(idleCheckTimer);
       refreshTimer = null;
+      refreshPending = false;
       workspaceCleanupTimer = null;
       idleCheckTimer = null;
       if (idleActivityStorageKey) {
@@ -2512,6 +2556,33 @@
     async function readSharedState() {
       return supabaseClient.from(SHARED_STATE_TABLE).select("data, updated_at, version").eq("id", SHARED_STATE_ROW_ID).maybeSingle();
     }
+    function stopSharedStateChannel() {
+      if (!sharedStateChannel) return;
+      const channel = sharedStateChannel;
+      sharedStateChannel = null;
+      supabaseClient.removeChannel(channel).then((status) => {
+        if (status !== "ok") console.warn("Channel sinkronisasi realtime tidak berhenti dengan normal:", status);
+      }).catch((error) => console.error("Channel sinkronisasi realtime gagal dihentikan:", error));
+    }
+    function startSharedStateChannel() {
+      stopSharedStateChannel();
+      sharedStateChannel = supabaseClient.channel(SHARED_STATE_CHANNEL_NAME)
+        .on("postgres_changes", {
+          event: "UPDATE",
+          schema: "public",
+          table: SHARED_STATE_TABLE,
+          filter: `id=eq.${SHARED_STATE_ROW_ID}`
+        }, (payload) => {
+          if (payload.new?.id === SHARED_STATE_ROW_ID) void refreshSharedState(payload.new);
+        })
+        .subscribe((status, error) => {
+          if (status === "SUBSCRIBED") {
+            void refreshSharedState();
+          } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+            console.warn("Sinkronisasi realtime tidak tersedia; polling cadangan tetap aktif.", status, error || "");
+          }
+        });
+    }
     async function startAuthenticatedSession(session, freshLogin = false) {
       if (!session?.user) return;
       if (session.user.user_metadata?.must_change_password) {
@@ -2553,16 +2624,18 @@
             remoteVersion = created.version;
           }
         }
+        lastSyncedState = stableSerialize(state);
+        applyLocalWorkspacePreference(state, session.user.id);
         const removedExpiredUnuploadedWorkspaces = removeExpiredUnuploadedWorkspaces();
         normalizeWorkspaceClassifications();
         persistLocalState();
-        lastSyncedState = stableSerialize(state);
         sharedStateReady = true;
         syncErrorShown = false;
         currentPage = freshLogin ? "dashboard" : restoreLastPage(session);
         unlockApp(session);
         render();
-        refreshTimer = setInterval(refreshSharedState, 8000);
+        startSharedStateChannel();
+        refreshTimer = setInterval(refreshSharedState, 45000);
         workspaceCleanupTimer = setInterval(() => {
           if (refreshInProgress || syncTimer) return;
           if (removeExpiredUnuploadedWorkspaces()) {
@@ -2587,7 +2660,8 @@
       const savingUserId = authSession.user.id;
       try {
         persistLocalState();
-        let pendingState = normalizeSharedState(JSON.parse(stableSerialize(state)));
+        let pendingState = normalizeSharedState(JSON.parse(stableSerialize(serializeSharedState(state))));
+        if (stableSerialize(pendingState) === lastSyncedState) return;
         for (let attempt = 0; attempt < 5; attempt++) {
           if (authSession?.user?.id !== savingUserId || !sharedStateReady) return;
           const serializedState = stableSerialize(pendingState);
@@ -2604,7 +2678,7 @@
             remoteVersion = saved.version;
             lastSyncedState = serializedState;
             syncErrorShown = false;
-            if (stableSerialize(state) !== serializedState) {
+            if (stableSerialize(serializeSharedState(state)) !== serializedState) {
               clearTimeout(syncTimer);
               syncTimer = setTimeout(saveSharedState, 100);
             }
@@ -2619,14 +2693,14 @@
           const remoteState = normalizeSharedState(row.data);
           const localState = normalizeSharedState(JSON.parse(stableSerialize(state)));
           state = mergeSharedState(JSON.parse(lastSyncedState), localState, remoteState);
+          applyLocalWorkspacePreference(state, savingUserId);
           persistLocalState();
-          pendingState = normalizeSharedState(JSON.parse(stableSerialize(state)));
+          pendingState = normalizeSharedState(JSON.parse(stableSerialize(serializeSharedState(state))));
           remoteUpdatedAt = row.updated_at;
           remoteVersion = row.version;
           lastSyncedState = stableSerialize(remoteState);
           if (stableSerialize(activeWorkspace()?.data || {}) !== previousActiveData) {
-            render();
-            notify("Perubahan bersamaan digabungkan. Data sesi aktif diperbarui dari server.");
+            renderPreservingActiveInput();
           }
         }
         syncTimer = setTimeout(saveSharedState, 1500);
@@ -2639,17 +2713,13 @@
             const { data: row, error: readError } = await readSharedState();
             if (readError) throw readError;
             if (!row) throw new Error("Data workspace bersama tidak ditemukan setelah penolakan perubahan.");
-            const selectedWorkspaceId = state.currentWorkspaceId;
             state = normalizeSharedState(row.data);
-            if (state.workspaces.some((workspace) => workspace.id === selectedWorkspaceId)) {
-              state.currentWorkspaceId = selectedWorkspaceId;
-              Object.assign(state, snapshotWorkspaceData(activeWorkspace().data));
-            }
             remoteUpdatedAt = row.updated_at;
             remoteVersion = row.version;
             lastSyncedState = stableSerialize(state);
+            applyLocalWorkspacePreference(state, savingUserId);
             persistLocalState();
-            render();
+            renderPreservingActiveInput();
           } catch (reloadError) {
             console.error("Gagal memuat ulang data setelah akses sesi ditolak:", reloadError);
             notify(`Perubahan sesi ditolak. Gagal memuat data terbaru: ${reloadError.message || "kesalahan tidak diketahui"}`);
@@ -2661,31 +2731,45 @@
         syncErrorShown = true;
       } finally {
         saveInProgress = false;
+        if (refreshPending && authSession && sharedStateReady) {
+          refreshPending = false;
+          void refreshSharedState();
+        }
       }
     }
-    async function refreshSharedState() {
-      if (!authSession || !sharedStateReady || refreshInProgress || syncTimer) return;
+    async function refreshSharedState(rowHint = null) {
+      if (!authSession || !sharedStateReady) return;
+      if (refreshInProgress || saveInProgress || syncTimer) {
+        refreshPending = true;
+        return;
+      }
       refreshInProgress = true;
       const refreshingUserId = authSession.user.id;
       try {
-        const { data: row, error } = await readSharedState();
+        let row = rowHint;
+        if (!row) {
+          const response = await readSharedState();
+          if (response.error) throw response.error;
+          row = response.data;
+        }
         if (authSession?.user?.id !== refreshingUserId || !sharedStateReady) return;
-        if (error) throw error;
         if (!row) throw new Error("Data workspace bersama tidak ditemukan.");
         syncErrorShown = false;
-        if (row.version !== remoteVersion && stableSerialize(row.data) !== lastSyncedState) {
-          const selectedWorkspaceId = state.currentWorkspaceId;
-          state = normalizeSharedState(row.data);
-          if (state.workspaces.some((workspace) => workspace.id === selectedWorkspaceId)) {
-            state.currentWorkspaceId = selectedWorkspaceId;
-            Object.assign(state, snapshotWorkspaceData(activeWorkspace().data));
-          }
+        const remoteState = normalizeSharedState(row.data);
+        if (row.version !== remoteVersion && stableSerialize(remoteState) !== lastSyncedState) {
+          const previousState = stableSerialize(state);
+          const localState = normalizeSharedState(JSON.parse(stableSerialize(state)));
+          state = mergeSharedState(JSON.parse(lastSyncedState), localState, remoteState);
+          applyLocalWorkspacePreference(state, refreshingUserId);
           remoteUpdatedAt = row.updated_at;
           remoteVersion = row.version;
-          lastSyncedState = stableSerialize(state);
+          lastSyncedState = stableSerialize(remoteState);
           persistLocalState();
-          render();
-          notify("Data workspace diperbarui oleh anggota tim.");
+          if (stableSerialize(state) !== previousState) renderPreservingActiveInput();
+          if (stableSerialize(serializeSharedState(state)) !== lastSyncedState) {
+            clearTimeout(syncTimer);
+            syncTimer = setTimeout(saveSharedState, 100);
+          }
         } else {
           remoteUpdatedAt = row.updated_at;
           remoteVersion = row.version;
@@ -2696,6 +2780,10 @@
         syncErrorShown = true;
       } finally {
         refreshInProgress = false;
+        if (refreshPending && authSession && sharedStateReady && !saveInProgress && !syncTimer) {
+          refreshPending = false;
+          void refreshSharedState();
+        }
       }
     }
     async function signIn(event) {
@@ -4039,6 +4127,43 @@
       if (window.matchMedia("(max-width: 650px)").matches) {
         document.querySelector(".nav-item.active")?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
       }
+    }
+
+    function renderPreservingActiveInput() {
+      const activeElement = document.activeElement;
+      const main = document.getElementById("main-content");
+      let selector = "";
+      if (activeElement?.id) {
+        selector = `#${CSS.escape(activeElement.id)}`;
+      } else if (activeElement?.matches("[data-manual-product], [data-manual-quantity], [data-layout-quantity]")) {
+        const attribute = activeElement.hasAttribute("data-manual-product")
+          ? "data-manual-product"
+          : activeElement.hasAttribute("data-manual-quantity")
+            ? "data-manual-quantity"
+            : "data-layout-quantity";
+        const form = activeElement.closest("[data-manual-form], [data-layout-form]");
+        const formAttribute = form?.hasAttribute("data-manual-form") ? "data-manual-form" : "data-layout-form";
+        selector = `[${formAttribute}="${CSS.escape(form?.getAttribute(formAttribute) || "")}"] [${attribute}]`;
+      } else if (activeElement?.classList.contains("layout-input")) {
+        const form = activeElement.closest("[data-layout-form]");
+        selector = `[data-layout-form="${CSS.escape(form?.dataset.layoutForm || "")}"] .layout-input`;
+      }
+      const value = activeElement && "value" in activeElement ? activeElement.value : null;
+      const selectionStart = activeElement && "selectionStart" in activeElement ? activeElement.selectionStart : null;
+      const selectionEnd = activeElement && "selectionEnd" in activeElement ? activeElement.selectionEnd : null;
+      const scrollY = window.scrollY;
+      render();
+      if (selector) {
+        const replacement = main.querySelector(selector);
+        if (replacement) {
+          replacement.focus({ preventScroll: true });
+          if (value !== null && "value" in replacement) replacement.value = value;
+          if (selectionStart !== null && selectionEnd !== null && replacement.setSelectionRange) {
+            replacement.setSelectionRange(selectionStart, selectionEnd);
+          }
+        }
+      }
+      window.scrollTo(0, scrollY);
     }
 
     function restoreLastPage(session) {

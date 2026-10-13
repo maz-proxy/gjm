@@ -9,6 +9,21 @@ create table if not exists public.stock_opname_state (
 alter table public.stock_opname_state
   add column if not exists version bigint not null default 1;
 
+do $$
+begin
+  if exists (select 1 from pg_publication where pubname = 'supabase_realtime')
+    and not exists (
+      select 1
+        from pg_publication_tables
+       where pubname = 'supabase_realtime'
+         and schemaname = 'public'
+         and tablename = 'stock_opname_state'
+    ) then
+    alter publication supabase_realtime add table public.stock_opname_state;
+  end if;
+end;
+$$;
+
 create table if not exists public.stock_opname_usernames (
   username text primary key check (username = lower(username) and username ~ '^[a-z0-9][a-z0-9._-]{2,29}$'),
   email text not null unique check (email = lower(email)),
