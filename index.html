@@ -542,13 +542,6 @@
     .dashboard-bar-track { align-self: center; background: #edf1eb; border-radius: 99px; height: 8px; overflow: hidden; }
     .dashboard-bar-fill { background: linear-gradient(90deg, #286344, #86b36a); border-radius: inherit; height: 100%; transition: width .55s cubic-bezier(.2,.75,.25,1); }
     .dashboard-empty { color: var(--muted); font-size: 10px; padding: 0 19px 17px; }
-    .dashboard-table { margin-bottom: 12px; }
-    .dashboard-table .workspace-name-input { max-width: 190px; }
-    .dashboard-progress-cell { min-width: 145px; }
-    .dashboard-progress-line { align-items: center; display: flex; gap: 8px; }
-    .dashboard-progress-line .dashboard-bar-track { flex: 1; }
-    .dashboard-progress-line strong { color: var(--green); font-size: 10px; min-width: 34px; text-align: right; }
-    .dashboard-open-button { min-height: 32px; padding: 0 10px; }
     @media (max-width: 900px) {
      .master-quantity-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .dashboard-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -3511,18 +3504,6 @@
       const workspaceStats = state.workspaces
         .filter((workspace) => workspace.data.activeSession.status === "active" && workspaceHasStarted(workspace))
         .map((workspace) => ({ workspace, stats: getWorkspaceDashboardStats(workspace) }));
-      const rows = workspaceStats.map(({ workspace, stats }) => {
-        const isCurrent = workspace.id === state.currentWorkspaceId;
-        return `<tr class="workspace-row ${isCurrent ? "current" : ""}">
-          <td><strong>${escapeHtml(workspace.name || "Nama Brand belum diisi")}</strong>${isCurrent ? '<div class="dashboard-panel-subtitle">Workspace aktif</div>' : ""}</td>
-          <td>${escapeHtml((workspace.picNames || []).filter(Boolean).join(" · ") || "Belum ditentukan")}</td>
-          <td class="dashboard-progress-cell"><div class="dashboard-progress-line"><div class="dashboard-bar-track" role="progressbar" aria-label="Progres SN ${escapeHtml(workspace.name)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${stats.progress}"><div class="dashboard-bar-fill" style="width:${stats.progress}%"></div></div><strong>${stats.progress}%</strong></div><div class="dashboard-panel-subtitle">${formatNumber(stats.scannedSerials)} / ${formatNumber(stats.targetSerials)} SN</div></td>
-          <td>${formatNumber(stats.completedProducts)} / ${formatNumber(stats.countedSkus)} sesuai · ${formatNumber(stats.totalQuantity)} / ${formatNumber(stats.expectedUnits)} unit</td>
-          <td><div class="dashboard-warehouse-list">${stats.warehouses.map((warehouse) => `<span class="dashboard-warehouse-chip">${escapeHtml(warehouse.name)} · ${warehouse.items} item <strong>${formatNumber(warehouse.quantity)} unit</strong></span>`).join("") || "-"}</div></td>
-          <td><span class="row-status different">Berjalan</span></td>
-          <td><button class="button button-secondary dashboard-open-button" data-dashboard-workspace="${escapeHtml(workspace.id)}">${isCurrent ? "Lihat hasil" : "Buka sesi"} →</button></td>
-        </tr>`;
-      }).join("");
       const total = workspaceStats.reduce((sum, item) => ({
         active: sum.active + 1,
         products: sum.products + item.stats.products,
@@ -3567,7 +3548,6 @@
           </article>
           <article class="dashboard-panel"><header class="dashboard-panel-head"><div><div class="dashboard-panel-title">Progres per brand</div><div class="dashboard-panel-subtitle">Sesi aktif saja · SN cocok dibanding target master</div></div><span class="dashboard-chart-tag">${workspaceStats.length} brand</span></header><div class="dashboard-chart-list">${chartRows}</div>${workspaceStats.length ? "" : '<div class="dashboard-empty">Belum ada sesi berjalan. Unggah workbook pada sesi bernama brand di Master VEF untuk memulai.</div>'}</article>
         </section>
-        <section class="table-section dashboard-table"><div class="table-toolbar"><div class="table-title">Rincian sesi yang berjalan <span class="table-count">${workspaceStats.length} brand aktif</span></div></div><div class="table-scroll"><table><thead><tr><th>Nama Brand</th><th>PIC</th><th>Progres scan</th><th>Rekonsiliasi</th><th>Quantity per Warehouse</th><th>Status</th><th></th></tr></thead><tbody>${rows || '<tr><td class="empty-row" colspan="7">Tidak ada sesi stock opname yang sedang berjalan.</td></tr>'}</tbody></table></div><div class="table-footer"><span>Data sesi selesai dan sesi yang belum dimulai tidak ditampilkan.</span><span>${formatNumber(total.scan)} SCAN + ${formatNumber(total.manual)} MANUAL + ${formatNumber(total.pj)} PJ</span></div></section>
         <section class="table-section recorded-card"><div class="table-toolbar"><div><div class="table-title">Stock Opname Recorded</div><p class="subtitle">Buka kembali lembar Scan Layout, Result SO, dan Rekap Selisih dari sesi yang telah selesai.</p></div><span class="category-chip">${recordedSessions.length} arsip selesai</span></div><div class="recorded-brand-picker"><label class="auth-field" for="recorded-brand-select"><span>Nama Brand</span><select id="recorded-brand-select" ${recordedBrands.length ? "" : "disabled"}><option value="">${recordedBrands.length ? "Pilih Nama Brand" : "Belum ada arsip selesai"}</option>${recordedBrands.map((brand) => `<option value="${escapeHtml(brand)}">${escapeHtml(brand)}</option>`).join("")}</select></label><button class="button button-primary" id="open-recorded-brand" type="button" ${recordedBrands.length ? "" : "disabled"}>Pilih bulan dan week</button></div></section>
       </div>`;
     }
@@ -4243,13 +4223,6 @@
       document.querySelectorAll("[data-open-workspace]").forEach((button) => button.addEventListener("click", () => switchWorkspace(button.dataset.openWorkspace, "products")));
       document.querySelectorAll("[data-start-workspace]").forEach((button) => button.addEventListener("click", () => startWorkspace(button.dataset.startWorkspace)));
       document.querySelectorAll("[data-delete-workspace]").forEach((button) => button.addEventListener("click", () => requestDeleteWorkspace(button.dataset.deleteWorkspace)));
-      document.querySelectorAll("[data-dashboard-workspace]").forEach((button) => button.addEventListener("click", () => {
-        const workspaceId = button.dataset.dashboardWorkspace;
-        if (workspaceId === state.currentWorkspaceId) {
-          currentPage = "opname";
-          render();
-        } else switchWorkspace(workspaceId);
-      }));
       document.querySelectorAll("[data-page-link]").forEach((button) => button.addEventListener("click", () => {
         currentPage = button.dataset.pageLink;
         render();
