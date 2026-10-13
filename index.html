@@ -1348,6 +1348,20 @@
     html[data-accent="burgundy"] .recorded-brand-picker select { border-color: #e4cbd3; }
     html[data-theme="dark"][data-accent="burgundy"] .recorded-brand-picker { background: linear-gradient(130deg, #302127, #261b20); }
     html[data-theme="dark"][data-accent="burgundy"] .recorded-brand-picker select { background-color: #21171b; border-color: #523a43; }
+    .recorded-card { background: linear-gradient(115deg, #174b42 0%, #176b5b 62%, #398b73 100%); border: 1px solid rgba(255,255,255,.16); border-radius: 15px; box-shadow: 0 12px 28px rgba(23,76,62,.16); color: #fff; overflow: hidden; position: relative; }
+    .recorded-card::after { border: 1px solid rgba(255,255,255,.13); border-radius: 50%; content: ""; height: 190px; pointer-events: none; position: absolute; right: 8%; top: -132px; width: 190px; }
+    .recorded-card .table-toolbar { align-items: center; background: transparent; border-color: rgba(255,255,255,.22); min-height: 75px; padding: 17px 21px 13px; position: relative; z-index: 1; }
+    .recorded-card .table-title { color: #fff; font-size: 15px; letter-spacing: -.15px; }
+    .recorded-card .subtitle { color: #d5e9df; font-size: 11px; line-height: 1.5; margin: 5px 0 0; }
+    .recorded-card > .table-toolbar > .category-chip { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.25); color: #fff; flex: 0 0 auto; }
+    .recorded-card .recorded-brand-picker { background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.2); margin: 13px 14px 14px; padding: 14px 16px; position: relative; z-index: 1; }
+    .recorded-card .recorded-brand-picker .auth-field > span { color: #e2f3ec; }
+    .recorded-card .recorded-brand-picker select { background-color: #fff; border-color: rgba(255,255,255,.65); color: #20312d; }
+    .recorded-card .recorded-brand-picker .button { background: #fff; border-color: #fff; color: #176b5b; }
+    .recorded-card .recorded-brand-picker .button:hover:not(:disabled) { background: #eaf5ef; border-color: #eaf5ef; color: #174b42; }
+    html[data-accent="burgundy"] .recorded-card { background: linear-gradient(115deg, #65283d 0%, #8f3b57 62%, #b35c77 100%); box-shadow: 0 12px 28px rgba(101,40,61,.18); }
+    html[data-accent="burgundy"] .recorded-card .recorded-brand-picker .button { color: #87364f; }
+    html[data-accent="burgundy"] .recorded-card .recorded-brand-picker .button:hover:not(:disabled) { background: #fbedf1; border-color: #fbedf1; color: #65283d; }
     html[data-theme="dark"] .resource-create-form .auth-input,
     html[data-theme="dark"] .resource-row .auth-input { background: #14211f; border-color: #3a514b; color: var(--ink); }
     html[data-theme="dark"] .dashboard-warehouse-chip { background: #263a33; border-color: #354a41; color: #d8e8dd; }
