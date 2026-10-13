@@ -2873,7 +2873,7 @@
       }
       for (const serials of serialsByProduct.values()) serials.sort((a, b) => a.localeCompare(b, "id-ID"));
       const filtered = state.products.filter((product) => !query || `${product.name} ${product.sku} ${product.itemGroup || ""} ${product.brand} ${product.warehouse}`.toLocaleLowerCase("id-ID").includes(query) || (serialsByProduct.get(product.id) || []).some((serial) => serial.toLocaleLowerCase("id-ID").includes(query)));
-      return `${navMarkup()}<section class="page-head archive-page-head master-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Master VEF · Data inventaris</div>${workspacePageTitle()}<p class="subtitle">Serial Number dipetakan ke item code, brand, dan warehouse.</p><div class="vef-timestamps"><span>Data didownload dari VEF <strong>${state.importDownloadedAt ? escapeHtml(formatDate(state.importDownloadedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })) : "Metadata sumber belum tersedia"}</strong></span><span>Data diupload Stock Opname <strong>${state.importUploadedAt ? escapeHtml(formatDate(state.importUploadedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })) : "Belum diunggah"}</strong></span></div></div><div class="head-buttons"><button class="button master-delete-button" id="delete-master-button" ${!canEdit || !state.products.length ? "disabled" : ""}>Hapus semua data</button><button class="button master-upload-button" id="import-button" ${!hasBrandName ? 'disabled title="Isi Nama Brand di Jadwal terlebih dahulu"' : !canEdit ? 'disabled title="Sesi ini hanya dapat diubah oleh pemilik atau Owner"' : ""}>↑ Unggah workbook</button></div></section>${renderSessionAccessNotice()}
+      return `${navMarkup()}<section class="page-head archive-page-head master-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Master VEF · Data inventaris</div>${workspacePageTitle()}<p class="subtitle">Serial Number dipetakan ke item code, brand, dan warehouse.</p><div class="vef-timestamps"><span>Data didownload dari VEF <strong>${state.importDownloadedAt ? escapeHtml(formatDate(state.importDownloadedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })) : "Metadata sumber belum tersedia"}</strong></span><span>Data diupload Stock Opname <strong>${state.importUploadedAt ? escapeHtml(formatDate(state.importUploadedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })) : "Belum diunggah"}</strong></span></div></div><div class="head-buttons"><button class="button master-delete-button" id="delete-master-button" ${!canEdit || !state.products.length ? "disabled" : ""}>Hapus semua data</button><button class="button master-upload-button" id="import-button" ${hasUploadedMaster ? 'disabled title="Hapus data VEF yang aktif sebelum mengunggah workbook baru"' : !hasBrandName ? 'disabled title="Isi Nama Brand di Jadwal terlebih dahulu"' : !canEdit ? 'disabled title="Sesi ini hanya dapat diubah oleh pemilik atau Owner"' : ""}>↑ Unggah workbook</button></div></section>${renderSessionAccessNotice()}
         <section class="metric-grid compact-metrics master-quantity-metrics" aria-label="Ringkasan quantity workbook Master VEF">
           <div class="metric"><div class="metric-top">Qty Serial Number diunggah <span class="metric-mark">⌗</span></div><div class="metric-value">${formatNumber(uploadedSerialCount)} <small>SN</small></div></div>
           <div class="metric"><div class="metric-top">Qty item VEF <span class="metric-mark">▤</span></div><div class="metric-value">${formatNumber(state.products.length)} <small>item</small></div></div>
@@ -4628,6 +4628,12 @@
       event.target.value = "";
       if (!file) return;
       if (!requireActiveSessionEdit()) return;
+      const hasUploadedMaster = state.products.length > 0
+        && (state.workbookFiles || []).some((workbook) => workbook.sessionId === state.activeSession.id);
+      if (hasUploadedMaster) {
+        notify("Hapus data VEF yang aktif terlebih dahulu sebelum mengunggah workbook baru.");
+        return;
+      }
       if (!activeWorkspace()?.name.trim()) {
         notify("Isi Nama Brand di halaman Jadwal sebelum mengunggah workbook.");
         currentPage = "workspaces";
