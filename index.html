@@ -57,10 +57,7 @@
     .sidebar-bottom { border-top: 1px solid rgba(255,255,255,.2); margin-top: auto; padding: 17px 9px 0; }
     .profile { align-items: center; display: flex; gap: 10px; }
     .profile-details { min-width: 0; }
-    .avatar { align-items: center; background: #f0e8d9; border-radius: 50%; color: #76562e; display: flex; font-size: 11px; font-weight: 700; height: 33px; justify-content: center; width: 33px; }
-    .profile-name { font-size: 12px; font-weight: 700; }
-    .profile-role { color: #c3d7c5; font-size: 11px; margin-top: 1px; }
-    .profile-email { color: #c3d7c5; font-size: 10px; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .profile-name { font-size: 12px; font-weight: 800; letter-spacing: .4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .admin-notice { border-radius: 8px; font-size: 12px; margin: 14px 0; padding: 10px 12px; }
     .admin-notice.success { background: var(--green-soft); color: var(--green-dark); }
     .admin-notice.error { background: var(--red-soft); color: var(--red); }
@@ -68,6 +65,14 @@
     .admin-user-status { color: var(--muted); font-size: 11px; }
     .logout-button { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.17); border-radius: 7px; color: #f4f8f2; font-size: 10px; margin-left: auto; padding: 6px 8px; }
     .logout-button:hover { background: rgba(255,255,255,.18); }
+    .logout-confirm-dialog { background: var(--paper); border: 1px solid var(--line); border-radius: 15px; max-width: min(390px, calc(100vw - 32px)); overflow: hidden; padding: 0; width: 100%; }
+    .logout-confirm-copy { color: var(--muted); font-size: 12px; line-height: 1.6; padding: 17px 21px 20px; }
+    .logout-confirm-dialog .dialog-actions { background: var(--canvas); }
+    .logout-confirm-dialog .button-danger { background: var(--red); border-color: var(--red); color: #fff; }
+    .logout-confirm-dialog .button-danger:hover { filter: brightness(.94); }
+    html[data-theme="dark"] .logout-confirm-dialog .dialog-actions { background: #1b2823; }
+    html[data-accent="burgundy"] .logout-confirm-dialog .button-danger { background: #963d58; border-color: #963d58; }
+    html[data-accent="burgundy"] .logout-confirm-dialog .button-danger:hover { background: #7d3048; }
     .auth-screen { align-items: center; background: radial-gradient(ellipse at 82% 10%, rgba(218,237,216,.5), transparent 35%), var(--canvas); display: flex; inset: 0; justify-content: center; padding: 20px; position: fixed; z-index: 20; }
     .auth-loading { align-items: center; background: radial-gradient(ellipse at 82% 10%, rgba(218,237,216,.16), transparent 35%), #111b1a; color: #f4f8f2; display: none; inset: 0; justify-content: center; position: fixed; z-index: 30; }
     .auth-loading-card { align-items: center; display: flex; flex-direction: column; gap: 13px; }
@@ -1400,7 +1405,7 @@
         <button class="nav-item" data-page="admin-users" id="admin-users-nav" hidden><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2H3Zm14-11a3 3 0 0 1 0 6m2 2a4 4 0 0 1 2 3v1h-4"/></svg></span><span>Kelola Akun</span></button>
       </nav>
       <div class="sidebar-bottom">
-        <div class="profile"><div class="avatar" id="profile-avatar">AD</div><div class="profile-details"><div class="profile-name" id="profile-name">Tim Gudang</div><div class="profile-role" id="profile-role"></div><div class="profile-email" id="profile-email"></div></div><button class="logout-button" id="logout-button" type="button">Keluar</button></div>
+        <div class="profile"><div class="profile-details"><div class="profile-name" id="profile-name">Pengguna</div></div><button class="logout-button" id="logout-button" type="button">Keluar</button></div>
       </div>
     </aside>
     <main id="main-content"></main>
@@ -1460,6 +1465,11 @@
       <div class="reset-password-warning">Demi keamanan, pengguna wajib mengganti password ini saat login berikutnya. Jangan bagikan password di grup atau tempat umum.</div>
     </div>
     <div class="dialog-actions"><button class="button button-primary" type="button" data-close="reset-password-dialog">Selesai</button></div>
+  </dialog>
+  <dialog id="logout-confirm-dialog" class="logout-confirm-dialog" aria-labelledby="logout-confirm-title" aria-describedby="logout-confirm-copy">
+    <div class="dialog-head"><div><div class="dialog-title" id="logout-confirm-title">Keluar dari akun?</div><div class="dialog-subtitle">Konfirmasi sebelum mengakhiri sesi Anda.</div></div></div>
+    <div class="logout-confirm-copy" id="logout-confirm-copy">Apakah Anda yakin ingin keluar dari workspace?</div>
+    <div class="dialog-actions"><button class="button button-secondary" type="button" data-close="logout-confirm-dialog">Batal</button><button class="button button-danger" id="confirm-logout-button" type="button">Ya, Keluar</button></div>
   </dialog>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -2193,8 +2203,7 @@
       lastIdleActivityWrite = 0;
       lastIdleActivityCheck = 0;
       document.body.classList.add("auth-locked");
-      document.getElementById("profile-email").textContent = "";
-      document.getElementById("profile-role").textContent = "";
+      document.getElementById("profile-name").textContent = "";
       document.getElementById("admin-users-nav").hidden = true;
       document.getElementById("data-resources-nav").hidden = true;
       document.getElementById("admin-nav-label").hidden = true;
@@ -2206,10 +2215,7 @@
       document.body.classList.remove("auth-checking");
       document.body.classList.remove("auth-locked");
       const username = session.user.user_metadata?.username || session.user.email || "Pengguna";
-      document.getElementById("profile-email").textContent = username;
-      document.getElementById("profile-avatar").textContent = username.slice(0, 2).toLocaleUpperCase("id-ID");
-      document.getElementById("profile-name").textContent = username;
-      document.getElementById("profile-role").textContent = isSuperAdmin() ? "Owner" : "Staf";
+      document.getElementById("profile-name").textContent = formatDisplayName(username);
       document.getElementById("admin-users-nav").hidden = !isSuperAdmin();
       document.getElementById("data-resources-nav").hidden = !isSuperAdmin();
       document.getElementById("admin-nav-label").hidden = !isSuperAdmin();
@@ -2302,6 +2308,7 @@
     }
     const isSuperAdmin = () => authSession?.user?.app_metadata?.role === "super_admin"
       && authSession?.user?.app_metadata?.owner_username === "indra";
+    const formatDisplayName = (username) => String(username || "Pengguna").trim().toLocaleUpperCase("id-ID");
     function databaseSetupHint(error) {
       const message = `${error.message || ""} ${error.details || ""}`;
       if (/column .*version.*does not exist|version.*schema cache/i.test(message)) {
@@ -2627,6 +2634,13 @@
     async function signOut() {
       const { error } = await supabaseClient.auth.signOut();
       if (error) notify(`Gagal keluar: ${error.message}`);
+    }
+    function requestSignOut() {
+      document.getElementById("logout-confirm-dialog").showModal();
+    }
+    async function confirmSignOut() {
+      document.getElementById("logout-confirm-dialog").close();
+      await signOut();
     }
     const normalizeField = (value) => String(value ?? "").toLocaleLowerCase("id-ID").replace(/[^a-z0-9]/g, "");
     const isLaptopProduct = (product) => {
@@ -4033,7 +4047,7 @@
     }
 
     function renderAdminUsers() {
-      return `${navMarkup()}<section class="page-head"><div><h1>Kelola Akun Staf</h1><p class="subtitle">Buat akun username, reset password, dan atur akses masuk workspace.</p></div></section><section class="table-section"><div class="table-toolbar"><div class="table-title">Tambah akun staf</div></div><form class="admin-create-form" id="admin-create-form"><label class="auth-field"><span>Username</span><input class="auth-input" name="username" type="text" minlength="3" maxlength="30" pattern="[a-z0-9][a-z0-9._-]{2,29}" required placeholder="contoh: stafbaru"></label><button class="button button-primary" type="submit">Buat akun</button></form><div class="admin-notice ${adminNoticeType}" id="admin-notice" ${adminNotice ? "" : "hidden"}>${escapeHtml(adminNotice)}</div></section><section class="table-section"><div class="table-toolbar"><div class="table-title">Daftar akun <span class="table-count">${adminUsers.length} staf</span></div><button class="button button-secondary" id="admin-refresh-users" type="button">Muat ulang</button></div><div class="table-scroll"><table><thead><tr><th>Username</th><th>Status</th><th>Peran</th><th>Aksi</th></tr></thead><tbody>${adminUsers.length ? adminUsers.map((user) => `<tr><td>${escapeHtml(user.username)}</td><td><span class="row-status ${user.disabled ? "pending" : "match"}">${user.disabled ? "Dinonaktifkan" : "Aktif"}</span></td><td>${user.superAdmin ? "Owner" : "Staf"}</td><td><button class="button button-secondary" type="button" data-admin-reset="${escapeHtml(user.username)}">Reset password</button> ${user.superAdmin ? "" : `<button class="button button-secondary" type="button" data-admin-toggle="${escapeHtml(user.username)}" data-disabled="${user.disabled}">${user.disabled ? "Aktifkan" : "Nonaktifkan"}</button>`}</td></tr>`).join("") : `<tr><td colspan="4">Belum ada akun staf.</td></tr>`}</tbody></table></div><div class="table-footer"><span>Password sementara ditampilkan satu kali dan harus diganti saat login berikutnya.</span></div></section>`;
+      return `${navMarkup()}<section class="page-head"><div><h1>Kelola Akun Staf</h1><p class="subtitle">Buat akun username, reset password, dan atur akses masuk workspace.</p></div></section><section class="table-section"><div class="table-toolbar"><div class="table-title">Tambah akun staf</div></div><form class="admin-create-form" id="admin-create-form"><label class="auth-field"><span>Username</span><input class="auth-input" name="username" type="text" minlength="3" maxlength="30" pattern="[a-z0-9][a-z0-9._-]{2,29}" required placeholder="contoh: stafbaru"></label><button class="button button-primary" type="submit">Buat akun</button></form><div class="admin-notice ${adminNoticeType}" id="admin-notice" ${adminNotice ? "" : "hidden"}>${escapeHtml(adminNotice)}</div></section><section class="table-section"><div class="table-toolbar"><div class="table-title">Daftar akun <span class="table-count">${adminUsers.length} staf</span></div><button class="button button-secondary" id="admin-refresh-users" type="button">Muat ulang</button></div><div class="table-scroll"><table><thead><tr><th>Nama</th><th>Username</th><th>Status</th><th>Peran</th><th>Aksi</th></tr></thead><tbody>${adminUsers.length ? adminUsers.map((user) => `<tr><td>${escapeHtml(formatDisplayName(user.username))}</td><td>${escapeHtml(user.username)}</td><td><span class="row-status ${user.disabled ? "pending" : "match"}">${user.disabled ? "Dinonaktifkan" : "Aktif"}</span></td><td>${user.superAdmin ? "Owner" : "Staf"}</td><td><button class="button button-secondary" type="button" data-admin-reset="${escapeHtml(user.username)}">Reset password</button> ${user.superAdmin ? "" : `<button class="button button-secondary" type="button" data-admin-toggle="${escapeHtml(user.username)}" data-disabled="${user.disabled}">${user.disabled ? "Aktifkan" : "Nonaktifkan"}</button>`}</td></tr>`).join("") : `<tr><td colspan="5">Belum ada akun staf.</td></tr>`}</tbody></table></div><div class="table-footer"><span>Password sementara ditampilkan satu kali dan harus diganti saat login berikutnya.</span></div></section>`;
     }
 
     async function loadAdminUsers() {
@@ -4968,7 +4982,7 @@
         if (currentPage === "admin-users") loadAdminUsers();
       });
     });
-    document.querySelectorAll("[data-logout]").forEach((button) => button.addEventListener("click", signOut));
+    document.querySelectorAll("[data-logout]").forEach((button) => button.addEventListener("click", requestSignOut));
     document.addEventListener("click", (event) => {
       const toggle = event.target.closest("[data-theme-toggle]");
       if (toggle) applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark", true);
@@ -4994,7 +5008,8 @@
     document.getElementById("confirm-delete-workspace").addEventListener("click", deleteWorkspace);
     document.getElementById("login-form").addEventListener("submit", signIn);
     document.getElementById("password-setup-form").addEventListener("submit", saveNewPassword);
-    document.getElementById("logout-button").addEventListener("click", signOut);
+    document.getElementById("logout-button").addEventListener("click", requestSignOut);
+    document.getElementById("confirm-logout-button").addEventListener("click", confirmSignOut);
     const isPasswordSetupLink = () => /(?:[?&#]type=(?:invite|recovery)|[?&]code=)/i.test(`${location.search}${location.hash}`);
     supabaseClient.auth.onAuthStateChange((event, session) => {
       if (session && (event === "PASSWORD_RECOVERY" || (event === "SIGNED_IN" && isPasswordSetupLink()))) showPasswordSetup(session);
