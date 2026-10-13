@@ -23,10 +23,10 @@ The browser app uses the Supabase project URL and publishable key in `index.html
 
    ```powershell
    npx.cmd --yes supabase login
-   npx.cmd --yes supabase link --project-ref kdeculjdbmhhhnqaonzb
-   npx.cmd --yes supabase functions deploy login-with-username --project-ref kdeculjdbmhhhnqaonzb
-   npx.cmd --yes supabase functions deploy provision-stock-users --project-ref kdeculjdbmhhhnqaonzb
-   npx.cmd --yes supabase functions deploy admin-users --project-ref kdeculjdbmhhhnqaonzb
+   npx.cmd --yes supabase link --project-ref gyrzbossqkuiawwuqkfo
+   npx.cmd --yes supabase functions deploy login-with-username --project-ref gyrzbossqkuiawwuqkfo
+   npx.cmd --yes supabase functions deploy provision-stock-users --project-ref gyrzbossqkuiawwuqkfo
+   npx.cmd --yes supabase functions deploy admin-users --project-ref gyrzbossqkuiawwuqkfo
    ```
 
    On PowerShell, use `npx.cmd` rather than `npx` if script execution is blocked. The functions use Supabase's built-in server-side credentials. Never put a secret or `service_role` key in browser code or commit one to GitHub.
@@ -41,16 +41,16 @@ The browser app uses the Supabase project URL and publishable key in `index.html
    $provisionKey = [Convert]::ToBase64String($bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_')
    $rng.Dispose()
 
-   npx.cmd --yes supabase secrets set "STOCK_OPNAME_PROVISION_KEY=$provisionKey" --project-ref kdeculjdbmhhhnqaonzb
+   npx.cmd --yes supabase secrets set "STOCK_OPNAME_PROVISION_KEY=$provisionKey" --project-ref gyrzbossqkuiawwuqkfo
 
-   $publishableKey = "sb_publishable_w2fpQZE11m9h00HAXNNFTA_5L7i_Jlf"
+   $publishableKey = "sb_publishable_wquuvlF0t0GklKqit4LDCg_KnPG002M"
    $headers = @{
      apikey = $publishableKey
      Authorization = "Bearer $publishableKey"
      "x-provisioning-key" = $provisionKey
    }
    $result = Invoke-RestMethod `
-     -Uri "https://kdeculjdbmhhhnqaonzb.supabase.co/functions/v1/provision-stock-users" `
+     -Uri "https://gyrzbossqkuiawwuqkfo.supabase.co/functions/v1/provision-stock-users" `
      -Method Post -Headers $headers -ContentType "application/json" -Body "{}"
    $result | ConvertTo-Json -Depth 5
    ```
@@ -58,7 +58,7 @@ The browser app uses the Supabase project URL and publishable key in `index.html
    Confirm that `failed` is empty and check the `created` and `existing` lists. Keep the temporary password private and share it directly with staff. Then disable the one-time provisioning endpoint by removing its key:
 
    ```powershell
-   npx.cmd --yes supabase secrets unset STOCK_OPNAME_PROVISION_KEY --project-ref kdeculjdbmhhhnqaonzb
+   npx.cmd --yes supabase secrets unset STOCK_OPNAME_PROVISION_KEY --project-ref gyrzbossqkuiawwuqkfo
    Remove-Variable provisionKey, headers, result, publishableKey, bytes, rng
    ```
 
