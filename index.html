@@ -235,6 +235,8 @@
     .scan-log-table { min-width: 520px; }
     .scan-log .row-status { margin-right: 4px; }
     .layout-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); }
+    .layout-upload-required { background: var(--green-soft); border: 1px solid var(--line); border-radius: 10px; color: var(--green-dark); font-size: 12px; line-height: 1.6; margin: 0 0 14px; padding: 12px 15px; }
+    .layout-upload-required strong { color: var(--green); }
     .layout-card { background: linear-gradient(145deg, #fff, #fcfdfb); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 5px 16px rgba(35, 59, 38, .045); min-width: 0; overflow: hidden; position: relative; transition: background .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease; }
     .layout-card:hover { border-color: #cbd9ca; box-shadow: 0 10px 24px rgba(35, 59, 38, .085); transform: translateY(-2px); }
     .layout-card.quantity-matched { background: linear-gradient(145deg, #f1f8f2, #e7f3e9); border-color: #b8d2bc; }
@@ -607,6 +609,12 @@
     .reset-password-value { align-items: center; background: #f5f8f6; border: 1px solid var(--line); border-radius: 8px; display: flex; gap: 10px; justify-content: space-between; padding: 8px 9px 8px 13px; }
     .reset-password-value code { color: var(--green-dark); font: 700 18px/1.3 "Space Grotesk", "Segoe UI", sans-serif; letter-spacing: 1px; }
     .reset-password-warning { background: #fbf2df; border: 1px solid #f0dfb8; border-radius: 8px; color: #765521; font-size: 10px; line-height: 1.5; margin-top: 13px; padding: 10px 12px; }
+    .upload-success-dialog { max-width: min(440px, calc(100vw - 32px)); overflow: hidden; padding: 0; }
+    .upload-success-content { padding: 24px 25px 20px; text-align: center; }
+    .upload-success-icon { align-items: center; background: var(--green-soft); border: 1px solid var(--line); border-radius: 50%; color: var(--green); display: flex; font-size: 24px; font-weight: 800; height: 54px; justify-content: center; margin: 0 auto 14px; width: 54px; }
+    .upload-success-message { color: var(--muted); font-size: 12px; line-height: 1.65; margin: 0; overflow-wrap: anywhere; }
+    .upload-success-dialog .dialog-actions { justify-content: center; }
+    .upload-success-dialog .button { min-width: 120px; }
     html[data-theme="dark"] .reset-password-success-icon { background: #203b35; border-color: #36594d; color: #9edbc3; }
     html[data-theme="dark"] .reset-password-account,
     html[data-theme="dark"] .reset-password-value { background: #192a27; border-color: var(--line); color: var(--ink); }
@@ -1408,6 +1416,11 @@
     <div class="recorded-view-actions"><div class="recorded-view-tabs" role="tablist" aria-label="Lembar kerja arsip"><button class="button button-secondary active" type="button" data-recorded-sheet="layouts">Scan Layout</button><button class="button button-secondary" type="button" data-recorded-sheet="result">Result SO</button><button class="button button-secondary" type="button" data-recorded-sheet="recap">Rekap Selisih</button></div><button class="button button-primary" id="print-recorded-sheet" type="button">Print / Save PDF</button></div>
     <div id="recorded-sheet-content" class="recorded-sheet-content"></div>
   </dialog>
+  <dialog id="workbook-upload-success-dialog" class="feature-dialog upload-success-dialog" aria-labelledby="workbook-upload-success-title" aria-describedby="workbook-upload-success-message">
+    <div class="dialog-head"><div><div class="dialog-title" id="workbook-upload-success-title">File berhasil diunggah</div><div class="dialog-subtitle">Konfirmasi hasil unggah file Master VEF.</div></div></div>
+    <div class="upload-success-content"><div class="upload-success-icon" aria-hidden="true">✓</div><p class="upload-success-message" id="workbook-upload-success-message"></p></div>
+    <div class="dialog-actions"><button class="button button-primary" type="button" data-close="workbook-upload-success-dialog">OK</button></div>
+  </dialog>
   <dialog id="pj-entry-dialog" class="feature-dialog">
     <div class="dialog-head"><div><div class="dialog-title">Tambah quantity PJ</div><div class="dialog-subtitle" id="pj-entry-product"></div></div><button class="dialog-close" type="button" data-close="pj-entry-dialog" aria-label="Tutup">×</button></div>
     <form id="pj-entry-form" class="feature-dialog-form"><label class="auth-field"><span>Tanggal dan waktu invoice</span><input class="auth-input" name="invoiceDate" type="datetime-local" required></label><label class="auth-field"><span>Nomor invoice</span><input class="auth-input" name="invoiceNumber" type="text" maxlength="100" required placeholder="Masukkan nomor invoice"></label><label class="auth-field"><span>Quantity PJ</span><input class="auth-input" name="quantity" type="number" min="1" step="1" required placeholder="Masukkan quantity"></label><div class="dialog-actions"><button class="button button-secondary" type="button" data-close="pj-entry-dialog">Batal</button><button class="button button-primary" type="submit">Simpan PJ</button></div></form>
@@ -1788,6 +1801,11 @@
       const activeFiles = workspace.id === state.currentWorkspaceId ? state.workbookFiles || [] : [];
       return [...workspaceFiles, ...activeFiles].some((workbook) => workbook.sessionId === sessionId);
     }
+    function requireUploadedVefForRack() {
+      if (workspaceHasActiveWorkbook(activeWorkspace())) return true;
+      notify("Unggah file VEF di halaman Master VEF sebelum menggunakan kartu Rack.");
+      return false;
+    }
     function workspaceIsOwnedByCurrentUser(workspace) {
       const user = authSession?.user;
       if (!workspace || !user) return false;
@@ -1975,6 +1993,11 @@
       clearTimeout(toastTimer);
       toastTimer = setTimeout(() => toast.classList.remove("visible"), 2300);
     };
+    function showWorkbookUploadSuccess(title, message) {
+      document.getElementById("workbook-upload-success-title").textContent = title;
+      document.getElementById("workbook-upload-success-message").textContent = message;
+      document.getElementById("workbook-upload-success-dialog").showModal();
+    }
     function showAuthMessage(message) {
       const target = document.getElementById("auth-message");
       target.textContent = message;
@@ -2875,6 +2898,8 @@
     function renderLayouts() {
       const active = state.activeSession.status === "active";
       const canEdit = canEditActiveSession();
+      const hasUploadedVef = workspaceHasActiveWorkbook(activeWorkspace());
+      const canUseRack = hasUploadedVef && active && canEdit;
       const rackTotals = state.layouts.reduce((totals, layout) => {
         const quantity = getRackQuantities(layout);
         totals.scan += quantity.scan;
@@ -2901,7 +2926,7 @@
           quantityStatus.className === "different" ? "quantity-over" : "",
           scans.some((scan) => scan.status === "duplicate" || scan.status === "not-found") ? "duplicate-warning" : ""
         ].filter(Boolean).join(" ");
-        const scanRows = scans.length ? scans.slice().reverse().map((scan) => `<div class="layout-scan-row"><details class="layout-scan-detail"><summary class="layout-scan-summary"><span class="layout-scan-code">Item Code: ${escapeHtml(scan.sku || "-")}</span><span class="layout-scan-name">Item Name: ${escapeHtml(scan.name || "-")}</span><span class="layout-scan-serial">Serial Number: ${escapeHtml(scan.serial)}</span>${scan.status === "duplicate" || scan.status === "not-found" ? `<span class="scan-warning-icon" role="img" aria-label="${scan.status === "duplicate" ? "Peringatan serial duplikat" : "Peringatan serial tidak ditemukan"}" title="${scan.status === "duplicate" ? "Serial Number duplikat" : "Serial Number tidak ditemukan"}">!</span>` : ""}</summary><div class="layout-scan-detail-body"><span>Hasil scan: ${escapeHtml(scan.status === "match" ? "Cocok di VEF" : scan.status === "duplicate" ? "SN duplikat" : scan.status === "non-laptop" ? "Bukan laptop" : "Tidak ditemukan")}</span><span>Tanggal dan waktu: ${escapeHtml(scan.scannedAt ? formatDate(scan.scannedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "-")}</span></div></details>${canEdit ? `<button class="layout-delete" type="button" data-delete-scan="${escapeHtml(scan.id)}" aria-label="Hapus scan ${escapeHtml(scan.serial)}" title="Hapus scan">×</button>` : ""}</div>`).join("") : `<div class="layout-record-empty">Belum ada scan.</div>`;
+        const scanRows = scans.length ? scans.slice().reverse().map((scan) => `<div class="layout-scan-row"><details class="layout-scan-detail"><summary class="layout-scan-summary"><span class="layout-scan-code">Item Code: ${escapeHtml(scan.sku || "-")}</span><span class="layout-scan-name">Item Name: ${escapeHtml(scan.name || "-")}</span><span class="layout-scan-serial">Serial Number: ${escapeHtml(scan.serial)}</span>${scan.status === "duplicate" || scan.status === "not-found" ? `<span class="scan-warning-icon" role="img" aria-label="${scan.status === "duplicate" ? "Peringatan serial duplikat" : "Peringatan serial tidak ditemukan"}" title="${scan.status === "duplicate" ? "Serial Number duplikat" : "Serial Number tidak ditemukan"}">!</span>` : ""}</summary><div class="layout-scan-detail-body"><span>Hasil scan: ${escapeHtml(scan.status === "match" ? "Cocok di VEF" : scan.status === "duplicate" ? "SN duplikat" : scan.status === "non-laptop" ? "Bukan laptop" : "Tidak ditemukan")}</span><span>Tanggal dan waktu: ${escapeHtml(scan.scannedAt ? formatDate(scan.scannedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "-")}</span></div></details>${canUseRack ? `<button class="layout-delete" type="button" data-delete-scan="${escapeHtml(scan.id)}" aria-label="Hapus scan ${escapeHtml(scan.serial)}" title="Hapus scan">×</button>` : ""}</div>`).join("") : `<div class="layout-record-empty">Belum ada scan.</div>`;
         const manualGroups = new Map();
         for (const entry of manualEntries) {
           const key = entry.productId || entry.sku;
@@ -2913,26 +2938,28 @@
           const sku = product?.sku || entries[0].sku;
           const name = product?.name || entries[0].name;
           const total = entries.reduce((sum, entry) => sum + Number(entry.quantity || 0), 0);
-          const entryRows = entries.slice().reverse().map((entry) => `<div class="manual-item-entry ${entry.id === lastManualEntryId ? "is-latest" : ""}" data-manual-entry="${escapeHtml(entry.id)}"><span>Qty ${formatNumber(entry.quantity)}${entry.createdAt ? ` · ${escapeHtml(formatDate(entry.createdAt, { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }))}` : ""}</span>${canEdit ? `<button class="layout-delete" type="button" data-delete-manual="${escapeHtml(entry.id)}" aria-label="Hapus input manual ${escapeHtml(sku)} sebanyak ${formatNumber(entry.quantity)}" title="Hapus input manual">×</button>` : ""}</div>`).join("");
+          const entryRows = entries.slice().reverse().map((entry) => `<div class="manual-item-entry ${entry.id === lastManualEntryId ? "is-latest" : ""}" data-manual-entry="${escapeHtml(entry.id)}"><span>Qty ${formatNumber(entry.quantity)}${entry.createdAt ? ` · ${escapeHtml(formatDate(entry.createdAt, { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }))}` : ""}</span>${canUseRack ? `<button class="layout-delete" type="button" data-delete-manual="${escapeHtml(entry.id)}" aria-label="Hapus input manual ${escapeHtml(sku)} sebanyak ${formatNumber(entry.quantity)}" title="Hapus input manual">×</button>` : ""}</div>`).join("");
           return `<details class="manual-item-details" data-manual-product-entry="${escapeHtml(entries[0].productId || entries[0].sku)}"><summary class="manual-item-summary"><span class="manual-item-sku">${escapeHtml(sku)}</span><span class="manual-item-name">${escapeHtml(name)}</span><strong class="manual-item-total">× ${formatNumber(total)}</strong></summary><div class="manual-item-expanded"><div class="manual-item-full-name">${escapeHtml(name)}</div>${entryRows}</div></details>`;
         }).join("") : `<div class="layout-record-empty">Belum ada input manual.</div>`;
-        const scanDisabled = !state.products.length || !active || !canEdit || !hasTarget || !rackHasNumber;
-        const manualDisabled = !state.products.length || !active || !canEdit || !rackHasNumber;
+        const scanDisabled = !state.products.length || !canUseRack || !hasTarget || !rackHasNumber;
+        const manualDisabled = !state.products.length || !canUseRack || !rackHasNumber;
         return `<section class="layout-card ${cardClasses}">
           <div class="layout-card-head">
-            <div><div class="layout-name"><span>Rack</span><input class="qty-input layout-number-input" id="rack-number-${escapeHtml(layout)}" type="text" maxlength="60" size="${Math.min(40, Math.max(10, String(rackNumber).length + 1))}" aria-label="Nama atau nomor Rack ${escapeHtml(layout)}" data-layout-number="${escapeHtml(layout)}" value="${escapeHtml(rackNumber)}" placeholder="Nomor/Nama" ${!active || !canEdit ? "disabled" : ""}></div><div class="layout-location">Nomor atau nama Rack</div></div>
-            <div class="layout-card-summary"><div class="layout-quantity-row"><label class="layout-quantity-label" for="quantity-${escapeHtml(layout)}">Target Scan</label><input class="qty-input layout-quantity-input" id="quantity-${escapeHtml(layout)}" type="number" min="0" step="1" inputmode="numeric" aria-label="Quantity target ${escapeHtml(rackName)}" data-layout-quantity="${escapeHtml(layout)}" value="${target ?? ""}" ${!active || !canEdit ? "disabled" : ""}></div><span class="layout-quantity-status ${quantityStatus.className}" data-layout-quantity-status="${escapeHtml(layout)}">${quantityStatus.label}</span><span class="layout-count">${matched} cocok${nonLaptopScans ? ` · ${nonLaptopScans} bukan laptop` : ""}${issues ? ` · ${issues} masalah` : ""}</span><span class="rack-quantity-summary">Scan <strong>${formatNumber(quantities.scan)}</strong> · Manual <strong>${formatNumber(quantities.manual)}</strong> · Total <strong>${formatNumber(quantities.total)}</strong></span></div>
-            <button class="rack-delete-button" type="button" data-delete-rack="${escapeHtml(layout)}" aria-label="Hapus ${escapeHtml(rackName)}" title="${hasRackData ? "Kosongkan data rack sebelum menghapus" : "Hapus rack"}" ${!canEdit || !active ? "disabled" : ""}>−</button>
+            <div><div class="layout-name"><span>Rack</span><input class="qty-input layout-number-input" id="rack-number-${escapeHtml(layout)}" type="text" maxlength="60" size="${Math.min(40, Math.max(10, String(rackNumber).length + 1))}" aria-label="Nama atau nomor Rack ${escapeHtml(layout)}" data-layout-number="${escapeHtml(layout)}" value="${escapeHtml(rackNumber)}" placeholder="Nomor/Nama" ${!canUseRack ? "disabled" : ""}></div><div class="layout-location">Nomor atau nama Rack</div></div>
+            <div class="layout-card-summary"><div class="layout-quantity-row"><label class="layout-quantity-label" for="quantity-${escapeHtml(layout)}">Target Scan</label><input class="qty-input layout-quantity-input" id="quantity-${escapeHtml(layout)}" type="number" min="0" step="1" inputmode="numeric" aria-label="Quantity target ${escapeHtml(rackName)}" data-layout-quantity="${escapeHtml(layout)}" value="${target ?? ""}" ${!canUseRack ? "disabled" : ""}></div><span class="layout-quantity-status ${quantityStatus.className}" data-layout-quantity-status="${escapeHtml(layout)}">${quantityStatus.label}</span><span class="layout-count">${matched} cocok${nonLaptopScans ? ` · ${nonLaptopScans} bukan laptop` : ""}${issues ? ` · ${issues} masalah` : ""}</span><span class="rack-quantity-summary">Scan <strong>${formatNumber(quantities.scan)}</strong> · Manual <strong>${formatNumber(quantities.manual)}</strong> · Total <strong>${formatNumber(quantities.total)}</strong></span></div>
+            <button class="rack-delete-button" type="button" data-delete-rack="${escapeHtml(layout)}" aria-label="Hapus ${escapeHtml(rackName)}" title="${!hasUploadedVef ? "Unggah file VEF terlebih dahulu" : hasRackData ? "Kosongkan data rack sebelum menghapus" : "Hapus rack"}" ${!canUseRack ? "disabled" : ""}>−</button>
           </div>
           <form class="layout-form" data-layout-form="${escapeHtml(layout)}"><input class="scan-input layout-input" autocomplete="off" placeholder="${rackHasNumber && hasTarget ? `Pindai SN di ${escapeHtml(rackName)}` : !rackHasNumber ? "Isi nama Rack dahulu" : "Isi quantity target dahulu"}" aria-label="Pindai Serial Number di ${escapeHtml(rackName)}" ${scanDisabled ? "disabled" : ""}><button class="button button-primary" type="submit" ${scanDisabled ? "disabled" : ""}>Catat Scan</button></form>
           <form class="layout-manual-form" data-manual-form="${escapeHtml(layout)}"><div class="manual-product-picker"><input class="scan-input" type="search" data-manual-product placeholder="${rackHasNumber ? "Cari item code atau nama barang" : "Isi nama Rack dahulu"}" aria-label="Cari item dari VEF Master untuk ${escapeHtml(rackName)}" autocomplete="off" aria-autocomplete="list" aria-expanded="false" ${manualDisabled ? "disabled" : ""}><div class="manual-product-options" role="listbox" aria-label="Hasil pencarian VEF Master"></div></div><input class="scan-input" type="number" min="1" step="1" inputmode="numeric" data-manual-quantity placeholder="Qty" aria-label="Quantity manual untuk ${escapeHtml(rackName)}" ${manualDisabled ? "disabled" : ""}><button class="button button-primary" type="submit" ${manualDisabled ? "disabled" : ""}>Catat Manual</button></form>
           <div class="layout-card-foot"><div class="layout-record-group"><div class="layout-record-heading">Scan</div><div class="layout-scan-list">${scanRows}</div></div><div class="layout-record-group"><div class="layout-record-heading">Manual</div><div class="layout-scan-list">${manualRows}</div></div></div>
         </section>`;
       }).join("");
-      return `${navMarkup()}<section class="page-head layout-page-head"><div class="layout-page-heading"><div class="layout-page-eyebrow">Pemindaian inventaris</div>${workspacePageTitle()}<p class="subtitle">Isi nomor Rack dan quantity target sebelum mulai scan.</p></div><div class="layout-overview-metrics" aria-label="Ringkasan quantity Scan Layout"><div class="layout-overview-metric"><span>Total Rack</span><strong>${state.layouts.length}</strong></div><div class="layout-overview-metric"><span>Total Scan</span><strong>${formatNumber(rackTotals.scan)}</strong><em>SN cocok</em></div><div class="layout-overview-metric"><span>Total Manual</span><strong>${formatNumber(rackTotals.manual)}</strong><em>unit</em></div><div class="layout-overview-metric"><span>Total Qty</span><strong>${formatNumber(rackTotals.scan + rackTotals.manual)}</strong><em>Scan + Manual</em></div><div class="layout-overview-metric"><span>Qty Master VEF</span><strong>${formatNumber(expected)}</strong><em>sesuai mode hitung</em></div></div></section>${renderSessionAccessNotice()}<section class="layout-grid">${cards || '<div class="schedule-empty">Belum ada Rack. Klik Tambah Rack untuk membuat Rack pertama.</div>'}</section><div class="schedule-add-row"><button class="button button-primary" id="add-rack-button" type="button" ${!active || !canEdit ? "disabled" : ""}>＋ Tambah Rack</button></div>`;
+      const uploadNotice = hasUploadedVef ? "" : '<div class="layout-upload-required" role="status">Unggah file VEF terlebih dahulu di halaman <strong>Master VEF</strong> untuk mengaktifkan kartu Rack, scan, input manual, dan tombol Tambah Rack.</div>';
+      return `${navMarkup()}<section class="page-head layout-page-head"><div class="layout-page-heading"><div class="layout-page-eyebrow">Pemindaian inventaris</div>${workspacePageTitle()}<p class="subtitle">Isi nomor Rack dan quantity target sebelum mulai scan.</p></div><div class="layout-overview-metrics" aria-label="Ringkasan quantity Scan Layout"><div class="layout-overview-metric"><span>Total Rack</span><strong>${state.layouts.length}</strong></div><div class="layout-overview-metric"><span>Total Scan</span><strong>${formatNumber(rackTotals.scan)}</strong><em>SN cocok</em></div><div class="layout-overview-metric"><span>Total Manual</span><strong>${formatNumber(rackTotals.manual)}</strong><em>unit</em></div><div class="layout-overview-metric"><span>Total Qty</span><strong>${formatNumber(rackTotals.scan + rackTotals.manual)}</strong><em>Scan + Manual</em></div><div class="layout-overview-metric"><span>Qty Master VEF</span><strong>${formatNumber(expected)}</strong><em>sesuai mode hitung</em></div></div></section>${renderSessionAccessNotice()}${uploadNotice}<section class="layout-grid">${cards || '<div class="schedule-empty">Belum ada Rack. Klik Tambah Rack untuk membuat Rack pertama.</div>'}</section><div class="schedule-add-row"><button class="button button-primary" id="add-rack-button" type="button" title="${hasUploadedVef ? "Tambah Rack" : "Unggah file VEF terlebih dahulu"}" ${!canUseRack ? "disabled" : ""}>＋ Tambah Rack</button></div>`;
     }
     function addRack() {
       if (!requireActiveSessionEdit()) return;
+      if (!requireUploadedVefForRack()) return;
       if (state.activeSession.status !== "active") {
         notify("Rack hanya dapat ditambahkan pada sesi yang masih aktif.");
         return;
@@ -2948,6 +2975,7 @@
     }
     function deleteRack(layout) {
       if (!requireActiveSessionEdit()) return;
+      if (!requireUploadedVefForRack()) return;
       if (state.activeSession.status !== "active" || !state.layouts.includes(layout)) return;
       const scanCount = state.scanEvents.filter((event) => event.layout === layout).length;
       const manualCount = state.manualEntries.filter((entry) => entry.layout === layout).length;
@@ -2975,6 +3003,7 @@
 
     function updateLayoutQuantity(input) {
       if (!requireActiveSessionEdit()) return;
+      if (!requireUploadedVefForRack()) return;
       const layout = input.dataset.layoutQuantity;
       const value = input.value.trim();
       if (!value) delete state.layoutQuantities[layout];
@@ -3006,6 +3035,7 @@
 
     function updateLayoutNumber(input) {
       if (!requireActiveSessionEdit()) return;
+      if (!requireUploadedVefForRack()) return;
       const layout = input.dataset.layoutNumber;
       const value = input.value.trim();
       if (!value) delete state.layoutNumbers[layout];
@@ -3031,7 +3061,7 @@
       const form = document.querySelector(`[data-manual-form="${CSS.escape(layout)}"]`);
       if (!form) return;
       const rackIsNamed = hasRackNumber(layout);
-      const canEnter = rackIsNamed && state.products.length > 0 && state.activeSession.status === "active" && canEditActiveSession();
+      const canEnter = rackIsNamed && state.products.length > 0 && state.activeSession.status === "active" && canEditActiveSession() && workspaceHasActiveWorkbook(activeWorkspace());
       form.querySelectorAll("[data-manual-product], [data-manual-quantity], button[type='submit']")
         .forEach((control) => control.toggleAttribute("disabled", !canEnter));
       const productInput = form.querySelector("[data-manual-product]");
@@ -4417,6 +4447,7 @@
     function handleLayoutScanSubmit(event) {
       event.preventDefault();
       if (!requireActiveSessionEdit()) return;
+      if (!requireUploadedVefForRack()) return;
       const form = event.currentTarget;
       const input = form.querySelector(".layout-input");
       const serial = input.value.trim();
@@ -4447,6 +4478,7 @@
     function handleManualEntrySubmit(event) {
       event.preventDefault();
       if (!requireActiveSessionEdit()) return;
+      if (!requireUploadedVefForRack()) return;
       const form = event.currentTarget;
       const productInput = form.querySelector("[data-manual-product]");
       const quantityInput = form.querySelector("[data-manual-quantity]");
@@ -4502,6 +4534,7 @@
 
     function deleteManualEntry(id) {
       if (!requireActiveSessionEdit()) return;
+      if (!requireUploadedVefForRack()) return;
       const removed = state.manualEntries.find((entry) => entry.id === id);
       if (!removed) return;
       state.manualEntries = state.manualEntries.filter((entry) => entry.id !== id);
@@ -4514,6 +4547,7 @@
 
     function deleteScanEvent(id) {
       if (!requireActiveSessionEdit()) return;
+      if (!requireUploadedVefForRack()) return;
       const removed = state.scanEvents.find((event) => event.id === id);
       if (!removed) return;
       const productBefore = state.products.find((product) => product.id === removed.productId);
@@ -4718,7 +4752,10 @@
           state.workbookFiles = [...(state.workbookFiles || []), archivedWorkbook];
           persist();
           render();
-          notify("Template dikenali dan diarsipkan. Isi Serial No dan Item Code pada tab VEF Master, lalu unggah ulang.");
+          showWorkbookUploadSuccess(
+            "File template berhasil diunggah",
+            `${file.name} berhasil diarsipkan. Lengkapi kolom Serial No dan Item Code pada tab VEF Master, lalu unggah ulang agar data item siap dipakai.`
+          );
           return;
         }
         const newSession = makeSession(authSession.user);
@@ -4748,7 +4785,10 @@
         state.workbookFiles = [...(state.workbookFiles || []), archivedWorkbook];
         persist();
         render();
-        notify(`Master dimuat dan file diarsipkan: ${state.products.length} item per warehouse, ${Object.keys(serialMaster).length} serial.`);
+        showWorkbookUploadSuccess(
+          "File Master VEF berhasil diunggah",
+          `${file.name} berhasil diproses dan diarsipkan: ${formatNumber(state.products.length)} item per warehouse dan ${formatNumber(Object.keys(serialMaster).length)} serial number.`
+        );
       } catch (error) {
         console.error(error);
         notify(error instanceof Error ? error.message : "Workbook tidak dapat diproses atau diarsipkan.");
