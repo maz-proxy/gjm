@@ -6,6 +6,13 @@
   <meta name="theme-color" content="#f4f7f6">
   <link rel="icon" type="image/svg+xml">
   <link rel="apple-touch-icon" type="image/svg+xml">
+  <script>
+    const isAndroidCapacitor = Boolean(window.androidBridge || window.Capacitor?.getPlatform?.() === "android");
+    if (isAndroidCapacitor) document.documentElement.classList.add("capacitor-android", "mobile-drawer-enabled");
+    else if (window.matchMedia("(max-width: 767px) and (orientation: portrait)").matches) {
+      document.documentElement.classList.add("mobile-drawer-enabled");
+    }
+  </script>
   <title>STOCK OPNAME | Rekonsiliasi SN</title>
   <style>
     :root {
@@ -1366,6 +1373,108 @@
       .recorded-view-actions { align-items: stretch; flex-direction: column; }
       .recorded-view-tabs > * { flex: 1 1 auto; }
     }
+    .android-sidebar-handle, .android-sidebar-backdrop { display: none; }
+    html.mobile-drawer-enabled .app-shell { display: block; min-height: 100vh; padding: 0; }
+    html.mobile-drawer-enabled .app-shell > .sidebar {
+      background: linear-gradient(180deg, #245b3d 0%, #194a32 100%);
+      border: 0;
+      bottom: 0;
+      box-shadow: 8px 0 30px rgba(0,0,0,.28);
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      height: 100vh;
+      height: 100dvh;
+      left: 0;
+      max-width: min(300px, 86vw);
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding: max(18px, env(safe-area-inset-top, 0px)) 14px max(16px, env(safe-area-inset-bottom, 0px));
+      position: fixed !important;
+      right: auto;
+      top: 0;
+      transform: translateX(-105%);
+      transition: transform .24s cubic-bezier(.2,.75,.25,1);
+      width: min(300px, 86vw);
+      z-index: 22;
+    }
+    html.mobile-drawer-enabled.android-nav-open .app-shell > .sidebar { transform: translateX(0); }
+    html.mobile-drawer-enabled .app-shell > .sidebar .brand { display: flex; flex: 0 0 auto; margin: 3px 0 22px; padding: 0 5px; }
+    html.mobile-drawer-enabled .app-shell > .sidebar .brand-mark { flex: 0 0 48px; height: 48px; width: 48px; }
+    html.mobile-drawer-enabled .app-shell > .sidebar .brand-name { font-size: 13px; }
+    html.mobile-drawer-enabled .app-shell > .sidebar .sidebar-toggle { margin-left: auto; position: static; }
+    html.mobile-drawer-enabled .app-shell > .sidebar .nav-label { display: block; margin: 12px 10px 8px; }
+    html.mobile-drawer-enabled .app-shell > .sidebar .nav-list {
+      align-items: stretch;
+      display: grid;
+      flex: 0 0 auto;
+      gap: 5px;
+      justify-content: stretch;
+      margin: 0 0 12px !important;
+      width: 100%;
+    }
+    html.mobile-drawer-enabled .app-shell > .sidebar .nav-list + .nav-list { border: 0; padding: 0; }
+    html.mobile-drawer-enabled .app-shell > .sidebar .nav-item {
+      align-items: center;
+      flex: initial;
+      flex-direction: row;
+      font-size: 12px;
+      gap: 11px;
+      justify-content: flex-start;
+      min-height: 46px;
+      padding: 0 10px;
+      text-align: left;
+    }
+    html.mobile-drawer-enabled .app-shell > .sidebar .nav-item > span:last-child { line-height: 1.3; max-width: none; }
+    html.mobile-drawer-enabled .app-shell > .sidebar .nav-icon { flex: 0 0 30px; height: 30px; width: 30px; }
+    html.mobile-drawer-enabled .app-shell > .sidebar .nav-icon svg { height: 17px; width: 17px; }
+    html.mobile-drawer-enabled .app-shell > .sidebar .sidebar-bottom { display: block; margin-top: auto; }
+    html.mobile-drawer-enabled .android-sidebar-handle {
+      align-items: center;
+      background: linear-gradient(145deg, rgba(52,122,81,.88), rgba(25,74,50,.88));
+      border: 1px solid rgba(255,255,255,.18);
+      border-left: 0;
+      border-radius: 0 9px 9px 0;
+      box-shadow: 2px 3px 8px rgba(0,0,0,.14);
+      color: #f4f8f2;
+      display: inline-flex;
+      height: 44px;
+      justify-content: center;
+      left: 0;
+      opacity: .76;
+      padding: 0 4px 0 2px;
+      position: fixed;
+      top: 50%;
+      transform: translateY(-50%);
+      touch-action: none;
+      transition: background .18s ease, opacity .18s ease;
+      width: 25px;
+      z-index: 21;
+    }
+    html.mobile-drawer-enabled .android-sidebar-handle:active { opacity: 1; }
+    html.mobile-drawer-enabled .android-sidebar-handle svg { fill: none; height: 15px; stroke: currentColor; stroke-linecap: round; stroke-width: 1.8; width: 15px; }
+    html.mobile-drawer-enabled.android-nav-open .android-sidebar-handle { opacity: 0; pointer-events: none; }
+    html.mobile-drawer-enabled .android-sidebar-backdrop {
+      background: rgba(11,20,17,.48);
+      border: 0;
+      display: block;
+      inset: 0;
+      opacity: 0;
+      pointer-events: none;
+      position: fixed;
+      transition: opacity .24s ease, visibility .24s ease;
+      visibility: hidden;
+      z-index: 20;
+    }
+    html.mobile-drawer-enabled.android-nav-open .android-sidebar-backdrop { opacity: 1; pointer-events: auto; visibility: visible; }
+    html.mobile-drawer-enabled body.auth-locked .android-sidebar-handle { display: none; }
+    html.mobile-drawer-enabled main { min-height: 100vh; padding-bottom: max(30px, env(safe-area-inset-bottom, 0px)); }
+    html.mobile-drawer-enabled .sidebar-toggle { touch-action: manipulation; }
+    @media (prefers-reduced-motion: reduce) {
+      html.mobile-drawer-enabled .app-shell > .sidebar,
+      html.mobile-drawer-enabled .android-sidebar-handle,
+      html.mobile-drawer-enabled .android-sidebar-backdrop { transition: none; }
+    }
   </style>
 </head>
 <body class="auth-checking auth-locked">
@@ -1395,7 +1504,7 @@
   </section>
   <div class="auth-footer">© 2026 M-Maz. All rights reserved.</div>
   <div class="app-shell">
-    <aside class="sidebar">
+    <aside class="sidebar" id="app-sidebar">
       <div class="brand">
         <div class="brand-mark" aria-hidden="true"><img class="brand-monogram" data-brand-emblem src="./assets/brand-emblem-source.png" alt=""></div>
         <div class="brand-copy"><div class="brand-name">STOCK OPNAME</div></div>
@@ -1428,6 +1537,10 @@
         <div class="profile"><div class="profile-details"><div class="profile-name" id="profile-name">Pengguna</div><span class="profile-role" id="profile-role"></span></div><button class="logout-button" id="logout-button" type="button">Keluar</button></div>
       </div>
     </aside>
+    <button class="android-sidebar-handle" type="button" aria-controls="app-sidebar" aria-expanded="false" aria-label="Geser atau buka menu navigasi">
+      <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+    <button class="android-sidebar-backdrop" type="button" aria-label="Tutup menu navigasi" aria-hidden="true"></button>
     <main id="main-content"></main>
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -5210,6 +5323,111 @@
     const appShell = document.querySelector(".app-shell");
     const sidebar = document.querySelector(".sidebar");
     const sidebarToggle = document.querySelector(".sidebar-toggle");
+    const androidSidebarHandle = document.querySelector(".android-sidebar-handle");
+    const androidSidebarBackdrop = document.querySelector(".android-sidebar-backdrop");
+    const isAndroidApp = document.documentElement.classList.contains("capacitor-android");
+    const mobilePortraitQuery = window.matchMedia("(max-width: 767px) and (orientation: portrait)");
+    const androidSidebarPositionKey = "stock-opname-mobile-menu-position";
+    let androidSidebarDrag = null;
+    let androidSidebarPosition = null;
+    let suppressSidebarClick = false;
+    function isMobileDrawerEnabled() {
+      return isAndroidApp || mobilePortraitQuery.matches;
+    }
+    function applyAndroidSidebarPosition() {
+      if (!mobilePortraitQuery.matches) {
+        androidSidebarHandle.style.removeProperty("left");
+        androidSidebarHandle.style.removeProperty("top");
+        androidSidebarHandle.style.removeProperty("transform");
+        return;
+      }
+      const handleWidth = androidSidebarHandle.offsetWidth || 25;
+      const handleHeight = androidSidebarHandle.offsetHeight || 44;
+      const maxX = Math.max(0, window.innerWidth - handleWidth);
+      const maxY = Math.max(0, window.innerHeight - handleHeight);
+      const anchor = androidSidebarPosition || { x: 0, y: .5 };
+      const x = Math.round(Math.min(1, Math.max(0, anchor.x)) * maxX);
+      const y = Math.round(Math.min(1, Math.max(0, anchor.y)) * maxY);
+      androidSidebarHandle.style.left = `${x}px`;
+      androidSidebarHandle.style.top = `${y}px`;
+      androidSidebarHandle.style.transform = "none";
+    }
+    function syncMobileDrawerMode() {
+      const enabled = isMobileDrawerEnabled();
+      document.documentElement.classList.toggle("mobile-drawer-enabled", enabled);
+      if (!enabled) setAndroidNavigationOpen(false);
+      applyAndroidSidebarPosition();
+    }
+    function setAndroidNavigationOpen(open) {
+      if (open && !isMobileDrawerEnabled()) return;
+      document.documentElement.classList.toggle("android-nav-open", open);
+      androidSidebarHandle.setAttribute("aria-expanded", String(open));
+      androidSidebarHandle.setAttribute("aria-label", open ? "Menu navigasi terbuka" : "Geser atau buka menu navigasi");
+      androidSidebarBackdrop.setAttribute("aria-hidden", String(!open));
+      sidebarToggle.setAttribute("aria-expanded", String(open));
+      sidebarToggle.setAttribute("aria-label", open ? "Tutup menu" : "Menu");
+      sidebarToggle.title = open ? "Tutup menu" : "Menu";
+      sidebarToggle.textContent = open ? "×" : "☰";
+    }
+    function saveAndroidSidebarPosition() {
+      const maxX = Math.max(1, window.innerWidth - androidSidebarHandle.offsetWidth);
+      const maxY = Math.max(1, window.innerHeight - androidSidebarHandle.offsetHeight);
+      androidSidebarPosition = {
+        x: androidSidebarHandle.offsetLeft / maxX,
+        y: androidSidebarHandle.offsetTop / maxY
+      };
+      localStorage.setItem(androidSidebarPositionKey, JSON.stringify(androidSidebarPosition));
+    }
+    const savedAndroidSidebarPosition = localStorage.getItem(androidSidebarPositionKey);
+    if (savedAndroidSidebarPosition) {
+      try {
+        const parsedPosition = JSON.parse(savedAndroidSidebarPosition);
+        if (Number.isFinite(parsedPosition.x) && Number.isFinite(parsedPosition.y)) {
+          androidSidebarPosition = { x: parsedPosition.x, y: parsedPosition.y };
+        }
+      } catch (error) {
+        console.warn("Posisi tombol navigasi tersimpan tidak valid.", error);
+      }
+    }
+    androidSidebarHandle.addEventListener("pointerdown", (event) => {
+      if (!mobilePortraitQuery.matches || !isMobileDrawerEnabled() || document.documentElement.classList.contains("android-nav-open")) return;
+      androidSidebarDrag = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, left: androidSidebarHandle.offsetLeft, top: androidSidebarHandle.offsetTop, moved: false };
+      androidSidebarHandle.setPointerCapture(event.pointerId);
+    });
+    androidSidebarHandle.addEventListener("pointermove", (event) => {
+      if (!androidSidebarDrag || event.pointerId !== androidSidebarDrag.pointerId) return;
+      const deltaX = event.clientX - androidSidebarDrag.startX;
+      const deltaY = event.clientY - androidSidebarDrag.startY;
+      if (!androidSidebarDrag.moved && Math.hypot(deltaX, deltaY) < 6) return;
+      androidSidebarDrag.moved = true;
+      const maxX = Math.max(0, window.innerWidth - androidSidebarHandle.offsetWidth);
+      const maxY = Math.max(0, window.innerHeight - androidSidebarHandle.offsetHeight);
+      const left = Math.min(maxX, Math.max(0, androidSidebarDrag.left + deltaX));
+      const top = Math.min(maxY, Math.max(0, androidSidebarDrag.top + deltaY));
+      androidSidebarHandle.style.left = `${left}px`;
+      androidSidebarHandle.style.top = `${top}px`;
+      androidSidebarHandle.style.transform = "none";
+    });
+    const finishAndroidSidebarDrag = (event) => {
+      if (!androidSidebarDrag || event.pointerId !== androidSidebarDrag.pointerId) return;
+      suppressSidebarClick = event.type === "pointerup" && androidSidebarDrag.moved;
+      if (androidSidebarDrag.moved) saveAndroidSidebarPosition();
+      androidSidebarDrag = null;
+    };
+    androidSidebarHandle.addEventListener("pointerup", finishAndroidSidebarDrag);
+    androidSidebarHandle.addEventListener("pointercancel", finishAndroidSidebarDrag);
+    androidSidebarHandle.addEventListener("click", (event) => {
+      if (suppressSidebarClick) {
+        event.preventDefault();
+        suppressSidebarClick = false;
+        return;
+      }
+      setAndroidNavigationOpen(true);
+    });
+    androidSidebarBackdrop.addEventListener("click", () => setAndroidNavigationOpen(false));
+    syncMobileDrawerMode();
+    mobilePortraitQuery.addEventListener("change", syncMobileDrawerMode);
+    window.addEventListener("resize", applyAndroidSidebarPosition);
     for (const eventName of ["pointerdown", "pointermove", "keydown", "scroll", "touchstart", "click"]) {
       document.addEventListener(eventName, recordUserActivity, { passive: true });
     }
@@ -5220,6 +5438,10 @@
       if (event.key === idleActivityStorageKey && event.newValue) checkIdleSession();
     });
     sidebarToggle.addEventListener("click", () => {
+      if (isMobileDrawerEnabled()) {
+        setAndroidNavigationOpen(false);
+        return;
+      }
       const collapsed = appShell.classList.toggle("sidebar-collapsed");
       appShell.classList.remove("sidebar-expanded");
       sidebarToggle.setAttribute("aria-expanded", String(!collapsed));
@@ -5243,8 +5465,12 @@
         currentPage = item.dataset.page;
         searchTerm = "";
         render();
+        if (isMobileDrawerEnabled()) setAndroidNavigationOpen(false);
         if (currentPage === "admin-users") loadAdminUsers();
       });
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && isMobileDrawerEnabled()) setAndroidNavigationOpen(false);
     });
     document.querySelectorAll("[data-logout]").forEach((button) => button.addEventListener("click", requestSignOut));
     document.addEventListener("click", (event) => {
