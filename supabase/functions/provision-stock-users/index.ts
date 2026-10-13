@@ -104,12 +104,12 @@ Deno.serve(async (request: Request) => {
     });
     if (error) {
       console.error("Owner promotion failed:", error.message);
-      return jsonResponse(500, { error: "Peran super admin gagal diberikan." }, responseOrigin);
+      return jsonResponse(500, { error: "Peran Owner gagal diberikan." }, responseOrigin);
     }
     return jsonResponse(200, {
       username: "indra",
       role: "super_admin",
-      message: "Indra sekarang menjadi super admin workspace.",
+      message: "Indra sekarang menjadi Owner workspace.",
     }, responseOrigin);
   }
 

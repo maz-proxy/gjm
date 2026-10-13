@@ -56,7 +56,7 @@ Deno.serve(async (request: Request) => {
 
   const authorization = request.headers.get("authorization") || "";
   const accessToken = authorization.match(/^Bearer\s+(.+)$/i)?.[1];
-  if (!accessToken) return jsonResponse(401, { error: "Silakan login sebagai super admin." }, origin);
+  if (!accessToken) return jsonResponse(401, { error: "Silakan login sebagai Owner." }, origin);
 
   const authClient = createClient(supabaseUrl, anonKey, {
     auth: { autoRefreshToken: false, persistSession: false },
@@ -67,7 +67,7 @@ Deno.serve(async (request: Request) => {
     authData.user?.app_metadata?.role !== "super_admin" ||
     authData.user?.app_metadata?.owner_username !== "indra"
   ) {
-    return jsonResponse(403, { error: "Aksi ini hanya untuk super admin." }, origin);
+    return jsonResponse(403, { error: "Aksi ini hanya untuk Owner." }, origin);
   }
 
   let input: { action?: string; username?: string; disabled?: boolean };

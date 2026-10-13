@@ -1394,7 +1394,7 @@
         <button class="nav-item" data-page="about"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9"/><path d="M8 12h8m-4-4v8"/></svg></span><span>Panduan</span></button>
         <button class="nav-item" data-page="about-info"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/></svg></span><span>About</span></button>
       </nav>
-      <div class="nav-label" id="admin-nav-label" hidden>Super Admin</div>
+      <div class="nav-label" id="admin-nav-label" hidden>Owner</div>
       <nav class="nav-list" id="admin-navigation" aria-label="Administrasi" hidden>
         <button class="nav-item" data-page="data-resources" id="data-resources-nav" hidden><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 5h16v14H4zM8 9h8m-8 3h8m-8 3h5"/></svg></span><span>Data Resource</span></button>
         <button class="nav-item" data-page="admin-users" id="admin-users-nav" hidden><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2H3Zm14-11a3 3 0 0 1 0 6m2 2a4 4 0 0 1 2 3v1h-4"/></svg></span><span>Kelola Akun</span></button>
@@ -1752,7 +1752,7 @@
       const names = workspaceResourceNames(resourceType, workspaceId).filter((name) => !query || normalizeField(name).includes(query));
       options.innerHTML = names.length
         ? `<div class="schedule-resource-options-heading">${resourceType === "brands" ? "Pilih Nama Brand" : "Pilih Nama PIC"}</div>${names.map((name) => `<button class="schedule-resource-option" type="button" role="option" data-schedule-resource-option="${escapeHtml(name)}">${escapeHtml(name)}</button>`).join("")}`
-        : `<div class="schedule-resource-options-empty">${workspaceResourceNames(resourceType, workspaceId).length ? `Tidak ada ${resourceType === "brands" ? "Nama Brand" : "Nama PIC"} yang cocok.` : `Belum ada ${resourceType === "brands" ? "Nama Brand" : "Nama PIC"}. Minta Super Admin menambahkannya di Data Resource.`}</div>`;
+        : `<div class="schedule-resource-options-empty">${workspaceResourceNames(resourceType, workspaceId).length ? `Tidak ada ${resourceType === "brands" ? "Nama Brand" : "Nama PIC"} yang cocok.` : `Belum ada ${resourceType === "brands" ? "Nama Brand" : "Nama PIC"}. Minta Owner menambahkannya di Data Resource.`}</div>`;
       options.classList.add("open");
       input.closest(".schedule-card")?.classList.add("schedule-resource-open");
       input.setAttribute("aria-expanded", "true");
@@ -1893,13 +1893,13 @@
       }
       if (canEditActiveSession()) return true;
       const owner = activeWorkspace()?.data?.activeSession;
-      notify(`Sesi ini hanya dapat diedit oleh ${sessionOwnerName(owner)} atau Super Admin.`);
+      notify(`Sesi ini hanya dapat diedit oleh ${sessionOwnerName(owner)} atau Owner.`);
       return false;
     }
     function renderSessionAccessNotice() {
       if (canEditActiveSession()) return "";
       const owner = activeWorkspace()?.data?.activeSession;
-      return `<div class="history-summary" role="status"><strong>Sesi hanya dapat dilihat.</strong><span>Pengedit: ${escapeHtml(sessionOwnerName(owner))}${owner?.createdByUsername ? " · staf lain tidak dapat mengubah sesi ini" : " · hubungi Super Admin untuk sesi lama"}.</span></div>`;
+      return `<div class="history-summary" role="status"><strong>Sesi hanya dapat dilihat.</strong><span>Pengedit: ${escapeHtml(sessionOwnerName(owner))}${owner?.createdByUsername ? " · staf lain tidak dapat mengubah sesi ini" : " · hubungi Owner untuk sesi lama"}.</span></div>`;
     }
     async function uploadWorkbookArchive(file, sessionId) {
       if (!authSession || !sharedStateReady) throw new Error("Login diperlukan untuk mengarsipkan file VEF.");
@@ -2209,7 +2209,7 @@
       document.getElementById("profile-email").textContent = username;
       document.getElementById("profile-avatar").textContent = username.slice(0, 2).toLocaleUpperCase("id-ID");
       document.getElementById("profile-name").textContent = username;
-      document.getElementById("profile-role").textContent = isSuperAdmin() ? "Super Admin · Pemilik" : "Staf";
+      document.getElementById("profile-role").textContent = isSuperAdmin() ? "Owner" : "Staf";
       document.getElementById("admin-users-nav").hidden = !isSuperAdmin();
       document.getElementById("data-resources-nav").hidden = !isSuperAdmin();
       document.getElementById("admin-nav-label").hidden = !isSuperAdmin();
@@ -2305,7 +2305,7 @@
     function databaseSetupHint(error) {
       const message = `${error.message || ""} ${error.details || ""}`;
       if (/column .*version.*does not exist|version.*schema cache/i.test(message)) {
-        return "Database belum mendukung penyimpanan bersama yang aman. Minta Super Admin menjalankan ulang seluruh supabase-setup.sql di Supabase → SQL Editor, lalu muat ulang aplikasi.";
+        return "Database belum mendukung penyimpanan bersama yang aman. Minta Owner menjalankan ulang seluruh supabase-setup.sql di Supabase → SQL Editor, lalu muat ulang aplikasi.";
       }
       if (/jsonb_object_length/i.test(message)) {
         return "Fungsi trigger database masih versi lama dan memakai jsonb_object_length yang tidak tersedia. Jalankan ulang seluruh file supabase-setup.sql di Supabase → SQL Editor untuk memperbarui trigger, lalu muat ulang aplikasi.";
@@ -2321,16 +2321,16 @@
           return "Perubahan ditolak karena sesi opname ini sedang dikerjakan staf lain. Data terbaru telah dimuat ulang.";
         }
         if (/legacy stock opname session has no owner/i.test(message)) {
-          return "Sesi lama belum memiliki data pemilik. Minta Super Admin menyelesaikan sesi lama sebelum sesi baru dimulai.";
+          return "Sesi lama belum memiliki data pemilik. Minta Owner menyelesaikan sesi lama sebelum sesi baru dimulai.";
         }
         if (/only the stock opname session owner|must be created by its authenticated owner/i.test(message)) {
-          return "Aksi ditolak. Hanya pemilik sesi opname atau Super Admin yang dapat mengubah data ini.";
+          return "Aksi ditolak. Hanya pemilik sesi opname atau Owner yang dapat mengubah data ini.";
         }
         if (/only the workspace super admin can manage shared stock opname resources/i.test(message)) {
-          return "Perubahan Data Resource hanya dapat dilakukan oleh Super Admin. Data terbaru telah dimuat ulang.";
+          return "Perubahan Data Resource hanya dapat dilakukan oleh Owner. Data terbaru telah dimuat ulang.";
         }
         if (/new row violates row-level security policy/i.test(message)) {
-          return "Database menolak pembuatan data workspace. Pastikan supabase-setup.sql sudah dijalankan. Jika ini login pertama atau data workspace belum ada, minta Super Admin login terlebih dahulu.";
+          return "Database menolak pembuatan data workspace. Pastikan supabase-setup.sql sudah dijalankan. Jika ini login pertama atau data workspace belum ada, minta Owner login terlebih dahulu.";
         }
         return `Akses database ditolak: ${error.message || "akun tidak memiliki izin untuk operasi ini."} Pastikan supabase-setup.sql sudah dijalankan dan akun Anda sudah diundang.`;
       }
@@ -2851,7 +2851,7 @@
       }
       for (const serials of serialsByProduct.values()) serials.sort((a, b) => a.localeCompare(b, "id-ID"));
       const filtered = state.products.filter((product) => !query || `${product.name} ${product.sku} ${product.itemGroup || ""} ${product.brand} ${product.warehouse}`.toLocaleLowerCase("id-ID").includes(query) || (serialsByProduct.get(product.id) || []).some((serial) => serial.toLocaleLowerCase("id-ID").includes(query)));
-      return `${navMarkup()}<section class="page-head archive-page-head master-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Master VEF · Data inventaris</div>${workspacePageTitle()}<p class="subtitle">Serial Number dipetakan ke item code, brand, dan warehouse.</p><div class="vef-timestamps"><span>Data didownload dari VEF <strong>${state.importDownloadedAt ? escapeHtml(formatDate(state.importDownloadedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })) : "Metadata sumber belum tersedia"}</strong></span><span>Data diupload Stock Opname <strong>${state.importUploadedAt ? escapeHtml(formatDate(state.importUploadedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })) : "Belum diunggah"}</strong></span></div></div><div class="head-buttons"><button class="button master-delete-button" id="delete-master-button" ${!canEdit || !state.products.length ? "disabled" : ""}>Hapus semua data</button><button class="button master-upload-button" id="import-button" ${!hasBrandName ? 'disabled title="Isi Nama Brand di Jadwal terlebih dahulu"' : !canEdit ? 'disabled title="Sesi ini hanya dapat diubah oleh pemilik atau Super Admin"' : ""}>↑ Unggah workbook</button></div></section>${renderSessionAccessNotice()}
+      return `${navMarkup()}<section class="page-head archive-page-head master-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Master VEF · Data inventaris</div>${workspacePageTitle()}<p class="subtitle">Serial Number dipetakan ke item code, brand, dan warehouse.</p><div class="vef-timestamps"><span>Data didownload dari VEF <strong>${state.importDownloadedAt ? escapeHtml(formatDate(state.importDownloadedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })) : "Metadata sumber belum tersedia"}</strong></span><span>Data diupload Stock Opname <strong>${state.importUploadedAt ? escapeHtml(formatDate(state.importUploadedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })) : "Belum diunggah"}</strong></span></div></div><div class="head-buttons"><button class="button master-delete-button" id="delete-master-button" ${!canEdit || !state.products.length ? "disabled" : ""}>Hapus semua data</button><button class="button master-upload-button" id="import-button" ${!hasBrandName ? 'disabled title="Isi Nama Brand di Jadwal terlebih dahulu"' : !canEdit ? 'disabled title="Sesi ini hanya dapat diubah oleh pemilik atau Owner"' : ""}>↑ Unggah workbook</button></div></section>${renderSessionAccessNotice()}
         <section class="metric-grid compact-metrics master-quantity-metrics" aria-label="Ringkasan quantity workbook Master VEF">
           <div class="metric"><div class="metric-top">Qty Serial Number diunggah <span class="metric-mark">⌗</span></div><div class="metric-value">${formatNumber(uploadedSerialCount)} <small>SN</small></div></div>
           <div class="metric"><div class="metric-top">Qty item VEF <span class="metric-mark">▤</span></div><div class="metric-value">${formatNumber(state.products.length)} <small>item</small></div></div>
@@ -3117,7 +3117,7 @@
       const session = state.sessions.find((item) => item.id === sessionId);
       if (!session) return;
       if (!canDeleteCompletedSession()) {
-        notify(`Arsip sesi hanya dapat dihapus oleh Super Admin.`);
+        notify(`Arsip sesi hanya dapat dihapus oleh Owner.`);
         return;
       }
       pendingCompletedSessionDeletionId = sessionId;
@@ -3130,7 +3130,7 @@
       if (session && !canDeleteCompletedSession()) {
         document.getElementById("delete-completed-session-dialog").close();
         pendingCompletedSessionDeletionId = "";
-        notify(`Arsip sesi hanya dapat dihapus oleh Super Admin.`);
+        notify(`Arsip sesi hanya dapat dihapus oleh Owner.`);
         return;
       }
       if (!session) {
@@ -3726,7 +3726,7 @@
       const field = select.dataset.workspaceScheduleField;
       if (!workspace || (field !== "month" && field !== "period")) return;
       if (!canEditWorkspaceSession(workspace) || workspaceHasStarted(workspace) || workspace.data.activeSession.status === "completed") {
-        notify(`Jadwal sesi hanya dapat diubah oleh ${sessionOwnerName(workspace.data.activeSession)} atau Super Admin.`);
+        notify(`Jadwal sesi hanya dapat diubah oleh ${sessionOwnerName(workspace.data.activeSession)} atau Owner.`);
         select.value = field === "month" ? normalizeWorkspaceMonth(workspace.month) : normalizeWorkspacePeriod(workspace.period);
         return;
       }
@@ -3797,7 +3797,7 @@
         return;
       }
       if (!canEditWorkspaceSession(workspace)) {
-        notify(`Sesi hanya dapat dimulai oleh ${sessionOwnerName(workspace.data.activeSession)} atau Super Admin.`);
+        notify(`Sesi hanya dapat dimulai oleh ${sessionOwnerName(workspace.data.activeSession)} atau Owner.`);
         return;
       }
       if (!workspaceScheduleIsComplete(workspace)) {
@@ -3922,7 +3922,7 @@
         <h2 class="about-section-title">Panduan menggunakan workspace</h2>
         <section class="about-guide-grid" aria-label="Panduan setiap workspace">
           ${guide("Ringkasan", "▥", "Dashboard", "Pantau progres scan, jumlah item dan unit per warehouse, quantity SCAN/MANUAL/PJ, serta sesi yang masih berjalan. Klik tombol pada rincian sesi untuk membuka workspace-nya. Di bagian bawah, pilih brand pada Stock Opname Recorded, lalu tentukan bulan dan week untuk membuka lembar arsip yang hanya-baca. Setiap lembar dapat dicetak atau disimpan sebagai PDF melalui dialog print browser.", "dashboard", "Dashboard")}
-          ${guide("Langkah 1", "▦", "Jadwal", "Tambahkan kartu jadwal, lalu pilih Nama Brand dan PIC 1/PIC 2 dari daftar yang dikelola Super Admin. Tentukan bulan, week, dan mode hitung laptop saja atau semua item. Ketiga nama wajib terisi sebelum sesi dapat dimulai. Tombol Mulai Stock Opname akan membuka Master VEF; setelah sesi berjalan, tombol berubah menjadi Lihat Stok Opname dan membuka Scan Layout. Kartu hanya dapat dihapus sebelum sesi dimulai dan selama belum berisi data kerja.", "workspaces", "Jadwal")}
+          ${guide("Langkah 1", "▦", "Jadwal", "Tambahkan kartu jadwal, lalu pilih Nama Brand dan PIC 1/PIC 2 dari daftar yang dikelola Owner. Tentukan bulan, week, dan mode hitung laptop saja atau semua item. Ketiga nama wajib terisi sebelum sesi dapat dimulai. Tombol Mulai Stock Opname akan membuka Master VEF; setelah sesi berjalan, tombol berubah menjadi Lihat Stok Opname dan membuka Scan Layout. Kartu hanya dapat dihapus sebelum sesi dimulai dan selama belum berisi data kerja.", "workspaces", "Jadwal")}
           ${guide("Langkah 2", "▤", "Master VEF", "Setelah memulai jadwal, unggah XLSX/XLS dengan sheet Serial No atau format workbook VEF yang didukung; file CSV dengan kolom Serial No, Item Code, Brand, Warehouse, dan Item Name juga dapat digunakan. Periksa jumlah item, serial, dan quantity per warehouse. Panel menampilkan metadata waktu sumber dan waktu unggah. File sumber disimpan dalam arsip sesi untuk dapat diunduh kembali.", "products", "Master VEF")}
           ${guide("Langkah 3", "▦", "Scan Layout", "Buat rack dan isi label rack (angka atau keterangan teks) serta target scan. Pindai serial number pada rack yang sesuai. Hasil cocok, duplikat, bukan laptop, atau tidak ditemukan tampil pada catatan scan; serial cocok juga menampilkan item code, nama item, serial number, dan waktu saat rinciannya dibuka. Rack dengan SN duplikat diberi tanda peringatan. Untuk barang tanpa serial, cari item dari VEF, pilih hasil yang benar, masukkan quantity, lalu Catat Manual. Catatan manual terbaru akan ditandai dan difokuskan.", "layouts", "Scan Layout")}
           ${guide("Langkah 4", "⌗", "Result SO", "Lembar ini menghitung SCAN + MANUAL + PJ dan membandingkan hasilnya dengan VEF. Untuk PJ, klik quantity pada item, lalu isi tanggal/waktu dan nomor invoice. Input hanya diterima jika waktu invoice lebih baru daripada timestamp file VEF yang tercatat di Master VEF. Tekan SO SELESAI setelah pemeriksaan selesai untuk mengunci dan mengarsipkan hasil.", "opname", "Result SO")}
@@ -3953,7 +3953,7 @@
 
     function saveResource(form) {
       if (!isSuperAdmin()) {
-        notify("Data Resource hanya dapat diubah oleh Super Admin.");
+        notify("Data Resource hanya dapat diubah oleh Owner.");
         return;
       }
       const type = form.dataset.resourceForm || form.dataset.resourceEditForm;
@@ -4018,7 +4018,7 @@
 
     function removeResource(type, name) {
       if (!isSuperAdmin() || (type !== "brands" && type !== "picNames")) {
-        notify("Data Resource hanya dapat diubah oleh Super Admin.");
+        notify("Data Resource hanya dapat diubah oleh Owner.");
         return;
       }
       if (!state.resources[type].includes(name)) {
@@ -4033,7 +4033,7 @@
     }
 
     function renderAdminUsers() {
-      return `${navMarkup()}<section class="page-head"><div><h1>Kelola Akun Staf</h1><p class="subtitle">Buat akun username, reset password, dan atur akses masuk workspace.</p></div></section><section class="table-section"><div class="table-toolbar"><div class="table-title">Tambah akun staf</div></div><form class="admin-create-form" id="admin-create-form"><label class="auth-field"><span>Username</span><input class="auth-input" name="username" type="text" minlength="3" maxlength="30" pattern="[a-z0-9][a-z0-9._-]{2,29}" required placeholder="contoh: stafbaru"></label><button class="button button-primary" type="submit">Buat akun</button></form><div class="admin-notice ${adminNoticeType}" id="admin-notice" ${adminNotice ? "" : "hidden"}>${escapeHtml(adminNotice)}</div></section><section class="table-section"><div class="table-toolbar"><div class="table-title">Daftar akun <span class="table-count">${adminUsers.length} staf</span></div><button class="button button-secondary" id="admin-refresh-users" type="button">Muat ulang</button></div><div class="table-scroll"><table><thead><tr><th>Username</th><th>Status</th><th>Peran</th><th>Aksi</th></tr></thead><tbody>${adminUsers.length ? adminUsers.map((user) => `<tr><td>${escapeHtml(user.username)}</td><td><span class="row-status ${user.disabled ? "pending" : "match"}">${user.disabled ? "Dinonaktifkan" : "Aktif"}</span></td><td>${user.superAdmin ? "Super Admin" : "Staf"}</td><td><button class="button button-secondary" type="button" data-admin-reset="${escapeHtml(user.username)}">Reset password</button> ${user.superAdmin ? "" : `<button class="button button-secondary" type="button" data-admin-toggle="${escapeHtml(user.username)}" data-disabled="${user.disabled}">${user.disabled ? "Aktifkan" : "Nonaktifkan"}</button>`}</td></tr>`).join("") : `<tr><td colspan="4">Belum ada akun staf.</td></tr>`}</tbody></table></div><div class="table-footer"><span>Password sementara ditampilkan satu kali dan harus diganti saat login berikutnya.</span></div></section>`;
+      return `${navMarkup()}<section class="page-head"><div><h1>Kelola Akun Staf</h1><p class="subtitle">Buat akun username, reset password, dan atur akses masuk workspace.</p></div></section><section class="table-section"><div class="table-toolbar"><div class="table-title">Tambah akun staf</div></div><form class="admin-create-form" id="admin-create-form"><label class="auth-field"><span>Username</span><input class="auth-input" name="username" type="text" minlength="3" maxlength="30" pattern="[a-z0-9][a-z0-9._-]{2,29}" required placeholder="contoh: stafbaru"></label><button class="button button-primary" type="submit">Buat akun</button></form><div class="admin-notice ${adminNoticeType}" id="admin-notice" ${adminNotice ? "" : "hidden"}>${escapeHtml(adminNotice)}</div></section><section class="table-section"><div class="table-toolbar"><div class="table-title">Daftar akun <span class="table-count">${adminUsers.length} staf</span></div><button class="button button-secondary" id="admin-refresh-users" type="button">Muat ulang</button></div><div class="table-scroll"><table><thead><tr><th>Username</th><th>Status</th><th>Peran</th><th>Aksi</th></tr></thead><tbody>${adminUsers.length ? adminUsers.map((user) => `<tr><td>${escapeHtml(user.username)}</td><td><span class="row-status ${user.disabled ? "pending" : "match"}">${user.disabled ? "Dinonaktifkan" : "Aktif"}</span></td><td>${user.superAdmin ? "Owner" : "Staf"}</td><td><button class="button button-secondary" type="button" data-admin-reset="${escapeHtml(user.username)}">Reset password</button> ${user.superAdmin ? "" : `<button class="button button-secondary" type="button" data-admin-toggle="${escapeHtml(user.username)}" data-disabled="${user.disabled}">${user.disabled ? "Aktifkan" : "Nonaktifkan"}</button>`}</td></tr>`).join("") : `<tr><td colspan="4">Belum ada akun staf.</td></tr>`}</tbody></table></div><div class="table-footer"><span>Password sementara ditampilkan satu kali dan harus diganti saat login berikutnya.</span></div></section>`;
     }
 
     async function loadAdminUsers() {
@@ -4173,7 +4173,7 @@
         const workspace = state.workspaces.find((item) => item.id === input.dataset.workspaceName);
         if (!workspace) return;
         if (!canEditWorkspaceSession(workspace) || workspaceHasStarted(workspace) || workspace.data.activeSession.status === "completed") {
-          notify(`Sesi hanya dapat diubah oleh ${sessionOwnerName(workspace.data.activeSession)} atau Super Admin.`);
+          notify(`Sesi hanya dapat diubah oleh ${sessionOwnerName(workspace.data.activeSession)} atau Owner.`);
           input.value = workspace.name;
           const summary = input.closest(".schedule-card")?.querySelector(".schedule-summary-title");
           if (summary) summary.textContent = workspace.name || "Nama Brand belum diisi";
@@ -4181,7 +4181,7 @@
         }
         const brand = input.value.trim();
         if (brand && !workspaceResourceNames("brands", workspace.id).some((name) => name.toLocaleLowerCase("id-ID") === brand.toLocaleLowerCase("id-ID"))) {
-          notify("Pilih Nama Brand dari Data Resource Super Admin.");
+          notify("Pilih Nama Brand dari Data Resource Owner.");
           input.value = workspace.name;
           const summary = input.closest(".schedule-card")?.querySelector(".schedule-summary-title");
           if (summary) summary.textContent = workspace.name || "Nama Brand belum diisi";
@@ -4201,13 +4201,13 @@
         const index = Number(input.dataset.picIndex);
         if (!workspace || !Number.isInteger(index) || index < 0 || index > 1) return;
         if (!canEditWorkspaceSession(workspace) || workspaceHasStarted(workspace) || workspace.data.activeSession.status === "completed") {
-          notify(`Sesi hanya dapat diubah oleh ${sessionOwnerName(workspace.data.activeSession)} atau Super Admin.`);
+          notify(`Sesi hanya dapat diubah oleh ${sessionOwnerName(workspace.data.activeSession)} atau Owner.`);
           input.value = workspace.picNames[index];
           return;
         }
         const picName = input.value.trim();
         if (picName && !workspaceResourceNames("picNames", workspace.id).some((name) => name.toLocaleLowerCase("id-ID") === picName.toLocaleLowerCase("id-ID"))) {
-          notify("Pilih Nama PIC dari Data Resource Super Admin.");
+          notify("Pilih Nama PIC dari Data Resource Owner.");
           input.value = workspace.picNames[index];
           return;
         }
