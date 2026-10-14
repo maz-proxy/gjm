@@ -92,11 +92,11 @@
     .logout-confirm-dialog .button-secondary { background: color-mix(in srgb, var(--green) 8%, var(--paper)); border-color: color-mix(in srgb, var(--green) 24%, var(--line)); color: var(--green-dark); }
     .logout-confirm-dialog .button-secondary:hover { background: color-mix(in srgb, var(--green) 14%, var(--paper)); border-color: color-mix(in srgb, var(--green) 38%, var(--line)); }
     .logout-confirm-dialog .button-secondary:focus-visible { outline: 3px solid color-mix(in srgb, var(--green) 30%, transparent); outline-offset: 2px; }
-    .logout-confirm-dialog .button-danger { background: var(--red); border-color: var(--red); color: #fff; }
+    .logout-confirm-dialog .button-danger { background: linear-gradient(135deg, var(--green), var(--green-dark)); border-color: var(--green); color: #fff; }
     .logout-confirm-dialog .button-danger:hover { filter: brightness(.94); }
     html[data-theme="dark"] .logout-confirm-dialog .dialog-actions { background: #1b2823; }
-    html[data-accent="burgundy"] .logout-confirm-dialog .button-danger { background: #963d58; border-color: #963d58; }
-    html[data-accent="burgundy"] .logout-confirm-dialog .button-danger:hover { background: #7d3048; }
+    html[data-accent="burgundy"] .logout-confirm-dialog .button-danger { background: linear-gradient(135deg, #9a3b5e, #742542); border-color: #9a3b5e; color: #fff; }
+    html[data-accent="burgundy"] .logout-confirm-dialog .button-danger:hover { background: linear-gradient(135deg, #842b4b, #5d1c35); }
     .auth-screen { align-items: center; background: radial-gradient(ellipse at 82% 10%, rgba(218,237,216,.5), transparent 35%), var(--canvas); display: flex; inset: 0; justify-content: center; padding: 20px; position: fixed; z-index: 20; }
     .auth-loading { align-items: center; background: radial-gradient(ellipse at 82% 10%, rgba(218,237,216,.16), transparent 35%), #111b1a; color: #f4f8f2; display: none; inset: 0; justify-content: center; position: fixed; z-index: 30; }
     .auth-loading-card { align-items: center; display: flex; flex-direction: column; gap: 13px; }
@@ -1056,6 +1056,7 @@
     html[data-theme="dark"] .logout-confirm-dialog .dialog-head { background: linear-gradient(115deg, color-mix(in srgb, var(--green) 17%, var(--paper)), var(--paper) 82%); border-bottom-color: color-mix(in srgb, var(--green) 30%, var(--line)); border-top-color: var(--green); }
     html[data-theme="dark"] .logout-confirm-dialog .dialog-actions { background: color-mix(in srgb, var(--green) 10%, var(--paper)); border-top-color: color-mix(in srgb, var(--green) 25%, var(--line)); }
     html[data-theme="dark"] .logout-confirm-dialog .button-secondary { background: color-mix(in srgb, var(--green) 13%, var(--paper)); border-color: color-mix(in srgb, var(--green) 36%, var(--line)); color: var(--ink); }
+    html[data-theme="dark"] .logout-confirm-dialog .button-danger { background: linear-gradient(135deg, #247357, #185540); border-color: #39866a; color: #fff; }
     html[data-theme="dark"] .recorded-period-dialog .select-input { background-color: #14211f; border-color: var(--line); color: var(--ink); }
     html[data-theme="dark"] .recorded-period-availability { background: #1c3029; border-color: #355347; color: #b7decb; }
     html[data-theme="dark"] .recorded-period-availability.empty { background: #392428; border-color: #67404a; color: #f0aeba; }
@@ -1294,6 +1295,8 @@
     html[data-accent="burgundy"][data-theme="dark"] .logout-confirm-dialog .dialog-actions { background: #281d22; border-top-color: #523a43; }
     html[data-accent="burgundy"][data-theme="dark"] .logout-confirm-dialog .button-secondary { background: #3b2830; border-color: #765064; color: #f4dce4; }
     html[data-accent="burgundy"][data-theme="dark"] .logout-confirm-dialog .button-secondary:hover { background: #4a2e39; border-color: #b96a84; }
+    html[data-accent="burgundy"][data-theme="dark"] .logout-confirm-dialog .button-danger { background: linear-gradient(135deg, #94405b, #67273d); border-color: #b96a84; color: #fff; }
+    html[data-accent="burgundy"][data-theme="dark"] .logout-confirm-dialog .button-danger:hover { background: linear-gradient(135deg, #a34d68, #76304a); }
     html[data-accent="burgundy"][data-theme="dark"] body { background-image: radial-gradient(ellipse at 88% 0%, rgba(105,48,69,.3), transparent 36%); }
     html[data-accent="burgundy"][data-theme="dark"] .auth-card { background: #302127; border-color: #523a43; }
     html[data-accent="burgundy"][data-theme="dark"] .auth-input { background: #21171b; border-color: #523a43; color: #f4dce4; }
