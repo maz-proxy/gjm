@@ -86,8 +86,11 @@
     .logout-button:hover { background: rgba(255,255,255,.18); }
     .logout-confirm-dialog { background: var(--paper); border: 1px solid var(--line); border-radius: 15px; max-width: min(390px, calc(100vw - 32px)); overflow: hidden; padding: 0; width: 100%; }
     .logout-confirm-dialog::backdrop { background: rgba(17, 27, 26, .52); backdrop-filter: blur(3px); }
+    .logout-confirm-dialog .dialog-head { background: linear-gradient(115deg, color-mix(in srgb, var(--green) 11%, var(--paper)), var(--paper) 78%); border-bottom-color: color-mix(in srgb, var(--green) 22%, var(--line)); border-top: 3px solid var(--green); padding-top: 16px; }
     .logout-confirm-copy { color: var(--muted); font-size: 12px; line-height: 1.6; padding: 17px 21px 20px; }
-    .logout-confirm-dialog .dialog-actions { background: var(--canvas); }
+    .logout-confirm-dialog .dialog-actions { background: color-mix(in srgb, var(--green) 7%, var(--canvas)); border-top-color: color-mix(in srgb, var(--green) 20%, var(--line)); }
+    .logout-confirm-dialog .button-secondary { background: color-mix(in srgb, var(--green) 8%, var(--paper)); border-color: color-mix(in srgb, var(--green) 24%, var(--line)); color: var(--green-dark); }
+    .logout-confirm-dialog .button-secondary:hover { background: color-mix(in srgb, var(--green) 14%, var(--paper)); border-color: color-mix(in srgb, var(--green) 38%, var(--line)); }
     .logout-confirm-dialog .button-secondary:focus-visible { outline: 3px solid color-mix(in srgb, var(--green) 30%, transparent); outline-offset: 2px; }
     .logout-confirm-dialog .button-danger { background: var(--red); border-color: var(--red); color: #fff; }
     .logout-confirm-dialog .button-danger:hover { filter: brightness(.94); }
@@ -1050,7 +1053,9 @@
     html[data-theme="dark"] .dialog-actions { background: #162320; border-color: var(--line); }
     html[data-theme="dark"] .logout-confirm-dialog { background: var(--paper); border-color: var(--line); box-shadow: 0 24px 70px rgba(0,0,0,.42); }
     html[data-theme="dark"] .logout-confirm-dialog::backdrop { background: rgba(5, 10, 9, .68); }
-    html[data-theme="dark"] .logout-confirm-dialog .dialog-actions { background: color-mix(in srgb, var(--paper) 82%, #000); border-top-color: var(--line); }
+    html[data-theme="dark"] .logout-confirm-dialog .dialog-head { background: linear-gradient(115deg, color-mix(in srgb, var(--green) 17%, var(--paper)), var(--paper) 82%); border-bottom-color: color-mix(in srgb, var(--green) 30%, var(--line)); border-top-color: var(--green); }
+    html[data-theme="dark"] .logout-confirm-dialog .dialog-actions { background: color-mix(in srgb, var(--green) 10%, var(--paper)); border-top-color: color-mix(in srgb, var(--green) 25%, var(--line)); }
+    html[data-theme="dark"] .logout-confirm-dialog .button-secondary { background: color-mix(in srgb, var(--green) 13%, var(--paper)); border-color: color-mix(in srgb, var(--green) 36%, var(--line)); color: var(--ink); }
     html[data-theme="dark"] .recorded-period-dialog .select-input { background-color: #14211f; border-color: var(--line); color: var(--ink); }
     html[data-theme="dark"] .recorded-period-availability { background: #1c3029; border-color: #355347; color: #b7decb; }
     html[data-theme="dark"] .recorded-period-availability.empty { background: #392428; border-color: #67404a; color: #f0aeba; }
@@ -1281,7 +1286,14 @@
     }
     html[data-accent="burgundy"][data-theme="dark"] .logout-confirm-dialog { background: #302127; border-color: #634452; box-shadow: 0 24px 70px rgba(0,0,0,.52); }
     html[data-accent="burgundy"][data-theme="dark"] .logout-confirm-dialog::backdrop { background: rgba(16, 8, 12, .74); }
+    html[data-accent="burgundy"] .logout-confirm-dialog .dialog-head { background: linear-gradient(115deg, #f4dfe7, #fff8fa 82%); border-bottom-color: #ead1d9; border-top-color: #842b4b; }
+    html[data-accent="burgundy"] .logout-confirm-dialog .dialog-actions { background: #f4e8ed; border-top-color: #ead1d9; }
+    html[data-accent="burgundy"] .logout-confirm-dialog .button-secondary { background: #fff8fa; border-color: #d9adba; color: #5d1c35; }
+    html[data-accent="burgundy"] .logout-confirm-dialog .button-secondary:hover { background: #f5e7ec; border-color: #b96a84; }
+    html[data-accent="burgundy"][data-theme="dark"] .logout-confirm-dialog .dialog-head { background: linear-gradient(115deg, #482b37, #302127 82%); border-bottom-color: #634452; border-top-color: #d786a0; }
     html[data-accent="burgundy"][data-theme="dark"] .logout-confirm-dialog .dialog-actions { background: #281d22; border-top-color: #523a43; }
+    html[data-accent="burgundy"][data-theme="dark"] .logout-confirm-dialog .button-secondary { background: #3b2830; border-color: #765064; color: #f4dce4; }
+    html[data-accent="burgundy"][data-theme="dark"] .logout-confirm-dialog .button-secondary:hover { background: #4a2e39; border-color: #b96a84; }
     html[data-accent="burgundy"][data-theme="dark"] body { background-image: radial-gradient(ellipse at 88% 0%, rgba(105,48,69,.3), transparent 36%); }
     html[data-accent="burgundy"][data-theme="dark"] .auth-card { background: #302127; border-color: #523a43; }
     html[data-accent="burgundy"][data-theme="dark"] .auth-input { background: #21171b; border-color: #523a43; color: #f4dce4; }
