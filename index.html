@@ -1132,17 +1132,30 @@
     .vef-timestamps strong { color: var(--ink); font-weight: 700; }
     .master-page-head .vef-timestamps { border-left-color: #a7dfc7; color: #e2f3ec; }
     .master-page-head .vef-timestamps strong { color: #fff; }
-    .recorded-view-dialog { max-width: min(1280px, calc(100vw - 28px)); }
-    .recorded-view-actions { align-items: center; display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; margin: 18px 0; }
+    .recorded-archive-page { display: grid; gap: 17px; }
+    .recorded-archive-head { align-items: flex-start; background: linear-gradient(120deg, color-mix(in srgb, var(--green) 14%, var(--paper)), var(--paper) 72%); border: 1px solid var(--line); border-left: 4px solid var(--green); border-radius: 14px; box-shadow: var(--shadow); display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; padding: 20px 22px; }
+    .recorded-archive-heading { min-width: 200px; }
+    .recorded-archive-heading h1 { font-size: clamp(22px, 2.2vw, 28px); letter-spacing: -.35px; margin: 0; }
+    .recorded-archive-heading p { color: var(--muted); font-size: 11px; line-height: 1.6; margin: 5px 0 0; }
+    .recorded-archive-meta { color: var(--muted); display: flex; flex-wrap: wrap; font-size: 10px; gap: 6px 14px; margin-top: 10px; }
+    .recorded-archive-meta strong { color: var(--ink); }
+    .recorded-pic-list { align-content: start; display: flex; flex-wrap: wrap; gap: 9px; }
+    .recorded-pic-card { background: color-mix(in srgb, var(--green) 8%, var(--paper)); border: 1px solid color-mix(in srgb, var(--green) 22%, var(--line)); border-radius: 10px; min-width: 136px; padding: 9px 12px; }
+    .recorded-pic-label { color: var(--muted); display: block; font-size: 9px; font-weight: 800; letter-spacing: .65px; text-transform: uppercase; }
+    .recorded-pic-name { color: var(--green-dark); display: block; font-size: 12px; font-weight: 750; margin-top: 3px; }
+    .recorded-view-actions { align-items: center; display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; margin: 0; }
     .recorded-view-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
     .recorded-view-tabs .active { background: var(--green); border-color: var(--green); color: #fff; }
-    .recorded-sheet-content { max-height: 62vh; overflow: auto; }
+    .recorded-sheet-content { min-width: 0; }
     .recorded-sheet-content .completed-racks { margin: 0; }
+    html[data-theme="dark"] .recorded-archive-head { background: linear-gradient(120deg, color-mix(in srgb, var(--green) 20%, var(--paper)), var(--paper) 72%); }
+    html[data-theme="dark"] .recorded-pic-card { background: color-mix(in srgb, var(--green) 14%, var(--paper)); border-color: color-mix(in srgb, var(--green) 34%, var(--line)); }
+    html[data-theme="dark"] .recorded-pic-name { color: var(--green-dark); }
     @media print {
       #print-session-root { display: block !important; padding: 0; }
       #print-session-root .completed-export-actions,
       #print-session-root [data-download-workbook] { display: none !important; }
-      #print-session-root .recorded-sheet-content { max-height: none; overflow: visible; }
+      #print-session-root .recorded-sheet-content { overflow: visible; }
       #print-session-root .table-scroll { overflow: visible; }
       #print-session-root table { min-width: 0; }
       #print-session-root details:not([open]) > :not(summary) { display: block !important; }
@@ -1874,11 +1887,6 @@
   <dialog id="recorded-period-dialog" class="feature-dialog recorded-period-dialog">
     <div class="dialog-head"><div><div class="dialog-title" id="recorded-period-title">Nama Brand</div><div class="dialog-subtitle">Tentukan bulan dan week sesi yang ingin ditinjau.</div></div><button class="dialog-close" type="button" data-close="recorded-period-dialog" aria-label="Tutup">×</button></div>
     <form id="recorded-period-form" class="feature-dialog-form"><label class="auth-field"><span>Bulan</span><select class="select-input" id="recorded-period-month" required></select></label><label class="auth-field"><span>Week</span><select class="select-input" id="recorded-period-week" required><option value="Week 1">Week 1</option><option value="Week 2">Week 2</option></select></label><div id="recorded-period-availability" class="recorded-period-availability" role="status" aria-live="polite" hidden></div><div class="dialog-actions"><button class="button button-secondary" type="button" data-close="recorded-period-dialog">Kembali</button><button class="button button-primary" type="submit">View</button></div></form>
-  </dialog>
-  <dialog id="recorded-view-dialog" class="feature-dialog recorded-view-dialog">
-    <div class="dialog-head"><div><div class="dialog-title" id="recorded-view-title">Stock Opname Recorded</div><div class="dialog-subtitle" id="recorded-view-subtitle"></div></div><button class="dialog-close" type="button" data-close="recorded-view-dialog" aria-label="Tutup">×</button></div>
-    <div class="recorded-view-actions"><div class="recorded-view-tabs" role="tablist" aria-label="Lembar kerja arsip"><button class="button button-secondary active" type="button" data-recorded-sheet="layouts">Scan Layout</button><button class="button button-secondary" type="button" data-recorded-sheet="result">Result SO</button><button class="button button-secondary" type="button" data-recorded-sheet="recap">Rekap Selisih</button></div><button class="button button-primary" id="print-recorded-sheet" type="button">Print / Save PDF</button></div>
-    <div id="recorded-sheet-content" class="recorded-sheet-content"></div>
   </dialog>
   <dialog id="workbook-upload-success-dialog" class="feature-dialog upload-success-dialog" aria-labelledby="workbook-upload-success-title" aria-describedby="workbook-upload-success-message">
     <div class="dialog-head"><div><div class="dialog-title" id="workbook-upload-success-title">File berhasil diunggah</div><div class="dialog-subtitle">Konfirmasi hasil unggah file Master VEF.</div></div></div>
@@ -3492,7 +3500,7 @@
       const loggedInName = formatDisplayName(loggedInUsername);
       const availablePresenceUsers = authSession ? (onlineUsersPresenceList.length ? onlineUsersPresenceList : [loggedInName]) : [];
       const onlineMarkup = authSession ? `<div class="online-accounts" aria-live="polite" aria-label="Akun online: ${availablePresenceUsers.map((name) => escapeHtml(name)).join(", ")}"><span class="online-accounts-label">Online:</span>${availablePresenceUsers.map((name) => `<span class="online-user"><span class="online-user-dot" aria-hidden="true"></span><span>${escapeHtml(name)}</span></span>`).join("")}</div>` : "";
-      return `<div class="topline"><div class="topline-heading"><div class="crumb">${escapeHtml(activeWorkspaceName())} <span> / </span> <b>${currentPage === "dashboard" ? "Dashboard" : currentPage === "opname" ? "Result SO" : currentPage === "layouts" ? "Scan Layout" : currentPage === "workspaces" ? "Jadwal" : currentPage === "products" ? "Master VEF" : currentPage === "recap" ? "Rekap selisih" : currentPage === "completed-sessions" ? "Sesi Stock Opname" : currentPage === "admin-users" ? "Kelola Akun" : currentPage === "data-resources" ? "Data Resource" : currentPage === "about-info" ? "About" : currentPage === "about" ? "Panduan" : "Riwayat Perubahan"}</b></div>${onlineMarkup}</div><div class="top-actions"><span class="today">${formatDate(new Date(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span>${picMarkup}<button class="accent-toggle" type="button" data-accent-toggle aria-label="Ganti tema warna ke burgundy"><span class="accent-swatch" aria-hidden="true"></span><span data-accent-label>Burgundy</span></button><button class="theme-toggle" type="button" data-theme-toggle aria-label="Aktifkan dark mode" aria-pressed="false"><span class="theme-toggle-icon" aria-hidden="true">☾</span><span class="theme-toggle-label">Dark</span></button></div></div>`;
+      return `<div class="topline"><div class="topline-heading"><div class="crumb">${escapeHtml(activeWorkspaceName())} <span> / </span> <b>${currentPage === "dashboard" ? "Dashboard" : currentPage === "recorded-archive" ? "Stock Opname Recorded" : currentPage === "opname" ? "Result SO" : currentPage === "layouts" ? "Scan Layout" : currentPage === "workspaces" ? "Jadwal" : currentPage === "products" ? "Master VEF" : currentPage === "recap" ? "Rekap selisih" : currentPage === "completed-sessions" ? "Sesi Stock Opname" : currentPage === "admin-users" ? "Kelola Akun" : currentPage === "data-resources" ? "Data Resource" : currentPage === "about-info" ? "About" : currentPage === "about" ? "Panduan" : "Riwayat Perubahan"}</b></div>${onlineMarkup}</div><div class="top-actions"><span class="today">${formatDate(new Date(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span>${picMarkup}<button class="accent-toggle" type="button" data-accent-toggle aria-label="Ganti tema warna ke burgundy"><span class="accent-swatch" aria-hidden="true"></span><span data-accent-label>Burgundy</span></button><button class="theme-toggle" type="button" data-theme-toggle aria-label="Aktifkan dark mode" aria-pressed="false"><span class="theme-toggle-icon" aria-hidden="true">☾</span><span class="theme-toggle-label">Dark</span></button></div></div>`;
     };
     const productRows = (products, active, canEdit) => products.length ? products.map((product, index) => {
       const included = isCountedProduct(product);
@@ -4222,16 +4230,43 @@
       selectedRecordedSessionId = session.id;
       selectedRecordedSheet = "layouts";
       document.getElementById("recorded-period-dialog").close();
-      document.getElementById("recorded-view-title").textContent = session.workspaceName;
-      document.getElementById("recorded-view-subtitle").textContent = `${archivedSessionMonth(session)} · ${archivedSessionWeek(session)} · Selesai ${formatDate(session.finishedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })} · Tampilan hanya-baca`;
-      renderRecordedSheetView();
-      document.getElementById("recorded-view-dialog").showModal();
+      currentPage = "recorded-archive";
+      render();
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
-    function renderRecordedSheetView() {
-      const session = state.sessions.find((item) => item.id === selectedRecordedSessionId);
-      if (!session) return;
-      document.querySelectorAll("[data-recorded-sheet]").forEach((button) => button.classList.toggle("active", button.dataset.recordedSheet === selectedRecordedSheet));
-      document.getElementById("recorded-sheet-content").innerHTML = renderRecordedSheet(session, selectedRecordedSheet);
+    function renderRecordedSessionPage() {
+      const session = state.sessions.find((item) => item.id === selectedRecordedSessionId && item.snapshot);
+      if (!session) {
+        currentPage = "dashboard";
+        return renderDashboard();
+      }
+      const pics = session.picNames || [];
+      const finishedAt = session.finishedAt
+        ? formatDate(session.finishedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })
+        : "Tidak tersedia";
+      return `${navMarkup()}<div class="recorded-archive-page">
+        <section class="recorded-archive-head">
+          <div class="recorded-archive-heading">
+            <h1>${escapeHtml(session.workspaceName || "Stock Opname Recorded")}</h1>
+            <p>Arsip lembar kerja stock opname · Tampilan hanya-baca</p>
+            <div class="recorded-archive-meta"><span><strong>Periode:</strong> ${escapeHtml(archivedSessionMonth(session))} · ${escapeHtml(archivedSessionWeek(session))}</span><span><strong>Selesai:</strong> ${escapeHtml(finishedAt)}</span></div>
+          </div>
+          <div class="recorded-pic-list" aria-label="PIC sesi">
+            <div class="recorded-pic-card"><span class="recorded-pic-label">PIC 1</span><span class="recorded-pic-name">${escapeHtml(pics[0] || "Belum diisi")}</span></div>
+            <div class="recorded-pic-card"><span class="recorded-pic-label">PIC 2</span><span class="recorded-pic-name">${escapeHtml(pics[1] || "Belum diisi")}</span></div>
+          </div>
+          <button class="button button-secondary" type="button" data-recorded-return>← Kembali ke Dashboard</button>
+        </section>
+        <section class="recorded-view-actions" aria-label="Lembar arsip dan cetak">
+          <div class="recorded-view-tabs" role="tablist" aria-label="Lembar kerja arsip">
+            <button class="button button-secondary${selectedRecordedSheet === "layouts" ? " active" : ""}" type="button" role="tab" aria-selected="${selectedRecordedSheet === "layouts"}" data-recorded-sheet="layouts">Scan Layout</button>
+            <button class="button button-secondary${selectedRecordedSheet === "result" ? " active" : ""}" type="button" role="tab" aria-selected="${selectedRecordedSheet === "result"}" data-recorded-sheet="result">Result SO</button>
+            <button class="button button-secondary${selectedRecordedSheet === "recap" ? " active" : ""}" type="button" role="tab" aria-selected="${selectedRecordedSheet === "recap"}" data-recorded-sheet="recap">Rekap Selisih</button>
+          </div>
+          <button class="button button-primary" id="print-recorded-sheet" type="button">Print / Save PDF</button>
+        </section>
+        <div id="recorded-sheet-content" class="recorded-sheet-content">${renderRecordedSheet(session, selectedRecordedSheet)}</div>
+      </div>`;
     }
     function openArchivePrintWindow(title, subtitle, content) {
       const printWindow = window.open("", "_blank");
@@ -4278,7 +4313,8 @@
         return;
       }
       const sheetName = selectedRecordedSheet === "layouts" ? "Scan Layout" : selectedRecordedSheet === "result" ? "Result SO" : "Rekap Selisih";
-      const subtitle = `${archivedSessionMonth(session)} · ${archivedSessionWeek(session)} · Selesai ${formatDate(session.finishedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })} · Tampilan hanya-baca`;
+      const pics = session.picNames || [];
+      const subtitle = `${archivedSessionMonth(session)} · ${archivedSessionWeek(session)} · PIC 1: ${pics[0] || "Belum diisi"} · PIC 2: ${pics[1] || "Belum diisi"} · Selesai ${session.finishedAt ? formatDate(session.finishedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "Tidak tersedia"} · Tampilan hanya-baca`;
       openArchivePrintWindow(`${session.workspaceName || "Sesi opname"} · ${sheetName}`, subtitle, renderRecordedSheet(session, selectedRecordedSheet, true));
     }
 
@@ -4558,7 +4594,7 @@
     function render() {
       if ((currentPage === "admin-users" || currentPage === "data-resources") && !isSuperAdmin()) currentPage = "opname";
       if (authSession) {
-        const savedPage = currentPage === "completed-session-detail" ? "completed-sessions" : currentPage;
+        const savedPage = currentPage === "completed-session-detail" ? "completed-sessions" : currentPage === "recorded-archive" ? "dashboard" : currentPage;
         try {
           localStorage.setItem(`${PAGE_STORAGE_KEY}${authSession.user.id}`, RESTORABLE_PAGES.has(savedPage) ? savedPage : "opname");
         } catch (error) {
@@ -4567,7 +4603,7 @@
       }
       document.querySelectorAll(".nav-item").forEach((item) => item.classList.toggle("active", item.dataset.page === currentPage));
       const main = document.getElementById("main-content");
-      main.innerHTML = currentPage === "dashboard" ? renderDashboard() : currentPage === "opname" ? renderOpname() : currentPage === "layouts" ? renderLayouts() : currentPage === "workspaces" ? renderWorkspaceSchedule() : currentPage === "products" ? renderProducts() : currentPage === "recap" ? renderRecap() : currentPage === "about-info" ? renderAboutWorkspace() : currentPage === "about" ? renderAbout() : currentPage === "admin-users" ? renderAdminUsers() : currentPage === "data-resources" ? renderDataResources() : currentPage === "completed-session-detail" ? renderCompletedSessionView() : currentPage === "completed-sessions" ? renderCompletedSessions() : renderHistory();
+      main.innerHTML = currentPage === "dashboard" ? renderDashboard() : currentPage === "recorded-archive" ? renderRecordedSessionPage() : currentPage === "opname" ? renderOpname() : currentPage === "layouts" ? renderLayouts() : currentPage === "workspaces" ? renderWorkspaceSchedule() : currentPage === "products" ? renderProducts() : currentPage === "recap" ? renderRecap() : currentPage === "about-info" ? renderAboutWorkspace() : currentPage === "about" ? renderAbout() : currentPage === "admin-users" ? renderAdminUsers() : currentPage === "data-resources" ? renderDataResources() : currentPage === "completed-session-detail" ? renderCompletedSessionView() : currentPage === "completed-sessions" ? renderCompletedSessions() : renderHistory();
       bindPageEvents();
       if (window.matchMedia("(max-width: 650px)").matches) {
         document.querySelector(".nav-item.active")?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
@@ -4627,7 +4663,7 @@
         <section class="about-intro"><div class="about-intro-copy"><div class="about-eyebrow">Stock Opname · Rekonsiliasi Serial Number</div><h2>Kontrol stock opname dalam satu workspace.</h2><p>Aplikasi ini membantu tim mengelola master VEF, memindai serial number, dan mencocokkan hasil opname dengan data stok. Aktivitas tersimpan bersama agar dapat dipantau oleh seluruh tim.</p></div><img class="about-character" src="./assets/about-character.png" alt="Ilustrasi staf sedang memindai serial number laptop"></section>
         <h2 class="about-section-title">Panduan menggunakan workspace</h2>
         <section class="about-guide-grid" aria-label="Panduan setiap workspace">
-          ${guide("Ringkasan", "▥", "Dashboard", "Pantau progres scan, jumlah item dan unit per warehouse, quantity SCAN/MANUAL/PJ, serta sesi yang masih berjalan. Klik tombol pada rincian sesi untuk membuka workspace-nya. Di bagian bawah, pilih brand pada Stock Opname Recorded, lalu tentukan bulan dan week untuk membuka lembar arsip yang hanya-baca. Setiap lembar dapat dicetak atau disimpan sebagai PDF melalui dialog print browser.", "dashboard", "Dashboard")}
+          ${guide("Ringkasan", "▥", "Dashboard", "Pantau progres scan, jumlah item dan unit per warehouse, quantity SCAN/MANUAL/PJ, serta sesi yang masih berjalan. Klik tombol pada rincian sesi untuk membuka workspace-nya. Di bagian bawah, pilih brand pada Stock Opname Recorded, lalu tentukan bulan dan week. Tombol View membuka halaman arsip khusus yang menampilkan PIC 1 dan PIC 2; pilih Scan Layout, Result SO, atau Rekap Selisih untuk melihat lembar hanya-baca. Setiap lembar dapat dicetak atau disimpan sebagai PDF melalui dialog print browser.", "dashboard", "Dashboard")}
           ${guide("Langkah 1", "▦", "Jadwal", "Tambahkan kartu jadwal, lalu pilih Nama Brand dan PIC 1/PIC 2 dari daftar yang dikelola Owner. Tentukan bulan, week, dan mode hitung laptop saja atau semua item. Ketiga nama wajib terisi sebelum sesi dapat dimulai. Tombol Mulai Stock Opname akan membuka Master VEF; setelah sesi berjalan, tombol berubah menjadi Lihat Stok Opname dan membuka Scan Layout. Kartu hanya dapat dihapus sebelum sesi dimulai dan selama belum berisi data kerja.", "workspaces", "Jadwal")}
           ${guide("Langkah 2", "▤", "Master VEF", "Setelah memulai jadwal, unggah XLSX/XLS dengan sheet Serial No atau format workbook VEF yang didukung; file CSV dengan kolom Serial No, Item Code, Brand, Warehouse, dan Item Name juga dapat digunakan. Periksa jumlah item, serial, dan quantity per warehouse. Panel menampilkan metadata waktu sumber dan waktu unggah. File sumber disimpan dalam arsip sesi untuk dapat diunduh kembali.", "products", "Master VEF")}
           ${guide("Langkah 3", "▦", "Scan Layout", "Buat rack dan isi label rack (angka atau keterangan teks) serta target scan. Pindai serial number pada rack yang sesuai. Hasil cocok, duplikat, bukan laptop, atau tidak ditemukan tampil pada catatan scan; serial cocok juga menampilkan item code, nama item, serial number, dan waktu saat rinciannya dibuka. Rack dengan SN duplikat diberi tanda peringatan. Untuk barang tanpa serial, cari item dari VEF, pilih hasil yang benar, masukkan quantity, lalu Catat Manual. Catatan manual terbaru akan ditandai dan difokuskan.", "layouts", "Scan Layout")}
@@ -4835,6 +4871,15 @@
       document.getElementById("new-session-button")?.addEventListener("click", startNewSession);
       document.getElementById("workbook-input").addEventListener("change", importWorkbook);
       document.getElementById("open-recorded-brand")?.addEventListener("click", openRecordedPeriodDialog);
+      document.querySelectorAll("[data-recorded-sheet]").forEach((button) => button.addEventListener("click", () => {
+        selectedRecordedSheet = button.dataset.recordedSheet;
+        render();
+      }));
+      document.getElementById("print-recorded-sheet")?.addEventListener("click", printRecordedSheet);
+      document.querySelector("[data-recorded-return]")?.addEventListener("click", () => {
+        currentPage = "dashboard";
+        render();
+      });
       document.querySelectorAll("[data-pj-product]").forEach((button) => button.addEventListener("click", () => openPjEntryDialog(button.dataset.pjProduct)));
       document.querySelectorAll(".schedule-card-summary").forEach((summary) => summary.addEventListener("click", () => {
         const selectedCard = summary.closest("details.schedule-card");
@@ -5933,11 +5978,6 @@
     });
     document.getElementById("recorded-period-month").addEventListener("change", updateRecordedPeriodAvailability);
     document.getElementById("recorded-period-week").addEventListener("change", updateRecordedPeriodAvailability);
-    document.querySelectorAll("[data-recorded-sheet]").forEach((button) => button.addEventListener("click", () => {
-      selectedRecordedSheet = button.dataset.recordedSheet;
-      renderRecordedSheetView();
-    }));
-    document.getElementById("print-recorded-sheet").addEventListener("click", printRecordedSheet);
     document.getElementById("pj-entry-form").addEventListener("submit", submitPjEntry);
     document.querySelectorAll("[data-close]").forEach((button) => button.addEventListener("click", () => document.getElementById(button.dataset.close).close()));
     document.getElementById("confirm-finish").addEventListener("click", finishSession);
