@@ -1937,8 +1937,12 @@
     const THEME_STORAGE_KEY = "ruangstok-theme";
     const PAGE_STORAGE_KEY = "ruangstok-last-page:";
     const WORKSPACE_STORAGE_KEY = "ruangstok-current-workspace:";
-    const warningScanAudio = new Audio("./assets/warning-duplicate.mp3");
-    const matchedScanAudio = new Audio("./assets/scan-match.mp3");
+    const scanAudioSources = { warning: "./assets/warning-duplicate.mp3", match: "./assets/scan-match.mp3" };
+    const scanAudioBuffers = new Map();
+    const scanAudioBufferLoads = new Map();
+    let scanAudioContext = null;
+    let scanAudioUnlockRequested = false;
+    let scanAudioUnsupportedNotified = false;
     const RESTORABLE_PAGES = new Set(["opname", "dashboard", "workspaces", "products", "layouts", "recap", "about", "about-info", "admin-users", "data-resources", "completed-sessions", "history"]);
     const brandEmblemSource = new Image();
     brandEmblemSource.src = "./assets/brand-emblem-source.png";
@@ -5109,39 +5113,129 @@
       return event;
     }
 
+    function getScanAudioContext() {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return null;
+      if (!scanAudioContext || scanAudioContext.state === "closed") {
+        try {
+          scanAudioContext = new AudioContextClass();
+          scanAudioUnlockRequested = false;
+          scanAudioBuffers.clear();
+          scanAudioBufferLoads.clear();
+        } catch (error) {
+          console.warn("Audio scan tidak dapat disiapkan:", error);
+          return null;
+        }
+      }
+      return scanAudioContext;
+    }
+
+    function loadScanAudioBuffer(type) {
+      const source = scanAudioSources[type];
+      const audioContext = getScanAudioContext();
+      if (!source || !audioContext) return Promise.resolve(null);
+      if (scanAudioBuffers.has(type)) return Promise.resolve(scanAudioBuffers.get(type));
+      if (scanAudioBufferLoads.has(type)) return scanAudioBufferLoads.get(type);
+      const loading = fetch(source)
+        .then((response) => {
+          if (!response.ok) throw new Error(`HTTP ${response.status} saat memuat bunyi scan.`);
+          return response.arrayBuffer();
+        })
+        .then((data) => audioContext.decodeAudioData(data))
+        .then((buffer) => {
+          if (scanAudioContext === audioContext) scanAudioBuffers.set(type, buffer);
+          return buffer;
+        })
+        .catch((error) => {
+          console.warn("Bunyi scan MP3 gagal dimuat; bunyi sintetis akan digunakan:", error);
+          return null;
+        })
+        .finally(() => scanAudioBufferLoads.delete(type));
+      scanAudioBufferLoads.set(type, loading);
+      return loading;
+    }
+
+    function unlockScanAudio() {
+      if (scanAudioUnlockRequested) return;
+      const audioContext = getScanAudioContext();
+      if (!audioContext) return;
+      scanAudioUnlockRequested = true;
+      if (audioContext?.state === "suspended") {
+        audioContext.resume().catch((error) => {
+          scanAudioUnlockRequested = false;
+          console.warn("Audio scan tidak dapat diaktifkan:", error);
+        });
+      }
+    }
+
+    function playScanAudioBuffer(type) {
+      const audioContext = getScanAudioContext();
+      const buffer = scanAudioBuffers.get(type);
+      if (!audioContext || !buffer) return false;
+      const start = () => {
+        if (audioContext.state !== "running") throw new Error(`AudioContext berstatus ${audioContext.state}.`);
+        const source = audioContext.createBufferSource();
+        source.buffer = buffer;
+        source.connect(audioContext.destination);
+        source.start();
+      };
+      const resume = audioContext.state === "running" ? Promise.resolve() : audioContext.resume();
+      resume.then(start).catch((error) => {
+        console.warn("Bunyi scan MP3 tidak dapat diputar; menggunakan bunyi sintetis:", error);
+        playScanTone(type === "warning" ? "duplicate" : "match");
+      });
+      return true;
+    }
+
+    function playScanTone(status) {
+      const audioContext = getScanAudioContext();
+      if (!audioContext) {
+        if (!scanAudioUnsupportedNotified) {
+          scanAudioUnsupportedNotified = true;
+          notify("Browser ini tidak mendukung bunyi scan.");
+        }
+        return;
+      }
+      const warning = status === "duplicate" || status === "not-found";
+      const tones = warning ? [{ frequency: 440, offset: 0 }, { frequency: 330, offset: 0.11 }] :
+        status === "match" ? [{ frequency: 880, offset: 0 }, { frequency: 1175, offset: 0.08 }] :
+          [{ frequency: 660, offset: 0 }];
+      const playTones = () => {
+        if (audioContext.state !== "running") throw new Error(`AudioContext berstatus ${audioContext.state}.`);
+        tones.forEach(({ frequency, offset }) => {
+          const oscillator = audioContext.createOscillator();
+          const gain = audioContext.createGain();
+          const startAt = audioContext.currentTime + offset;
+          const duration = 0.22;
+          oscillator.type = "sine";
+          oscillator.frequency.value = frequency;
+          gain.gain.setValueAtTime(0.38, startAt);
+          gain.gain.exponentialRampToValueAtTime(0.001, startAt + duration);
+          oscillator.connect(gain);
+          gain.connect(audioContext.destination);
+          oscillator.start(startAt);
+          oscillator.stop(startAt + duration);
+        });
+      };
+      const resume = audioContext.state === "running" ? Promise.resolve() : audioContext.resume();
+      resume.then(playTones).catch((error) => console.warn("Bunyi scan cadangan tidak dapat diputar:", error));
+    }
+
     function playScanBeep(status) {
       const warning = status === "duplicate" || status === "not-found";
-      if (warning || status === "match") {
-        const audio = warning ? warningScanAudio : matchedScanAudio;
-        audio.pause();
-        audio.currentTime = 0;
-        audio.play().catch((error) => console.warn("Bunyi scan tidak dapat diputar:", error));
+      const type = warning ? "warning" : status === "match" ? "match" : "";
+      if (!type) {
+        playScanTone(status);
         return;
       }
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContextClass) {
-        notify("Browser ini tidak mendukung bunyi scan.");
-        return;
+      if (!playScanAudioBuffer(type)) {
+        void loadScanAudioBuffer(type);
+        playScanTone(status);
       }
-      const audioContext = new AudioContextClass();
-      const tones = [{ frequency: 660, offset: 0 }];
-      if (audioContext.state === "suspended") audioContext.resume().catch((error) => console.warn("Audio scan tidak dapat diaktifkan:", error));
-      tones.forEach(({ frequency, offset }) => {
-        const oscillator = audioContext.createOscillator();
-        const gain = audioContext.createGain();
-        const startAt = audioContext.currentTime + offset;
-        const duration = 0.3;
-        oscillator.type = "sine";
-        oscillator.frequency.value = frequency;
-        gain.gain.setValueAtTime(0.48, startAt);
-        gain.gain.exponentialRampToValueAtTime(0.001, startAt + duration);
-        oscillator.connect(gain);
-        gain.connect(audioContext.destination);
-        oscillator.start(startAt);
-        oscillator.stop(startAt + duration);
-      });
-      setTimeout(() => audioContext.close(), 800);
     }
+
+    void loadScanAudioBuffer("match");
+    void loadScanAudioBuffer("warning");
 
     function handleLayoutScanSubmit(event) {
       event.preventDefault();
@@ -5769,8 +5863,24 @@
     for (const eventName of ["pointerdown", "pointermove", "keydown", "scroll", "touchstart", "click"]) {
       document.addEventListener(eventName, recordUserActivity, { passive: true });
     }
+    const unlockScanAudioOnInteraction = (event) => {
+      if (event.isTrusted) unlockScanAudio();
+    };
+    for (const eventName of ["pointerdown", "keydown", "touchstart"]) {
+      document.addEventListener(eventName, unlockScanAudioOnInteraction, { capture: true, passive: true });
+    }
+    const resumeScanAudio = () => {
+      if (document.visibilityState === "visible" && scanAudioContext?.state === "suspended") {
+        scanAudioContext.resume().catch((error) => console.warn("Audio scan tidak dapat dilanjutkan:", error));
+      }
+    };
+    window.addEventListener("focus", resumeScanAudio);
+    window.addEventListener("pageshow", resumeScanAudio);
     document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") checkIdleSession();
+      if (document.visibilityState === "visible") {
+        resumeScanAudio();
+        checkIdleSession();
+      }
     });
     window.addEventListener("storage", (event) => {
       if (event.key === idleActivityStorageKey && event.newValue) checkIdleSession();
