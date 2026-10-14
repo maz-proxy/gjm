@@ -85,8 +85,10 @@
     .logout-button { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.17); border-radius: 7px; color: #f4f8f2; font-size: 10px; margin-left: auto; padding: 6px 8px; }
     .logout-button:hover { background: rgba(255,255,255,.18); }
     .logout-confirm-dialog { background: var(--paper); border: 1px solid var(--line); border-radius: 15px; max-width: min(390px, calc(100vw - 32px)); overflow: hidden; padding: 0; width: 100%; }
+    .logout-confirm-dialog::backdrop { background: rgba(17, 27, 26, .52); backdrop-filter: blur(3px); }
     .logout-confirm-copy { color: var(--muted); font-size: 12px; line-height: 1.6; padding: 17px 21px 20px; }
     .logout-confirm-dialog .dialog-actions { background: var(--canvas); }
+    .logout-confirm-dialog .button-secondary:focus-visible { outline: 3px solid color-mix(in srgb, var(--green) 30%, transparent); outline-offset: 2px; }
     .logout-confirm-dialog .button-danger { background: var(--red); border-color: var(--red); color: #fff; }
     .logout-confirm-dialog .button-danger:hover { filter: brightness(.94); }
     html[data-theme="dark"] .logout-confirm-dialog .dialog-actions { background: #1b2823; }
@@ -1046,6 +1048,9 @@
     html[data-theme="dark"] .dialog-head { border-color: var(--line); }
     html[data-theme="dark"] dialog { background: var(--paper); color: var(--ink); }
     html[data-theme="dark"] .dialog-actions { background: #162320; border-color: var(--line); }
+    html[data-theme="dark"] .logout-confirm-dialog { background: var(--paper); border-color: var(--line); box-shadow: 0 24px 70px rgba(0,0,0,.42); }
+    html[data-theme="dark"] .logout-confirm-dialog::backdrop { background: rgba(5, 10, 9, .68); }
+    html[data-theme="dark"] .logout-confirm-dialog .dialog-actions { background: color-mix(in srgb, var(--paper) 82%, #000); border-top-color: var(--line); }
     html[data-theme="dark"] .recorded-period-dialog .select-input { background-color: #14211f; border-color: var(--line); color: var(--ink); }
     html[data-theme="dark"] .recorded-period-availability { background: #1c3029; border-color: #355347; color: #b7decb; }
     html[data-theme="dark"] .recorded-period-availability.empty { background: #392428; border-color: #67404a; color: #f0aeba; }
@@ -1274,6 +1279,9 @@
       --scrollbar-thumb: #765064;
       --scrollbar-thumb-hover: #b96a84;
     }
+    html[data-accent="burgundy"][data-theme="dark"] .logout-confirm-dialog { background: #302127; border-color: #634452; box-shadow: 0 24px 70px rgba(0,0,0,.52); }
+    html[data-accent="burgundy"][data-theme="dark"] .logout-confirm-dialog::backdrop { background: rgba(16, 8, 12, .74); }
+    html[data-accent="burgundy"][data-theme="dark"] .logout-confirm-dialog .dialog-actions { background: #281d22; border-top-color: #523a43; }
     html[data-accent="burgundy"][data-theme="dark"] body { background-image: radial-gradient(ellipse at 88% 0%, rgba(105,48,69,.3), transparent 36%); }
     html[data-accent="burgundy"][data-theme="dark"] .auth-card { background: #302127; border-color: #523a43; }
     html[data-accent="burgundy"][data-theme="dark"] .auth-input { background: #21171b; border-color: #523a43; color: #f4dce4; }
@@ -1519,7 +1527,9 @@
     }
     html[data-accent="burgundy"] button:focus-visible,
     html[data-accent="burgundy"] input:focus-visible,
-    html[data-accent="burgundy"] select:focus-visible { outline-color: rgba(132,43,75,.28); }
+    html[data-accent="burgundy"] select:focus-visible,
+    html[data-accent="burgundy"] .logout-confirm-dialog .button-secondary:focus-visible { outline-color: rgba(132,43,75,.42); }
+    html[data-accent="burgundy"] .logout-confirm-dialog::backdrop { background: rgba(78,25,46,.52); }
     html[data-accent="burgundy"] .sidebar,
     html[data-accent="burgundy"].mobile-drawer-enabled .app-shell > .sidebar { background: linear-gradient(180deg, #76233f 0%, #4e192e 100%); border-color: #4e192e; }
     html[data-accent="burgundy"] .nav-item.active { background: linear-gradient(100deg, #f4dfe7, #fbf0f3); box-shadow: inset 3px 0 #d9a1b4; color: #531a30; }
