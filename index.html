@@ -8,8 +8,8 @@
   <link rel="apple-touch-icon" type="image/svg+xml">
   <script>
     const isAndroidCapacitor = Boolean(window.androidBridge || window.Capacitor?.getPlatform?.() === "android");
-    if (isAndroidCapacitor) document.documentElement.classList.add("capacitor-android", "mobile-drawer-enabled");
-    else if (window.matchMedia("(max-width: 767px) and (orientation: portrait)").matches) {
+    if (isAndroidCapacitor) document.documentElement.classList.add("capacitor-android");
+    if (window.matchMedia("(max-width: 767px) and (orientation: portrait)").matches) {
       document.documentElement.classList.add("mobile-drawer-enabled");
     }
   </script>
@@ -1398,6 +1398,11 @@
       width: min(300px, 86vw);
       z-index: 22;
     }
+    html.mobile-drawer-enabled.android-nav-right .app-shell > .sidebar {
+      left: auto;
+      right: 0;
+      transform: translateX(105%);
+    }
     html.mobile-drawer-enabled.android-nav-open .app-shell > .sidebar { transform: translateX(0); }
     html.mobile-drawer-enabled .app-shell > .sidebar .brand { display: flex; flex: 0 0 auto; margin: 3px 0 22px; padding: 0 5px; }
     html.mobile-drawer-enabled .app-shell > .sidebar .brand-mark { flex: 0 0 48px; height: 48px; width: 48px; }
@@ -1450,6 +1455,14 @@
       transition: background .18s ease, opacity .18s ease;
       width: 25px;
       z-index: 21;
+    }
+    html.mobile-drawer-enabled.android-nav-right .android-sidebar-handle {
+      border-left: 1px solid rgba(255,255,255,.18);
+      border-radius: 9px 0 0 9px;
+      border-right: 0;
+      left: auto;
+      padding: 0 2px 0 4px;
+      right: 0;
     }
     html.mobile-drawer-enabled .android-sidebar-handle:active { opacity: 1; }
     html.mobile-drawer-enabled .android-sidebar-handle svg { fill: none; height: 15px; stroke: currentColor; stroke-linecap: round; stroke-width: 1.8; width: 15px; }
@@ -5325,37 +5338,44 @@
     const sidebarToggle = document.querySelector(".sidebar-toggle");
     const androidSidebarHandle = document.querySelector(".android-sidebar-handle");
     const androidSidebarBackdrop = document.querySelector(".android-sidebar-backdrop");
-    const isAndroidApp = document.documentElement.classList.contains("capacitor-android");
     const mobilePortraitQuery = window.matchMedia("(max-width: 767px) and (orientation: portrait)");
     const androidSidebarPositionKey = "stock-opname-mobile-menu-position";
     let androidSidebarDrag = null;
     let androidSidebarPosition = null;
     let suppressSidebarClick = false;
     function isMobileDrawerEnabled() {
-      return isAndroidApp || mobilePortraitQuery.matches;
+      return mobilePortraitQuery.matches;
     }
     function applyAndroidSidebarPosition() {
+      document.documentElement.classList.toggle("android-nav-right", androidSidebarPosition?.side === "right");
       if (!mobilePortraitQuery.matches) {
         androidSidebarHandle.style.removeProperty("left");
+        androidSidebarHandle.style.removeProperty("right");
         androidSidebarHandle.style.removeProperty("top");
         androidSidebarHandle.style.removeProperty("transform");
         return;
       }
-      const handleWidth = androidSidebarHandle.offsetWidth || 25;
       const handleHeight = androidSidebarHandle.offsetHeight || 44;
-      const maxX = Math.max(0, window.innerWidth - handleWidth);
       const maxY = Math.max(0, window.innerHeight - handleHeight);
-      const anchor = androidSidebarPosition || { x: 0, y: .5 };
-      const x = Math.round(Math.min(1, Math.max(0, anchor.x)) * maxX);
+      const anchor = androidSidebarPosition || { side: "left", y: .5 };
       const y = Math.round(Math.min(1, Math.max(0, anchor.y)) * maxY);
-      androidSidebarHandle.style.left = `${x}px`;
+      androidSidebarHandle.style.left = anchor.side === "right" ? "auto" : "0px";
+      androidSidebarHandle.style.right = anchor.side === "right" ? "0px" : "auto";
       androidSidebarHandle.style.top = `${y}px`;
       androidSidebarHandle.style.transform = "none";
     }
     function syncMobileDrawerMode() {
       const enabled = isMobileDrawerEnabled();
       document.documentElement.classList.toggle("mobile-drawer-enabled", enabled);
-      if (!enabled) setAndroidNavigationOpen(false);
+      if (!enabled && document.documentElement.classList.contains("android-nav-open")) {
+        document.documentElement.classList.remove("android-nav-open");
+        androidSidebarBackdrop.setAttribute("aria-hidden", "true");
+        const collapsed = appShell.classList.contains("sidebar-collapsed");
+        sidebarToggle.setAttribute("aria-expanded", String(!collapsed));
+        sidebarToggle.setAttribute("aria-label", collapsed ? "Lebarkan menu" : "Ciutkan menu");
+        sidebarToggle.title = collapsed ? "Lebarkan menu" : "Ciutkan menu";
+        sidebarToggle.textContent = collapsed ? "»" : "«";
+      }
       applyAndroidSidebarPosition();
     }
     function setAndroidNavigationOpen(open) {
@@ -5364,26 +5384,30 @@
       androidSidebarHandle.setAttribute("aria-expanded", String(open));
       androidSidebarHandle.setAttribute("aria-label", open ? "Menu navigasi terbuka" : "Geser atau buka menu navigasi");
       androidSidebarBackdrop.setAttribute("aria-hidden", String(!open));
+      document.documentElement.classList.toggle("android-nav-right", androidSidebarPosition?.side === "right");
       sidebarToggle.setAttribute("aria-expanded", String(open));
       sidebarToggle.setAttribute("aria-label", open ? "Tutup menu" : "Menu");
       sidebarToggle.title = open ? "Tutup menu" : "Menu";
       sidebarToggle.textContent = open ? "×" : "☰";
     }
     function saveAndroidSidebarPosition() {
-      const maxX = Math.max(1, window.innerWidth - androidSidebarHandle.offsetWidth);
       const maxY = Math.max(1, window.innerHeight - androidSidebarHandle.offsetHeight);
       androidSidebarPosition = {
-        x: androidSidebarHandle.offsetLeft / maxX,
+        side: androidSidebarHandle.offsetLeft + androidSidebarHandle.offsetWidth / 2 >= window.innerWidth / 2 ? "right" : "left",
         y: androidSidebarHandle.offsetTop / maxY
       };
       localStorage.setItem(androidSidebarPositionKey, JSON.stringify(androidSidebarPosition));
+      applyAndroidSidebarPosition();
     }
     const savedAndroidSidebarPosition = localStorage.getItem(androidSidebarPositionKey);
     if (savedAndroidSidebarPosition) {
       try {
         const parsedPosition = JSON.parse(savedAndroidSidebarPosition);
-        if (Number.isFinite(parsedPosition.x) && Number.isFinite(parsedPosition.y)) {
-          androidSidebarPosition = { x: parsedPosition.x, y: parsedPosition.y };
+        if (Number.isFinite(parsedPosition.y)) {
+          const side = parsedPosition.side === "left" || parsedPosition.side === "right"
+            ? parsedPosition.side
+            : Number.isFinite(parsedPosition.x) && parsedPosition.x >= .5 ? "right" : "left";
+          androidSidebarPosition = { side, y: parsedPosition.y };
         }
       } catch (error) {
         console.warn("Posisi tombol navigasi tersimpan tidak valid.", error);
@@ -5405,6 +5429,7 @@
       const left = Math.min(maxX, Math.max(0, androidSidebarDrag.left + deltaX));
       const top = Math.min(maxY, Math.max(0, androidSidebarDrag.top + deltaY));
       androidSidebarHandle.style.left = `${left}px`;
+      androidSidebarHandle.style.right = "auto";
       androidSidebarHandle.style.top = `${top}px`;
       androidSidebarHandle.style.transform = "none";
     });
