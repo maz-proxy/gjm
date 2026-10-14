@@ -31,8 +31,17 @@
       --red: #a34b46;
       --red-soft: #f9ecea;
       --shadow: 0 14px 38px rgba(25, 55, 50, .1);
+      --scrollbar-track: #edf2f0;
+      --scrollbar-thumb: #b4c1bd;
+      --scrollbar-thumb-hover: #82938e;
     }
     * { box-sizing: border-box; }
+    * { scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track); scrollbar-width: thin; }
+    *::-webkit-scrollbar { height: 12px; width: 12px; }
+    *::-webkit-scrollbar-track { background: var(--scrollbar-track); }
+    *::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); background-clip: padding-box; border: 3px solid var(--scrollbar-track); border-radius: 999px; min-height: 36px; }
+    *::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); background-clip: padding-box; }
+    *::-webkit-scrollbar-corner { background: var(--scrollbar-track); }
     body { margin: 0; background: radial-gradient(ellipse at 88% 0%, rgba(213, 232, 226, .5), transparent 36%), var(--canvas); color: var(--ink); font: 14px/1.5 "DM Sans", "Segoe UI", sans-serif; }
     button, input, select { font: inherit; }
     button { cursor: pointer; }
@@ -867,6 +876,9 @@
       --red: #e59b93;
       --red-soft: #402a29;
       --shadow: 0 14px 38px rgba(0, 0, 0, .28);
+      --scrollbar-track: #17211f;
+      --scrollbar-thumb: #53645f;
+      --scrollbar-thumb-hover: #71837d;
     }
     html[data-theme="dark"] .metric,
     html[data-theme="dark"] .layout-card,
@@ -1172,6 +1184,9 @@
       --green-dark: #5d1c35;
       --green-soft: #f5e7ec;
       --lime: #dfb0bf;
+      --scrollbar-track: #f5e9ed;
+      --scrollbar-thumb: #c69aa8;
+      --scrollbar-thumb-hover: #9b6678;
     }
     html[data-accent="burgundy"] body { background-image: radial-gradient(ellipse at 88% 0%, rgba(232,207,216,.62), transparent 36%); }
     html[data-accent="burgundy"] .auth-card { background: #fff5f8; border-color: #e7cbd4; box-shadow: 0 22px 70px rgba(78,25,46,.2); }
@@ -1255,6 +1270,9 @@
       --green-dark: #f0b6c7;
       --green-soft: #422632;
       --lime: #b96a84;
+      --scrollbar-track: #291c21;
+      --scrollbar-thumb: #765064;
+      --scrollbar-thumb-hover: #b96a84;
     }
     html[data-accent="burgundy"][data-theme="dark"] body { background-image: radial-gradient(ellipse at 88% 0%, rgba(105,48,69,.3), transparent 36%); }
     html[data-accent="burgundy"][data-theme="dark"] .auth-card { background: #302127; border-color: #523a43; }
