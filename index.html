@@ -1100,9 +1100,13 @@
     }
     .feature-dialog { border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 24px 90px rgba(15, 34, 29, .26); max-height: min(88vh, 900px); max-width: min(960px, calc(100vw - 32px)); padding: 24px; width: 100%; }
     .feature-dialog#pj-entry-dialog { max-width: min(560px, calc(100vw - 32px)); padding: 18px; width: 100%; }
+    .feature-dialog#inbound-entry-dialog { max-width: min(560px, calc(100vw - 32px)); padding: 18px; width: 100%; }
     #pj-entry-dialog .dialog-head { padding: 0 0 12px; }
+    #inbound-entry-dialog .dialog-head { padding: 0 0 12px; }
     #pj-entry-dialog .feature-dialog-form { gap: 10px; padding-top: 12px; }
+    #inbound-entry-dialog .feature-dialog-form { gap: 10px; padding-top: 12px; }
     #pj-entry-dialog .dialog-actions { margin-top: 0; padding: 10px 0 0; }
+    #inbound-entry-dialog .dialog-actions { margin-top: 0; padding: 10px 0 0; }
     .feature-dialog.upload-success-dialog { max-width: min(440px, calc(100vw - 32px)); padding: 0; width: min(440px, calc(100vw - 32px)); }
     .feature-dialog[open] { animation: feature-dialog-drop .22s ease-out both; }
     .feature-dialog::backdrop { background: rgba(12, 25, 22, .52); backdrop-filter: blur(3px); }
@@ -1437,6 +1441,7 @@
     @media (max-width: 640px) {
       .feature-dialog { padding: 17px; }
       .feature-dialog#pj-entry-dialog { padding: 14px; }
+      .feature-dialog#inbound-entry-dialog { padding: 14px; }
       .recorded-brand-picker { grid-template-columns: 1fr; }
       .recorded-view-actions { align-items: stretch; flex-direction: column; }
       .recorded-view-tabs > * { flex: 1 1 auto; }
@@ -1913,6 +1918,15 @@
     <div class="pj-delete-confirm-copy" id="pj-delete-confirm-copy"></div>
     <div class="dialog-actions"><button class="button button-secondary" type="button" data-close="pj-delete-confirm-dialog">Batal</button><button class="button button-danger" id="confirm-delete-pj" type="button">Hapus invoice</button></div>
   </dialog>
+  <dialog id="inbound-entry-dialog" class="feature-dialog">
+    <div class="dialog-head"><div><div class="dialog-title" id="inbound-entry-title">Tambah Inbound/Retur</div><div class="dialog-subtitle" id="inbound-entry-product"></div></div><button class="dialog-close" type="button" data-close="inbound-entry-dialog" aria-label="Tutup">×</button></div>
+    <form id="inbound-entry-form" class="feature-dialog-form"><label class="auth-field" id="inbound-entry-existing-wrap" hidden><span>Pilih data untuk diedit</span><select class="auth-input" id="inbound-entry-existing"></select></label><label class="auth-field"><span>Tanggal dan waktu PREC/RETUR</span><input class="auth-input" name="entryDate" type="datetime-local" required></label><label class="auth-field"><span>Nomor PREC/RETUR</span><input class="auth-input" name="referenceNumber" type="text" maxlength="100" required placeholder="Masukkan nomor PREC/RETUR"></label><label class="auth-field"><span>Quantity Inbound/Retur</span><input class="auth-input" name="quantity" type="number" min="1" step="1" required placeholder="Masukkan quantity"></label><div class="dialog-actions"><button class="button button-danger" id="inbound-entry-delete" type="button" hidden>Hapus data</button><button class="button button-secondary" id="inbound-entry-new" type="button">Data baru</button><button class="button button-secondary" type="button" data-close="inbound-entry-dialog">Batal</button><button class="button button-primary" id="inbound-entry-save" type="submit">Simpan</button></div></form>
+  </dialog>
+  <dialog id="inbound-delete-confirm-dialog" class="pj-delete-confirm-dialog" aria-labelledby="inbound-delete-confirm-title" aria-describedby="inbound-delete-confirm-copy">
+    <div class="dialog-head"><div><div class="dialog-title" id="inbound-delete-confirm-title">Hapus Inbound/Retur?</div></div><button class="dialog-close" type="button" data-close="inbound-delete-confirm-dialog" aria-label="Tutup">×</button></div>
+    <div class="pj-delete-confirm-copy" id="inbound-delete-confirm-copy"></div>
+    <div class="dialog-actions"><button class="button button-secondary" type="button" data-close="inbound-delete-confirm-dialog">Batal</button><button class="button button-danger" id="confirm-delete-inbound" type="button">Hapus data</button></div>
+  </dialog>
   <dialog id="finish-dialog">
     <div class="dialog-head"><div><div class="dialog-title">Selesaikan stock opname?</div><div class="dialog-subtitle">Hasil diarsipkan, lalu seluruh data kerja sesi ini direset. Jika ada sesi lain yang berjalan, sesi itu akan dibuka untuk dilanjutkan.</div></div><button class="dialog-close" type="button" data-close="finish-dialog" aria-label="Tutup">×</button></div>
     <div class="confirm-body" id="finish-message"></div>
@@ -2180,8 +2194,8 @@
     const DEFAULT_LAYOUTS = ["Rack 1"];
     const UNUPLOADED_WORKSPACE_TIMEOUT_MS = 5 * 60 * 1000;
     const WORKSPACE_CLEANUP_INTERVAL_MS = 15 * 1000;
-    const initialState = () => ({ products: [], serialMaster: {}, scanEvents: [], manualEntries: [], pjEntries: [], historyEvents: [], sessions: [], workbookFiles: [], resources: { brands: [], picNames: [] }, activeSession: makeSession(), countMode: "laptops", importFile: "", importMessage: "", importDownloadedAt: "", importUploadedAt: "", layouts: [...DEFAULT_LAYOUTS], layoutQuantities: {}, layoutNumbers: {} });
-    const emptyWorkspaceData = () => ({ products: [], serialMaster: {}, scanEvents: [], manualEntries: [], pjEntries: [], historyEvents: [], workbookFiles: [], activeSession: makeSession(), countMode: "laptops", importFile: "", importMessage: "", importDownloadedAt: "", importUploadedAt: "", layouts: [...DEFAULT_LAYOUTS], layoutQuantities: {}, layoutNumbers: {} });
+    const initialState = () => ({ products: [], serialMaster: {}, scanEvents: [], manualEntries: [], pjEntries: [], inboundEntries: [], historyEvents: [], sessions: [], workbookFiles: [], resources: { brands: [], picNames: [] }, activeSession: makeSession(), countMode: "laptops", importFile: "", importMessage: "", importDownloadedAt: "", importUploadedAt: "", layouts: [...DEFAULT_LAYOUTS], layoutQuantities: {}, layoutNumbers: {} });
+    const emptyWorkspaceData = () => ({ products: [], serialMaster: {}, scanEvents: [], manualEntries: [], pjEntries: [], inboundEntries: [], historyEvents: [], workbookFiles: [], activeSession: makeSession(), countMode: "laptops", importFile: "", importMessage: "", importDownloadedAt: "", importUploadedAt: "", layouts: [...DEFAULT_LAYOUTS], layoutQuantities: {}, layoutNumbers: {} });
     const snapshotWorkspaceData = (source) => {
       const products = source.products || [];
       const sourceLayouts = Array.isArray(source.layouts) && source.layouts.length ? source.layouts : [...DEFAULT_LAYOUTS];
@@ -2198,7 +2212,7 @@
         .map((product) => ({ id: crypto.randomUUID(), productId: product.id, sku: product.sku, name: product.name, layout: layouts[0], quantity: Number(product.box), createdAt: new Date().toISOString() }));
       const boxTotals = new Map();
       for (const entry of manualEntries) boxTotals.set(entry.productId, (boxTotals.get(entry.productId) || 0) + Number(entry.quantity || 0));
-      return { products: products.map((product) => ({ ...product, box: boxTotals.get(product.id) || 0 })), serialMaster: source.serialMaster || {}, scanEvents: source.scanEvents || [], manualEntries, pjEntries: Array.isArray(source.pjEntries) ? source.pjEntries : [], historyEvents: source.historyEvents || [], workbookFiles: Array.isArray(source.workbookFiles) ? source.workbookFiles : [], activeSession: source.activeSession || makeSession(), countMode: source.countMode === "all" ? "all" : "laptops", importFile: source.importFile || "", importMessage: source.importMessage || "", importDownloadedAt: source.importDownloadedAt || "", importUploadedAt: source.importUploadedAt || "", layouts, layoutQuantities: source.layoutQuantities || {}, layoutNumbers: source.layoutNumbers || {} };
+      return { products: products.map((product) => ({ ...product, box: boxTotals.get(product.id) || 0 })), serialMaster: source.serialMaster || {}, scanEvents: source.scanEvents || [], manualEntries, pjEntries: Array.isArray(source.pjEntries) ? source.pjEntries : [], inboundEntries: Array.isArray(source.inboundEntries) ? source.inboundEntries : [], historyEvents: source.historyEvents || [], workbookFiles: Array.isArray(source.workbookFiles) ? source.workbookFiles : [], activeSession: source.activeSession || makeSession(), countMode: source.countMode === "all" ? "all" : "laptops", importFile: source.importFile || "", importMessage: source.importMessage || "", importDownloadedAt: source.importDownloadedAt || "", importUploadedAt: source.importUploadedAt || "", layouts, layoutQuantities: source.layoutQuantities || {}, layoutNumbers: source.layoutNumbers || {} };
     };
     const createWorkspace = (name = "", data = emptyWorkspaceData(), schedulePlaceholder = false) => ({ id: crypto.randomUUID(), name, month: normalizeWorkspaceMonth(""), period: normalizeWorkspacePeriod(""), picNames: ["", ""], startedAt: "", scheduleCreatedAt: "", scheduleOwnerUserId: "", scheduleOwnerUsername: "", uploadActivityAt: "", schedulePlaceholder, data });
     const isEmptyScheduleWorkspace = (workspace, sessions = []) => {
@@ -2213,6 +2227,7 @@
         && !(data.scanEvents || []).length
         && !(data.manualEntries || []).length
         && !(data.pjEntries || []).length
+        && !(data.inboundEntries || []).length
         && !(data.historyEvents || []).length
         && !(data.workbookFiles || []).length
         && !data.importFile
@@ -2269,6 +2284,7 @@
     if (!state.layoutNumbers || typeof state.layoutNumbers !== "object") state.layoutNumbers = {};
     if (!Array.isArray(state.scanEvents)) state.scanEvents = [];
     if (!Array.isArray(state.pjEntries)) state.pjEntries = [];
+    if (!Array.isArray(state.inboundEntries)) state.inboundEntries = [];
     if (!Array.isArray(state.historyEvents)) state.historyEvents = [];
     if (!Array.isArray(state.sessions)) state.sessions = [];
     if (!state.resources || typeof state.resources !== "object") state.resources = { brands: [], picNames: [] };
@@ -2327,6 +2343,8 @@
     let selectedRecordedSheet = "layouts";
     let pendingPjProductId = "";
     let pendingPjEntryId = "";
+    let pendingInboundProductId = "";
+    let pendingInboundEntryId = "";
     let pendingCompletedSessionDeletionId = "";
     let pendingWorkspaceDeletionId = "";
     let lastManualEntryId = "";
@@ -2484,6 +2502,7 @@
         && !(data.scanEvents || []).length
         && !(data.manualEntries || []).length
         && !(data.pjEntries || []).length
+        && !(data.inboundEntries || []).length
         && !(data.workbookFiles || []).length
         && !(state.workbookFiles || []).some((workbook) => workbook.sessionId === sessionId)
         && !data.importFile
@@ -2801,6 +2820,7 @@
       if (!normalized.layoutNumbers || typeof normalized.layoutNumbers !== "object") normalized.layoutNumbers = {};
       if (!Array.isArray(normalized.scanEvents)) normalized.scanEvents = [];
       if (!Array.isArray(normalized.pjEntries)) normalized.pjEntries = [];
+      if (!Array.isArray(normalized.inboundEntries)) normalized.inboundEntries = [];
       if (!Array.isArray(source.manualEntries)) delete normalized.manualEntries;
       if (!Array.isArray(normalized.historyEvents)) normalized.historyEvents = [];
       if (!Array.isArray(normalized.sessions)) normalized.sessions = [];
@@ -3389,7 +3409,10 @@
     const manualQuantityFor = (productId) => state.manualEntries.filter((entry) => entry.productId === productId).reduce((sum, entry) => sum + Number(entry.quantity || 0), 0);
     const syncManualBoxTotals = () => state.products.forEach((product) => { product.box = manualQuantityFor(product.id); });
     const reconciledQty = (product) => Number(product.count || 0) + Number(product.box || 0) + Number(product.pj || 0);
-    const varianceFor = (product) => reconciledQty(product) - Number(product.stock || 0);
+    const inboundQuantityFor = (productId, entries = state.inboundEntries) => (entries || [])
+      .filter((entry) => entry.productId === productId)
+      .reduce((sum, entry) => sum + Number(entry.quantity || 0), 0);
+    const varianceFor = (product, inboundEntries = state.inboundEntries) => reconciledQty(product) - Number(product.stock || 0) - inboundQuantityFor(product.id, inboundEntries);
     function setPjEntryForm(entry = null) {
       const form = document.getElementById("pj-entry-form");
       const title = document.getElementById("pj-entry-title");
@@ -3517,6 +3540,128 @@
       render();
       notify("Invoice PJ berhasil dihapus.");
     }
+    function setInboundEntryForm(entry = null) {
+      const form = document.getElementById("inbound-entry-form");
+      const selector = document.getElementById("inbound-entry-existing");
+      pendingInboundEntryId = entry?.id || "";
+      if (entry) {
+        const entryDate = new Date(entry.entryAt);
+        form.elements.entryDate.value = Number.isFinite(entryDate.getTime()) ? new Date(entryDate.getTime() - entryDate.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : "";
+        form.elements.referenceNumber.value = entry.referenceNumber || "";
+        form.elements.quantity.value = String(entry.quantity || "");
+        selector.value = entry.id;
+      } else {
+        const now = new Date();
+        form.elements.entryDate.value = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+        form.elements.referenceNumber.value = "";
+        form.elements.quantity.value = "";
+        selector.value = "";
+      }
+      document.getElementById("inbound-entry-title").textContent = entry ? "Edit Inbound/Retur" : "Tambah Inbound/Retur";
+      document.getElementById("inbound-entry-new").hidden = !entry;
+      document.getElementById("inbound-entry-delete").hidden = !entry;
+      document.getElementById("inbound-entry-save").textContent = entry ? "Simpan perubahan" : "Simpan";
+    }
+    function openInboundEntryDialog(productId) {
+      if (!requireActiveSessionEdit()) return;
+      const product = state.products.find((item) => item.id === productId);
+      if (!product) {
+        notify("Item Inbound/Retur tidak ditemukan.");
+        return;
+      }
+      if (!state.importDownloadedAt) {
+        notify("Metadata tanggal file VEF tidak tersedia; Inbound/Retur tidak dapat divalidasi.");
+        return;
+      }
+      pendingInboundProductId = productId;
+      document.getElementById("inbound-entry-product").textContent = `${product.sku} · ${product.name} · VEF ${formatDate(state.importDownloadedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}`;
+      const entries = (state.inboundEntries || []).filter((entry) => entry.productId === productId);
+      const selector = document.getElementById("inbound-entry-existing");
+      selector.innerHTML = entries.slice().reverse().map((entry) => `<option value="${escapeHtml(entry.id)}">${escapeHtml(entry.referenceNumber || "PREC/RETUR tanpa nomor")} · ${escapeHtml(entry.entryAt && Number.isFinite(new Date(entry.entryAt).getTime()) ? formatDate(entry.entryAt, { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "Tanggal tidak tersedia")} · Qty ${formatNumber(entry.quantity)}</option>`).join("");
+      setInboundEntryForm(entries[entries.length - 1] || null);
+      document.getElementById("inbound-entry-existing-wrap").hidden = entries.length < 2;
+      document.getElementById("inbound-entry-dialog").showModal();
+    }
+    function submitInboundEntry(event) {
+      event.preventDefault();
+      if (!requireActiveSessionEdit()) return;
+      const form = event.currentTarget;
+      const product = state.products.find((item) => item.id === pendingInboundProductId);
+      const existingEntry = pendingInboundEntryId ? state.inboundEntries.find((entry) => entry.id === pendingInboundEntryId && entry.productId === product?.id) : null;
+      if (pendingInboundEntryId && !existingEntry) {
+        notify("Data Inbound/Retur yang dipilih tidak lagi tersedia. Tutup dialog lalu buka kembali.");
+        return;
+      }
+      const referenceNumber = form.elements.referenceNumber.value.trim();
+      const entryDate = new Date(form.elements.entryDate.value);
+      const quantity = Number(form.elements.quantity.value);
+      const sourceTimestamp = new Date(state.importDownloadedAt);
+      if (!product || !referenceNumber || !Number.isFinite(entryDate.getTime()) || !Number.isFinite(sourceTimestamp.getTime())) {
+        notify("Lengkapi nomor PREC/RETUR dan tanggal/waktu yang valid.");
+        return;
+      }
+      if (entryDate.getTime() <= sourceTimestamp.getTime()) {
+        notify("Tanggal/waktu PREC/RETUR harus sesudah tanggal file VEF didownload.");
+        return;
+      }
+      const nextInboundQuantity = inboundQuantityFor(product.id) - Number(existingEntry?.quantity || 0) + quantity;
+      if (!Number.isSafeInteger(quantity) || quantity < 1 || !Number.isSafeInteger(nextInboundQuantity) || nextInboundQuantity < 0) {
+        notify("Quantity Inbound/Retur harus bilangan bulat minimal 1 dan tidak melebihi batas.");
+        return;
+      }
+      const entry = existingEntry || {
+        id: crypto.randomUUID(),
+        productId: product.id,
+        sku: product.sku,
+        recordedAt: new Date().toISOString()
+      };
+      Object.assign(entry, { referenceNumber, entryAt: entryDate.toISOString(), quantity });
+      if (!existingEntry) state.inboundEntries.push(entry);
+      recordActivity(existingEntry ? "Inbound/Retur diperbarui" : "Inbound/Retur ditambahkan", `${product.sku} · PREC/RETUR ${referenceNumber} (${formatDate(entry.entryAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}) sebanyak ${formatNumber(quantity)}.`);
+      persist();
+      pendingInboundProductId = "";
+      pendingInboundEntryId = "";
+      form.reset();
+      document.getElementById("inbound-entry-dialog").close();
+      render();
+      notify(existingEntry ? "Data Inbound/Retur berhasil diperbarui." : "Inbound/Retur berhasil dicatat.");
+    }
+    function deleteInboundEntry() {
+      if (!requireActiveSessionEdit()) return;
+      const product = state.products.find((item) => item.id === pendingInboundProductId);
+      const entry = state.inboundEntries.find((item) => item.id === pendingInboundEntryId && item.productId === product?.id);
+      if (!product || !entry) {
+        notify("Data Inbound/Retur yang dipilih tidak lagi tersedia. Tutup dialog lalu buka kembali.");
+        return;
+      }
+      document.getElementById("inbound-delete-confirm-copy").textContent = `Hapus PREC/RETUR ${entry.referenceNumber || "(tanpa nomor)"} sebanyak ${formatNumber(entry.quantity)} unit untuk ${product.sku}? Quantity pembanding Inbound/Retur akan dikurangi.`;
+      document.getElementById("inbound-delete-confirm-dialog").showModal();
+    }
+    function confirmDeleteInboundEntry() {
+      if (!requireActiveSessionEdit()) return;
+      const product = state.products.find((item) => item.id === pendingInboundProductId);
+      const entry = state.inboundEntries.find((item) => item.id === pendingInboundEntryId && item.productId === product?.id);
+      if (!product || !entry) {
+        document.getElementById("inbound-delete-confirm-dialog").close();
+        notify("Data Inbound/Retur yang dipilih tidak lagi tersedia. Tutup dialog lalu buka kembali.");
+        return;
+      }
+      const nextQuantity = inboundQuantityFor(product.id) - Number(entry.quantity || 0);
+      if (!Number.isSafeInteger(nextQuantity) || nextQuantity < 0) {
+        notify("Quantity Inbound/Retur tidak konsisten dengan data yang dipilih. Data tidak diubah.");
+        return;
+      }
+      document.getElementById("inbound-delete-confirm-dialog").close();
+      state.inboundEntries = state.inboundEntries.filter((item) => item.id !== entry.id);
+      recordActivity("Inbound/Retur dihapus", `${product.sku} · PREC/RETUR ${entry.referenceNumber || "(tanpa nomor)"} dihapus, quantity pembanding ${formatNumber(entry.quantity)} dikurangi.`);
+      persist();
+      pendingInboundProductId = "";
+      pendingInboundEntryId = "";
+      document.getElementById("inbound-entry-form").reset();
+      document.getElementById("inbound-entry-dialog").close();
+      render();
+      notify("Data Inbound/Retur berhasil dihapus.");
+    }
     function reclassifyScanEvents(scanEvents, serialMaster, countMode) {
       const seen = new Set();
       for (const event of scanEvents) {
@@ -3536,10 +3681,10 @@
         }
       }
     }
-    const statusFor = (product, countMode = state.countMode) => {
+    const statusFor = (product, countMode = state.countMode, inboundEntries = state.inboundEntries) => {
       const included = isCountedProduct(product, countMode);
       if (!included && countMode !== "laptops") return { label: "Bukan laptop", className: "non-laptop" };
-      const variance = varianceFor(product);
+      const variance = varianceFor(product, inboundEntries);
       if (variance === 0) return { label: "Sesuai", className: "match" };
       if (variance < 0) return { label: countMode === "laptops" ? "Minus" : "Kurang", className: "shortage" };
       return { label: countMode === "laptops" ? "Plus" : "Lebih", className: "different" };
@@ -3557,16 +3702,20 @@
     function getReconciliationTotals(products = state.products, countMode = state.countMode) {
       const counted = products.filter((product) => isCountedProduct(product, countMode));
       const expected = counted.reduce((sum, product) => sum + Number(product.stock || 0), 0);
+      const inbound = counted.reduce((sum, product) => sum + inboundQuantityFor(product.id), 0);
       const scan = counted.reduce((sum, product) => sum + Number(product.count || 0), 0);
       const manual = counted.reduce((sum, product) => sum + Number(product.box || 0), 0);
       const pj = counted.reduce((sum, product) => sum + Number(product.pj || 0), 0);
       const total = scan + manual + pj;
-      const variance = total - expected;
+      const expectedWithInbound = expected + inbound;
+      const variance = total - expectedWithInbound;
       const absoluteVariance = counted.reduce((sum, product) => sum + Math.abs(varianceFor(product)), 0);
       const mismatched = counted.filter((product) => varianceFor(product) !== 0);
       return {
         count: counted.length,
         expected,
+        inbound,
+        expectedWithInbound,
         scan,
         manual,
         pj,
@@ -3575,7 +3724,7 @@
         absoluteVariance,
         mismatched: mismatched.length,
         mismatchPercent: counted.length ? Math.round(mismatched.length / counted.length * 100) : 0,
-        quantityMismatchPercent: expected ? Math.round(absoluteVariance / expected * 100) : (absoluteVariance ? 100 : 0)
+        quantityMismatchPercent: expectedWithInbound ? Math.round(absoluteVariance / expectedWithInbound * 100) : (absoluteVariance ? 100 : 0)
       };
     }
     const navMarkup = () => {
@@ -3593,9 +3742,13 @@
       const status = statusFor(product);
       const variance = varianceFor(product);
       const pjEntries = (state.pjEntries || []).filter((entry) => entry.productId === product.id);
+      const inboundEntries = (state.inboundEntries || []).filter((entry) => entry.productId === product.id);
       const pjTooltip = pjEntries.length
         ? pjEntries.map((entry) => `${entry.invoiceNumber || "Invoice tanpa nomor"} · ${entry.invoiceAt && Number.isFinite(new Date(entry.invoiceAt).getTime()) ? formatDate(entry.invoiceAt, { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "Tanggal tidak tersedia"} · Qty ${formatNumber(entry.quantity)}`).join(" | ")
         : "Belum ada invoice PJ. Klik untuk mencatat.";
+      const inboundTooltip = inboundEntries.length
+        ? inboundEntries.map((entry) => `${entry.referenceNumber || "PREC/RETUR tanpa nomor"} · ${entry.entryAt && Number.isFinite(new Date(entry.entryAt).getTime()) ? formatDate(entry.entryAt, { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "Tanggal tidak tersedia"} · Qty ${formatNumber(entry.quantity)}`).join(" | ")
+        : "Belum ada Inbound/Retur. Klik untuk mencatat.";
       return `<tr class="${included ? "" : "non-laptop-row"}">
         <td class="number-cell">${index + 1}</td>
         <td><div class="product-cell"><div><div class="product-name">${escapeHtml(product.name)}</div><div class="product-sku">${escapeHtml(product.sku)}</div></div></div></td>
@@ -3604,11 +3757,12 @@
         <td class="number-cell">${formatNumber(product.stock)}</td>
         <td class="number-cell">${included ? formatNumber(product.count || 0) : "-"}</td>
         <td class="number-cell">${formatNumber(product.box || 0)}</td>
+        <td>${included ? `<button class="pj-entry-button" type="button" data-inbound-product="${escapeHtml(product.id)}" title="${escapeHtml(inboundTooltip)}" aria-label="Inbound/Retur ${formatNumber(inboundQuantityFor(product.id))} untuk ${escapeHtml(product.sku)}. Klik untuk melihat atau mengedit data." ${!active || !canEdit ? "disabled" : ""}>${formatNumber(inboundQuantityFor(product.id))}</button>` : "-"}</td>
         <td>${included ? `<button class="pj-entry-button" type="button" data-pj-product="${escapeHtml(product.id)}" title="${escapeHtml(pjTooltip)}" aria-label="PJ ${formatNumber(product.pj || 0)} untuk ${escapeHtml(product.sku)}. Klik untuk melihat atau mengedit invoice." ${!active || !canEdit ? "disabled" : ""}>${formatNumber(product.pj || 0)}</button>` : "-"}</td>
         <td><span class="variance ${variance === 0 ? "zero" : variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td>
         <td><span class="row-status ${status.className}">${included && variance === 0 ? '<span class="check-success-icon" aria-hidden="true">✓</span>' : ""}${status.label}</span></td>
       </tr>`;
-    }).join("") : `<tr><td class="empty-row" colspan="10">${state.importFile ? "Template terbaca, tetapi tab VEF Master belum berisi Serial No dan Item Code." : "Belum ada data VEF. Unggah workbook stock opname untuk memulai."}</td></tr>`;
+    }).join("") : `<tr><td class="empty-row" colspan="11">${state.importFile ? "Template terbaca, tetapi tab VEF Master belum berisi Serial No dan Item Code." : "Belum ada data VEF. Unggah workbook stock opname untuk memulai."}</td></tr>`;
 
     function renderOpname() {
       const stats = getStats();
@@ -3621,7 +3775,7 @@
       });
       const latestScans = [...state.scanEvents].slice(-8).reverse();
       return `${navMarkup()}
-        <section class="page-head result-page-head"><div class="result-page-heading"><div class="result-page-eyebrow">Result SO · Rekonsiliasi inventaris</div>${workspacePageTitle()}<p class="subtitle">SCAN + MANUAL + PJ dibandingkan dengan VEF. Perhitungan: ${countModeLabel(state.countMode).toLocaleLowerCase("id-ID")}.</p></div></section>
+        <section class="page-head result-page-head"><div class="result-page-heading"><div class="result-page-eyebrow">Result SO · Rekonsiliasi inventaris</div>${workspacePageTitle()}<p class="subtitle">SCAN + MANUAL + PJ dibandingkan dengan VEF + Inbound/Retur. Perhitungan: ${countModeLabel(state.countMode).toLocaleLowerCase("id-ID")}.</p></div></section>
         ${renderSessionAccessNotice()}
         <section class="session-strip result-session-strip"><div class="session-info"><div class="session-kicker">Sesi opname · ${escapeHtml(formatDate(state.activeSession.startedAt, { day: "numeric", month: "short", year: "numeric" }))}</div><div class="session-title">${active ? "Rekonsiliasi sedang berjalan" : "Rekonsiliasi selesai"}</div><div class="session-meta">${state.importFile ? `${escapeHtml(state.importFile)}${state.importMessage ? ` · ${escapeHtml(state.importMessage)}` : ""}` : "Unggah workbook di Master VEF untuk memulai sesi."} · Pemilik: ${escapeHtml(sessionOwnerName(state.activeSession))}</div></div><div class="session-actions"><span class="status-pill"><span class="status-dot" style="${active ? "" : "background:#fff"}"></span>${active ? "Sedang berjalan" : "Selesai"}</span>${active ? `<button class="button finish-opname-button" id="finish-button" ${!canEdit || !stats.total ? "disabled" : ""}>SO SELESAI</button>` : `<button class="button" id="new-session-button" ${!canEdit ? "disabled" : ""}><span class="icon-plus">+</span> Mulai sesi baru</button>`}</div></section>
         <section class="metric-grid compact-metrics result-metrics" aria-label="Ringkasan stock opname">
@@ -3629,12 +3783,13 @@
           <div class="metric"><div class="metric-top">Unit VEF dihitung <span class="metric-mark">#</span></div><div class="metric-value" id="metric-expected">${formatNumber(stats.expected)} <small>unit</small></div></div>
           <div class="metric"><div class="metric-top">Quantity SCAN <span class="metric-mark">⌗</span></div><div class="metric-value" id="metric-scan-qty">${formatNumber(totals.scan)} <small>unit</small></div></div>
           <div class="metric"><div class="metric-top">Quantity MANUAL <span class="metric-mark">＋</span></div><div class="metric-value" id="metric-manual-qty">${formatNumber(totals.manual)} <small>unit</small></div></div>
+          <div class="metric"><div class="metric-top">Quantity Inbound/Retur <span class="metric-mark">↙</span></div><div class="metric-value" id="metric-inbound-qty">${formatNumber(totals.inbound)} <small>unit</small></div></div>
           <div class="metric"><div class="metric-top">Quantity PJ <span class="metric-mark">↗</span></div><div class="metric-value" id="metric-pj-qty">${formatNumber(totals.pj)} <small>unit</small></div></div>
           <div class="metric"><div class="metric-top">Total Quantity SO <span class="metric-mark">Σ</span></div><div class="metric-value" id="metric-total-qty">${formatNumber(totals.total)} <small>unit</small></div><div class="metric-note">SCAN + MANUAL + PJ</div></div>
           <div class="metric"><div class="metric-top">Selisih Quantity <span class="metric-mark issue-count">!</span></div><div class="metric-value" id="metric-variance-qty">${totals.variance > 0 ? "+" : ""}${formatNumber(totals.variance)} <small>unit</small></div><div class="metric-note" id="metric-mismatch-note">${totals.mismatched} item tidak sesuai · ${totals.mismatchPercent}%</div></div>
         </section>
-        <section class="table-section"><div class="table-toolbar"><div class="table-title">Rekonsiliasi per item <span class="table-count">${filtered.length} dari ${state.products.length} item · ${stats.total} ${state.countMode === "all" ? "item" : "laptop"} dihitung · ${stats.nonLaptop} tidak dihitung · SCAN ${formatNumber(totals.scan)} + MANUAL ${formatNumber(totals.manual)} + PJ ${formatNumber(totals.pj)} = ${formatNumber(totals.total)} / VEF ${formatNumber(totals.expected)}</span></div><div class="filters"><div class="search-wrap"><span class="search-icon">⌕</span><input class="search-input" id="search-input" placeholder="Cari item code atau nama" value="${escapeHtml(searchTerm)}" aria-label="Cari item"></div></div></div>
-          <div class="table-scroll"><table><thead><tr><th>No</th><th>Item / item code</th><th>Brand</th><th>Warehouse</th><th>VEF</th><th>SCAN</th><th>MANUAL</th><th>PJ</th><th>Selisih</th><th>Check</th></tr></thead><tbody>${productRows(filtered, active, canEdit)}</tbody></table></div>
+        <section class="table-section"><div class="table-toolbar"><div class="table-title">Rekonsiliasi per item <span class="table-count">${filtered.length} dari ${state.products.length} item · ${stats.total} ${state.countMode === "all" ? "item" : "laptop"} dihitung · ${stats.nonLaptop} tidak dihitung · SCAN ${formatNumber(totals.scan)} + MANUAL ${formatNumber(totals.manual)} + PJ ${formatNumber(totals.pj)} = ${formatNumber(totals.total)} / VEF ${formatNumber(totals.expected)} + Inbound/Retur ${formatNumber(totals.inbound)} = ${formatNumber(totals.expectedWithInbound)}</span></div><div class="filters"><div class="search-wrap"><span class="search-icon">⌕</span><input class="search-input" id="search-input" placeholder="Cari item code atau nama" value="${escapeHtml(searchTerm)}" aria-label="Cari item"></div></div></div>
+          <div class="table-scroll"><table><thead><tr><th>No</th><th>Item / item code</th><th>Brand</th><th>Warehouse</th><th>VEF</th><th>SCAN</th><th>MANUAL</th><th>Inbound/Retur</th><th>PJ</th><th>Selisih</th><th>Check</th></tr></thead><tbody>${productRows(filtered, active, canEdit)}</tbody></table></div>
           <div class="table-footer"><span class="auto-save"><span class="save-dot"></span> Tersimpan otomatis</span><span>Menampilkan ${filtered.length} barang</span></div></section>
         <section class="table-section" style="margin-top:15px"><div class="table-toolbar"><div class="table-title">Riwayat pemindaian <span class="table-count">${state.scanEvents.length} scan</span></div></div><div class="table-scroll"><table class="scan-log-table"><thead><tr><th>Waktu</th><th>Serial Number</th><th>Item code</th><th>Rack</th><th>Hasil scan</th></tr></thead><tbody>${latestScans.length ? latestScans.map((scan) => `<tr><td>${escapeHtml(formatDate(scan.scannedAt, { hour: "2-digit", minute: "2-digit", second: "2-digit" }))}</td><td class="scan-log">${escapeHtml(scan.serial)}</td><td>${escapeHtml(scan.sku || "-")}</td><td>${escapeHtml(rackLabel(scan.layout))}</td><td><span class="row-status ${scan.status === "match" ? "match" : scan.status === "non-laptop" ? "non-laptop" : "shortage"}">${scan.status === "match" ? "Cocok di VEF" : scan.status === "duplicate" ? "SN duplikat" : scan.status === "non-laptop" ? "Bukan laptop" : "Tidak ada di VEF"}</span></td></tr>`).join("") : `<tr><td class="empty-row" colspan="5">Belum ada Serial Number yang dipindai.</td></tr>`}</tbody></table></div></section>`;
     }
@@ -3894,16 +4049,16 @@
       const rows = exceptions.map((product, index) => {
         const variance = varianceFor(product);
         const status = statusFor(product);
-        return `<tr><td class="number-cell">${index + 1}</td><td><div class="product-name">${escapeHtml(product.name)}</div><div class="product-sku">${escapeHtml(product.sku)}</div></td><td><span class="category-chip">${escapeHtml(product.brand || "-")}</span></td><td>${escapeHtml(product.warehouse || "-")}</td><td class="number-cell">${formatNumber(product.stock)}</td><td class="number-cell">${formatNumber(product.count || 0)}</td><td class="number-cell">${formatNumber(product.box || 0)}</td><td class="number-cell">${formatNumber(product.pj || 0)}</td><td><span class="variance ${variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td><td><span class="row-status ${status.className}">${status.label}</span></td><td><input class="note-input" aria-label="Catatan ${escapeHtml(product.sku)}" data-note-sku="${escapeHtml(product.sku)}" placeholder="Tambah catatan" value="${escapeHtml(product.note || "")}" ${canEdit ? "" : "disabled"}></td></tr>`;
+        return `<tr><td class="number-cell">${index + 1}</td><td><div class="product-name">${escapeHtml(product.name)}</div><div class="product-sku">${escapeHtml(product.sku)}</div></td><td><span class="category-chip">${escapeHtml(product.brand || "-")}</span></td><td>${escapeHtml(product.warehouse || "-")}</td><td class="number-cell">${formatNumber(product.stock)}</td><td class="number-cell">${formatNumber(product.count || 0)}</td><td class="number-cell">${formatNumber(product.box || 0)}</td><td class="number-cell">${formatNumber(inboundQuantityFor(product.id))}</td><td class="number-cell">${formatNumber(product.pj || 0)}</td><td><span class="variance ${variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td><td><span class="row-status ${status.className}">${status.label}</span></td><td><input class="note-input" aria-label="Catatan ${escapeHtml(product.sku)}" data-note-sku="${escapeHtml(product.sku)}" placeholder="Tambah catatan" value="${escapeHtml(product.note || "")}" ${canEdit ? "" : "disabled"}></td></tr>`;
       }).join("");
-      return `${navMarkup()}<section class="page-head archive-page-head recap-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Rekap selisih · Pemeriksaan opname</div>${workspacePageTitle()}<p class="subtitle">Hanya item dengan hasil Check tidak sesuai yang ditampilkan. Rumus: SCAN + MANUAL + PJ dibandingkan dengan VEF.</p></div><span class="category-chip">${exceptions.length} item bermasalah</span></section>${renderSessionAccessNotice()}
+      return `${navMarkup()}<section class="page-head archive-page-head recap-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Rekap selisih · Pemeriksaan opname</div>${workspacePageTitle()}<p class="subtitle">Hanya item dengan hasil Check tidak sesuai yang ditampilkan. Rumus: SCAN + MANUAL + PJ dibandingkan dengan VEF + Inbound/Retur.</p></div><span class="category-chip">${exceptions.length} item bermasalah</span></section>${renderSessionAccessNotice()}
         <section class="metric-grid compact-metrics recap-metrics" aria-label="Ringkasan ketidaksesuaian terhadap master VEF">
           <div class="metric"><div class="metric-top">Item bermasalah <span class="metric-mark issue-count">!</span></div><div class="metric-value">${exceptions.length} <small>/ ${totals.count} item</small></div></div>
           <div class="metric"><div class="metric-top">Item tidak sesuai <span class="metric-mark">%</span></div><div class="metric-value">${totals.mismatchPercent}<small>%</small></div></div>
           <div class="metric"><div class="metric-top">Total kuantitas selisih <span class="metric-mark">Δ</span></div><div class="metric-value">${formatNumber(totals.absoluteVariance)} <small>unit</small></div></div>
           <div class="metric"><div class="metric-top">Selisih terhadap VEF <span class="metric-mark">#</span></div><div class="metric-value">${totals.quantityMismatchPercent}<small>%</small></div></div>
         </section>
-        <section class="table-section"><div class="table-toolbar"><div class="table-title">Item belum sesuai <span class="table-count">${exceptions.length} dari ${totals.count} item · Total SO ${formatNumber(totals.total)} / VEF ${formatNumber(totals.expected)}</span></div></div><div class="table-scroll"><table><thead><tr><th>No</th><th>Item / item code</th><th>Brand</th><th>Warehouse</th><th>VEF</th><th>SCAN</th><th>MANUAL</th><th>PJ</th><th>Selisih</th><th>Check</th><th>Note</th></tr></thead><tbody>${rows || `<tr><td class="empty-row" colspan="11">Belum ada item bermasalah. Semua item sesuai dengan VEF.</td></tr>`}</tbody></table></div><div class="table-footer"><span class="auto-save"><span class="save-dot"></span> Catatan tersimpan otomatis</span><span>${exceptions.length} item bermasalah dari ${totals.count} item dihitung</span></div></section>`;
+        <section class="table-section"><div class="table-toolbar"><div class="table-title">Item belum sesuai <span class="table-count">${exceptions.length} dari ${totals.count} item · Total SO ${formatNumber(totals.total)} / VEF + Inbound/Retur ${formatNumber(totals.expectedWithInbound)}</span></div></div><div class="table-scroll"><table><thead><tr><th>No</th><th>Item / item code</th><th>Brand</th><th>Warehouse</th><th>VEF</th><th>SCAN</th><th>MANUAL</th><th>Inbound/Retur</th><th>PJ</th><th>Selisih</th><th>Check</th><th>Note</th></tr></thead><tbody>${rows || `<tr><td class="empty-row" colspan="12">Belum ada item bermasalah. Semua item sesuai dengan VEF.</td></tr>`}</tbody></table></div><div class="table-footer"><span class="auto-save"><span class="save-dot"></span> Catatan tersimpan otomatis</span><span>${exceptions.length} item bermasalah dari ${totals.count} item dihitung</span></div></section>`;
     }
 
     function renderHistory() {
@@ -3982,6 +4137,7 @@
       const snapshot = session.snapshot;
       const scans = snapshot.scanEvents || [];
       const products = snapshot.products || [];
+      const inboundEntries = snapshot.inboundEntries || [];
       const countMode = snapshot.countMode === "all" ? "all" : "laptops";
       const workbooks = session.workbooks || [];
       const workbookArchive = `<section class="table-section" style="margin:12px 0"><div class="table-toolbar"><div class="table-title">File VEF sumber <span class="table-count">${workbooks.length} file</span></div></div>${workbooks.length ? `<div class="completed-export-actions">${workbooks.map((workbook) => `<button class="button button-secondary" type="button" data-download-workbook="${escapeHtml(workbook.storagePath)}" data-download-session="${escapeHtml(session.id)}">↓ ${escapeHtml(workbook.name)} · ${formatNumber(workbook.size / 1024)} KB</button>`).join("")}</div>` : `<div class="confirm-body">Tidak ada file VEF yang diarsipkan untuk sesi ini.</div>`}</section>`;
@@ -3995,16 +4151,16 @@
         return `<div class="completed-rack"><div class="completed-rack-title">${escapeHtml(rackNumber ? (/^\d+$/.test(String(rackNumber)) ? `Rack ${rackNumber}` : String(rackNumber)) : layout)}</div><div class="completed-rack-meta">${target === undefined ? `${rackScans.length} scan · target belum diisi` : `${escapeHtml(result.label)}`}</div>${rackScans.length ? rackScans.slice().reverse().map((scan) => `<div class="completed-rack-scan">Item Code ${escapeHtml(scan.sku || "-")} · Item Name ${escapeHtml(scan.name || "-")} · Serial Number ${escapeHtml(scan.serial)} · ${escapeHtml(scan.status === "match" ? "Cocok" : scan.status === "duplicate" ? "Duplikat" : scan.status === "non-laptop" ? "Bukan laptop" : "Tidak ditemukan")} · ${escapeHtml(scan.scannedAt ? formatDate(scan.scannedAt, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "-")}</div>`).join("") : `<div class="completed-rack-meta">Belum ada scan.</div>`}${manualEntries.map((entry) => `<div class="completed-rack-scan">Manual · ${escapeHtml(entry.sku)} · ${escapeHtml(entry.name)} · Qty ${formatNumber(entry.quantity)} · ${escapeHtml(entry.createdAt ? formatDate(entry.createdAt, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "-")}</div>`).join("")}</div>`;
       }).join("");
       const productRows = products.map((product, index) => {
-        const variance = reconciledQty(product) - Number(product.stock || 0);
+        const variance = varianceFor(product, inboundEntries);
         const included = isCountedProduct(product, countMode);
-        const status = statusFor(product, countMode);
-        return `<tr><td>${index + 1}</td><td>${escapeHtml(product.sku)}</td><td>${escapeHtml(product.name)}</td><td>${escapeHtml(product.warehouse || "-")}</td><td>${formatNumber(product.stock)}</td><td>${included ? formatNumber(product.count || 0) : "-"}</td><td>${formatNumber(product.box || 0)}</td><td>${included ? formatNumber(product.pj || 0) : "-"}</td><td><span class="variance ${variance === 0 ? "zero" : variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td><td><span class="row-status ${status.className}">${status.label}</span></td><td>${escapeHtml(product.note || "-")}</td></tr>`;
+        const status = statusFor(product, countMode, inboundEntries);
+        return `<tr><td>${index + 1}</td><td>${escapeHtml(product.sku)}</td><td>${escapeHtml(product.name)}</td><td>${escapeHtml(product.warehouse || "-")}</td><td>${formatNumber(product.stock)}</td><td>${included ? formatNumber(product.count || 0) : "-"}</td><td>${formatNumber(product.box || 0)}</td><td>${included ? formatNumber(inboundQuantityFor(product.id, inboundEntries)) : "-"}</td><td>${included ? formatNumber(product.pj || 0) : "-"}</td><td><span class="variance ${variance === 0 ? "zero" : variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td><td><span class="row-status ${status.className}">${status.label}</span></td><td>${escapeHtml(product.note || "-")}</td></tr>`;
       }).join("");
-      const recapProducts = products.filter((product) => isCountedProduct(product, countMode) && reconciledQty(product) !== Number(product.stock || 0));
+      const recapProducts = products.filter((product) => isCountedProduct(product, countMode) && varianceFor(product, inboundEntries) !== 0);
       const recapRows = recapProducts.map((product, index) => {
-        const variance = reconciledQty(product) - Number(product.stock || 0);
-        const status = statusFor(product, countMode);
-        return `<tr><td>${index + 1}</td><td>${escapeHtml(product.sku)}</td><td>${escapeHtml(product.name)}</td><td>${escapeHtml(product.warehouse || "-")}</td><td>${formatNumber(product.stock)}</td><td>${formatNumber(product.count || 0)}</td><td>${formatNumber(product.box || 0)}</td><td>${formatNumber(product.pj || 0)}</td><td><span class="variance ${variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td><td>${escapeHtml(status.label)}</td><td>${escapeHtml(product.note || "-")}</td></tr>`;
+        const variance = varianceFor(product, inboundEntries);
+        const status = statusFor(product, countMode, inboundEntries);
+        return `<tr><td>${index + 1}</td><td>${escapeHtml(product.sku)}</td><td>${escapeHtml(product.name)}</td><td>${escapeHtml(product.warehouse || "-")}</td><td>${formatNumber(product.stock)}</td><td>${formatNumber(product.count || 0)}</td><td>${formatNumber(product.box || 0)}</td><td>${formatNumber(inboundQuantityFor(product.id, inboundEntries))}</td><td>${formatNumber(product.pj || 0)}</td><td><span class="variance ${variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td><td>${escapeHtml(status.label)}</td><td>${escapeHtml(product.note || "-")}</td></tr>`;
       }).join("");
       const manualRows = (snapshot.manualEntries || []).map((entry, index) => {
         const rackNumber = snapshot.layoutNumbers?.[entry.layout];
@@ -4012,9 +4168,20 @@
         return `<tr><td>${index + 1}</td><td>${escapeHtml(entry.sku || "-")}</td><td>${escapeHtml(entry.name || "-")}</td><td>${escapeHtml(rackName)}</td><td>${formatNumber(entry.quantity)}</td><td>${escapeHtml(entry.createdAt ? formatDate(entry.createdAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "-")}</td></tr>`;
       }).join("");
       const pjRows = (snapshot.pjEntries || []).map((entry, index) => `<tr><td>${index + 1}</td><td>${escapeHtml(entry.sku || "-")}</td><td>${escapeHtml(entry.invoiceNumber || "-")}</td><td>${escapeHtml(entry.invoiceAt ? formatDate(entry.invoiceAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "-")}</td><td>${formatNumber(entry.quantity || 0)}</td></tr>`).join("");
+      const inboundRows = inboundEntries.map((entry, index) => `<tr><td>${index + 1}</td><td>${escapeHtml(entry.sku || "-")}</td><td>${escapeHtml(entry.referenceNumber || "-")}</td><td>${escapeHtml(entry.entryAt ? formatDate(entry.entryAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "-")}</td><td>${formatNumber(entry.quantity || 0)}</td></tr>`).join("");
       const sourceTimestamp = snapshot.importDownloadedAt ? formatDate(snapshot.importDownloadedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "Metadata tidak tersedia";
       const uploadedTimestamp = snapshot.importUploadedAt ? formatDate(snapshot.importUploadedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "Tidak tersedia";
-      return `${workbookArchive}<div class="completed-export-actions"><button class="button button-primary" type="button" data-export-session="${escapeHtml(session.id)}">↓ Ekspor XLSX</button><button class="button button-secondary" type="button" data-print-session="${escapeHtml(session.id)}">▤ Print</button></div><div class="completed-detail-panel"><p class="subtitle">Data didownload dari VEF ${escapeHtml(sourceTimestamp)} · Data diupload Stock Opname ${escapeHtml(uploadedTimestamp)}</p><h3>Scan Layout · ${scans.length} scan</h3><div class="completed-racks">${racks || `<div class="completed-rack-meta">Tidak ada data Rack.</div>`}</div><h3>Input Manual · ${(snapshot.manualEntries || []).length} catatan</h3><div class="table-scroll"><table class="completed-result-table"><thead><tr><th>No</th><th>Item Code</th><th>Item Name</th><th>Rack</th><th>Quantity</th><th>Waktu Input</th></tr></thead><tbody>${manualRows || `<tr><td class="empty-row" colspan="6">Belum ada input manual.</td></tr>`}</tbody></table></div><h3>Result SO · ${products.length} item</h3><div class="table-scroll"><table class="completed-result-table"><thead><tr><th>No</th><th>Item code</th><th>Item name</th><th>Warehouse</th><th>VEF</th><th>SCAN</th><th>MANUAL</th><th>PJ</th><th>Selisih</th><th>Check</th><th>Note</th></tr></thead><tbody>${productRows || `<tr><td class="empty-row" colspan="11">Data Result SO tidak tersedia.</td></tr>`}</tbody></table></div><h3>Detail PJ · ${(snapshot.pjEntries || []).length} invoice</h3><div class="table-scroll"><table class="completed-result-table"><thead><tr><th>No</th><th>Item Code</th><th>Nomor Invoice</th><th>Tanggal Invoice</th><th>Quantity PJ</th></tr></thead><tbody>${pjRows || `<tr><td class="empty-row" colspan="5">Belum ada input PJ tercatat.</td></tr>`}</tbody></table></div><h3>Rekap Selisih · ${recapProducts.length} item perlu ditinjau</h3><div class="table-scroll"><table class="completed-result-table"><thead><tr><th>No</th><th>Item code</th><th>Item name</th><th>Warehouse</th><th>VEF</th><th>SCAN</th><th>MANUAL</th><th>PJ</th><th>Selisih</th><th>Check</th><th>Note</th></tr></thead><tbody>${recapRows || `<tr><td class="empty-row" colspan="11">Belum ada selisih. Semua item sesuai dengan VEF.</td></tr>`}</tbody></table></div></div>`;
+      return `${workbookArchive}
+        <div class="completed-export-actions"><button class="button button-primary" type="button" data-export-session="${escapeHtml(session.id)}">↓ Ekspor XLSX</button><button class="button button-secondary" type="button" data-print-session="${escapeHtml(session.id)}">▤ Print</button></div>
+        <div class="completed-detail-panel">
+          <p class="subtitle">Data didownload dari VEF ${escapeHtml(sourceTimestamp)} · Data diupload Stock Opname ${escapeHtml(uploadedTimestamp)}</p>
+          <h3>Scan Layout · ${scans.length} scan</h3><div class="completed-racks">${racks || `<div class="completed-rack-meta">Tidak ada data Rack.</div>`}</div>
+          <h3>Input Manual · ${(snapshot.manualEntries || []).length} catatan</h3><div class="table-scroll"><table class="completed-result-table"><thead><tr><th>No</th><th>Item Code</th><th>Item Name</th><th>Rack</th><th>Quantity</th><th>Waktu Input</th></tr></thead><tbody>${manualRows || `<tr><td class="empty-row" colspan="6">Belum ada input manual.</td></tr>`}</tbody></table></div>
+          <h3>Result SO · ${products.length} item</h3><div class="table-scroll"><table class="completed-result-table"><thead><tr><th>No</th><th>Item code</th><th>Item name</th><th>Warehouse</th><th>VEF</th><th>SCAN</th><th>MANUAL</th><th>Inbound/Retur</th><th>PJ</th><th>Selisih</th><th>Check</th><th>Note</th></tr></thead><tbody>${productRows || `<tr><td class="empty-row" colspan="12">Data Result SO tidak tersedia.</td></tr>`}</tbody></table></div>
+          <h3>Detail PJ · ${(snapshot.pjEntries || []).length} invoice</h3><div class="table-scroll"><table class="completed-result-table"><thead><tr><th>No</th><th>Item Code</th><th>Nomor Invoice</th><th>Tanggal Invoice</th><th>Quantity PJ</th></tr></thead><tbody>${pjRows || `<tr><td class="empty-row" colspan="5">Belum ada input PJ tercatat.</td></tr>`}</tbody></table></div>
+          <h3>Detail Inbound/Retur · ${inboundEntries.length} catatan</h3><div class="table-scroll"><table class="completed-result-table"><thead><tr><th>No</th><th>Item Code</th><th>Nomor PREC/RETUR</th><th>Tanggal</th><th>Quantity</th></tr></thead><tbody>${inboundRows || `<tr><td class="empty-row" colspan="5">Belum ada data Inbound/Retur.</td></tr>`}</tbody></table></div>
+          <h3>Rekap Selisih · ${recapProducts.length} item perlu ditinjau</h3><div class="table-scroll"><table class="completed-result-table"><thead><tr><th>No</th><th>Item code</th><th>Item name</th><th>Warehouse</th><th>VEF</th><th>SCAN</th><th>MANUAL</th><th>Inbound/Retur</th><th>PJ</th><th>Selisih</th><th>Check</th><th>Note</th></tr></thead><tbody>${recapRows || `<tr><td class="empty-row" colspan="12">Belum ada selisih. Semua item sesuai dengan VEF.</td></tr>`}</tbody></table></div>
+        </div>`;
     }
 
     function exportCompletedSession(sessionId) {
@@ -4029,6 +4196,7 @@
       }
       const snapshot = session.snapshot;
       const countMode = snapshot.countMode === "all" ? "all" : "laptops";
+      const inboundEntries = snapshot.inboundEntries || [];
       const workbook = XLSX.utils.book_new();
       const scanRows = [["Rack", "Quantity Target", "Jumlah Scan", "Serial Number", "Item Code", "Item Name", "Hasil Scan", "Waktu Scan"]];
       const layouts = snapshot.layouts?.length ? snapshot.layouts : [...new Set((snapshot.scanEvents || []).map((scan) => scan.layout).filter(Boolean))];
@@ -4062,10 +4230,10 @@
           entry.createdAt ? formatDate(entry.createdAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }) : ""
         ]);
       }
-      const resultRows = [["No", "Item Code", "Item Name", "Warehouse", "VEF", "SCAN", "MANUAL", "PJ", "Selisih", "Check", "Note"]];
+      const resultRows = [["No", "Item Code", "Item Name", "Warehouse", "VEF", "SCAN", "MANUAL", "Inbound/Retur", "PJ", "Selisih", "Check", "Note"]];
       (snapshot.products || []).forEach((product, index) => {
         const included = isCountedProduct(product, countMode);
-        const variance = reconciledQty(product) - Number(product.stock || 0);
+        const variance = varianceFor(product, inboundEntries);
         resultRows.push([
           index + 1,
           product.sku,
@@ -4074,16 +4242,17 @@
           Number(product.stock || 0),
           included ? Number(product.count || 0) : "",
           Number(product.box || 0),
+          included ? inboundQuantityFor(product.id, inboundEntries) : "",
           included ? Number(product.pj || 0) : "",
           variance,
-          statusFor(product, countMode).label,
+          statusFor(product, countMode, inboundEntries).label,
           product.note || ""
         ]);
       });
-      const recapRows = [["No", "Item Code", "Item Name", "Warehouse", "VEF", "SCAN", "MANUAL", "PJ", "Selisih", "Check", "Note"]];
+      const recapRows = [["No", "Item Code", "Item Name", "Warehouse", "VEF", "SCAN", "MANUAL", "Inbound/Retur", "PJ", "Selisih", "Check", "Note"]];
       (snapshot.products || []).filter((product) => isCountedProduct(product, countMode)
-        && reconciledQty(product) !== Number(product.stock || 0)).forEach((product, index) => {
-        const variance = reconciledQty(product) - Number(product.stock || 0);
+        && varianceFor(product, inboundEntries) !== 0).forEach((product, index) => {
+        const variance = varianceFor(product, inboundEntries);
         recapRows.push([
           index + 1,
           product.sku,
@@ -4092,9 +4261,10 @@
           Number(product.stock || 0),
           Number(product.count || 0),
           Number(product.box || 0),
+          inboundQuantityFor(product.id, inboundEntries),
           Number(product.pj || 0),
           variance,
-          statusFor(product, countMode).label,
+          statusFor(product, countMode, inboundEntries).label,
           product.note || ""
         ]);
       });
@@ -4107,11 +4277,21 @@
         Number(entry.quantity || 0),
         entry.recordedAt ? formatDate(entry.recordedAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : ""
       ]));
+      const inboundRows = [["No", "Item Code", "Nomor PREC/RETUR", "Tanggal", "Quantity", "Waktu Input"]];
+      inboundEntries.forEach((entry, index) => inboundRows.push([
+        index + 1,
+        entry.sku || "",
+        entry.referenceNumber || "",
+        entry.entryAt ? formatDate(entry.entryAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "",
+        Number(entry.quantity || 0),
+        entry.recordedAt ? formatDate(entry.recordedAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : ""
+      ]));
       XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(scanRows), "Scan Layout");
       XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(resultRows), "Result SO");
       XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(recapRows), "Rekap Selisih");
       XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(manualRows), "Input Manual");
       XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(pjRows), "Detail PJ");
+      XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(inboundRows), "Inbound Retur");
       XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([["Data didownload dari VEF", snapshot.importDownloadedAt || "Metadata tidak tersedia"], ["Data diupload Stock Opname", snapshot.importUploadedAt || "Tidak tersedia"]]), "Metadata VEF");
       const safeName = String(session.workspaceName || "sesi-opname").replace(/[<>:"/\\|?*\u0000-\u001f]/g, "-").trim() || "sesi-opname";
       const date = new Date(session.finishedAt).toISOString().slice(0, 10);
@@ -4142,7 +4322,8 @@
       const targetSerials = countedSerialKeys.size || countedProducts.reduce((total, product) => total + Math.max(0, Number(product.stock) || 0), 0);
       const scannedSerials = matchedSerials.size;
       const progress = targetSerials ? Math.min(100, Math.round(scannedSerials / targetSerials * 100)) : 0;
-      const completedProducts = countedProducts.filter((product) => Number(product.count || 0) + Number(product.box || 0) + Number(product.pj || 0) === Number(product.stock || 0)).length;
+      const inboundEntries = Array.isArray(data.inboundEntries) ? data.inboundEntries : [];
+      const completedProducts = countedProducts.filter((product) => Number(product.count || 0) + Number(product.box || 0) + Number(product.pj || 0) === Number(product.stock || 0) + inboundQuantityFor(product.id, inboundEntries)).length;
       const issues = scanEvents.filter((event) => event.status === "duplicate" || event.status === "not-found").length;
       const expectedUnits = countedProducts.reduce((sum, product) => sum + Number(product.stock || 0), 0);
       const warehouseTotals = new Map();
@@ -4156,7 +4337,8 @@
       const scanQuantity = countedProducts.reduce((sum, product) => sum + Number(product.count || 0), 0);
       const manualQuantity = countedProducts.reduce((sum, product) => sum + Number(product.box || 0), 0);
       const pjQuantity = countedProducts.reduce((sum, product) => sum + Number(product.pj || 0), 0);
-      const mismatchedProducts = countedProducts.filter((product) => Number(product.count || 0) + Number(product.box || 0) + Number(product.pj || 0) !== Number(product.stock || 0));
+      const inboundQuantity = countedProducts.reduce((sum, product) => sum + inboundQuantityFor(product.id, inboundEntries), 0);
+      const mismatchedProducts = countedProducts.filter((product) => Number(product.count || 0) + Number(product.box || 0) + Number(product.pj || 0) !== Number(product.stock || 0) + inboundQuantityFor(product.id, inboundEntries));
       return {
         products: products.length,
         countedSkus: countedProducts.length,
@@ -4172,9 +4354,10 @@
         scanQuantity,
         manualQuantity,
         pjQuantity,
+        inboundQuantity,
         totalQuantity: scanQuantity + manualQuantity + pjQuantity,
         mismatchCount: mismatchedProducts.length,
-        absoluteVariance: mismatchedProducts.reduce((sum, product) => sum + Math.abs(Number(product.count || 0) + Number(product.box || 0) + Number(product.pj || 0) - Number(product.stock || 0)), 0),
+        absoluteVariance: mismatchedProducts.reduce((sum, product) => sum + Math.abs(Number(product.count || 0) + Number(product.box || 0) + Number(product.pj || 0) - Number(product.stock || 0) - inboundQuantityFor(product.id, inboundEntries)), 0),
         scans: scanEvents.length,
         layouts: Array.isArray(data.layouts) ? data.layouts.length : 0,
         isCompleted: data.activeSession?.status === "completed"
@@ -4199,10 +4382,11 @@
         scan: sum.scan + item.stats.scanQuantity,
         manual: sum.manual + item.stats.manualQuantity,
         pj: sum.pj + item.stats.pjQuantity,
+        inbound: sum.inbound + item.stats.inboundQuantity,
         totalQty: sum.totalQty + item.stats.totalQuantity,
         mismatched: sum.mismatched + item.stats.mismatchCount,
         absoluteVariance: sum.absoluteVariance + item.stats.absoluteVariance
-      }), { active: 0, products: 0, countedSkus: 0, serials: 0, scanned: 0, issues: 0, expected: 0, scan: 0, manual: 0, pj: 0, totalQty: 0, mismatched: 0, absoluteVariance: 0 });
+      }), { active: 0, products: 0, countedSkus: 0, serials: 0, scanned: 0, issues: 0, expected: 0, scan: 0, manual: 0, pj: 0, inbound: 0, totalQty: 0, mismatched: 0, absoluteVariance: 0 });
       const overallProgress = total.serials ? Math.min(100, Math.round(total.scanned / total.serials * 100)) : 0;
       const mismatchPercent = total.countedSkus ? Math.round(total.mismatched / total.countedSkus * 100) : 0;
       const circumference = 2 * Math.PI * 38;
@@ -4220,6 +4404,7 @@
           <article class="dashboard-metric"><div class="dashboard-metric-label">Master VEF <span class="dashboard-metric-icon">#</span></div><div class="dashboard-metric-value">${formatNumber(total.expected)}<small> unit</small></div><div class="dashboard-metric-note">${formatNumber(total.products)} item master</div></article>
           <article class="dashboard-metric"><div class="dashboard-metric-label">Quantity SCAN <span class="dashboard-metric-icon">⌗</span></div><div class="dashboard-metric-value">${formatNumber(total.scan)}<small> unit</small></div><div class="dashboard-metric-note">${formatNumber(total.scanned)} SN cocok dari ${formatNumber(total.serials)} SN master</div></article>
           <article class="dashboard-metric"><div class="dashboard-metric-label">Quantity MANUAL <span class="dashboard-metric-icon">＋</span></div><div class="dashboard-metric-value">${formatNumber(total.manual)}<small> unit</small></div><div class="dashboard-metric-note">Input manual seluruh sesi berjalan</div></article>
+          <article class="dashboard-metric"><div class="dashboard-metric-label">Inbound/Retur <span class="dashboard-metric-icon">↙</span></div><div class="dashboard-metric-value">${formatNumber(total.inbound)}<small> unit</small></div><div class="dashboard-metric-note">Ditambahkan ke quantity pembanding VEF</div></article>
           <article class="dashboard-metric"><div class="dashboard-metric-label">Total SO <span class="dashboard-metric-icon">Σ</span></div><div class="dashboard-metric-value">${formatNumber(total.totalQty)}<small> unit</small></div><div class="dashboard-metric-note">SCAN + MANUAL + PJ ${formatNumber(total.pj)}</div></article>
           <article class="dashboard-metric"><div class="dashboard-metric-label">Selisih quantity <span class="dashboard-metric-icon alert">Δ</span></div><div class="dashboard-metric-value">${formatNumber(total.absoluteVariance)}<small> unit</small></div><div class="dashboard-metric-note">Akumulasi selisih absolut terhadap VEF</div></article>
           <article class="dashboard-metric"><div class="dashboard-metric-label">SN bermasalah <span class="dashboard-metric-icon alert">!</span></div><div class="dashboard-metric-value">${formatNumber(total.issues)}</div><div class="dashboard-metric-note">Duplikat atau tidak ditemukan</div></article>
@@ -4247,6 +4432,7 @@
     function renderRecordedSheet(session, sheet, printMode = false) {
       const snapshot = session.snapshot || {};
       const products = snapshot.products || [];
+      const inboundEntries = snapshot.inboundEntries || [];
       const countMode = snapshot.countMode === "all" ? "all" : "laptops";
       if (sheet === "layouts") {
         const layouts = snapshot.layouts?.length ? snapshot.layouts : [...new Set((snapshot.scanEvents || []).map((scan) => scan.layout).filter(Boolean))];
@@ -4259,16 +4445,16 @@
           return `<article class="layout-card"><div class="layout-card-head"><div><div class="layout-name">${escapeHtml(title)}</div><div class="layout-location">Scan Layout · tampilan arsip</div></div><div class="layout-card-summary"><span class="layout-count">Target ${target === undefined ? "-" : formatNumber(target)} · ${scans.length} scan · ${manualEntries.reduce((sum, entry) => sum + Number(entry.quantity || 0), 0)} manual</span></div></div><div class="layout-card-foot"><div class="layout-record-group"><div class="layout-record-heading">Scan</div>${scans.length ? scans.slice().reverse().map((scan) => `<details class="layout-scan-detail"${printMode ? " open" : ""}><summary class="layout-scan-summary"><span class="layout-scan-code">Item Code: ${escapeHtml(scan.sku || "-")}</span><span class="layout-scan-name">Item Name: ${escapeHtml(scan.name || "-")}</span><span class="layout-scan-serial">Serial Number: ${escapeHtml(scan.serial)}</span>${scan.status === "duplicate" || scan.status === "not-found" ? `<span class="scan-warning-icon" role="img" aria-label="Peringatan hasil scan" title="${scan.status === "duplicate" ? "Serial Number duplikat" : "Serial Number tidak ditemukan"}">!</span>` : ""}</summary><div class="layout-scan-detail-body"><span>Hasil: ${escapeHtml(scan.status === "match" ? "Cocok di VEF" : scan.status === "duplicate" ? "Duplikat" : scan.status === "non-laptop" ? "Bukan laptop" : "Tidak ditemukan")}</span><span>Waktu: ${escapeHtml(scan.scannedAt ? formatDate(scan.scannedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "-")}</span></div></details>`).join("") : `<div class="layout-record-empty">Belum ada scan.</div>`}</div><div class="layout-record-group"><div class="layout-record-heading">Manual</div>${manualEntries.length ? manualEntries.slice().reverse().map((entry) => `<div class="completed-rack-scan">${escapeHtml(entry.sku)} · ${escapeHtml(entry.name)} · Qty ${formatNumber(entry.quantity)} · ${escapeHtml(entry.createdAt ? formatDate(entry.createdAt, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "-")}</div>`).join("") : `<div class="layout-record-empty">Belum ada input manual.</div>`}</div></div></article>`;
         }).join("") || `<div class="completed-rack-meta">Tidak ada data Rack.</div>`}</div>`;
       }
-      const visibleProducts = sheet === "recap" ? products.filter((product) => isCountedProduct(product, countMode) && reconciledQty(product) !== Number(product.stock || 0)) : products;
+      const visibleProducts = sheet === "recap" ? products.filter((product) => isCountedProduct(product, countMode) && varianceFor(product, inboundEntries) !== 0) : products;
       const rows = visibleProducts.map((product, index) => {
         const included = isCountedProduct(product, countMode);
-        const variance = reconciledQty(product) - Number(product.stock || 0);
-        const status = statusFor(product, countMode);
-        return `<tr><td class="number-cell">${index + 1}</td><td><div class="product-name">${escapeHtml(product.name)}</div><div class="product-sku">${escapeHtml(product.sku)}</div></td><td><span class="category-chip">${escapeHtml(product.brand || "-")}</span></td><td>${escapeHtml(product.warehouse || "-")}</td><td class="number-cell">${formatNumber(product.stock)}</td><td class="number-cell">${included ? formatNumber(product.count || 0) : "-"}</td><td class="number-cell">${formatNumber(product.box || 0)}</td><td class="number-cell">${included ? formatNumber(product.pj || 0) : "-"}</td><td><span class="variance ${variance === 0 ? "zero" : variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td><td><span class="row-status ${status.className}">${status.label}</span></td><td>${escapeHtml(product.note || "-")}</td></tr>`;
+        const variance = varianceFor(product, inboundEntries);
+        const status = statusFor(product, countMode, inboundEntries);
+        return `<tr><td class="number-cell">${index + 1}</td><td><div class="product-name">${escapeHtml(product.name)}</div><div class="product-sku">${escapeHtml(product.sku)}</div></td><td><span class="category-chip">${escapeHtml(product.brand || "-")}</span></td><td>${escapeHtml(product.warehouse || "-")}</td><td class="number-cell">${formatNumber(product.stock)}</td><td class="number-cell">${included ? formatNumber(product.count || 0) : "-"}</td><td class="number-cell">${formatNumber(product.box || 0)}</td><td class="number-cell">${included ? formatNumber(inboundQuantityFor(product.id, inboundEntries)) : "-"}</td><td class="number-cell">${included ? formatNumber(product.pj || 0) : "-"}</td><td><span class="variance ${variance === 0 ? "zero" : variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td><td><span class="row-status ${status.className}">${status.label}</span></td><td>${escapeHtml(product.note || "-")}</td></tr>`;
       }).join("");
       const title = sheet === "recap" ? "Item belum sesuai" : "Rekonsiliasi per item";
       const emptyMessage = sheet === "recap" ? "Belum ada item bermasalah. Semua item sesuai dengan VEF." : "Data Result SO tidak tersedia.";
-      return `<section class="table-section"><div class="table-toolbar"><div class="table-title">${title} <span class="table-count">${visibleProducts.length} item · hanya-baca</span></div></div><div class="table-scroll"><table><thead><tr><th>No</th><th>Item / item code</th><th>Brand</th><th>Warehouse</th><th>VEF</th><th>SCAN</th><th>MANUAL</th><th>PJ</th><th>Selisih</th><th>Check</th><th>Note</th></tr></thead><tbody>${rows || `<tr><td class="empty-row" colspan="11">${emptyMessage}</td></tr>`}</tbody></table></div></section>`;
+      return `<section class="table-section"><div class="table-toolbar"><div class="table-title">${title} <span class="table-count">${visibleProducts.length} item · hanya-baca</span></div></div><div class="table-scroll"><table><thead><tr><th>No</th><th>Item / item code</th><th>Brand</th><th>Warehouse</th><th>VEF</th><th>SCAN</th><th>MANUAL</th><th>Inbound/Retur</th><th>PJ</th><th>Selisih</th><th>Check</th><th>Note</th></tr></thead><tbody>${rows || `<tr><td class="empty-row" colspan="12">${emptyMessage}</td></tr>`}</tbody></table></div></section>`;
     }
     function openRecordedPeriodDialog() {
       const brand = document.getElementById("recorded-brand-select")?.value;
@@ -4972,6 +5158,7 @@
         render();
       });
       document.querySelectorAll("[data-pj-product]").forEach((button) => button.addEventListener("click", () => openPjEntryDialog(button.dataset.pjProduct)));
+      document.querySelectorAll("[data-inbound-product]").forEach((button) => button.addEventListener("click", () => openInboundEntryDialog(button.dataset.inboundProduct)));
       document.querySelectorAll(".schedule-card-summary").forEach((summary) => summary.addEventListener("click", () => {
         const selectedCard = summary.closest("details.schedule-card");
         document.querySelectorAll("details.schedule-card[open]").forEach((card) => {
@@ -5232,6 +5419,7 @@
       const totals = getReconciliationTotals();
       document.getElementById("metric-scan-qty").innerHTML = `${formatNumber(totals.scan)} <small>unit</small>`;
       document.getElementById("metric-manual-qty").innerHTML = `${formatNumber(totals.manual)} <small>unit</small>`;
+      document.getElementById("metric-inbound-qty").innerHTML = `${formatNumber(totals.inbound)} <small>unit</small>`;
       document.getElementById("metric-pj-qty").innerHTML = `${formatNumber(totals.pj)} <small>unit</small>`;
       document.getElementById("metric-total-qty").innerHTML = `${formatNumber(totals.total)} <small>unit</small>`;
       document.getElementById("metric-variance-qty").innerHTML = `${totals.variance > 0 ? "+" : ""}${formatNumber(totals.variance)} <small>unit</small>`;
@@ -5715,6 +5903,7 @@
         state.scanEvents = [];
         state.manualEntries = [];
         state.pjEntries = [];
+        state.inboundEntries = [];
         state.layouts = importedLayouts;
         state.layoutQuantities = {};
         state.layoutNumbers = {};
@@ -5811,6 +6000,7 @@
       state.scanEvents = [];
       state.manualEntries = [];
       state.pjEntries = [];
+      state.inboundEntries = [];
       state.layoutQuantities = {};
       state.lastScan = null;
       state.products.forEach((product) => { product.count = 0; product.box = 0; product.pj = 0; });
@@ -5834,6 +6024,7 @@
       state.scanEvents = [];
       state.manualEntries = [];
       state.pjEntries = [];
+      state.inboundEntries = [];
       const removedPaths = new Set(currentSessionWorkbooks.map((workbook) => workbook.storagePath));
       state.workbookFiles = (state.workbookFiles || []).filter((workbook) => !removedPaths.has(workbook.storagePath));
       state.lastScan = null;
@@ -5861,11 +6052,11 @@
     }
 
     function exportCsv() {
-      const header = ["Item Code", "Item Name", "Item Group", "Brand", "Warehouse", "Jenis", "VEF", "SCAN", "MANUAL", "PJ", "Selisih", "Check"];
+      const header = ["Item Code", "Item Name", "Item Group", "Brand", "Warehouse", "Jenis", "VEF", "SCAN", "MANUAL", "Inbound/Retur", "PJ", "Selisih", "Check"];
       const rows = state.products.map((product) => {
         const laptop = isLaptopProduct(product);
         const included = isCountedProduct(product);
-        return [product.sku, product.name, product.itemGroup || "", product.brand, product.warehouse, laptop ? "Laptop" : "Bukan laptop", product.stock, included ? product.count || 0 : "", product.box || 0, included ? product.pj || 0 : "", varianceFor(product), statusFor(product).label];
+        return [product.sku, product.name, product.itemGroup || "", product.brand, product.warehouse, laptop ? "Laptop" : "Bukan laptop", product.stock, included ? product.count || 0 : "", product.box || 0, included ? inboundQuantityFor(product.id) : "", included ? product.pj || 0 : "", varianceFor(product), statusFor(product).label];
       });
       const csv = [header, ...rows].map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(",")).join("\r\n");
       const link = document.createElement("a");
@@ -6077,6 +6268,14 @@
       if (entry) setPjEntryForm(entry);
     });
     document.getElementById("pj-entry-new").addEventListener("click", () => setPjEntryForm());
+    document.getElementById("inbound-entry-form").addEventListener("submit", submitInboundEntry);
+    document.getElementById("inbound-entry-existing").addEventListener("change", (event) => {
+      const entry = state.inboundEntries.find((item) => item.id === event.currentTarget.value && item.productId === pendingInboundProductId);
+      if (entry) setInboundEntryForm(entry);
+    });
+    document.getElementById("inbound-entry-new").addEventListener("click", () => setInboundEntryForm());
+    document.getElementById("inbound-entry-delete").addEventListener("click", deleteInboundEntry);
+    document.getElementById("confirm-delete-inbound").addEventListener("click", confirmDeleteInboundEntry);
     document.querySelectorAll("[data-close]").forEach((button) => button.addEventListener("click", () => document.getElementById(button.dataset.close).close()));
     document.getElementById("confirm-finish").addEventListener("click", finishSession);
     document.getElementById("confirm-delete-master").addEventListener("click", deleteAllMasterData);
