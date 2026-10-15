@@ -1233,6 +1233,13 @@
     .schedule-select-option::before { display: none; }
     .schedule-select-option[aria-selected="true"] { background: var(--green-soft); color: var(--green-dark); }
     .schedule-select-option[aria-selected="true"]::after { color: var(--green); content: "✓"; font-size: 12px; font-weight: 800; margin-left: 12px; }
+    .recorded-card .recorded-brand-picker .schedule-select-trigger { background: #fff; border-color: rgba(255,255,255,.75); border-radius: 11px; color: #20312d; font-size: 12px; font-weight: 700; min-height: 46px; padding: 0 14px; }
+    .recorded-card .recorded-brand-picker .schedule-select-trigger:hover:not(:disabled) { border-color: #a9d5c3; }
+    .recorded-card .recorded-brand-picker .schedule-select-trigger:focus-visible,
+    .recorded-card .recorded-brand-picker .schedule-select-picker.open .schedule-select-trigger { border-color: #b5e0cd; box-shadow: 0 0 0 3px rgba(255,255,255,.2); outline: 0; }
+    .recorded-card .recorded-brand-picker .schedule-select-chevron { color: var(--green); font-size: 15px; }
+    .recorded-card.recorded-brand-select-open { overflow: visible; z-index: 20; }
+    .recorded-card .recorded-brand-picker .schedule-select-options { z-index: 40; }
     html[data-theme="dark"] .schedule-select-trigger { background: #14211f; border-color: #3a514b; color: var(--ink); }
     html[data-theme="dark"] .schedule-select-option[aria-selected="true"] { background: #203b35; color: #d9f1e4; }
     html[data-accent="burgundy"] {
@@ -2468,6 +2475,7 @@
       picker?.classList.remove("open");
       picker?.querySelector(".schedule-select-options")?.classList.remove("open");
       picker?.closest(".schedule-card")?.classList.remove("schedule-resource-open");
+      picker?.closest(".recorded-card")?.classList.remove("recorded-brand-select-open");
       picker?.querySelector(".schedule-select-trigger")?.setAttribute("aria-expanded", "false");
     }
     function workspaceScheduleIsComplete(workspace) {
@@ -4455,7 +4463,7 @@
           </article>
           <article class="dashboard-panel"><header class="dashboard-panel-head"><div><div class="dashboard-panel-title">Progres per brand</div><div class="dashboard-panel-subtitle">Sesi aktif saja · SN cocok dibanding target master</div></div><span class="dashboard-chart-tag">${workspaceStats.length} brand</span></header><div class="dashboard-chart-list">${chartRows}</div>${workspaceStats.length ? "" : '<div class="dashboard-empty">Belum ada sesi berjalan. Unggah workbook pada sesi bernama brand di Master VEF untuk memulai.</div>'}</article>
         </section>
-        <section class="table-section recorded-card"><div class="table-toolbar"><div><div class="table-title">Stock Opname Recorded</div><p class="subtitle">Buka kembali lembar Scan Layout, Result SO, dan Rekap Selisih dari sesi yang telah selesai.</p></div><span class="category-chip">${recordedSessions.length} arsip selesai</span></div><div class="recorded-brand-picker"><label class="auth-field" for="recorded-brand-select"><span>Nama Brand</span><select id="recorded-brand-select" ${recordedBrands.length ? "" : "disabled"}><option value="">${recordedBrands.length ? "Pilih Nama Brand" : "Belum ada arsip selesai"}</option>${recordedBrands.map((brand) => `<option value="${escapeHtml(brand)}">${escapeHtml(brand)}</option>`).join("")}</select></label><button class="button button-primary" id="open-recorded-brand" type="button" ${recordedBrands.length ? "" : "disabled"}>Pilih bulan dan week</button></div></section>
+        <section class="table-section recorded-card"><div class="table-toolbar"><div><div class="table-title">Stock Opname Recorded</div><p class="subtitle">Buka kembali lembar Scan Layout, Result SO, dan Rekap Selisih dari sesi yang telah selesai.</p></div><span class="category-chip">${recordedSessions.length} arsip selesai</span></div><div class="recorded-brand-picker"><label class="auth-field"><span>Nama Brand</span>${renderScheduleDropdown("recorded-brand-trigger", "Pilih Nama Brand untuk arsip", "recorded-brand-native", 'id="recorded-brand-select"', [["", recordedBrands.length ? "Pilih Nama Brand" : "Belum ada arsip selesai"], ...recordedBrands.map((brand) => [brand, brand])], "", !recordedBrands.length)}</label><button class="button button-primary" id="open-recorded-brand" type="button" ${recordedBrands.length ? "" : "disabled"}>Pilih bulan dan week</button></div></section>
       </div>`;
     }
 
@@ -4498,7 +4506,7 @@
       const brand = document.getElementById("recorded-brand-select")?.value;
       if (!brand) {
         notify("Pilih Nama Brand terlebih dahulu.");
-        document.getElementById("recorded-brand-select")?.focus();
+        document.getElementById("recorded-brand-trigger")?.focus();
         return;
       }
       const sessions = state.sessions
@@ -5326,6 +5334,7 @@
           picker.classList.add("open");
           options.classList.add("open");
           picker.closest(".schedule-card")?.classList.add("schedule-resource-open");
+          picker.closest(".recorded-card")?.classList.add("recorded-brand-select-open");
           trigger.setAttribute("aria-expanded", "true");
         });
         trigger.addEventListener("keydown", (event) => {
