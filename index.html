@@ -1392,8 +1392,7 @@
     .manual-item-entry.is-latest { background: #e8f4ec; border-radius: 7px; box-shadow: 0 0 0 2px rgba(23, 107, 91, .15); scroll-margin: 90px; }
     .schedule-card-foot .schedule-actions { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; }
     .schedule-card-foot .schedule-actions .button { margin: 0; }
-    .pj-entry-summary { color: var(--muted); display: block; font-size: 10px; margin-top: 3px; }
-    .pj-entry-button { background: #f4f7f6; border: 1px solid var(--line); border-radius: 8px; color: var(--green-dark); cursor: pointer; font-size: 12px; font-weight: 700; min-width: 80px; padding: 7px 9px; }
+    .pj-entry-button { background: #f4f7f6; border: 1px solid var(--line); border-radius: 8px; color: var(--green-dark); cursor: pointer; font-size: 12px; font-weight: 700; min-width: 48px; padding: 7px 9px; }
     .pj-entry-button:disabled { cursor: not-allowed; opacity: .55; }
     html[data-theme="dark"] .recorded-brand-picker { background: linear-gradient(130deg, #182b26, #1c322b); }
     html[data-theme="dark"] .recorded-brand-picker select { background-color: #14211f; border-color: #3a514b; box-shadow: 0 2px 5px rgba(0,0,0,.16), inset 0 1px rgba(255,255,255,.03); color: var(--ink); }
@@ -1894,8 +1893,8 @@
     <div class="dialog-actions"><button class="button button-primary" type="button" data-close="workbook-upload-success-dialog">OK</button></div>
   </dialog>
   <dialog id="pj-entry-dialog" class="feature-dialog">
-    <div class="dialog-head"><div><div class="dialog-title">Tambah quantity PJ</div><div class="dialog-subtitle" id="pj-entry-product"></div></div><button class="dialog-close" type="button" data-close="pj-entry-dialog" aria-label="Tutup">×</button></div>
-    <form id="pj-entry-form" class="feature-dialog-form"><label class="auth-field"><span>Tanggal dan waktu invoice</span><input class="auth-input" name="invoiceDate" type="datetime-local" required></label><label class="auth-field"><span>Nomor invoice</span><input class="auth-input" name="invoiceNumber" type="text" maxlength="100" required placeholder="Masukkan nomor invoice"></label><label class="auth-field"><span>Quantity PJ</span><input class="auth-input" name="quantity" type="number" min="1" step="1" required placeholder="Masukkan quantity"></label><div class="dialog-actions"><button class="button button-secondary" type="button" data-close="pj-entry-dialog">Batal</button><button class="button button-primary" type="submit">Simpan PJ</button></div></form>
+    <div class="dialog-head"><div><div class="dialog-title" id="pj-entry-title">Tambah quantity PJ</div><div class="dialog-subtitle" id="pj-entry-product"></div></div><button class="dialog-close" type="button" data-close="pj-entry-dialog" aria-label="Tutup">×</button></div>
+    <form id="pj-entry-form" class="feature-dialog-form"><label class="auth-field" id="pj-entry-existing-wrap" hidden><span>Pilih invoice untuk diedit</span><select class="auth-input" id="pj-entry-existing"></select></label><label class="auth-field"><span>Tanggal dan waktu invoice</span><input class="auth-input" name="invoiceDate" type="datetime-local" required></label><label class="auth-field"><span>Nomor invoice</span><input class="auth-input" name="invoiceNumber" type="text" maxlength="100" required placeholder="Masukkan nomor invoice"></label><label class="auth-field"><span>Quantity PJ</span><input class="auth-input" name="quantity" type="number" min="1" step="1" required placeholder="Masukkan quantity"></label><div class="dialog-actions"><button class="button button-secondary" id="pj-entry-new" type="button">Invoice baru</button><button class="button button-secondary" type="button" data-close="pj-entry-dialog">Batal</button><button class="button button-primary" id="pj-entry-save" type="submit">Simpan PJ</button></div></form>
   </dialog>
   <dialog id="finish-dialog">
     <div class="dialog-head"><div><div class="dialog-title">Selesaikan stock opname?</div><div class="dialog-subtitle">Hasil diarsipkan, lalu seluruh data kerja sesi ini direset. Jika ada sesi lain yang berjalan, sesi itu akan dibuka untuk dilanjutkan.</div></div><button class="dialog-close" type="button" data-close="finish-dialog" aria-label="Tutup">×</button></div>
@@ -2310,6 +2309,7 @@
     let selectedRecordedSessionId = "";
     let selectedRecordedSheet = "layouts";
     let pendingPjProductId = "";
+    let pendingPjEntryId = "";
     let pendingCompletedSessionDeletionId = "";
     let pendingWorkspaceDeletionId = "";
     let lastManualEntryId = "";
@@ -3373,6 +3373,30 @@
     const syncManualBoxTotals = () => state.products.forEach((product) => { product.box = manualQuantityFor(product.id); });
     const reconciledQty = (product) => Number(product.count || 0) + Number(product.box || 0) + Number(product.pj || 0);
     const varianceFor = (product) => reconciledQty(product) - Number(product.stock || 0);
+    function setPjEntryForm(entry = null) {
+      const form = document.getElementById("pj-entry-form");
+      const title = document.getElementById("pj-entry-title");
+      const selectorWrap = document.getElementById("pj-entry-existing-wrap");
+      const selector = document.getElementById("pj-entry-existing");
+      pendingPjEntryId = entry?.id || "";
+      if (entry) {
+        const invoiceDate = new Date(entry.invoiceAt);
+        form.elements.invoiceDate.value = Number.isFinite(invoiceDate.getTime()) ? new Date(invoiceDate.getTime() - invoiceDate.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : "";
+        form.elements.invoiceNumber.value = entry.invoiceNumber || "";
+        form.elements.quantity.value = String(entry.quantity || "");
+        selector.value = entry.id;
+      } else {
+        const now = new Date();
+        form.elements.invoiceDate.value = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+        form.elements.invoiceNumber.value = "";
+        form.elements.quantity.value = "";
+        selector.value = "";
+      }
+      selectorWrap.hidden = !entry && selector.options.length === 0;
+      title.textContent = entry ? "Edit quantity PJ" : "Tambah quantity PJ";
+      document.getElementById("pj-entry-new").hidden = !entry;
+      document.getElementById("pj-entry-save").textContent = entry ? "Simpan perubahan" : "Simpan PJ";
+    }
     function openPjEntryDialog(productId) {
       if (!requireActiveSessionEdit()) return;
       const product = state.products.find((item) => item.id === productId);
@@ -3386,9 +3410,11 @@
       }
       pendingPjProductId = productId;
       document.getElementById("pj-entry-product").textContent = `${product.sku} · ${product.name} · VEF ${formatDate(state.importDownloadedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}`;
-      const now = new Date();
-      const localValue = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-      document.querySelector("#pj-entry-form [name='invoiceDate']").value = localValue;
+      const entries = (state.pjEntries || []).filter((entry) => entry.productId === productId);
+      const selector = document.getElementById("pj-entry-existing");
+      selector.innerHTML = entries.slice().reverse().map((entry) => `<option value="${escapeHtml(entry.id)}">${escapeHtml(entry.invoiceNumber || "Invoice tanpa nomor")} · ${escapeHtml(entry.invoiceAt && Number.isFinite(new Date(entry.invoiceAt).getTime()) ? formatDate(entry.invoiceAt, { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "Tanggal tidak tersedia")} · Qty ${formatNumber(entry.quantity)}</option>`).join("");
+      setPjEntryForm(entries[entries.length - 1] || null);
+      document.getElementById("pj-entry-existing-wrap").hidden = entries.length < 2;
       document.getElementById("pj-entry-dialog").showModal();
     }
     function submitPjEntry(event) {
@@ -3396,6 +3422,11 @@
       if (!requireActiveSessionEdit()) return;
       const form = event.currentTarget;
       const product = state.products.find((item) => item.id === pendingPjProductId);
+      const existingEntry = pendingPjEntryId ? state.pjEntries.find((entry) => entry.id === pendingPjEntryId && entry.productId === product?.id) : null;
+      if (pendingPjEntryId && !existingEntry) {
+        notify("Invoice PJ yang dipilih tidak lagi tersedia. Tutup dialog lalu buka kembali.");
+        return;
+      }
       const invoiceNumber = form.elements.invoiceNumber.value.trim();
       const invoiceDate = new Date(form.elements.invoiceDate.value);
       const quantity = Number(form.elements.quantity.value);
@@ -3408,29 +3439,28 @@
         notify("Tanggal/waktu invoice harus sesudah tanggal file VEF didownload.");
         return;
       }
-      if (!Number.isSafeInteger(quantity) || quantity < 1 || !Number.isSafeInteger(Number(product.pj || 0) + quantity)) {
+      const nextProductQuantity = Number(product?.pj || 0) - Number(existingEntry?.quantity || 0) + quantity;
+      if (!Number.isSafeInteger(quantity) || quantity < 1 || !Number.isSafeInteger(nextProductQuantity) || nextProductQuantity < 0) {
         notify("Quantity PJ harus bilangan bulat minimal 1 dan tidak melebihi batas.");
         return;
       }
-      const entry = {
+      const entry = existingEntry || {
         id: crypto.randomUUID(),
         productId: product.id,
         sku: product.sku,
-        invoiceNumber,
-        invoiceAt: invoiceDate.toISOString(),
-        quantity,
         recordedAt: new Date().toISOString()
       };
-      state.pjEntries.push(entry);
-      product.pj = Number(product.pj || 0) + quantity;
-      recordActivity("PJ ditambahkan", `${product.sku} · invoice ${invoiceNumber} (${formatDate(entry.invoiceAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}) sebanyak ${formatNumber(quantity)}.`);
-      playScanBeep("match");
+      Object.assign(entry, { invoiceNumber, invoiceAt: invoiceDate.toISOString(), quantity });
+      if (!existingEntry) state.pjEntries.push(entry);
+      product.pj = nextProductQuantity;
+      recordActivity(existingEntry ? "PJ diperbarui" : "PJ ditambahkan", `${product.sku} · invoice ${invoiceNumber} (${formatDate(entry.invoiceAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}) sebanyak ${formatNumber(quantity)}.`);
       persist();
       pendingPjProductId = "";
+      pendingPjEntryId = "";
       form.reset();
       document.getElementById("pj-entry-dialog").close();
       render();
-      notify("Quantity PJ berhasil dicatat.");
+      notify(existingEntry ? "Data PJ berhasil diperbarui." : "Quantity PJ berhasil dicatat.");
     }
     function reclassifyScanEvents(scanEvents, serialMaster, countMode) {
       const seen = new Set();
@@ -3507,6 +3537,10 @@
       const included = isCountedProduct(product);
       const status = statusFor(product);
       const variance = varianceFor(product);
+      const pjEntries = (state.pjEntries || []).filter((entry) => entry.productId === product.id);
+      const pjTooltip = pjEntries.length
+        ? pjEntries.map((entry) => `${entry.invoiceNumber || "Invoice tanpa nomor"} · ${entry.invoiceAt && Number.isFinite(new Date(entry.invoiceAt).getTime()) ? formatDate(entry.invoiceAt, { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "Tanggal tidak tersedia"} · Qty ${formatNumber(entry.quantity)}`).join(" | ")
+        : "Belum ada invoice PJ. Klik untuk mencatat.";
       return `<tr class="${included ? "" : "non-laptop-row"}">
         <td class="number-cell">${index + 1}</td>
         <td><div class="product-cell"><div><div class="product-name">${escapeHtml(product.name)}</div><div class="product-sku">${escapeHtml(product.sku)}</div></div></div></td>
@@ -3515,7 +3549,7 @@
         <td class="number-cell">${formatNumber(product.stock)}</td>
         <td class="number-cell">${included ? formatNumber(product.count || 0) : "-"}</td>
         <td class="number-cell">${formatNumber(product.box || 0)}</td>
-        <td>${included ? `<button class="pj-entry-button" type="button" data-pj-product="${escapeHtml(product.id)}" aria-label="Tambah PJ untuk ${escapeHtml(product.sku)}" ${!active || !canEdit ? "disabled" : ""}>${formatNumber(product.pj || 0)} · Tambah</button>${(state.pjEntries || []).filter((entry) => entry.productId === product.id).slice(-1).map((entry) => `<span class="pj-entry-summary">${escapeHtml(entry.invoiceNumber)} · ${escapeHtml(formatDate(entry.invoiceAt, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }))}</span>`).join("")}` : "-"}</td>
+        <td>${included ? `<button class="pj-entry-button" type="button" data-pj-product="${escapeHtml(product.id)}" title="${escapeHtml(pjTooltip)}" aria-label="PJ ${formatNumber(product.pj || 0)} untuk ${escapeHtml(product.sku)}. Klik untuk melihat atau mengedit invoice." ${!active || !canEdit ? "disabled" : ""}>${formatNumber(product.pj || 0)}</button>` : "-"}</td>
         <td><span class="variance ${variance === 0 ? "zero" : variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td>
         <td><span class="row-status ${status.className}">${included && variance === 0 ? '<span class="check-success-icon" aria-hidden="true">✓</span>' : ""}${status.label}</span></td>
       </tr>`;
@@ -5981,6 +6015,11 @@
     document.getElementById("recorded-period-month").addEventListener("change", updateRecordedPeriodAvailability);
     document.getElementById("recorded-period-week").addEventListener("change", updateRecordedPeriodAvailability);
     document.getElementById("pj-entry-form").addEventListener("submit", submitPjEntry);
+    document.getElementById("pj-entry-existing").addEventListener("change", (event) => {
+      const entry = state.pjEntries.find((item) => item.id === event.currentTarget.value && item.productId === pendingPjProductId);
+      if (entry) setPjEntryForm(entry);
+    });
+    document.getElementById("pj-entry-new").addEventListener("click", () => setPjEntryForm());
     document.querySelectorAll("[data-close]").forEach((button) => button.addEventListener("click", () => document.getElementById(button.dataset.close).close()));
     document.getElementById("confirm-finish").addEventListener("click", finishSession);
     document.getElementById("confirm-delete-master").addEventListener("click", deleteAllMasterData);
