@@ -1092,6 +1092,10 @@
       .app-shell > .sidebar .nav-icon svg { height: 15px; width: 15px; }
     }
     .feature-dialog { border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 24px 90px rgba(15, 34, 29, .26); max-height: min(88vh, 900px); max-width: min(960px, calc(100vw - 32px)); padding: 24px; width: 100%; }
+    .feature-dialog#pj-entry-dialog { max-width: min(560px, calc(100vw - 32px)); padding: 18px; width: 100%; }
+    #pj-entry-dialog .dialog-head { padding: 0 0 12px; }
+    #pj-entry-dialog .feature-dialog-form { gap: 10px; padding-top: 12px; }
+    #pj-entry-dialog .dialog-actions { margin-top: 0; padding: 10px 0 0; }
     .feature-dialog.upload-success-dialog { max-width: min(440px, calc(100vw - 32px)); padding: 0; width: min(440px, calc(100vw - 32px)); }
     .feature-dialog[open] { animation: feature-dialog-drop .22s ease-out both; }
     .feature-dialog::backdrop { background: rgba(12, 25, 22, .52); backdrop-filter: blur(3px); }
@@ -1425,6 +1429,7 @@
     html[data-theme="dark"] .manual-item-entry.is-latest { background: #233b31; }
     @media (max-width: 640px) {
       .feature-dialog { padding: 17px; }
+      .feature-dialog#pj-entry-dialog { padding: 14px; }
       .recorded-brand-picker { grid-template-columns: 1fr; }
       .recorded-view-actions { align-items: stretch; flex-direction: column; }
       .recorded-view-tabs > * { flex: 1 1 auto; }
