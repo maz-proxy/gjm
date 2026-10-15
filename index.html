@@ -4592,10 +4592,16 @@
       }, { once: true });
       printWindow.document.open();
       printWindow.document.write(`<!doctype html><html lang="id" data-theme="${escapeHtml(theme)}" data-accent="${escapeHtml(accent)}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHtml(title)}</title><style>${styles}
+        html[data-accent="burgundy"] { --print-accent: #842b4b; --print-accent-dark: #5d1c35; --print-accent-soft: #f5e7ec; --print-accent-line: #ead1d9; }
+        html:not([data-accent="burgundy"]) { --print-accent: #176b5b; --print-accent-dark: #124a41; --print-accent-soft: #e5f2ee; --print-accent-line: #c9dfd0; }
         body.printing-session { background: #fff; display: block; margin: 0; min-height: 0; padding: 12mm; }
         #print-session-root { display: block; margin: 0 auto; max-width: none; padding: 0; }
-        #print-session-root h1 { color: #20312d; font-size: 21px; margin: 0 0 4px; }
+        #print-session-root h1 { color: var(--print-accent-dark); font-size: 21px; margin: 0 0 4px; }
         #print-session-root > .print-session-subtitle { color: #64746f; font-size: 10px; margin: 0 0 14px; }
+        #print-session-root th { background: var(--print-accent-soft); color: var(--print-accent-dark); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        #print-session-root .table-section, #print-session-root .layout-card, #print-session-root .completed-rack { border-color: var(--print-accent-line); }
+        #print-session-root .layout-card-head { background: color-mix(in srgb, var(--print-accent) 9%, #fff); border-color: var(--print-accent-line); }
+        #print-session-root .layout-name, #print-session-root .layout-record-heading, #print-session-root .completed-detail-panel h3, #print-session-root .completed-rack-title { color: var(--print-accent-dark); }
         #print-session-root .table-scroll, #print-session-root .completed-detail-panel, #print-session-root .recorded-sheet-content { max-height: none; min-width: 0; overflow: visible; }
         #print-session-root table { min-width: 0; }
         #print-session-root [data-export-session], #print-session-root [data-print-session] { display: none !important; }
