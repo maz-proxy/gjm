@@ -529,7 +529,9 @@
     .schedule-empty { background: var(--paper); border: 1px dashed var(--line); border-radius: 12px; color: var(--muted); padding: 35px 18px; text-align: center; }
     .dashboard-page { animation: dashboard-enter .32s ease both; }
     @keyframes dashboard-enter { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+    .dashboard-top-row { align-items: stretch; display: grid; gap: 14px; grid-template-columns: minmax(0, 7fr) minmax(260px, 3fr); margin-bottom: 20px; }
     .dashboard-hero { align-items: center; background: linear-gradient(112deg, #174b42 0%, #176b5b 62%, #398b73 100%); border: 1px solid rgba(255,255,255,.16); border-radius: 15px; box-shadow: 0 12px 28px rgba(23,76,62,.14); color: #fff; display: flex; gap: 24px; justify-content: space-between; margin-bottom: 20px; min-height: 151px; overflow: hidden; padding: 22px 26px; position: relative; }
+    .dashboard-top-row .dashboard-hero { height: 100%; margin-bottom: 0; }
     .dashboard-hero::after { background: rgba(205,236,222,.11); border: 1px solid rgba(255,255,255,.12); border-radius: 50%; content: ""; height: 240px; position: absolute; right: 19%; top: -172px; width: 240px; }
     .dashboard-hero-copy, .dashboard-hero-action { position: relative; z-index: 1; }
     .dashboard-hero-copy { min-width: 0; }
@@ -582,11 +584,17 @@
      .master-quantity-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .dashboard-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .dashboard-charts { grid-template-columns: minmax(0, .9fr) minmax(0, 1.5fr); }
+      .dashboard-top-row { grid-template-columns: minmax(0, 1fr); }
+      .dashboard-top-row .dashboard-hero { min-height: 151px; }
+      .dashboard-top-row .recorded-card .recorded-brand-picker { grid-template-columns: minmax(0, 1fr) auto; }
       .schedule-grid { grid-template-columns: minmax(0, 1fr); }
     }
     @media (max-width: 650px) {
       .dashboard-overview { align-items: flex-start; flex-direction: column; gap: 6px; }
       .dashboard-hero { align-items: flex-start; flex-direction: column; gap: 14px; margin-bottom: 15px; min-height: 0; padding: 18px; }
+      .dashboard-top-row { gap: 12px; margin-bottom: 15px; }
+      .dashboard-top-row .dashboard-hero { min-height: 0; }
+      .dashboard-top-row .recorded-card .recorded-brand-picker { grid-template-columns: minmax(0, 1fr); }
       .dashboard-hero .dashboard-overview { align-items: flex-start; flex-direction: column; gap: 5px; }
       .dashboard-hero-action { align-self: flex-start; }
       .dashboard-metrics { gap: 8px; }
@@ -1453,6 +1461,11 @@
     .recorded-card .recorded-brand-picker select { background-color: #fff; border-color: rgba(255,255,255,.65); color: #20312d; }
     .recorded-card .recorded-brand-picker .button { background: #fff; border-color: #fff; color: #176b5b; }
     .recorded-card .recorded-brand-picker .button:hover:not(:disabled) { background: #eaf5ef; border-color: #eaf5ef; color: #174b42; }
+    .dashboard-top-row .recorded-card { align-self: stretch; margin: 0; }
+    .dashboard-top-row .recorded-card .table-toolbar { align-items: flex-start; gap: 8px; }
+    .dashboard-top-row .recorded-card > .table-toolbar > div { min-width: 0; }
+    .dashboard-top-row .recorded-card .recorded-brand-picker { align-items: stretch; grid-template-columns: minmax(0, 1fr); margin-top: 12px; }
+    .dashboard-top-row .recorded-card .recorded-brand-picker .button { width: 100%; }
     html[data-accent="burgundy"] .recorded-card { background: linear-gradient(115deg, #65283d 0%, #8f3b57 62%, #b35c77 100%); box-shadow: 0 12px 28px rgba(101,40,61,.18); }
     html[data-accent="burgundy"] .recorded-card .recorded-brand-picker .button { color: #87364f; }
     html[data-accent="burgundy"] .recorded-card .recorded-brand-picker .button:hover:not(:disabled) { background: #fbedf1; border-color: #fbedf1; color: #65283d; }
@@ -4443,7 +4456,10 @@
         <span class="dashboard-chart-count">${stats.progress}% · ${formatNumber(stats.scannedSerials)}/${formatNumber(stats.targetSerials)} SN</span>
       </div>`).join("");
       return `${navMarkup()}<div class="dashboard-page">
-        <section class="page-head dashboard-hero"><div class="dashboard-hero-copy"><div class="dashboard-hero-eyebrow">Ringkasan Stock Opname · Live</div><h1>Dashboard Sesi Berjalan</h1><p class="subtitle">Statistik dan progres hanya untuk sesi opname yang masih berjalan.</p><div class="dashboard-overview"><p>${total.active} sesi aktif · pantau Scan, Manual, dan rekonsiliasi quantity.</p><span class="dashboard-date">${formatDate(new Date(), { day: "numeric", month: "long", year: "numeric" })}</span></div></div><button class="button dashboard-hero-action" data-page-link="workspaces">Kelola Jadwal →</button></section>
+        <div class="dashboard-top-row">
+          <section class="page-head dashboard-hero"><div class="dashboard-hero-copy"><div class="dashboard-hero-eyebrow">Ringkasan Stock Opname · Live</div><h1>Dashboard Sesi Berjalan</h1><p class="subtitle">Statistik dan progres hanya untuk sesi opname yang masih berjalan.</p><div class="dashboard-overview"><p>${total.active} sesi aktif · pantau Scan, Manual, dan rekonsiliasi quantity.</p><span class="dashboard-date">${formatDate(new Date(), { day: "numeric", month: "long", year: "numeric" })}</span></div></div><button class="button dashboard-hero-action" data-page-link="workspaces">Kelola Jadwal →</button></section>
+          <section class="table-section recorded-card"><div class="table-toolbar"><div><div class="table-title">Stock Opname Recorded</div><p class="subtitle">Buka kembali lembar Scan Layout, Result SO, dan Rekap Selisih dari sesi yang telah selesai.</p></div><span class="category-chip">${recordedSessions.length} arsip selesai</span></div><div class="recorded-brand-picker"><label class="auth-field"><span>Nama Brand</span>${renderScheduleDropdown("recorded-brand-trigger", "Pilih Nama Brand untuk arsip", "recorded-brand-native", 'id="recorded-brand-select"', [["", recordedBrands.length ? "Pilih Nama Brand" : "Belum ada arsip selesai"], ...recordedBrands.map((brand) => [brand, brand])], "", !recordedBrands.length)}</label><button class="button button-primary" id="open-recorded-brand" type="button" ${recordedBrands.length ? "" : "disabled"}>Pilih bulan dan week</button></div></section>
+        </div>
         <section class="dashboard-metrics" aria-label="Statistik sesi stock opname yang berjalan">
           <article class="dashboard-metric"><div class="dashboard-metric-label">Sesi berjalan <span class="dashboard-metric-icon">◉</span></div><div class="dashboard-metric-value">${total.active}</div><div class="dashboard-metric-note">${workspaceStats.length} brand sedang dihitung</div></article>
           <article class="dashboard-metric"><div class="dashboard-metric-label">Item diperiksa <span class="dashboard-metric-icon">▤</span></div><div class="dashboard-metric-value">${formatNumber(total.countedSkus)}</div><div class="dashboard-metric-note">${formatNumber(total.mismatched)} item belum sesuai · ${mismatchPercent}%</div></article>
@@ -4463,7 +4479,6 @@
           </article>
           <article class="dashboard-panel"><header class="dashboard-panel-head"><div><div class="dashboard-panel-title">Progres per brand</div><div class="dashboard-panel-subtitle">Sesi aktif saja · SN cocok dibanding target master</div></div><span class="dashboard-chart-tag">${workspaceStats.length} brand</span></header><div class="dashboard-chart-list">${chartRows}</div>${workspaceStats.length ? "" : '<div class="dashboard-empty">Belum ada sesi berjalan. Unggah workbook pada sesi bernama brand di Master VEF untuk memulai.</div>'}</article>
         </section>
-        <section class="table-section recorded-card"><div class="table-toolbar"><div><div class="table-title">Stock Opname Recorded</div><p class="subtitle">Buka kembali lembar Scan Layout, Result SO, dan Rekap Selisih dari sesi yang telah selesai.</p></div><span class="category-chip">${recordedSessions.length} arsip selesai</span></div><div class="recorded-brand-picker"><label class="auth-field"><span>Nama Brand</span>${renderScheduleDropdown("recorded-brand-trigger", "Pilih Nama Brand untuk arsip", "recorded-brand-native", 'id="recorded-brand-select"', [["", recordedBrands.length ? "Pilih Nama Brand" : "Belum ada arsip selesai"], ...recordedBrands.map((brand) => [brand, brand])], "", !recordedBrands.length)}</label><button class="button button-primary" id="open-recorded-brand" type="button" ${recordedBrands.length ? "" : "disabled"}>Pilih bulan dan week</button></div></section>
       </div>`;
     }
 
