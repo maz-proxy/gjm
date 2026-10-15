@@ -4165,14 +4165,16 @@
       notify("Sesi stock opname berhasil dihapus.");
     }
 
-    function renderCompletedSessionDetails(session) {
+    function renderCompletedSessionDetails(session, printMode = false) {
       const snapshot = session.snapshot;
       const scans = snapshot.scanEvents || [];
       const products = snapshot.products || [];
       const inboundEntries = snapshot.inboundEntries || [];
       const countMode = snapshot.countMode === "all" ? "all" : "laptops";
       const workbooks = session.workbooks || [];
-      const workbookArchive = `<section class="table-section" style="margin:12px 0"><div class="table-toolbar"><div class="table-title">File VEF sumber <span class="table-count">${workbooks.length} file</span></div></div>${workbooks.length ? `<div class="completed-export-actions">${workbooks.map((workbook) => `<button class="button button-secondary" type="button" data-download-workbook="${escapeHtml(workbook.storagePath)}" data-download-session="${escapeHtml(session.id)}">↓ ${escapeHtml(workbook.name)} · ${formatNumber(workbook.size / 1024)} KB</button>`).join("")}</div>` : `<div class="confirm-body">Tidak ada file VEF yang diarsipkan untuk sesi ini.</div>`}</section>`;
+      const sourceTimestamp = snapshot.importDownloadedAt ? formatDate(snapshot.importDownloadedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "Metadata tidak tersedia";
+      const uploadedTimestamp = snapshot.importUploadedAt ? formatDate(snapshot.importUploadedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "Tidak tersedia";
+      const workbookArchive = `<section class="table-section" style="margin:12px 0"><div class="table-toolbar"><div class="table-title">File VEF sumber <span class="table-count">${workbooks.length} file</span>${printMode ? `<div class="vef-timestamps"><span>Data didownload dari VEF <strong>${escapeHtml(sourceTimestamp)}</strong></span><span>Data diupload Stock Opname <strong>${escapeHtml(uploadedTimestamp)}</strong></span></div>` : ""}</div></div>${workbooks.length ? `<div class="completed-export-actions">${workbooks.map((workbook) => `<button class="button button-secondary" type="button" data-download-workbook="${escapeHtml(workbook.storagePath)}" data-download-session="${escapeHtml(session.id)}">↓ ${escapeHtml(workbook.name)} · ${formatNumber(workbook.size / 1024)} KB</button>`).join("")}</div>` : `<div class="confirm-body">Tidak ada file VEF yang diarsipkan untuk sesi ini.</div>`}</section>`;
       const layouts = snapshot.layouts?.length ? snapshot.layouts : [...new Set(scans.map((scan) => scan.layout).filter(Boolean))];
       const racks = layouts.map((layout) => {
         const rackScans = scans.filter((scan) => scan.layout === layout);
@@ -4201,12 +4203,10 @@
       }).join("");
       const pjRows = (snapshot.pjEntries || []).map((entry, index) => `<tr><td>${index + 1}</td><td>${escapeHtml(entry.sku || "-")}</td><td>${escapeHtml(entry.invoiceNumber || "-")}</td><td>${escapeHtml(entry.invoiceAt ? formatDate(entry.invoiceAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "-")}</td><td>${formatNumber(entry.quantity || 0)}</td></tr>`).join("");
       const inboundRows = inboundEntries.map((entry, index) => `<tr><td>${index + 1}</td><td>${escapeHtml(entry.sku || "-")}</td><td>${escapeHtml(entry.referenceNumber || "-")}</td><td>${escapeHtml(entry.entryAt ? formatDate(entry.entryAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "-")}</td><td>${formatNumber(entry.quantity || 0)}</td></tr>`).join("");
-      const sourceTimestamp = snapshot.importDownloadedAt ? formatDate(snapshot.importDownloadedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "Metadata tidak tersedia";
-      const uploadedTimestamp = snapshot.importUploadedAt ? formatDate(snapshot.importUploadedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "Tidak tersedia";
       return `${workbookArchive}
         <div class="completed-export-actions"><button class="button button-primary" type="button" data-export-session="${escapeHtml(session.id)}">↓ Ekspor XLSX</button><button class="button button-secondary" type="button" data-print-session="${escapeHtml(session.id)}">▤ Print</button></div>
         <div class="completed-detail-panel">
-          <p class="subtitle">Data didownload dari VEF ${escapeHtml(sourceTimestamp)} · Data diupload Stock Opname ${escapeHtml(uploadedTimestamp)}</p>
+          ${printMode ? "" : `<p class="subtitle">Data didownload dari VEF ${escapeHtml(sourceTimestamp)} · Data diupload Stock Opname ${escapeHtml(uploadedTimestamp)}</p>`}
           <h3>Scan Layout · ${scans.length} scan</h3><div class="completed-racks">${racks || `<div class="completed-rack-meta">Tidak ada data Rack.</div>`}</div>
           <h3>Input Manual · ${(snapshot.manualEntries || []).length} catatan</h3><div class="table-scroll"><table class="completed-result-table"><thead><tr><th>No</th><th>Item Code</th><th>Item Name</th><th>Rack</th><th>Quantity</th><th>Waktu Input</th></tr></thead><tbody>${manualRows || `<tr><td class="empty-row" colspan="6">Belum ada input manual.</td></tr>`}</tbody></table></div>
           <h3>Result SO · ${products.length} item</h3><div class="table-scroll"><table class="completed-result-table"><thead><tr><th>No</th><th>Item code</th><th>Item name</th><th>Warehouse</th><th>VEF</th><th>SCAN</th><th>MANUAL</th><th>Inbound/Retur</th><th>PJ</th><th>Selisih</th><th>Check</th><th>Note</th></tr></thead><tbody>${productRows || `<tr><td class="empty-row" colspan="12">Data Result SO tidak tersedia.</td></tr>`}</tbody></table></div>
@@ -4620,7 +4620,7 @@
       }
       const pics = session.picNames || [];
       const subtitle = `${archivedSessionMonth(session)} · ${archivedSessionWeek(session)} · Pemilik: ${sessionOwnerName(session)} · PIC 1: ${pics[0] || "Belum diisi"} · PIC 2: ${pics[1] || "Belum diisi"} · Selesai ${formatDate(session.finishedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}`;
-      openArchivePrintWindow(`${session.workspaceName || "Sesi opname"} · Stock Opname`, subtitle, renderCompletedSessionDetails(session));
+      openArchivePrintWindow(`${session.workspaceName || "Sesi opname"} · Stock Opname`, subtitle, renderCompletedSessionDetails(session, true));
     }
     function printRecordedSheet() {
       const session = state.sessions.find((item) => item.id === selectedRecordedSessionId);
