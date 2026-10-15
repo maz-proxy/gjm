@@ -1108,10 +1108,20 @@
     .feature-dialog { border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 24px 90px rgba(15, 34, 29, .26); max-height: min(88vh, 900px); max-width: min(960px, calc(100vw - 32px)); padding: 24px; width: 100%; }
     .feature-dialog#pj-entry-dialog { max-width: min(560px, calc(100vw - 32px)); padding: 18px; width: 100%; }
     .feature-dialog#inbound-entry-dialog { max-width: min(560px, calc(100vw - 32px)); padding: 18px; width: 100%; }
-    #pj-entry-dialog .dialog-head { padding: 0 0 12px; }
-    #inbound-entry-dialog .dialog-head { padding: 0 0 12px; }
     #pj-entry-dialog .dialog-head,
-    #inbound-entry-dialog .dialog-head { background: linear-gradient(115deg, color-mix(in srgb, var(--green) 12%, var(--paper)), var(--paper) 82%); border: 1px solid color-mix(in srgb, var(--green) 24%, var(--line)); border-radius: 10px; margin-bottom: 12px; padding: 12px 14px; }
+    #inbound-entry-dialog .dialog-head { background: linear-gradient(112deg, color-mix(in srgb, var(--green) 55%, #000), color-mix(in srgb, var(--green) 78%, #000) 62%, color-mix(in srgb, var(--green) 68%, #000)); border: 0; border-radius: 12px; isolation: isolate; margin-bottom: 12px; min-height: 104px; overflow: hidden; padding: 19px 20px 17px; position: relative; }
+    #pj-entry-dialog .dialog-head::before,
+    #inbound-entry-dialog .dialog-head::before { border: 1px solid rgba(255,255,255,.14); border-radius: 50%; content: ""; height: 230px; pointer-events: none; position: absolute; right: 25%; top: -145px; width: 230px; }
+    #pj-entry-dialog .dialog-head > div,
+    #inbound-entry-dialog .dialog-head > div { min-width: 0; position: relative; z-index: 1; }
+    #pj-entry-dialog .dialog-title,
+    #inbound-entry-dialog .dialog-title { color: #fff; font-size: 18px; font-weight: 800; }
+    #pj-entry-dialog .dialog-subtitle,
+    #inbound-entry-dialog .dialog-subtitle { color: rgba(255,255,255,.82); line-height: 1.5; }
+    #pj-entry-dialog .dialog-close,
+    #inbound-entry-dialog .dialog-close { color: rgba(255,255,255,.86); position: relative; z-index: 1; }
+    #pj-entry-dialog .dialog-close:hover,
+    #inbound-entry-dialog .dialog-close:hover { color: #fff; }
     #pj-entry-dialog .feature-dialog-form { gap: 10px; padding-top: 12px; }
     #inbound-entry-dialog .feature-dialog-form { gap: 10px; padding-top: 12px; }
     #pj-entry-dialog .dialog-actions { margin-top: 0; padding: 10px 0 0; }
