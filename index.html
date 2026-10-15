@@ -4596,6 +4596,7 @@
         html:not([data-accent="burgundy"]) { --print-accent: #176b5b; --print-accent-dark: #124a41; --print-accent-soft: #e5f2ee; --print-accent-line: #c9dfd0; }
         body.printing-session { background: #fff; display: block; margin: 0; min-height: 0; padding: 12mm; }
         #print-session-root { display: block; margin: 0 auto; max-width: none; padding: 0; }
+        #print-session-root, #print-session-root *, #print-session-root *::before, #print-session-root *::after { box-shadow: none !important; text-shadow: none !important; }
         #print-session-root h1 { color: var(--print-accent-dark); font-size: 21px; margin: 0 0 4px; }
         #print-session-root > .print-session-subtitle { color: #64746f; font-size: 10px; margin: 0 0 14px; }
         #print-session-root th { background: var(--print-accent-soft); color: var(--print-accent-dark); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
