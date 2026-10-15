@@ -6399,8 +6399,11 @@
       const accentToggle = event.target.closest("[data-accent-toggle]");
       if (accentToggle) applyAccent(document.documentElement.dataset.accent === "burgundy" ? "green" : "burgundy", true);
     });
-    document.getElementById("recorded-period-month").addEventListener("change", updateRecordedPeriodAvailability);
-    document.getElementById("recorded-period-week").addEventListener("change", updateRecordedPeriodAvailability);
+    document.addEventListener("change", (event) => {
+      if (event.target.id === "recorded-period-month" || event.target.id === "recorded-period-week") {
+        updateRecordedPeriodAvailability();
+      }
+    });
     document.getElementById("pj-entry-form").addEventListener("submit", submitPjEntry);
     document.getElementById("pj-entry-delete").addEventListener("click", deletePjEntry);
     document.getElementById("confirm-delete-pj").addEventListener("click", confirmDeletePjEntry);
