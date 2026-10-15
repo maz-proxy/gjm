@@ -622,18 +622,18 @@
     .form-field label { color: #596056; font-size: 10px; font-weight: 700; }
     .form-control { background: #fff; border: 1px solid #dfe3db; border-radius: 5px; height: 36px; outline: 0; padding: 0 9px; width: 100%; }
     .dialog-actions { background: #fafbf8; border-top: 1px solid var(--line); display: flex; gap: 8px; justify-content: flex-end; padding: 13px 21px; }
-    .recorded-period-dialog { background: #fff; border: 1px solid var(--line); border-radius: 15px; box-shadow: 0 24px 80px rgba(22,31,23,.24); overflow: hidden; }
-    .recorded-period-dialog .dialog-head { padding: 22px 25px 16px; }
-    .recorded-period-dialog .dialog-title { font-size: 17px; letter-spacing: -.2px; }
+    .recorded-period-dialog { background: var(--paper); border: 1px solid var(--line); border-radius: 15px; box-shadow: 0 24px 80px rgba(22,31,23,.24); max-width: min(520px, calc(100vw - 32px)); overflow: hidden; width: 100%; }
+    .recorded-period-dialog .dialog-head { padding: 17px 19px 13px; }
+    .recorded-period-dialog .dialog-title { font-size: 16px; letter-spacing: -.2px; }
     .recorded-period-dialog .dialog-close { align-items: center; border: 1px solid transparent; border-radius: 7px; display: inline-flex; height: 30px; justify-content: center; transition: background .15s ease, border-color .15s ease; width: 30px; }
     .recorded-period-dialog .dialog-close:hover { background: var(--green-soft); border-color: var(--line); color: var(--green); }
-    .recorded-period-dialog .feature-dialog-form { display: grid; gap: 15px; padding: 18px 25px 0; }
+    .recorded-period-dialog .feature-dialog-form { display: grid; gap: 12px; padding: 14px 19px 0; }
     .recorded-period-dialog .auth-field { gap: 7px; }
     .recorded-period-dialog .auth-field > span { color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; }
     .recorded-period-dialog .select-input { appearance: none; background-color: var(--paper); background-image: linear-gradient(45deg, transparent 50%, var(--green) 50%), linear-gradient(135deg, var(--green) 50%, transparent 50%); background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%; background-repeat: no-repeat; background-size: 5px 5px, 5px 5px; border-color: var(--line); border-radius: 10px; font-size: 12px; font-weight: 600; height: 42px; padding: 0 36px 0 12px; transition: border-color .15s ease, box-shadow .15s ease; }
     .recorded-period-dialog .select-input:focus-visible { border-color: var(--green); box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 16%, transparent); outline: 0; }
-    .recorded-period-dialog .dialog-actions { margin: 2px 0 0; padding: 13px 0 18px; }
-    .recorded-period-dialog .dialog-actions { margin-left: -25px; margin-right: -25px; padding-left: 25px; padding-right: 25px; }
+    .recorded-period-dialog .dialog-actions { margin: 2px 0 0; padding: 11px 0 14px; }
+    .recorded-period-dialog .dialog-actions { margin-left: -19px; margin-right: -19px; padding-left: 19px; padding-right: 19px; }
     .recorded-period-availability { align-items: flex-start; background: #f1f7f4; border: 1px solid #dcebe3; border-radius: 9px; color: #3e6756; display: flex; font-size: 11px; gap: 9px; line-height: 1.5; padding: 10px 12px; }
     .recorded-period-availability[hidden] { display: none; }
     .recorded-period-availability::before { background: currentColor; border-radius: 50%; content: ""; flex: 0 0 7px; height: 7px; margin-top: 5px; }
@@ -1922,6 +1922,11 @@
   <dialog id="recorded-period-dialog" class="feature-dialog recorded-period-dialog">
     <div class="dialog-head"><div><div class="dialog-title" id="recorded-period-title">Nama Brand</div><div class="dialog-subtitle">Tentukan bulan dan week sesi yang ingin ditinjau.</div></div><button class="dialog-close" type="button" data-close="recorded-period-dialog" aria-label="Tutup">×</button></div>
     <form id="recorded-period-form" class="feature-dialog-form"><label class="auth-field"><span>Bulan</span><select class="select-input" id="recorded-period-month" required></select></label><label class="auth-field"><span>Week</span><select class="select-input" id="recorded-period-week" required><option value="Week 1">Week 1</option><option value="Week 2">Week 2</option></select></label><div id="recorded-period-availability" class="recorded-period-availability" role="status" aria-live="polite" hidden></div><div class="dialog-actions"><button class="button button-secondary" type="button" data-close="recorded-period-dialog">Kembali</button><button class="button button-primary" type="submit">View</button></div></form>
+  </dialog>
+  <dialog id="recorded-data-unavailable-dialog" class="date-validation-dialog" aria-labelledby="recorded-data-unavailable-title" aria-describedby="recorded-data-unavailable-copy">
+    <div class="dialog-head"><div><div class="dialog-title" id="recorded-data-unavailable-title">Data arsip belum tersedia</div><div class="dialog-subtitle">Pilih periode lain untuk melihat hasil.</div></div><button class="dialog-close" type="button" data-close="recorded-data-unavailable-dialog" aria-label="Tutup">×</button></div>
+    <div class="date-validation-copy" id="recorded-data-unavailable-copy"></div>
+    <div class="dialog-actions"><button class="button button-primary" type="button" data-close="recorded-data-unavailable-dialog">Mengerti</button></div>
   </dialog>
   <dialog id="workbook-upload-success-dialog" class="feature-dialog upload-success-dialog" aria-labelledby="workbook-upload-success-title" aria-describedby="workbook-upload-success-message">
     <div class="dialog-head"><div><div class="dialog-title" id="workbook-upload-success-title">File berhasil diunggah</div><div class="dialog-subtitle">Konfirmasi hasil unggah file Master VEF.</div></div></div>
@@ -4533,7 +4538,8 @@
       const session = state.sessions.filter((item) => item.workspaceName === brand && archivedSessionMonth(item) === month && archivedSessionWeek(item) === week && item.snapshot).sort((a, b) => new Date(b.finishedAt) - new Date(a.finishedAt))[0];
       if (!session) {
         updateRecordedPeriodAvailability();
-        notify(`Data arsip ${brand} · ${month} · ${week} tidak tersedia.`);
+        document.getElementById("recorded-data-unavailable-copy").textContent = `Belum ada arsip stock opname untuk ${brand} · ${month} · ${week}. Selesaikan stock opname terlebih dahulu atau pilih periode lain.`;
+        document.getElementById("recorded-data-unavailable-dialog").showModal();
         return;
       }
       selectedRecordedSessionId = session.id;
