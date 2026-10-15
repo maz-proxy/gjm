@@ -652,22 +652,21 @@
     .form-field label { color: #596056; font-size: 10px; font-weight: 700; }
     .form-control { background: #fff; border: 1px solid #dfe3db; border-radius: 5px; height: 36px; outline: 0; padding: 0 9px; width: 100%; }
     .dialog-actions { background: #fafbf8; border-top: 1px solid var(--line); display: flex; gap: 8px; justify-content: flex-end; padding: 13px 21px; }
-    .recorded-period-dialog { background: var(--paper); border: 1px solid var(--line); border-radius: 15px; box-shadow: 0 24px 80px rgba(22,31,23,.24); max-width: min(520px, calc(100vw - 32px)); overflow: hidden; width: 100%; }
-    .recorded-period-dialog .dialog-head { padding: 17px 19px 13px; }
-    .recorded-period-dialog .dialog-title { font-size: 16px; letter-spacing: -.2px; }
-    .recorded-period-dialog .dialog-close { align-items: center; border: 1px solid transparent; border-radius: 7px; display: inline-flex; height: 30px; justify-content: center; transition: background .15s ease, border-color .15s ease; width: 30px; }
-    .recorded-period-dialog .dialog-close:hover { background: var(--green-soft); border-color: var(--line); color: var(--green); }
-    .recorded-period-dialog .feature-dialog-form { display: grid; gap: 12px; padding: 14px 19px 0; }
-    .recorded-period-dialog .auth-field { gap: 7px; }
-    .recorded-period-dialog .auth-field > span { color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; }
-    .recorded-period-dialog .select-input { appearance: none; background-color: var(--paper); background-image: linear-gradient(45deg, transparent 50%, var(--green) 50%), linear-gradient(135deg, var(--green) 50%, transparent 50%); background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%; background-repeat: no-repeat; background-size: 5px 5px, 5px 5px; border-color: var(--line); border-radius: 10px; font-size: 12px; font-weight: 600; height: 42px; padding: 0 36px 0 12px; transition: border-color .15s ease, box-shadow .15s ease; }
-    .recorded-period-dialog .select-input:focus-visible { border-color: var(--green); box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 16%, transparent); outline: 0; }
-    .recorded-period-dialog .dialog-actions { margin: 2px 0 0; padding: 11px 0 14px; }
-    .recorded-period-dialog .dialog-actions { margin-left: -19px; margin-right: -19px; padding-left: 19px; padding-right: 19px; }
     .recorded-period-availability { align-items: flex-start; background: #f1f7f4; border: 1px solid #dcebe3; border-radius: 9px; color: #3e6756; display: flex; font-size: 11px; gap: 9px; line-height: 1.5; padding: 10px 12px; }
     .recorded-period-availability[hidden] { display: none; }
     .recorded-period-availability::before { background: currentColor; border-radius: 50%; content: ""; flex: 0 0 7px; height: 7px; margin-top: 5px; }
     .recorded-period-availability.empty { background: #fbf1f2; border-color: #efd9dc; color: #8b3a4a; }
+    .recorded-period-controls { display: grid; gap: 7px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .recorded-period-controls .auth-field { min-width: 0; }
+    .recorded-period-controls .recorded-period-brand { grid-column: 1 / -1; }
+    .recorded-period-controls .auth-field > span { color: #e2f3ec; font-size: 9px; font-weight: 800; letter-spacing: .55px; text-transform: uppercase; }
+    .recorded-period-controls .schedule-select-trigger { background: #fff; border-color: rgba(255,255,255,.65); color: #20312d; min-height: 36px; }
+    .recorded-period-controls .schedule-select-chevron { color: var(--green); }
+    .recorded-period-controls .schedule-select-options { z-index: 45; }
+    .recorded-period-controls .recorded-period-availability,
+    .recorded-period-controls .recorded-period-view { grid-column: 1 / -1; }
+    .recorded-period-controls .recorded-period-availability { font-size: 9px; padding: 7px 9px; }
+    .recorded-period-controls .recorded-period-view { min-height: 35px; }
     .confirm-body { color: #5f665c; font-size: 12px; line-height: 1.6; padding: 20px 21px; }
     .confirm-body strong { color: var(--ink); }
     .reset-password-dialog { overflow: hidden; }
@@ -1102,7 +1101,6 @@
     html[data-theme="dark"] .logout-confirm-dialog .dialog-actions { background: color-mix(in srgb, var(--green) 10%, var(--paper)); border-top-color: color-mix(in srgb, var(--green) 25%, var(--line)); }
     html[data-theme="dark"] .logout-confirm-dialog .button-secondary { background: color-mix(in srgb, var(--green) 13%, var(--paper)); border-color: color-mix(in srgb, var(--green) 36%, var(--line)); color: var(--ink); }
     html[data-theme="dark"] .logout-confirm-dialog .button-danger { background: linear-gradient(135deg, #247357, #185540); border-color: #39866a; color: #fff; }
-    html[data-theme="dark"] .recorded-period-dialog .select-input { background-color: #14211f; border-color: var(--line); color: var(--ink); }
     html[data-theme="dark"] .recorded-period-availability { background: #1c3029; border-color: #355347; color: #b7decb; }
     html[data-theme="dark"] .recorded-period-availability.empty { background: #392428; border-color: #67404a; color: #f0aeba; }
     html[data-theme="dark"] .confirm-body { color: var(--muted); }
@@ -1137,7 +1135,6 @@
       .app-shell > .sidebar .nav-icon svg { height: 15px; width: 15px; }
     }
     .feature-dialog { border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 24px 90px rgba(15, 34, 29, .26); max-height: min(88vh, 900px); max-width: min(960px, calc(100vw - 32px)); padding: 24px; width: 100%; }
-    .feature-dialog.recorded-period-dialog { max-width: min(520px, calc(100vw - 32px)); padding: 0; width: min(520px, calc(100vw - 32px)); }
     .feature-dialog#pj-entry-dialog { max-width: min(560px, calc(100vw - 32px)); padding: 18px; width: 100%; }
     .feature-dialog#inbound-entry-dialog { max-width: min(560px, calc(100vw - 32px)); padding: 18px; width: 100%; }
     #pj-entry-dialog .dialog-head,
@@ -1289,11 +1286,6 @@
     html[data-accent="burgundy"] .auth-card { background: #fff5f8; border-color: #e7cbd4; box-shadow: 0 22px 70px rgba(78,25,46,.2); }
     html[data-accent="burgundy"] .auth-input { background: #fffafb; border-color: #e4cbd3; }
     html[data-accent="burgundy"] .auth-input:focus { background: #fff; border-color: #b96a84; box-shadow: 0 0 0 3px rgba(132,43,75,.12); }
-    html[data-accent="burgundy"] .recorded-period-dialog { background: #fff9fb; border-color: #ead1d9; box-shadow: 0 24px 80px rgba(78,25,46,.24); }
-    html[data-accent="burgundy"] .recorded-period-dialog .dialog-head { border-color: #ead1d9; }
-    html[data-accent="burgundy"] .recorded-period-dialog .dialog-actions { background: #fdf7f9; border-color: #ead1d9; }
-    html[data-accent="burgundy"] .recorded-period-dialog .button-secondary { background: #fff; border-color: #ead1d9; color: #64273c; }
-    html[data-accent="burgundy"] .recorded-period-dialog .button-secondary:hover { background: #f8e9ee; border-color: #d9adba; }
     html[data-accent="burgundy"] .recorded-period-availability { background: #f5e9ed; border-color: #ead1d9; color: #6b3447; }
     html[data-accent="burgundy"] .recorded-period-availability.empty { background: #fbebee; border-color: #eccbd2; color: #8b3046; }
     html[data-accent="burgundy"] .schedule-card,
@@ -1387,12 +1379,6 @@
     html[data-accent="burgundy"][data-theme="dark"] .auth-card { background: #302127; border-color: #523a43; }
     html[data-accent="burgundy"][data-theme="dark"] .auth-input { background: #21171b; border-color: #523a43; color: #f4dce4; }
     html[data-accent="burgundy"][data-theme="dark"] .auth-input:focus { background: #281b20; border-color: #b96a84; }
-    html[data-theme="dark"][data-accent="burgundy"] .recorded-period-dialog { background: #302127; border-color: #523a43; }
-    html[data-theme="dark"][data-accent="burgundy"] .recorded-period-dialog .dialog-head,
-    html[data-theme="dark"][data-accent="burgundy"] .recorded-period-dialog .dialog-actions { background: #281d22; border-color: #523a43; }
-    html[data-theme="dark"][data-accent="burgundy"] .recorded-period-dialog .select-input { background-color: #21171b; border-color: #634452; color: #f4dce4; }
-    html[data-theme="dark"][data-accent="burgundy"] .recorded-period-dialog .button-secondary { background: #3b2830; border-color: #634452; color: #f4dce4; }
-    html[data-theme="dark"][data-accent="burgundy"] .recorded-period-dialog .button-secondary:hover { background: #4a2e39; border-color: #9a5369; }
     html[data-theme="dark"][data-accent="burgundy"] .recorded-period-availability { background: #392630; border-color: #634452; color: #ecc3d0; }
     html[data-theme="dark"][data-accent="burgundy"] .recorded-period-availability.empty { background: #40252b; border-color: #76434e; color: #f0aeba; }
     html[data-theme="dark"][data-accent="burgundy"] .schedule-card,
@@ -1479,7 +1465,7 @@
     .recorded-card .table-title { color: #fff; font-size: 15px; letter-spacing: -.15px; }
     .recorded-card .subtitle { color: #d5e9df; font-size: 11px; line-height: 1.5; margin: 5px 0 0; }
     .recorded-card > .table-toolbar > .category-chip { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.25); color: #fff; flex: 0 0 auto; }
-    .recorded-card .recorded-brand-picker { background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.2); margin: 13px 14px 14px; padding: 14px 16px; position: relative; z-index: 1; }
+    .recorded-card .recorded-brand-picker { background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.2); grid-template-columns: minmax(0, 1fr); margin: 13px 14px 14px; padding: 14px 16px; position: relative; z-index: 1; }
     .recorded-card .recorded-brand-picker .auth-field > span { color: #e2f3ec; }
     .recorded-card .recorded-brand-picker select { background-color: #fff; border-color: rgba(255,255,255,.65); color: #20312d; }
     .recorded-card .recorded-brand-picker .button { background: #fff; border-color: #fff; color: #176b5b; }
@@ -1494,6 +1480,10 @@
     .dashboard-top-row .recorded-card .recorded-brand-picker .auth-field > span { font-size: 9px; }
     .dashboard-top-row .recorded-card .recorded-brand-picker .schedule-select-trigger,
     .dashboard-top-row .recorded-card .recorded-brand-picker .button { min-height: 34px; }
+    .dashboard-top-row .recorded-card .recorded-period-controls { gap: 6px; }
+    .dashboard-top-row .recorded-card .recorded-period-controls .schedule-select-trigger { font-size: 10px; min-height: 34px; padding: 0 8px; }
+    .dashboard-top-row .recorded-card .recorded-period-controls .schedule-select-options { z-index: 45; }
+    .dashboard-top-row .recorded-card .recorded-period-controls .recorded-period-view { font-size: 10px; min-height: 32px; }
     html[data-accent="burgundy"] .recorded-card { background: linear-gradient(115deg, #65283d 0%, #8f3b57 62%, #b35c77 100%); box-shadow: 0 12px 28px rgba(101,40,61,.18); }
     html[data-accent="burgundy"] .recorded-card .recorded-brand-picker .button { color: #87364f; }
     html[data-accent="burgundy"] .recorded-card .recorded-brand-picker .button:hover:not(:disabled) { background: #fbedf1; border-color: #fbedf1; color: #65283d; }
@@ -1662,7 +1652,6 @@
     html[data-accent="burgundy"] .workspace-name-input:focus,
     html[data-accent="burgundy"] .schedule-period-select:focus,
     html[data-accent="burgundy"] .schedule-select-trigger:focus-visible,
-    html[data-accent="burgundy"] .recorded-period-dialog .select-input:focus-visible { border-color: #b96a84; box-shadow: 0 0 0 3px rgba(132,43,75,.12); }
     html[data-accent="burgundy"] .layout-page-head,
     html[data-accent="burgundy"] .result-page-head,
     html[data-accent="burgundy"] .archive-page-head,
@@ -1858,7 +1847,6 @@
     html[data-accent="burgundy"][data-theme="dark"] .workspace-count-mode:focus,
     html[data-accent="burgundy"][data-theme="dark"] .workspace-name-input:focus,
     html[data-accent="burgundy"][data-theme="dark"] .schedule-select-trigger:focus-visible,
-    html[data-accent="burgundy"][data-theme="dark"] .recorded-period-dialog .select-input:focus-visible { background-color: #281b20; border-color: #b96a84; box-shadow: 0 0 0 3px rgba(215,134,160,.14); }
     html[data-accent="burgundy"][data-theme="dark"] .table-toolbar { background: linear-gradient(100deg, #211820, #281d22); border-color: #523a43; }
     html[data-accent="burgundy"][data-theme="dark"] th { background: #38232b; color: #d9b8c3; }
     html[data-accent="burgundy"][data-theme="dark"] tbody tr:hover,
@@ -1983,10 +1971,6 @@
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <input class="upload-input" id="workbook-input" type="file" accept=".xlsx,.xls,.csv" aria-label="Pilih workbook atau file CSV stock opname">
-  <dialog id="recorded-period-dialog" class="feature-dialog recorded-period-dialog">
-    <div class="dialog-head"><div><div class="dialog-title" id="recorded-period-title">Nama Brand</div><div class="dialog-subtitle">Tentukan bulan dan week sesi yang ingin ditinjau.</div></div><button class="dialog-close" type="button" data-close="recorded-period-dialog" aria-label="Tutup">×</button></div>
-    <form id="recorded-period-form" class="feature-dialog-form"><label class="auth-field"><span>Bulan</span><select class="select-input" id="recorded-period-month" required></select></label><label class="auth-field"><span>Week</span><select class="select-input" id="recorded-period-week" required><option value="Week 1">Week 1</option><option value="Week 2">Week 2</option></select></label><div id="recorded-period-availability" class="recorded-period-availability" role="status" aria-live="polite" hidden></div><div class="dialog-actions"><button class="button button-secondary" type="button" data-close="recorded-period-dialog">Kembali</button><button class="button button-primary" type="submit">View</button></div></form>
-  </dialog>
   <dialog id="recorded-data-unavailable-dialog" class="date-validation-dialog" aria-labelledby="recorded-data-unavailable-title" aria-describedby="recorded-data-unavailable-copy">
     <div class="dialog-head"><div><div class="dialog-title" id="recorded-data-unavailable-title">Data arsip belum tersedia</div><div class="dialog-subtitle">Pilih periode lain untuk melihat hasil.</div></div><button class="dialog-close" type="button" data-close="recorded-data-unavailable-dialog" aria-label="Tutup">×</button></div>
     <div class="date-validation-copy" id="recorded-data-unavailable-copy"></div>
@@ -4528,7 +4512,13 @@
       return `${navMarkup()}<div class="dashboard-page">
         <div class="dashboard-top-row">
           <section class="page-head dashboard-hero"><div class="dashboard-hero-copy"><div class="dashboard-hero-eyebrow">Ringkasan Stock Opname · Live</div><h1>Dashboard Sesi Berjalan</h1><p class="subtitle">Statistik dan progres hanya untuk sesi opname yang masih berjalan.</p><div class="dashboard-overview"><p>${total.active} sesi aktif · pantau Scan, Manual, dan rekonsiliasi quantity.</p><span class="dashboard-date">${formatDate(new Date(), { day: "numeric", month: "long", year: "numeric" })}</span></div></div><button class="button dashboard-hero-action" data-page-link="workspaces">Kelola Jadwal →</button></section>
-          <section class="table-section recorded-card"><div class="table-toolbar"><div><div class="table-title">Stock Opname Recorded</div><p class="subtitle">Buka kembali lembar Scan Layout, Result SO, dan Rekap Selisih dari sesi yang telah selesai.</p></div><span class="category-chip">${recordedSessions.length} arsip selesai</span></div><div class="recorded-brand-picker"><label class="auth-field"><span>Nama Brand</span>${renderScheduleDropdown("recorded-brand-trigger", "Pilih Nama Brand untuk arsip", "recorded-brand-native", 'id="recorded-brand-select"', [["", recordedBrands.length ? "Pilih Nama Brand" : "Belum ada arsip selesai"], ...recordedBrands.map((brand) => [brand, brand])], "", !recordedBrands.length)}</label><button class="button button-primary" id="open-recorded-brand" type="button" ${recordedBrands.length ? "" : "disabled"}>Pilih bulan dan week</button></div></section>
+          <section class="table-section recorded-card"><div class="table-toolbar"><div><div class="table-title">Stock Opname Recorded</div><p class="subtitle">Buka kembali lembar Scan Layout, Result SO, dan Rekap Selisih dari sesi yang telah selesai.</p></div><span class="category-chip">${recordedSessions.length} arsip selesai</span></div><div class="recorded-brand-picker"><div class="recorded-period-controls">
+            <label class="auth-field recorded-period-brand"><span>Nama Brand</span>${renderScheduleDropdown("recorded-brand-trigger", "Pilih Nama Brand untuk arsip", "recorded-brand-native", 'id="recorded-brand-select"', [["", recordedBrands.length ? "Pilih Nama Brand" : "Belum ada arsip selesai"], ...recordedBrands.map((brand) => [brand, brand])], "", !recordedBrands.length)}</label>
+            <label class="auth-field"><span>Bulan</span>${renderScheduleDropdown("recorded-month-trigger", "Pilih bulan", "schedule-period-select", 'id="recorded-period-month"', WORKSPACE_MONTHS.map((month) => [month, month]), WORKSPACE_MONTHS[new Date().getMonth()], true)}</label>
+            <label class="auth-field"><span>Week</span>${renderScheduleDropdown("recorded-week-trigger", "Pilih week", "schedule-period-select", 'id="recorded-period-week"', [["Week 1", "Week 1"], ["Week 2", "Week 2"]], archivedSessionWeek({ finishedAt: new Date().toISOString() }), true)}</label>
+            <div id="recorded-period-availability" class="recorded-period-availability" role="status" aria-live="polite" hidden></div>
+            <button class="button button-primary recorded-period-view" id="view-recorded-session" type="button" disabled>View</button>
+          </div></div></section>
         </div>
         <section class="dashboard-summary-charts" aria-label="Grafik quantity dan ringkasan stock opname">
           <article class="dashboard-panel"><header class="dashboard-panel-head"><div><div class="dashboard-panel-title">Komposisi Quantity</div><div class="dashboard-panel-subtitle">Hasil SO dibandingkan dengan VEF + Inbound/Retur</div></div><span class="dashboard-chart-tag">Unit</span></header>
@@ -4591,28 +4581,39 @@
       const emptyMessage = sheet === "recap" ? "Belum ada item bermasalah. Semua item sesuai dengan VEF." : "Data Result SO tidak tersedia.";
       return `<section class="table-section"><div class="table-toolbar"><div class="table-title">${title} <span class="table-count">${visibleProducts.length} item · hanya-baca</span></div></div><div class="table-scroll"><table><thead><tr><th>No</th><th>Item / item code</th><th>Brand</th><th>Warehouse</th><th>VEF</th><th>SCAN</th><th>MANUAL</th><th>Inbound/Retur</th><th>PJ</th><th>Selisih</th><th>Check</th><th>Note</th></tr></thead><tbody>${rows || `<tr><td class="empty-row" colspan="12">${emptyMessage}</td></tr>`}</tbody></table></div></section>`;
     }
-    function openRecordedPeriodDialog() {
+    function handleRecordedBrandChange() {
       const brand = document.getElementById("recorded-brand-select")?.value;
+      const monthSelect = document.getElementById("recorded-period-month");
+      const weekSelect = document.getElementById("recorded-period-week");
+      const monthTrigger = document.getElementById("recorded-month-trigger");
+      const weekTrigger = document.getElementById("recorded-week-trigger");
+      const viewButton = document.getElementById("view-recorded-session");
+      const notice = document.getElementById("recorded-period-availability");
+      selectedRecordedBrand = brand || "";
       if (!brand) {
-        notify("Pilih Nama Brand terlebih dahulu.");
-        document.getElementById("recorded-brand-trigger")?.focus();
+        monthSelect.disabled = true;
+        weekSelect.disabled = true;
+        monthTrigger.disabled = true;
+        weekTrigger.disabled = true;
+        viewButton.disabled = true;
+        notice.hidden = true;
         return;
       }
       const sessions = state.sessions
         .filter((session) => session.workspaceName === brand && session.snapshot)
         .sort((a, b) => new Date(b.finishedAt) - new Date(a.finishedAt));
-      if (!sessions.length) {
-        notify(`Belum ada arsip selesai untuk ${brand}.`);
-        return;
+      monthSelect.disabled = false;
+      weekSelect.disabled = false;
+      monthTrigger.disabled = false;
+      weekTrigger.disabled = false;
+      viewButton.disabled = false;
+      if (sessions.length) {
+        monthSelect.value = archivedSessionMonth(sessions[0]);
+        weekSelect.value = archivedSessionWeek(sessions[0]);
       }
-      selectedRecordedBrand = brand;
-      document.getElementById("recorded-period-title").textContent = brand;
-      const monthSelect = document.getElementById("recorded-period-month");
-      monthSelect.innerHTML = WORKSPACE_MONTHS.map((month) => `<option value="${month}">${month}</option>`).join("");
-      monthSelect.value = archivedSessionMonth(sessions[0]);
-      document.getElementById("recorded-period-week").value = archivedSessionWeek(sessions[0]);
+      monthSelect.dispatchEvent(new Event("change", { bubbles: true }));
+      weekSelect.dispatchEvent(new Event("change", { bubbles: true }));
       updateRecordedPeriodAvailability();
-      document.getElementById("recorded-period-dialog").showModal();
     }
     function updateRecordedPeriodAvailability() {
       const notice = document.getElementById("recorded-period-availability");
@@ -4642,7 +4643,6 @@
       }
       selectedRecordedSessionId = session.id;
       selectedRecordedSheet = "layouts";
-      document.getElementById("recorded-period-dialog").close();
       currentPage = "recorded-archive";
       render();
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -5290,7 +5290,8 @@
       document.getElementById("finish-button")?.addEventListener("click", openFinishDialog);
       document.getElementById("new-session-button")?.addEventListener("click", startNewSession);
       document.getElementById("workbook-input").addEventListener("change", importWorkbook);
-      document.getElementById("open-recorded-brand")?.addEventListener("click", openRecordedPeriodDialog);
+      document.getElementById("recorded-brand-select")?.addEventListener("change", handleRecordedBrandChange);
+      document.getElementById("view-recorded-session")?.addEventListener("click", showRecordedSession);
       document.querySelectorAll("[data-recorded-sheet]").forEach((button) => button.addEventListener("click", () => {
         selectedRecordedSheet = button.dataset.recordedSheet;
         render();
@@ -6397,10 +6398,6 @@
       if (toggle) applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark", true);
       const accentToggle = event.target.closest("[data-accent-toggle]");
       if (accentToggle) applyAccent(document.documentElement.dataset.accent === "burgundy" ? "green" : "burgundy", true);
-    });
-    document.getElementById("recorded-period-form").addEventListener("submit", (event) => {
-      event.preventDefault();
-      showRecordedSession();
     });
     document.getElementById("recorded-period-month").addEventListener("change", updateRecordedPeriodAvailability);
     document.getElementById("recorded-period-week").addEventListener("change", updateRecordedPeriodAvailability);
