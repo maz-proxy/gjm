@@ -104,6 +104,13 @@
     .pj-delete-confirm-copy { color: var(--muted); font-size: 12px; line-height: 1.55; padding: 14px 18px; }
     .pj-delete-confirm-dialog .dialog-actions { background: color-mix(in srgb, var(--green) 5%, var(--canvas)); border-top-color: var(--line); padding: 10px 14px; }
     .pj-delete-confirm-dialog .button-secondary { background: var(--paper); color: var(--ink); }
+    .date-validation-dialog { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; max-width: min(390px, calc(100vw - 32px)); overflow: hidden; padding: 0; width: 100%; }
+    .date-validation-dialog::backdrop { background: rgba(17, 27, 26, .52); backdrop-filter: blur(3px); }
+    .date-validation-dialog .dialog-head { background: color-mix(in srgb, var(--amber) 8%, var(--paper)); border-bottom-color: var(--line); border-top: 3px solid var(--amber); padding: 15px 18px 12px; }
+    .date-validation-dialog .dialog-title { font-size: 15px; }
+    .date-validation-copy { color: var(--muted); font-size: 12px; line-height: 1.55; padding: 14px 18px; }
+    .date-validation-dialog .dialog-actions { background: color-mix(in srgb, var(--amber) 5%, var(--canvas)); border-top-color: var(--line); padding: 10px 14px; }
+    .date-validation-dialog .button-primary { background: var(--amber); border-color: var(--amber); color: #fff; }
     .auth-screen { align-items: center; background: radial-gradient(ellipse at 82% 10%, rgba(218,237,216,.5), transparent 35%), var(--canvas); display: flex; inset: 0; justify-content: center; padding: 20px; position: fixed; z-index: 20; }
     .auth-loading { align-items: center; background: radial-gradient(ellipse at 82% 10%, rgba(218,237,216,.16), transparent 35%), #111b1a; color: #f4f8f2; display: none; inset: 0; justify-content: center; position: fixed; z-index: 30; }
     .auth-loading-card { align-items: center; display: flex; flex-direction: column; gap: 13px; }
@@ -1927,6 +1934,11 @@
     <div class="pj-delete-confirm-copy" id="inbound-delete-confirm-copy"></div>
     <div class="dialog-actions"><button class="button button-secondary" type="button" data-close="inbound-delete-confirm-dialog">Batal</button><button class="button button-danger" id="confirm-delete-inbound" type="button">Hapus data</button></div>
   </dialog>
+  <dialog id="date-validation-warning-dialog" class="date-validation-dialog" aria-labelledby="date-validation-warning-title" aria-describedby="date-validation-warning-copy">
+    <div class="dialog-head"><div><div class="dialog-title" id="date-validation-warning-title">Tanggal tidak sesuai</div><div class="dialog-subtitle">Data belum disimpan.</div></div><button class="dialog-close" type="button" data-close="date-validation-warning-dialog" aria-label="Tutup">×</button></div>
+    <div class="date-validation-copy" id="date-validation-warning-copy"></div>
+    <div class="dialog-actions"><button class="button button-primary" type="button" data-close="date-validation-warning-dialog">Perbaiki tanggal</button></div>
+  </dialog>
   <dialog id="finish-dialog">
     <div class="dialog-head"><div><div class="dialog-title">Selesaikan stock opname?</div><div class="dialog-subtitle">Hasil diarsipkan, lalu seluruh data kerja sesi ini direset. Jika ada sesi lain yang berjalan, sesi itu akan dibuka untuk dilanjutkan.</div></div><button class="dialog-close" type="button" data-close="finish-dialog" aria-label="Tutup">×</button></div>
     <div class="confirm-body" id="finish-message"></div>
@@ -3413,6 +3425,14 @@
       .filter((entry) => entry.productId === productId)
       .reduce((sum, entry) => sum + Number(entry.quantity || 0), 0);
     const varianceFor = (product, inboundEntries = state.inboundEntries) => reconciledQty(product) - Number(product.stock || 0) - inboundQuantityFor(product.id, inboundEntries);
+    function showDateValidationWarning(documentType) {
+      const sourceTimestamp = new Date(state.importDownloadedAt);
+      const downloadedAt = Number.isFinite(sourceTimestamp.getTime())
+        ? formatDate(sourceTimestamp, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })
+        : "tanggal download VEF";
+      document.getElementById("date-validation-warning-copy").textContent = `Tanggal/waktu ${documentType} harus sesudah tanggal file VEF didownload (${downloadedAt}). Ubah tanggal/waktu ${documentType} lalu simpan kembali.`;
+      document.getElementById("date-validation-warning-dialog").showModal();
+    }
     function setPjEntryForm(entry = null) {
       const form = document.getElementById("pj-entry-form");
       const title = document.getElementById("pj-entry-title");
@@ -3477,7 +3497,7 @@
         return;
       }
       if (invoiceDate.getTime() <= sourceTimestamp.getTime()) {
-        notify("Tanggal/waktu invoice harus sesudah tanggal file VEF didownload.");
+        showDateValidationWarning("invoice");
         return;
       }
       const nextProductQuantity = Number(product?.pj || 0) - Number(existingEntry?.quantity || 0) + quantity;
@@ -3601,7 +3621,7 @@
         return;
       }
       if (entryDate.getTime() <= sourceTimestamp.getTime()) {
-        notify("Tanggal/waktu PREC/RETUR harus sesudah tanggal file VEF didownload.");
+        showDateValidationWarning("PREC/RETUR");
         return;
       }
       const nextInboundQuantity = inboundQuantityFor(product.id) - Number(existingEntry?.quantity || 0) + quantity;
