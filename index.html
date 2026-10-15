@@ -550,14 +550,34 @@
     .dashboard-overview { align-items: flex-end; display: flex; justify-content: space-between; margin: -5px 0 20px; }
     .dashboard-overview p { color: var(--muted); font-size: 12px; margin: 6px 0 0; }
     .dashboard-date { color: var(--muted); font-size: 11px; }
-    .dashboard-metrics { display: grid; gap: 12px; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 14px; }
-    .dashboard-metric { background: linear-gradient(145deg, #fff, #fbfdf9); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 5px 18px rgba(35,59,38,.035); min-width: 0; padding: 17px; transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease; }
-    .dashboard-metric:hover { border-color: #c9ddcb; box-shadow: 0 10px 25px rgba(35,59,38,.075); transform: translateY(-2px); }
-    .dashboard-metric-label { align-items: center; color: var(--muted); display: flex; font-size: 11px; gap: 8px; justify-content: space-between; }
-    .dashboard-metric-icon { align-items: center; background: #eaf3e9; border-radius: 8px; color: var(--green); display: inline-flex; flex: 0 0 29px; font-size: 14px; height: 29px; justify-content: center; }
-    .dashboard-metric-icon.alert { background: var(--amber-soft); color: var(--amber); }
-    .dashboard-metric-value { font-family: "Space Grotesk", "Segoe UI", sans-serif; font-size: 27px; font-weight: 700; line-height: 1.1; margin-top: 13px; }
-    .dashboard-metric-note { color: var(--muted); font-size: 10px; margin-top: 5px; }
+    .dashboard-summary-charts { display: grid; gap: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 14px; }
+    .dashboard-quantity-content, .dashboard-status-content { display: grid; gap: 18px; padding: 18px 19px; }
+    .dashboard-quantity-group { display: grid; gap: 9px; }
+    .dashboard-quantity-heading { align-items: baseline; display: flex; gap: 12px; justify-content: space-between; }
+    .dashboard-quantity-label { font-size: 10px; font-weight: 700; }
+    .dashboard-quantity-value { font-family: "Space Grotesk", "Segoe UI", sans-serif; font-size: 14px; font-weight: 700; white-space: nowrap; }
+    .dashboard-quantity-track.dashboard-bar-track { display: flex; height: 15px; }
+    .dashboard-quantity-segment { height: 100%; transition: width .55s cubic-bezier(.2,.75,.25,1); }
+    .dashboard-quantity-segment:first-child { border-radius: 99px 0 0 99px; }
+    .dashboard-quantity-segment:last-child { border-radius: 0 99px 99px 0; }
+    .dashboard-quantity-segment.scan, .dashboard-status-match { background: #3b8054; }
+    .dashboard-quantity-segment.manual { background: #86b36a; }
+    .dashboard-quantity-segment.pj { background: #b3c98a; }
+    .dashboard-quantity-segment.vef { background: #94a69c; }
+    .dashboard-quantity-segment.inbound { background: #c4d3c5; }
+    .dashboard-quantity-legend { display: flex; flex-wrap: wrap; gap: 9px 15px; }
+    .dashboard-quantity-legend-item { align-items: center; color: var(--muted); display: inline-flex; font-size: 9px; gap: 6px; }
+    .dashboard-quantity-legend-item strong { color: var(--ink); font-size: 10px; }
+    .dashboard-quantity-swatch { border-radius: 3px; height: 8px; width: 8px; }
+    .dashboard-quantity-note { align-items: center; background: #f5f7f3; border: 1px solid var(--line); border-radius: 8px; color: var(--muted); display: flex; font-size: 10px; gap: 6px; justify-content: space-between; padding: 9px 11px; }
+    .dashboard-quantity-note strong { color: var(--ink); white-space: nowrap; }
+    .dashboard-status-track.dashboard-bar-track { display: flex; height: 13px; }
+    .dashboard-status-match, .dashboard-status-mismatch { height: 100%; transition: width .55s cubic-bezier(.2,.75,.25,1); }
+    .dashboard-status-match { border-radius: 99px 0 0 99px; }
+    .dashboard-status-mismatch { background: #d28749; border-radius: 0 99px 99px 0; }
+    .dashboard-status-legend { display: flex; flex-wrap: wrap; gap: 9px 15px; }
+    .dashboard-summary-list { gap: 14px; padding: 0; }
+    .dashboard-summary-fill { background: linear-gradient(90deg, #286344, #86b36a); }
     .dashboard-charts { display: grid; gap: 14px; grid-template-columns: minmax(240px, .8fr) minmax(0, 1.8fr); margin-bottom: 14px; }
     .dashboard-panel { background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 5px 18px rgba(35,59,38,.035); min-width: 0; overflow: hidden; }
     .dashboard-panel-head { align-items: center; border-bottom: 1px solid #edf1eb; display: flex; justify-content: space-between; min-height: 59px; padding: 12px 17px; }
@@ -586,7 +606,7 @@
     .dashboard-empty { color: var(--muted); font-size: 10px; padding: 0 19px 17px; }
     @media (max-width: 900px) {
      .master-quantity-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-      .dashboard-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .dashboard-summary-charts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .dashboard-charts { grid-template-columns: minmax(0, .9fr) minmax(0, 1.5fr); }
       .dashboard-top-row { grid-template-columns: minmax(0, 1fr); }
       .dashboard-top-row .dashboard-hero { min-height: 112px; }
@@ -601,9 +621,7 @@
       .dashboard-top-row .recorded-card .recorded-brand-picker { grid-template-columns: minmax(0, 1fr); }
       .dashboard-hero .dashboard-overview { align-items: flex-start; flex-direction: column; gap: 5px; }
       .dashboard-hero-action { align-self: flex-start; }
-      .dashboard-metrics { gap: 8px; }
-      .dashboard-metric { padding: 13px; }
-      .dashboard-metric-value { font-size: 23px; }
+      .dashboard-summary-charts { grid-template-columns: minmax(0, 1fr); }
       .dashboard-charts { grid-template-columns: minmax(0, 1fr); }
       .dashboard-chart-list { gap: 14px; padding: 15px; }
       .dashboard-chart-row { grid-template-columns: minmax(64px, .7fr) minmax(70px, 1.5fr) auto; }
@@ -1049,6 +1067,7 @@
     html[data-theme="dark"] .dashboard-donut-track,
     html[data-theme="dark"] .dashboard-bar-track,
     html[data-theme="dark"] .progress-track { background: #2d403b; stroke: #2d403b; }
+    html[data-theme="dark"] .dashboard-quantity-note { background: #20312d; border-color: var(--line); }
     html[data-theme="dark"] .dashboard-legend-dot.remaining { background: #445650; }
     html[data-theme="dark"] .layout-card.quantity-matched { background: linear-gradient(145deg, #1d3932, #203d35); border-color: #3e705d; }
     html[data-theme="dark"] .layout-card.quantity-over { background: linear-gradient(145deg, #422c2b, #392625); border-color: #80504b; }
@@ -1666,6 +1685,13 @@
     html[data-accent="burgundy"] .result-export-button:hover { background: #f8e8ed; border-color: #e6c5d0; }
     html[data-accent="burgundy"] .progress-fill,
     html[data-accent="burgundy"] .dashboard-bar-fill { background: linear-gradient(90deg, #742542, #c26c88); }
+    html[data-accent="burgundy"] .dashboard-quantity-segment.scan,
+    html[data-accent="burgundy"] .dashboard-status-match { background: #9a3b5e; }
+    html[data-accent="burgundy"] .dashboard-quantity-segment.manual { background: #c26c88; }
+    html[data-accent="burgundy"] .dashboard-quantity-segment.pj { background: #e5a4b9; }
+    html[data-accent="burgundy"] .dashboard-quantity-segment.vef { background: #7d5263; }
+    html[data-accent="burgundy"] .dashboard-quantity-segment.inbound { background: #c99ba8; }
+    html[data-accent="burgundy"] .dashboard-quantity-note { background: #fbf0f4; }
     html[data-accent="burgundy"] .dashboard-donut-progress { stroke: #9a3b5e; }
     html[data-accent="burgundy"] .dashboard-donut-track,
     html[data-accent="burgundy"] .progress-track { background: #f1e4e8; stroke: #f1e4e8; }
@@ -1746,6 +1772,14 @@
     html[data-accent="burgundy"][data-theme="dark"] .finish-opname-button { background: linear-gradient(135deg, #94405b, #67273d); color: #fff; }
     html[data-accent="burgundy"][data-theme="dark"] .progress-fill,
     html[data-accent="burgundy"][data-theme="dark"] .dashboard-bar-fill { background: linear-gradient(90deg, #94405b, #d786a0); }
+    html[data-accent="burgundy"][data-theme="dark"] .dashboard-quantity-segment.scan,
+    html[data-accent="burgundy"][data-theme="dark"] .dashboard-status-match { background: #d786a0; }
+    html[data-accent="burgundy"][data-theme="dark"] .dashboard-quantity-segment.manual { background: #bb6682; }
+    html[data-accent="burgundy"][data-theme="dark"] .dashboard-quantity-segment.pj { background: #80475b; }
+    html[data-accent="burgundy"][data-theme="dark"] .dashboard-quantity-segment.vef { background: #a77b8a; }
+    html[data-accent="burgundy"][data-theme="dark"] .dashboard-quantity-segment.inbound { background: #684653; }
+    html[data-accent="burgundy"][data-theme="dark"] .dashboard-quantity-note { background: #392630; border-color: #634452; }
+    html[data-accent="burgundy"][data-theme="dark"] .dashboard-status-mismatch { background: #c26c88; }
     html[data-accent="burgundy"][data-theme="dark"] .dashboard-donut-progress { stroke: #d786a0; }
     html[data-accent="burgundy"][data-theme="dark"] .dashboard-donut-track,
     html[data-accent="burgundy"][data-theme="dark"] .progress-track { background: #49343d; stroke: #49343d; }
@@ -4459,6 +4493,33 @@
       const mismatchPercent = total.countedSkus ? Math.round(total.mismatched / total.countedSkus * 100) : 0;
       const circumference = 2 * Math.PI * 38;
       const progressLength = (circumference * overallProgress / 100).toFixed(2);
+      const quantityScale = Math.max(total.totalQty, total.expected + total.inbound, 1);
+      const countedSegments = [
+        { name: "SCAN", value: total.scan, className: "scan" },
+        { name: "MANUAL", value: total.manual, className: "manual" },
+        { name: "PJ", value: total.pj, className: "pj" }
+      ];
+      const targetSegments = [
+        { name: "VEF", value: total.expected, className: "vef" },
+        { name: "Inbound/Retur", value: total.inbound, className: "inbound" }
+      ];
+      const renderQuantitySegments = (segments) => segments.map((segment) => `<span class="dashboard-quantity-segment ${segment.className}" style="width:${(segment.value / quantityScale * 100).toFixed(2)}%" title="${segment.name}: ${formatNumber(segment.value)} unit" aria-hidden="true"></span>`).join("");
+      const renderQuantityLegend = (segments) => segments.map((segment) => `<span class="dashboard-quantity-legend-item"><i class="dashboard-quantity-swatch dashboard-quantity-segment ${segment.className}"></i>${segment.name} <strong>${formatNumber(segment.value)}</strong></span>`).join("");
+      const matchingItems = Math.max(0, total.countedSkus - total.mismatched);
+      const mismatchItems = Math.min(total.countedSkus, total.mismatched);
+      const statusRows = [
+        ["Sesi aktif", total.active],
+        ["Item master VEF", total.products],
+        ["SN cocok", total.scanned],
+        ["SN master", total.serials],
+        ["SN bermasalah", total.issues]
+      ];
+      const statusScale = Math.max(1, ...statusRows.map(([, value]) => value));
+      const statusChartRows = statusRows.map(([name, value]) => `<div class="dashboard-chart-row">
+        <span class="dashboard-chart-name" title="${name}">${name}</span>
+        <div class="dashboard-bar-track" role="progressbar" aria-label="${name}" aria-valuemin="0" aria-valuemax="${statusScale}" aria-valuenow="${value}"><div class="dashboard-bar-fill dashboard-summary-fill" style="width:${(value / statusScale * 100).toFixed(2)}%"></div></div>
+        <span class="dashboard-chart-count">${formatNumber(value)}</span>
+      </div>`).join("");
       const chartRows = workspaceStats.map(({ workspace, stats }) => `<div class="dashboard-chart-row">
         <span class="dashboard-chart-name" title="${escapeHtml(workspace.name)}">${escapeHtml(workspace.name || "Tanpa nama")}</span>
         <div class="dashboard-bar-track" role="progressbar" aria-label="Progres SN ${escapeHtml(workspace.name)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${stats.progress}"><div class="dashboard-bar-fill" style="width:${stats.progress}%"></div></div>
@@ -4469,16 +4530,20 @@
           <section class="page-head dashboard-hero"><div class="dashboard-hero-copy"><div class="dashboard-hero-eyebrow">Ringkasan Stock Opname · Live</div><h1>Dashboard Sesi Berjalan</h1><p class="subtitle">Statistik dan progres hanya untuk sesi opname yang masih berjalan.</p><div class="dashboard-overview"><p>${total.active} sesi aktif · pantau Scan, Manual, dan rekonsiliasi quantity.</p><span class="dashboard-date">${formatDate(new Date(), { day: "numeric", month: "long", year: "numeric" })}</span></div></div><button class="button dashboard-hero-action" data-page-link="workspaces">Kelola Jadwal →</button></section>
           <section class="table-section recorded-card"><div class="table-toolbar"><div><div class="table-title">Stock Opname Recorded</div><p class="subtitle">Buka kembali lembar Scan Layout, Result SO, dan Rekap Selisih dari sesi yang telah selesai.</p></div><span class="category-chip">${recordedSessions.length} arsip selesai</span></div><div class="recorded-brand-picker"><label class="auth-field"><span>Nama Brand</span>${renderScheduleDropdown("recorded-brand-trigger", "Pilih Nama Brand untuk arsip", "recorded-brand-native", 'id="recorded-brand-select"', [["", recordedBrands.length ? "Pilih Nama Brand" : "Belum ada arsip selesai"], ...recordedBrands.map((brand) => [brand, brand])], "", !recordedBrands.length)}</label><button class="button button-primary" id="open-recorded-brand" type="button" ${recordedBrands.length ? "" : "disabled"}>Pilih bulan dan week</button></div></section>
         </div>
-        <section class="dashboard-metrics" aria-label="Statistik sesi stock opname yang berjalan">
-          <article class="dashboard-metric"><div class="dashboard-metric-label">Sesi berjalan <span class="dashboard-metric-icon">◉</span></div><div class="dashboard-metric-value">${total.active}</div><div class="dashboard-metric-note">${workspaceStats.length} brand sedang dihitung</div></article>
-          <article class="dashboard-metric"><div class="dashboard-metric-label">Item diperiksa <span class="dashboard-metric-icon">▤</span></div><div class="dashboard-metric-value">${formatNumber(total.countedSkus)}</div><div class="dashboard-metric-note">${formatNumber(total.mismatched)} item belum sesuai · ${mismatchPercent}%</div></article>
-          <article class="dashboard-metric"><div class="dashboard-metric-label">Master VEF <span class="dashboard-metric-icon">#</span></div><div class="dashboard-metric-value">${formatNumber(total.expected)}<small> unit</small></div><div class="dashboard-metric-note">${formatNumber(total.products)} item master</div></article>
-          <article class="dashboard-metric"><div class="dashboard-metric-label">Quantity SCAN <span class="dashboard-metric-icon">⌗</span></div><div class="dashboard-metric-value">${formatNumber(total.scan)}<small> unit</small></div><div class="dashboard-metric-note">${formatNumber(total.scanned)} SN cocok dari ${formatNumber(total.serials)} SN master</div></article>
-          <article class="dashboard-metric"><div class="dashboard-metric-label">Quantity MANUAL <span class="dashboard-metric-icon">＋</span></div><div class="dashboard-metric-value">${formatNumber(total.manual)}<small> unit</small></div><div class="dashboard-metric-note">Input manual seluruh sesi berjalan</div></article>
-          <article class="dashboard-metric"><div class="dashboard-metric-label">Inbound/Retur <span class="dashboard-metric-icon">↙</span></div><div class="dashboard-metric-value">${formatNumber(total.inbound)}<small> unit</small></div><div class="dashboard-metric-note">Ditambahkan ke quantity pembanding VEF</div></article>
-          <article class="dashboard-metric"><div class="dashboard-metric-label">Total SO <span class="dashboard-metric-icon">Σ</span></div><div class="dashboard-metric-value">${formatNumber(total.totalQty)}<small> unit</small></div><div class="dashboard-metric-note">SCAN + MANUAL + PJ ${formatNumber(total.pj)}</div></article>
-          <article class="dashboard-metric"><div class="dashboard-metric-label">Selisih quantity <span class="dashboard-metric-icon alert">Δ</span></div><div class="dashboard-metric-value">${formatNumber(total.absoluteVariance)}<small> unit</small></div><div class="dashboard-metric-note">Akumulasi selisih absolut terhadap VEF</div></article>
-          <article class="dashboard-metric"><div class="dashboard-metric-label">SN bermasalah <span class="dashboard-metric-icon alert">!</span></div><div class="dashboard-metric-value">${formatNumber(total.issues)}</div><div class="dashboard-metric-note">Duplikat atau tidak ditemukan</div></article>
+        <section class="dashboard-summary-charts" aria-label="Grafik quantity dan ringkasan stock opname">
+          <article class="dashboard-panel"><header class="dashboard-panel-head"><div><div class="dashboard-panel-title">Komposisi Quantity</div><div class="dashboard-panel-subtitle">Hasil SO dibandingkan dengan VEF + Inbound/Retur</div></div><span class="dashboard-chart-tag">Unit</span></header>
+            <div class="dashboard-quantity-content">
+              <div class="dashboard-quantity-group"><div class="dashboard-quantity-heading"><span class="dashboard-quantity-label">Hasil SO</span><strong class="dashboard-quantity-value">${formatNumber(total.totalQty)} unit</strong></div><div class="dashboard-quantity-track dashboard-bar-track" role="img" aria-label="Hasil SO: SCAN ${formatNumber(total.scan)}, MANUAL ${formatNumber(total.manual)}, PJ ${formatNumber(total.pj)}, total ${formatNumber(total.totalQty)} unit">${renderQuantitySegments(countedSegments)}</div><div class="dashboard-quantity-legend">${renderQuantityLegend(countedSegments)}</div></div>
+              <div class="dashboard-quantity-group"><div class="dashboard-quantity-heading"><span class="dashboard-quantity-label">Pembanding</span><strong class="dashboard-quantity-value">${formatNumber(total.expected + total.inbound)} unit</strong></div><div class="dashboard-quantity-track dashboard-bar-track" role="img" aria-label="Pembanding: VEF ${formatNumber(total.expected)} dan Inbound/Retur ${formatNumber(total.inbound)}, total ${formatNumber(total.expected + total.inbound)} unit">${renderQuantitySegments(targetSegments)}</div><div class="dashboard-quantity-legend">${renderQuantityLegend(targetSegments)}</div></div>
+              <div class="dashboard-quantity-note"><span>Akumulasi selisih absolut</span><strong>${formatNumber(total.absoluteVariance)} unit</strong></div>
+            </div>
+          </article>
+          <article class="dashboard-panel"><header class="dashboard-panel-head"><div><div class="dashboard-panel-title">Ringkasan &amp; Status</div><div class="dashboard-panel-subtitle">Item diperiksa, progres, dan SN pada sesi aktif</div></div><span class="dashboard-chart-tag">${mismatchPercent}% selisih</span></header>
+            <div class="dashboard-status-content">
+              <div class="dashboard-quantity-group"><div class="dashboard-quantity-heading"><span class="dashboard-quantity-label">Status item diperiksa</span><strong class="dashboard-quantity-value">${formatNumber(total.countedSkus)} item</strong></div><div class="dashboard-status-track dashboard-bar-track" role="img" aria-label="${formatNumber(matchingItems)} item sesuai dan ${formatNumber(mismatchItems)} item selisih dari ${formatNumber(total.countedSkus)} item diperiksa"><span class="dashboard-status-match" style="width:${total.countedSkus ? (matchingItems / total.countedSkus * 100).toFixed(2) : 0}%"></span><span class="dashboard-status-mismatch" style="width:${total.countedSkus ? (mismatchItems / total.countedSkus * 100).toFixed(2) : 0}%"></span></div><div class="dashboard-status-legend"><span class="dashboard-quantity-legend-item"><i class="dashboard-quantity-swatch dashboard-status-match"></i>Sesuai <strong>${formatNumber(matchingItems)}</strong></span><span class="dashboard-quantity-legend-item"><i class="dashboard-quantity-swatch dashboard-status-mismatch"></i>Selisih <strong>${formatNumber(mismatchItems)}</strong></span></div></div>
+              <div class="dashboard-chart-list dashboard-summary-list">${statusChartRows}</div>
+            </div>
+          </article>
         </section>
         <section class="dashboard-charts" aria-label="Grafik progres stock opname">
           <article class="dashboard-panel"><header class="dashboard-panel-head"><div><div class="dashboard-panel-title">Progres keseluruhan</div><div class="dashboard-panel-subtitle">Serial Number cocok pada sesi berjalan</div></div><span class="dashboard-chart-tag">${total.active ? "Live" : "Menunggu sesi"}</span></header>
