@@ -3452,11 +3452,12 @@
       }
     }
     const statusFor = (product, countMode = state.countMode) => {
-      if (!isCountedProduct(product, countMode)) return { label: "Bukan laptop", className: "non-laptop" };
+      const included = isCountedProduct(product, countMode);
+      if (!included && countMode !== "laptops") return { label: "Bukan laptop", className: "non-laptop" };
       const variance = varianceFor(product);
       if (variance === 0) return { label: "Sesuai", className: "match" };
-      if (variance < 0) return { label: "Kurang", className: "shortage" };
-      return { label: "Lebih", className: "different" };
+      if (variance < 0) return { label: countMode === "laptops" ? "Minus" : "Kurang", className: "shortage" };
+      return { label: countMode === "laptops" ? "Plus" : "Lebih", className: "different" };
     };
     const getStats = () => {
       const counted = state.products.filter((product) => isCountedProduct(product));
@@ -3504,8 +3505,8 @@
     };
     const productRows = (products, active, canEdit) => products.length ? products.map((product, index) => {
       const included = isCountedProduct(product);
-      const status = included ? statusFor(product) : { label: "Bukan laptop", className: "non-laptop" };
-      const variance = included ? varianceFor(product) : null;
+      const status = statusFor(product);
+      const variance = varianceFor(product);
       return `<tr class="${included ? "" : "non-laptop-row"}">
         <td class="number-cell">${index + 1}</td>
         <td><div class="product-cell"><div><div class="product-name">${escapeHtml(product.name)}</div><div class="product-sku">${escapeHtml(product.sku)}</div></div></div></td>
@@ -3515,7 +3516,7 @@
         <td class="number-cell">${included ? formatNumber(product.count || 0) : "-"}</td>
         <td class="number-cell">${formatNumber(product.box || 0)}</td>
         <td>${included ? `<button class="pj-entry-button" type="button" data-pj-product="${escapeHtml(product.id)}" aria-label="Tambah PJ untuk ${escapeHtml(product.sku)}" ${!active || !canEdit ? "disabled" : ""}>${formatNumber(product.pj || 0)} · Tambah</button>${(state.pjEntries || []).filter((entry) => entry.productId === product.id).slice(-1).map((entry) => `<span class="pj-entry-summary">${escapeHtml(entry.invoiceNumber)} · ${escapeHtml(formatDate(entry.invoiceAt, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }))}</span>`).join("")}` : "-"}</td>
-        <td>${included ? `<span class="variance ${variance === 0 ? "zero" : variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span>` : "-"}</td>
+        <td><span class="variance ${variance === 0 ? "zero" : variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td>
         <td><span class="row-status ${status.className}">${included && variance === 0 ? '<span class="check-success-icon" aria-hidden="true">✓</span>' : ""}${status.label}</span></td>
       </tr>`;
     }).join("") : `<tr><td class="empty-row" colspan="10">${state.importFile ? "Template terbaca, tetapi tab VEF Master belum berisi Serial No dan Item Code." : "Belum ada data VEF. Unggah workbook stock opname untuk memulai."}</td></tr>`;
@@ -3585,7 +3586,7 @@
           <div class="metric"><div class="metric-top">Qty keseluruhan <span class="metric-mark">Σ</span></div><div class="metric-value">${formatNumber(totalUnitCount)} <small>unit</small></div><div class="metric-note">Laptop + selain laptop</div></div>
         </section>
         <section class="master-warehouse-summary" aria-label="Quantity Master VEF per Warehouse"><span class="master-warehouse-title">Quantity per Warehouse</span><div class="master-warehouse-items">${warehouseSummary || '<span class="master-warehouse-empty">Belum ada data Warehouse.</span>'}</div>${hasUploadedMaster ? '<button class="button master-start-scan-button" type="button" data-page-link="layouts">⊞ Mulai Scan / Hitung</button>' : ""}</section>
-        <section class="table-section"><div class="table-toolbar"><div class="table-title">Master barang <span class="table-count">${filtered.length} item · ${filtered.filter(isLaptopProduct).length} laptop · ${filtered.filter((product) => !isLaptopProduct(product)).length} bukan laptop</span></div><div class="filters"><div class="search-wrap"><span class="search-icon">⌕</span><input class="search-input" id="search-input" placeholder="Cari item code atau SN" value="${escapeHtml(searchTerm)}" aria-label="Cari master"></div></div></div><div class="table-scroll"><table><thead><tr><th>No</th><th>Item code</th><th>Item name</th><th>Item Group</th><th>Brand</th><th>Warehouse</th><th>VEF</th><th>Serial Number</th></tr></thead><tbody>${filtered.length ? filtered.map((product, index) => { const serials = serialsByProduct.get(product.id) || []; const laptop = isLaptopProduct(product); return `<tr class="${laptop ? "" : "non-laptop-row"}"><td class="number-cell">${index + 1}</td><td class="number-cell">${escapeHtml(product.sku)}</td><td><div class="product-name">${escapeHtml(product.name)}</div>${laptop ? "" : `<span class="row-status non-laptop">Bukan laptop</span>`}</td><td>${escapeHtml(product.itemGroup || "-")}</td><td>${escapeHtml(product.brand || "-")}</td><td>${escapeHtml(product.warehouse || "-")}</td><td>${formatNumber(product.stock)}</td><td>${serials.length ? `<details class="serial-details"><summary>${formatNumber(serials.length)} SN · tampilkan</summary><div class="serial-list">${serials.map((serial) => `<span class="serial-token">${escapeHtml(serial)}</span>`).join("")}</div></details>` : "-"}</td></tr>`; }).join("") : `<tr><td class="empty-row" colspan="8">Unggah workbook untuk memuat master VEF.</td></tr>`}</tbody></table></div><div class="table-footer"><span>${state.serialMaster ? Object.keys(state.serialMaster).length : 0} serial terdaftar</span><span>${escapeHtml(state.importFile || "Belum ada workbook")}</span></div></section>`;
+        <section class="table-section"><div class="table-toolbar"><div class="table-title">Master barang <span class="table-count">${filtered.length} item · ${filtered.filter(isLaptopProduct).length} laptop · ${filtered.filter((product) => !isLaptopProduct(product)).length} bukan laptop</span></div><div class="filters"><div class="search-wrap"><span class="search-icon">⌕</span><input class="search-input" id="search-input" placeholder="Cari item code atau SN" value="${escapeHtml(searchTerm)}" aria-label="Cari master"></div></div></div><div class="table-scroll"><table><thead><tr><th>No</th><th>Item code</th><th>Item name</th><th>Item Group</th><th>Brand</th><th>Warehouse</th><th>VEF</th><th>Serial Number</th></tr></thead><tbody>${filtered.length ? filtered.map((product, index) => { const serials = serialsByProduct.get(product.id) || []; const laptop = isLaptopProduct(product); const status = laptop ? null : statusFor(product); return `<tr class="${laptop ? "" : "non-laptop-row"}"><td class="number-cell">${index + 1}</td><td class="number-cell">${escapeHtml(product.sku)}</td><td><div class="product-name">${escapeHtml(product.name)}</div>${status ? `<span class="row-status ${status.className}">${status.label}</span>` : ""}</td><td>${escapeHtml(product.itemGroup || "-")}</td><td>${escapeHtml(product.brand || "-")}</td><td>${escapeHtml(product.warehouse || "-")}</td><td>${formatNumber(product.stock)}</td><td>${serials.length ? `<details class="serial-details"><summary>${formatNumber(serials.length)} SN · tampilkan</summary><div class="serial-list">${serials.map((serial) => `<span class="serial-token">${escapeHtml(serial)}</span>`).join("")}</div></details>` : "-"}</td></tr>`; }).join("") : `<tr><td class="empty-row" colspan="8">Unggah workbook untuk memuat master VEF.</td></tr>`}</tbody></table></div><div class="table-footer"><span>${state.serialMaster ? Object.keys(state.serialMaster).length : 0} serial terdaftar</span><span>${escapeHtml(state.importFile || "Belum ada workbook")}</span></div></section>`;
     }
 
     function renderManualProductOptions(input) {
@@ -3907,13 +3908,14 @@
       const productRows = products.map((product, index) => {
         const variance = reconciledQty(product) - Number(product.stock || 0);
         const included = isCountedProduct(product, countMode);
-        const status = included ? (variance === 0 ? { label: "Sesuai", className: "match" } : variance < 0 ? { label: "Kurang", className: "shortage" } : { label: "Lebih", className: "different" }) : { label: "Bukan laptop", className: "non-laptop" };
-        return `<tr><td>${index + 1}</td><td>${escapeHtml(product.sku)}</td><td>${escapeHtml(product.name)}</td><td>${escapeHtml(product.warehouse || "-")}</td><td>${formatNumber(product.stock)}</td><td>${included ? formatNumber(product.count || 0) : "-"}</td><td>${formatNumber(product.box || 0)}</td><td>${included ? formatNumber(product.pj || 0) : "-"}</td><td>${included ? `<span class="variance ${variance === 0 ? "zero" : variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span>` : "-"}</td><td><span class="row-status ${status.className}">${status.label}</span></td><td>${escapeHtml(product.note || "-")}</td></tr>`;
+        const status = statusFor(product, countMode);
+        return `<tr><td>${index + 1}</td><td>${escapeHtml(product.sku)}</td><td>${escapeHtml(product.name)}</td><td>${escapeHtml(product.warehouse || "-")}</td><td>${formatNumber(product.stock)}</td><td>${included ? formatNumber(product.count || 0) : "-"}</td><td>${formatNumber(product.box || 0)}</td><td>${included ? formatNumber(product.pj || 0) : "-"}</td><td><span class="variance ${variance === 0 ? "zero" : variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td><td><span class="row-status ${status.className}">${status.label}</span></td><td>${escapeHtml(product.note || "-")}</td></tr>`;
       }).join("");
       const recapProducts = products.filter((product) => isCountedProduct(product, countMode) && reconciledQty(product) !== Number(product.stock || 0));
       const recapRows = recapProducts.map((product, index) => {
         const variance = reconciledQty(product) - Number(product.stock || 0);
-        return `<tr><td>${index + 1}</td><td>${escapeHtml(product.sku)}</td><td>${escapeHtml(product.name)}</td><td>${escapeHtml(product.warehouse || "-")}</td><td>${formatNumber(product.stock)}</td><td>${formatNumber(product.count || 0)}</td><td>${formatNumber(product.box || 0)}</td><td>${formatNumber(product.pj || 0)}</td><td><span class="variance ${variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td><td>${escapeHtml(variance < 0 ? "Kurang" : "Lebih")}</td><td>${escapeHtml(product.note || "-")}</td></tr>`;
+        const status = statusFor(product, countMode);
+        return `<tr><td>${index + 1}</td><td>${escapeHtml(product.sku)}</td><td>${escapeHtml(product.name)}</td><td>${escapeHtml(product.warehouse || "-")}</td><td>${formatNumber(product.stock)}</td><td>${formatNumber(product.count || 0)}</td><td>${formatNumber(product.box || 0)}</td><td>${formatNumber(product.pj || 0)}</td><td><span class="variance ${variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td><td>${escapeHtml(status.label)}</td><td>${escapeHtml(product.note || "-")}</td></tr>`;
       }).join("");
       const manualRows = (snapshot.manualEntries || []).map((entry, index) => {
         const rackNumber = snapshot.layoutNumbers?.[entry.layout];
@@ -3984,8 +3986,8 @@
           included ? Number(product.count || 0) : "",
           Number(product.box || 0),
           included ? Number(product.pj || 0) : "",
-          included ? variance : "",
-          included ? (variance === 0 ? "Sesuai" : variance < 0 ? "Kurang" : "Lebih") : "Bukan laptop",
+          variance,
+          statusFor(product, countMode).label,
           product.note || ""
         ]);
       });
@@ -4003,7 +4005,7 @@
           Number(product.box || 0),
           Number(product.pj || 0),
           variance,
-          variance < 0 ? "Kurang" : "Lebih",
+          statusFor(product, countMode).label,
           product.note || ""
         ]);
       });
@@ -4172,8 +4174,8 @@
       const rows = visibleProducts.map((product, index) => {
         const included = isCountedProduct(product, countMode);
         const variance = reconciledQty(product) - Number(product.stock || 0);
-        const status = !included ? { label: "Bukan laptop", className: "non-laptop" } : variance === 0 ? { label: "Sesuai", className: "match" } : variance < 0 ? { label: "Kurang", className: "shortage" } : { label: "Lebih", className: "different" };
-        return `<tr><td class="number-cell">${index + 1}</td><td><div class="product-name">${escapeHtml(product.name)}</div><div class="product-sku">${escapeHtml(product.sku)}</div></td><td><span class="category-chip">${escapeHtml(product.brand || "-")}</span></td><td>${escapeHtml(product.warehouse || "-")}</td><td class="number-cell">${formatNumber(product.stock)}</td><td class="number-cell">${included ? formatNumber(product.count || 0) : "-"}</td><td class="number-cell">${formatNumber(product.box || 0)}</td><td class="number-cell">${included ? formatNumber(product.pj || 0) : "-"}</td><td>${included ? `<span class="variance ${variance === 0 ? "zero" : variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span>` : "-"}</td><td><span class="row-status ${status.className}">${status.label}</span></td><td>${escapeHtml(product.note || "-")}</td></tr>`;
+        const status = statusFor(product, countMode);
+        return `<tr><td class="number-cell">${index + 1}</td><td><div class="product-name">${escapeHtml(product.name)}</div><div class="product-sku">${escapeHtml(product.sku)}</div></td><td><span class="category-chip">${escapeHtml(product.brand || "-")}</span></td><td>${escapeHtml(product.warehouse || "-")}</td><td class="number-cell">${formatNumber(product.stock)}</td><td class="number-cell">${included ? formatNumber(product.count || 0) : "-"}</td><td class="number-cell">${formatNumber(product.box || 0)}</td><td class="number-cell">${included ? formatNumber(product.pj || 0) : "-"}</td><td><span class="variance ${variance === 0 ? "zero" : variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td><td><span class="row-status ${status.className}">${status.label}</span></td><td>${escapeHtml(product.note || "-")}</td></tr>`;
       }).join("");
       const title = sheet === "recap" ? "Item belum sesuai" : "Rekonsiliasi per item";
       const emptyMessage = sheet === "recap" ? "Belum ada item bermasalah. Semua item sesuai dengan VEF." : "Data Result SO tidak tersedia.";
@@ -5774,7 +5776,7 @@
       const rows = state.products.map((product) => {
         const laptop = isLaptopProduct(product);
         const included = isCountedProduct(product);
-        return [product.sku, product.name, product.itemGroup || "", product.brand, product.warehouse, laptop ? "Laptop" : "Bukan laptop", product.stock, included ? product.count || 0 : "", product.box || 0, included ? product.pj || 0 : "", included ? varianceFor(product) : "", included ? statusFor(product).label : "Bukan laptop"];
+        return [product.sku, product.name, product.itemGroup || "", product.brand, product.warehouse, laptop ? "Laptop" : "Bukan laptop", product.stock, included ? product.count || 0 : "", product.box || 0, included ? product.pj || 0 : "", varianceFor(product), statusFor(product).label];
       });
       const csv = [header, ...rows].map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(",")).join("\r\n");
       const link = document.createElement("a");
