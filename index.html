@@ -357,6 +357,7 @@
     .layout-scan-summary { align-items: center; display: flex; flex-wrap: wrap; gap: 4px 10px; }
     .layout-scan-code, .layout-scan-serial { flex: 0 0 auto; }
     .layout-scan-name { flex: 1 1 160px; min-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .layout-scan-type { color: var(--muted); flex: 0 1 auto; }
     .layout-scan-info { min-width: 0; overflow-wrap: anywhere; }
     .layout-scan-status { color: var(--muted); font-size: 9px; }
     .layout-scan-status.match { color: var(--green); }
@@ -1205,11 +1206,30 @@
     .recorded-pic-card { background: color-mix(in srgb, var(--green) 8%, var(--paper)); border: 1px solid color-mix(in srgb, var(--green) 22%, var(--line)); border-radius: 10px; min-width: 136px; padding: 9px 12px; }
     .recorded-pic-label { color: var(--muted); display: block; font-size: 9px; font-weight: 800; letter-spacing: .65px; text-transform: uppercase; }
     .recorded-pic-name { color: var(--green-dark); display: block; font-size: 12px; font-weight: 750; margin-top: 3px; }
-    .recorded-view-actions { align-items: center; display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; margin: 0; }
+    .recorded-view-actions { align-items: center; display: grid; gap: 12px; grid-template-columns: auto minmax(180px, 1fr) auto; margin: 0; }
     .recorded-view-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
     .recorded-view-tabs .active { background: var(--green); border-color: var(--green); color: #fff; }
+    .recorded-archive-search { justify-self: center; max-width: 440px; min-width: 0; width: 100%; }
+    .recorded-archive-search .search-wrap { width: 100%; }
+    .recorded-archive-search .search-input { height: 39px; width: 100%; }
+    .recorded-archive-search .search-icon { top: 10px; }
     .recorded-sheet-content { min-width: 0; }
     .recorded-sheet-content .completed-racks { margin: 0; }
+    .recorded-search-summary { color: var(--muted); font-size: 10px; margin: 0 0 9px; }
+    .recorded-search-type { color: var(--muted); display: block; font-size: 9px; margin-top: 3px; }
+    @media (max-width: 760px) {
+      .recorded-view-actions { grid-template-columns: minmax(0, 1fr) auto; }
+      .recorded-view-tabs { grid-column: 1 / -1; }
+      .recorded-archive-search { grid-column: 1; grid-row: 2; max-width: none; }
+      .recorded-view-actions > #print-recorded-sheet { grid-column: 2; grid-row: 2; }
+    }
+    @media (max-width: 480px) {
+      .recorded-view-actions { gap: 9px; }
+      .recorded-view-tabs { gap: 5px; }
+      .recorded-view-tabs .button { font-size: 10px; min-height: 34px; padding: 0 8px; }
+      .recorded-archive-search .search-input { font-size: 10px; }
+      .recorded-view-actions > #print-recorded-sheet { font-size: 10px; min-height: 34px; padding: 0 9px; }
+    }
     html[data-theme="dark"] .recorded-archive-head { background: linear-gradient(120deg, color-mix(in srgb, var(--green) 20%, var(--paper)), var(--paper) 72%); }
     html[data-theme="dark"] .recorded-pic-card { background: color-mix(in srgb, var(--green) 14%, var(--paper)); border-color: color-mix(in srgb, var(--green) 34%, var(--line)); }
     html[data-theme="dark"] .recorded-pic-name { color: var(--green-dark); }
@@ -2417,6 +2437,7 @@
     let selectedRecordedBrand = "";
     let selectedRecordedSessionId = "";
     let selectedRecordedSheet = "layouts";
+    let recordedArchiveSearchTerm = "";
     let pendingPjProductId = "";
     let pendingPjEntryId = "";
     let pendingInboundProductId = "";
@@ -4558,18 +4579,52 @@
       const products = snapshot.products || [];
       const inboundEntries = snapshot.inboundEntries || [];
       const countMode = snapshot.countMode === "all" ? "all" : "laptops";
+      const query = recordedArchiveSearchTerm.trim().toLocaleLowerCase("id-ID");
+      const productsById = new Map(products.map((product) => [product.id, product]));
+      const productsBySku = new Map(products.map((product) => [String(product.sku || "").toLocaleLowerCase("id-ID"), product]));
+      const serialsByProduct = new Map();
+      for (const [serial, master] of Object.entries(snapshot.serialMaster || {})) {
+        const product = productsById.get(master?.productId) || productsBySku.get(String(master?.sku || "").toLocaleLowerCase("id-ID"));
+        if (!product) continue;
+        const serials = serialsByProduct.get(product.id) || [];
+        serials.push(serial);
+        serialsByProduct.set(product.id, serials);
+      }
+      const recordMatches = (record, product) => !query || [
+        record.sku, record.name, record.itemGroup, product?.sku, product?.name, product?.itemGroup,
+        ...(product ? serialsByProduct.get(product.id) || [] : []),
+        record.serial
+      ].some((value) => String(value || "").toLocaleLowerCase("id-ID").includes(query));
       if (sheet === "layouts") {
         const layouts = snapshot.layouts?.length ? snapshot.layouts : [...new Set((snapshot.scanEvents || []).map((scan) => scan.layout).filter(Boolean))];
-        return `<div class="completed-racks">${layouts.map((layout) => {
-          const scans = (snapshot.scanEvents || []).filter((scan) => scan.layout === layout);
-          const manualEntries = (snapshot.manualEntries || []).filter((entry) => entry.layout === layout);
+        const rackMarkup = layouts.map((layout) => {
+          const allScans = (snapshot.scanEvents || []).filter((scan) => scan.layout === layout);
+          const allManualEntries = (snapshot.manualEntries || []).filter((entry) => entry.layout === layout);
+          const scans = query ? allScans.filter((scan) => recordMatches(scan, productsById.get(scan.productId) || productsBySku.get(String(scan.sku || "").toLocaleLowerCase("id-ID")))) : allScans;
+          const manualEntries = query ? allManualEntries.filter((entry) => recordMatches(entry, productsById.get(entry.productId) || productsBySku.get(String(entry.sku || "").toLocaleLowerCase("id-ID")))) : allManualEntries;
+          if (query && !scans.length && !manualEntries.length) return "";
           const number = snapshot.layoutNumbers?.[layout];
           const title = number ? `Rack ${number}` : layout;
           const target = snapshot.layoutQuantities?.[layout];
-          return `<article class="layout-card"><div class="layout-card-head"><div><div class="layout-name">${escapeHtml(title)}</div><div class="layout-location">Scan Layout · tampilan arsip</div></div><div class="layout-card-summary"><span class="layout-count">Target ${target === undefined ? "-" : formatNumber(target)} · ${scans.length} scan · ${manualEntries.reduce((sum, entry) => sum + Number(entry.quantity || 0), 0)} manual</span></div></div><div class="layout-card-foot"><div class="layout-record-group"><div class="layout-record-heading">Scan</div>${scans.length ? scans.slice().reverse().map((scan) => `<details class="layout-scan-detail"${printMode ? " open" : ""}><summary class="layout-scan-summary"><span class="layout-scan-code">Item Code: ${escapeHtml(scan.sku || "-")}</span><span class="layout-scan-name">Item Name: ${escapeHtml(scan.name || "-")}</span><span class="layout-scan-serial">Serial Number: ${escapeHtml(scan.serial)}</span>${scan.status === "duplicate" || scan.status === "not-found" ? `<span class="scan-warning-icon" role="img" aria-label="Peringatan hasil scan" title="${scan.status === "duplicate" ? "Serial Number duplikat" : "Serial Number tidak ditemukan"}">!</span>` : ""}</summary><div class="layout-scan-detail-body"><span>Hasil: ${escapeHtml(scan.status === "match" ? "Cocok di VEF" : scan.status === "duplicate" ? "Duplikat" : scan.status === "non-laptop" ? "Bukan laptop" : "Tidak ditemukan")}</span><span>Waktu: ${escapeHtml(scan.scannedAt ? formatDate(scan.scannedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "-")}</span></div></details>`).join("") : `<div class="layout-record-empty">Belum ada scan.</div>`}</div><div class="layout-record-group"><div class="layout-record-heading">Manual</div>${manualEntries.length ? manualEntries.slice().reverse().map((entry) => `<div class="completed-rack-scan">${escapeHtml(entry.sku)} · ${escapeHtml(entry.name)} · Qty ${formatNumber(entry.quantity)} · ${escapeHtml(entry.createdAt ? formatDate(entry.createdAt, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "-")}</div>`).join("") : `<div class="layout-record-empty">Belum ada input manual.</div>`}</div></div></article>`;
-        }).join("") || `<div class="completed-rack-meta">Tidak ada data Rack.</div>`}</div>`;
+          const scanRows = scans.length ? scans.slice().reverse().map((scan) => {
+            const product = productsById.get(scan.productId) || productsBySku.get(String(scan.sku || "").toLocaleLowerCase("id-ID"));
+            const itemType = scan.itemGroup || product?.itemGroup || "-";
+            return `<details class="layout-scan-detail"${printMode ? " open" : ""}><summary class="layout-scan-summary"><span class="layout-scan-code">Item Code: ${escapeHtml(scan.sku || "-")}</span><span class="layout-scan-name">Item Name: ${escapeHtml(scan.name || "-")}</span><span class="layout-scan-serial">Serial Number: ${escapeHtml(scan.serial)}</span><span class="layout-scan-type">Tipe: ${escapeHtml(itemType)}</span>${scan.status === "duplicate" || scan.status === "not-found" ? `<span class="scan-warning-icon" role="img" aria-label="Peringatan hasil scan" title="${scan.status === "duplicate" ? "Serial Number duplikat" : "Serial Number tidak ditemukan"}">!</span>` : ""}</summary><div class="layout-scan-detail-body"><span>Hasil: ${escapeHtml(scan.status === "match" ? "Cocok di VEF" : scan.status === "duplicate" ? "Duplikat" : scan.status === "non-laptop" ? "Bukan laptop" : "Tidak ditemukan")}</span><span>Waktu: ${escapeHtml(scan.scannedAt ? formatDate(scan.scannedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "-")}</span></div></details>`;
+          }).join("") : `<div class="layout-record-empty">${query ? "Tidak ada scan yang cocok di rack ini." : "Belum ada scan."}</div>`;
+          const manualRows = manualEntries.length ? manualEntries.slice().reverse().map((entry) => {
+            const product = productsById.get(entry.productId) || productsBySku.get(String(entry.sku || "").toLocaleLowerCase("id-ID"));
+            return `<div class="completed-rack-scan">${escapeHtml(entry.sku)} · ${escapeHtml(entry.name)} · Tipe ${escapeHtml(product?.itemGroup || "-")} · Qty ${formatNumber(entry.quantity)} · ${escapeHtml(entry.createdAt ? formatDate(entry.createdAt, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "-")}</div>`;
+          }).join("") : `<div class="layout-record-empty">${query ? "Tidak ada input manual yang cocok di rack ini." : "Belum ada input manual."}</div>`;
+          return `<article class="layout-card"><div class="layout-card-head"><div><div class="layout-name">${escapeHtml(title)}</div><div class="layout-location">Scan Layout · tampilan arsip</div></div><div class="layout-card-summary"><span class="layout-count">Target ${target === undefined ? "-" : formatNumber(target)} · ${query ? `${scans.length} hasil scan · ${manualEntries.length} hasil manual` : `${allScans.length} scan · ${allManualEntries.reduce((sum, entry) => sum + Number(entry.quantity || 0), 0)} manual`}</span></div></div><div class="layout-card-foot"><div class="layout-record-group"><div class="layout-record-heading">Scan ${query ? `· ${scans.length} hasil` : ""}</div>${scanRows}</div><div class="layout-record-group"><div class="layout-record-heading">Manual ${query ? `· ${manualEntries.length} hasil` : ""}</div>${manualRows}</div></div></article>`;
+        }).join("");
+        const matchingRackCount = (rackMarkup.match(/<article class="layout-card"/g) || []).length;
+        const emptyMessage = query ? `Tidak ada item yang cocok dengan “${escapeHtml(recordedArchiveSearchTerm.trim())}”.` : "Tidak ada data Rack.";
+        return `<div class="recorded-search-summary">${query ? `${matchingRackCount} rack berisi hasil · pencarian berdasarkan item code, nama, atau Serial Number` : `${layouts.length} rack · tampilan arsip`}</div><div class="completed-racks">${rackMarkup || `<div class="completed-rack-meta">${emptyMessage}</div>`}</div>`;
       }
-      const visibleProducts = sheet === "recap" ? products.filter((product) => isCountedProduct(product, countMode) && varianceFor(product, inboundEntries) !== 0) : products;
+      const visibleProducts = products.filter((product) => {
+        const includedInSheet = sheet === "recap" ? isCountedProduct(product, countMode) && varianceFor(product, inboundEntries) !== 0 : true;
+        return includedInSheet && recordMatches(product, product);
+      });
       const rows = visibleProducts.map((product, index) => {
         const included = isCountedProduct(product, countMode);
         const variance = varianceFor(product, inboundEntries);
@@ -4577,8 +4632,8 @@
         return `<tr><td class="number-cell">${index + 1}</td><td><div class="product-name">${escapeHtml(product.name)}</div><div class="product-sku">${escapeHtml(product.sku)}</div></td><td><span class="category-chip">${escapeHtml(product.brand || "-")}</span></td><td>${escapeHtml(product.warehouse || "-")}</td><td class="number-cell">${formatNumber(product.stock)}</td><td class="number-cell">${included ? formatNumber(product.count || 0) : "-"}</td><td class="number-cell">${formatNumber(product.box || 0)}</td><td class="number-cell">${included ? formatNumber(inboundQuantityFor(product.id, inboundEntries)) : "-"}</td><td class="number-cell">${included ? formatNumber(product.pj || 0) : "-"}</td><td><span class="variance ${variance === 0 ? "zero" : variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td><td><span class="row-status ${status.className}">${status.label}</span></td><td>${escapeHtml(product.note || "-")}</td></tr>`;
       }).join("");
       const title = sheet === "recap" ? "Item belum sesuai" : "Rekonsiliasi per item";
-      const emptyMessage = sheet === "recap" ? "Belum ada item bermasalah. Semua item sesuai dengan VEF." : "Data Result SO tidak tersedia.";
-      return `<section class="table-section"><div class="table-toolbar"><div class="table-title">${title} <span class="table-count">${visibleProducts.length} item · hanya-baca</span></div></div><div class="table-scroll"><table><thead><tr><th>No</th><th>Item / item code</th><th>Brand</th><th>Warehouse</th><th>VEF</th><th>SCAN</th><th>MANUAL</th><th>Inbound/Retur</th><th>PJ</th><th>Selisih</th><th>Check</th><th>Note</th></tr></thead><tbody>${rows || `<tr><td class="empty-row" colspan="12">${emptyMessage}</td></tr>`}</tbody></table></div></section>`;
+      const emptyMessage = query ? `Tidak ada hasil untuk “${escapeHtml(recordedArchiveSearchTerm.trim())}”.` : sheet === "recap" ? "Belum ada item bermasalah. Semua item sesuai dengan VEF." : "Data Result SO tidak tersedia.";
+      return `<section class="table-section"><div class="table-toolbar"><div class="table-title">${title} <span class="table-count">${visibleProducts.length} item · hanya-baca${query ? " · hasil pencarian" : ""}</span></div></div><div class="table-scroll"><table><thead><tr><th>No</th><th>Item / item code</th><th>Brand</th><th>Warehouse</th><th>VEF</th><th>SCAN</th><th>MANUAL</th><th>Inbound/Retur</th><th>PJ</th><th>Selisih</th><th>Check</th><th>Note</th></tr></thead><tbody>${rows || `<tr><td class="empty-row" colspan="12">${emptyMessage}</td></tr>`}</tbody></table></div></section>`;
     }
     function handleRecordedBrandChange() {
       const brand = document.getElementById("recorded-brand-select")?.value;
@@ -4642,6 +4697,7 @@
       }
       selectedRecordedSessionId = session.id;
       selectedRecordedSheet = "layouts";
+      recordedArchiveSearchTerm = "";
       currentPage = "recorded-archive";
       render();
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -4675,6 +4731,7 @@
             <button class="button button-secondary${selectedRecordedSheet === "result" ? " active" : ""}" type="button" role="tab" aria-selected="${selectedRecordedSheet === "result"}" data-recorded-sheet="result">Result SO</button>
             <button class="button button-secondary${selectedRecordedSheet === "recap" ? " active" : ""}" type="button" role="tab" aria-selected="${selectedRecordedSheet === "recap"}" data-recorded-sheet="recap">Rekap Selisih</button>
           </div>
+          <div class="recorded-archive-search"><div class="search-wrap"><span class="search-icon" aria-hidden="true">⌕</span><input class="search-input" id="recorded-archive-search" type="search" placeholder="Cari item code, nama, atau SN" value="${escapeHtml(recordedArchiveSearchTerm)}" aria-label="Cari item code, nama, atau Serial Number dalam lembar arsip"></div></div>
           <button class="button button-primary" id="print-recorded-sheet" type="button">Print / Save PDF</button>
         </section>
         <div id="recorded-sheet-content" class="recorded-sheet-content">${renderRecordedSheet(session, selectedRecordedSheet)}</div>
@@ -5295,6 +5352,15 @@
         selectedRecordedSheet = button.dataset.recordedSheet;
         render();
       }));
+      document.getElementById("recorded-archive-search")?.addEventListener("input", (event) => {
+        const search = event.currentTarget;
+        const cursor = search.selectionStart;
+        recordedArchiveSearchTerm = search.value;
+        render();
+        const next = document.getElementById("recorded-archive-search");
+        next?.focus();
+        next?.setSelectionRange(cursor, cursor);
+      });
       document.getElementById("print-recorded-sheet")?.addEventListener("click", printRecordedSheet);
       document.querySelector("[data-recorded-return]")?.addEventListener("click", () => {
         currentPage = "dashboard";
