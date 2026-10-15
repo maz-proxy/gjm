@@ -1899,7 +1899,7 @@
   </dialog>
   <dialog id="pj-entry-dialog" class="feature-dialog">
     <div class="dialog-head"><div><div class="dialog-title" id="pj-entry-title">Tambah quantity PJ</div><div class="dialog-subtitle" id="pj-entry-product"></div></div><button class="dialog-close" type="button" data-close="pj-entry-dialog" aria-label="Tutup">×</button></div>
-    <form id="pj-entry-form" class="feature-dialog-form"><label class="auth-field" id="pj-entry-existing-wrap" hidden><span>Pilih invoice untuk diedit</span><select class="auth-input" id="pj-entry-existing"></select></label><label class="auth-field"><span>Tanggal dan waktu invoice</span><input class="auth-input" name="invoiceDate" type="datetime-local" required></label><label class="auth-field"><span>Nomor invoice</span><input class="auth-input" name="invoiceNumber" type="text" maxlength="100" required placeholder="Masukkan nomor invoice"></label><label class="auth-field"><span>Quantity PJ</span><input class="auth-input" name="quantity" type="number" min="1" step="1" required placeholder="Masukkan quantity"></label><div class="dialog-actions"><button class="button button-secondary" id="pj-entry-new" type="button">Invoice baru</button><button class="button button-secondary" type="button" data-close="pj-entry-dialog">Batal</button><button class="button button-primary" id="pj-entry-save" type="submit">Simpan PJ</button></div></form>
+    <form id="pj-entry-form" class="feature-dialog-form"><label class="auth-field" id="pj-entry-existing-wrap" hidden><span>Pilih invoice untuk diedit</span><select class="auth-input" id="pj-entry-existing"></select></label><label class="auth-field"><span>Tanggal dan waktu invoice</span><input class="auth-input" name="invoiceDate" type="datetime-local" required></label><label class="auth-field"><span>Nomor invoice</span><input class="auth-input" name="invoiceNumber" type="text" maxlength="100" required placeholder="Masukkan nomor invoice"></label><label class="auth-field"><span>Quantity PJ</span><input class="auth-input" name="quantity" type="number" min="1" step="1" required placeholder="Masukkan quantity"></label><div class="dialog-actions"><button class="button button-danger" id="pj-entry-delete" type="button" hidden>Hapus invoice</button><button class="button button-secondary" id="pj-entry-new" type="button">Invoice baru</button><button class="button button-secondary" type="button" data-close="pj-entry-dialog">Batal</button><button class="button button-primary" id="pj-entry-save" type="submit">Simpan PJ</button></div></form>
   </dialog>
   <dialog id="finish-dialog">
     <div class="dialog-head"><div><div class="dialog-title">Selesaikan stock opname?</div><div class="dialog-subtitle">Hasil diarsipkan, lalu seluruh data kerja sesi ini direset. Jika ada sesi lain yang berjalan, sesi itu akan dibuka untuk dilanjutkan.</div></div><button class="dialog-close" type="button" data-close="finish-dialog" aria-label="Tutup">×</button></div>
@@ -3400,6 +3400,7 @@
       selectorWrap.hidden = !entry && selector.options.length === 0;
       title.textContent = entry ? "Edit quantity PJ" : "Tambah quantity PJ";
       document.getElementById("pj-entry-new").hidden = !entry;
+      document.getElementById("pj-entry-delete").hidden = !entry;
       document.getElementById("pj-entry-save").textContent = entry ? "Simpan perubahan" : "Simpan PJ";
     }
     function openPjEntryDialog(productId) {
@@ -3466,6 +3467,31 @@
       document.getElementById("pj-entry-dialog").close();
       render();
       notify(existingEntry ? "Data PJ berhasil diperbarui." : "Quantity PJ berhasil dicatat.");
+    }
+    function deletePjEntry() {
+      if (!requireActiveSessionEdit()) return;
+      const product = state.products.find((item) => item.id === pendingPjProductId);
+      const entry = state.pjEntries.find((item) => item.id === pendingPjEntryId && item.productId === product?.id);
+      if (!product || !entry) {
+        notify("Invoice PJ yang dipilih tidak lagi tersedia. Tutup dialog lalu buka kembali.");
+        return;
+      }
+      if (!window.confirm(`Hapus invoice ${entry.invoiceNumber || "(tanpa nomor)"} sebanyak ${formatNumber(entry.quantity)} PJ untuk ${product.sku}? Quantity PJ akan dikurangi.`)) return;
+      const nextQuantity = Number(product.pj || 0) - Number(entry.quantity || 0);
+      if (!Number.isSafeInteger(nextQuantity) || nextQuantity < 0) {
+        notify("Quantity PJ tidak konsisten dengan invoice yang dipilih. Data tidak diubah.");
+        return;
+      }
+      state.pjEntries = state.pjEntries.filter((item) => item.id !== entry.id);
+      product.pj = nextQuantity;
+      recordActivity("PJ dihapus", `${product.sku} · invoice ${entry.invoiceNumber || "(tanpa nomor)"} dihapus, quantity ${formatNumber(entry.quantity)} dikurangi.`);
+      persist();
+      pendingPjProductId = "";
+      pendingPjEntryId = "";
+      document.getElementById("pj-entry-form").reset();
+      document.getElementById("pj-entry-dialog").close();
+      render();
+      notify("Invoice PJ berhasil dihapus.");
     }
     function reclassifyScanEvents(scanEvents, serialMaster, countMode) {
       const seen = new Set();
@@ -6020,6 +6046,7 @@
     document.getElementById("recorded-period-month").addEventListener("change", updateRecordedPeriodAvailability);
     document.getElementById("recorded-period-week").addEventListener("change", updateRecordedPeriodAvailability);
     document.getElementById("pj-entry-form").addEventListener("submit", submitPjEntry);
+    document.getElementById("pj-entry-delete").addEventListener("click", deletePjEntry);
     document.getElementById("pj-entry-existing").addEventListener("change", (event) => {
       const entry = state.pjEntries.find((item) => item.id === event.currentTarget.value && item.productId === pendingPjProductId);
       if (entry) setPjEntryForm(entry);
