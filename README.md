@@ -2,6 +2,10 @@
 
 Static web application for stock-opname reconciliation. GitHub Actions publishes it to GitHub Pages whenever a commit is pushed to `main`. Supabase provides staff authentication and shared team data.
 
+## Language preference
+
+Use the Indonesian and UK flag buttons on the login screen or in the workspace toolbar to switch between Indonesian and English. The selection applies to the app interface and print/PDF pages, defaults to Indonesian, and is saved in the current browser on the current device; it is not shared with other accounts or devices. User-entered and inventory data are not translated.
+
 ## Publish with GitHub Pages
 
 1. Create a GitHub repository and add this project to it.

@@ -898,6 +898,12 @@
     .theme-toggle-icon { font-size: 13px; line-height: 1; }
     .accent-toggle { align-items: center; background: rgba(255,255,255,.76); border: 1px solid var(--line); border-radius: 7px; color: var(--ink); display: inline-flex; font-size: 10px; font-weight: 700; gap: 6px; min-height: 29px; padding: 4px 8px; }
     .accent-toggle:hover { border-color: #b8cfc6; }
+    .language-options { align-items: center; display: inline-flex; flex: 0 0 auto; gap: 4px; }
+    .language-option { align-items: center; background: rgba(255,255,255,.76); border: 1px solid var(--line); border-radius: 6px; cursor: pointer; display: inline-flex; height: 27px; justify-content: center; padding: 3px; transition: background .2s ease, border-color .2s ease, box-shadow .2s ease; width: 35px; }
+    .language-option:hover { border-color: #b8cfc6; }
+    .language-option[aria-pressed="true"] { border-color: var(--green); box-shadow: 0 0 0 1px var(--green); }
+    .language-flag { border-radius: 2px; display: block; height: 17px; overflow: hidden; width: 26px; }
+    .auth-language-options { left: 20px; position: absolute; right: auto; top: 18px; z-index: 10; }
     .accent-swatch { background: var(--green); border: 1px solid rgba(0,0,0,.12); border-radius: 50%; height: 12px; width: 12px; }
     .auth-theme-toggle { position: absolute; right: 20px; top: 18px; }
     .auth-accent-toggle { position: absolute; right: 82px; top: 18px; }
@@ -905,6 +911,7 @@
       .theme-toggle { min-height: 27px; padding: 4px 7px; }
       .theme-toggle-label { display: none; }
       .accent-toggle { min-height: 27px; padding: 4px 7px; }
+      .auth-language-options { left: 12px; top: 12px; }
       .auth-theme-toggle { right: 12px; top: 12px; }
       .auth-accent-toggle { right: 62px; top: 12px; }
       .top-account { gap: 6px; }
@@ -1108,6 +1115,8 @@
     html[data-theme="dark"] .theme-toggle { background: #22332f; border-color: #3a514b; color: #e3eeea; }
     html[data-theme="dark"] .theme-toggle:hover { background: #2a403a; border-color: #527467; }
     html[data-theme="dark"] .accent-toggle { background: #22332f; border-color: #3a514b; color: #e3eeea; }
+    html[data-theme="dark"] .language-option { background: #22332f; border-color: #3a514b; }
+    html[data-theme="dark"] .language-option[aria-pressed="true"] { border-color: #83c6ae; box-shadow: 0 0 0 1px #83c6ae; }
     html[data-theme="dark"] .nav-item.active { background: linear-gradient(100deg, #28483e, #203a34); box-shadow: inset 3px 0 #83c6ae; color: #e1f1eb; }
     html[data-theme="dark"] .auth-message.success { background: #203b35; border-color: #36594d; color: #9edbc3; }
     html[data-theme="dark"] .auth-message:not(.success) { background: #402a29; border-color: #67403c; color: #efaaa1; }
@@ -1943,6 +1952,10 @@
     <div class="auth-loading-card"><div class="auth-loading-mark" aria-hidden="true"><img class="brand-monogram" data-brand-emblem src="./assets/brand-emblem-source.png" alt=""></div><div class="auth-loading-spinner" aria-hidden="true"></div><div class="auth-loading-text">Memeriksa sesi login...</div></div>
   </section>
   <section class="auth-screen" id="auth-screen" aria-label="Login">
+    <div class="language-options auth-language-options" role="group" aria-label="Pilih bahasa">
+      <button class="language-option" type="button" data-language-option="id" aria-label="Bahasa Indonesia" aria-pressed="false"><svg class="language-flag" aria-hidden="true" viewBox="0 0 30 20"><rect width="30" height="10" fill="#ce1126"/><rect y="10" width="30" height="10" fill="#fff"/></svg></button>
+      <button class="language-option" type="button" data-language-option="en" aria-label="English" aria-pressed="false"><svg class="language-flag" aria-hidden="true" viewBox="0 0 60 30"><rect width="60" height="30" fill="#012169"/><path d="M0 0 60 30M60 0 0 30" stroke="#fff" stroke-width="6"/><path d="M0 0 60 30M60 0 0 30" stroke="#c8102e" stroke-width="2"/><path d="M30 0v30M0 15h60" stroke="#fff" stroke-width="10"/><path d="M30 0v30M0 15h60" stroke="#c8102e" stroke-width="4"/></svg></button>
+    </div>
     <button class="theme-toggle auth-theme-toggle" type="button" data-theme-toggle aria-label="Aktifkan dark mode" aria-pressed="false"><span class="theme-toggle-icon" aria-hidden="true">☾</span><span class="theme-toggle-label">Dark</span></button>
     <button class="accent-toggle auth-accent-toggle" type="button" data-accent-toggle aria-label="Ganti tema warna ke burgundy"><span class="accent-swatch" aria-hidden="true"></span><span data-accent-label>Burgundy</span></button>
     <div class="auth-card">
@@ -2085,6 +2098,624 @@
   <script>
     const STORAGE_KEY = "ruangstok-sn-v2";
     const THEME_STORAGE_KEY = "ruangstok-theme";
+    const LANGUAGE_STORAGE_KEY = "ruangstok-language";
+    const LANGUAGE_TRANSLATIONS = Object.freeze({
+      "Memeriksa sesi login...": "Checking login session...",
+      "Memeriksa sesi login": "Checking login session",
+      "Pilih bahasa": "Choose language",
+      "Ganti tema warna ke burgundy": "Switch accent color to burgundy",
+      "Aktifkan dark mode": "Enable dark mode",
+      "Nonaktifkan dark mode": "Disable dark mode",
+      "Ganti tema warna ke green": "Switch accent color to green",
+      "Login menggunakan username dan password dari admin. Data stock opname dibagikan ke seluruh tim.": "Log in with the username and password provided by your administrator. Stock opname data is shared with the whole team.",
+      "Masukkan username": "Enter username",
+      "Masukkan password": "Enter password",
+      "Password baru": "New password",
+      "Ulangi password baru": "Confirm new password",
+      "Minimal 8 karakter": "At least 8 characters",
+      "Ulangi password": "Confirm password",
+      "Simpan password": "Save password",
+      "Login Account": "Login",
+      "Masuk": "Log in",
+      "Akun dibuat oleh admin. Saat pertama kali masuk, Anda akan diminta mengganti password sementara. Jika lupa password, hubungi admin.": "Accounts are created by an administrator. You will be asked to change your temporary password on your first login. Contact your administrator if you forget your password.",
+      "Sampaikan password sementara ini secara pribadi kepada pemilik akun.": "Share this temporary password privately with the account owner.",
+      "Demi keamanan, pengguna wajib mengganti password ini saat login berikutnya. Jangan bagikan password di grup atau tempat umum.": "For security, the user must change this password at their next login. Do not share it in a group or public place.",
+      "Salin": "Copy",
+      "Selesai": "Done",
+      "Keluar dari akun?": "Log out?",
+      "Konfirmasi sebelum mengakhiri sesi Anda.": "Confirm before ending your session.",
+      "Apakah Anda yakin ingin keluar dari workspace?": "Are you sure you want to leave the workspace?",
+      "Batal": "Cancel",
+      "Ya, Keluar": "Yes, log out",
+      "Nama Brand belum diisi": "Brand name not set",
+      "Belum diisi": "Not set",
+      "Dashboard Sesi Berjalan": "Active Session Dashboard",
+      "Stock Opname Recorded": "Recorded Stock Opname",
+      "Result SO": "Stock Reconciliation",
+      "Scan Layout": "Scan & Manual",
+      "Jadwal": "Schedule",
+      "Master VEF": "VEF Master",
+      "Rekap selisih": "Recap",
+      "Rekap Selisih": "Recap",
+      "Sesi Stock Opname": "Session SO",
+      "Kelola Akun": "Account Manager",
+      "Pemindaian inventaris": "Inventory scanning",
+      "Isi nomor Rack dan quantity target sebelum mulai scan.": "Enter a rack number and quantity target before scanning.",
+      "Total Rack": "Total Racks",
+      "Ringkasan quantity Scan Layout": "Scan & Manual Summary",
+      "Total Scan": "Total Scans",
+      "Total Manual": "Total Manual",
+      "Total Quantity SO": "Total Reconciliation Quantity",
+      "Total Qty": "Total Quantity",
+      "sesuai mode hitung": "according to counting mode",
+      "Sesi hanya dapat dilihat.": "This session is read-only.",
+      "Pengedit: Belum ditetapkan · hubungi Owner untuk sesi lama.": "Editor: Not assigned · contact the Owner for older sessions.",
+      "Belum ditetapkan": "Not assigned",
+      "Pemilik:": "Owner:",
+      "Sesi opname ·": "Stock Opname session ·",
+      "Sedang berjalan": "In progress",
+      "SO SELESAI": "FINISH STOCK OPNAME",
+      "Hasil SO": "Stock Reconciliation",
+      "Sesuai": "Matching",
+      "Item master VEF": "VEF master items",
+      "item bermasalah": "problem items",
+      "item laptop": "laptop items",
+      "item selain laptop": "non-laptop items",
+      "arsip selesai": "completed archives",
+      "sesi selesai": "completed sessions",
+      "Belum ada perubahan": "No changes yet",
+      "Riwayat perubahan": "Change history",
+      "aktivitas": "activities",
+      "Buka ": "Open ",
+      "Tambah Rack": "Add Rack",
+      "Hapus Rack": "Delete Rack",
+      "cocok": "matching",
+      "0 cocok": "0 matching",
+      "di halaman": "on the page",
+      "untuk mengaktifkan kartu Rack, scan, input manual, dan tombol Tambah Rack.": "to enable rack cards, scanning, manual entries, and the Add Rack button.",
+      "Ringkasan quantity Scan & Manual": "Scan & Manual Quantity Summary",
+      "Qty VEF Master": "VEF Master Qty",
+      "Qty Master VEF": "VEF Master Qty",
+      "Quantity manual untuk": "Manual quantity for",
+      "Nama atau nomor Rack": "Rack name or number",
+      "Quantity target Rack": "Target quantity for Rack",
+      "laptop saja": "laptops only",
+      "Laptop dihitung": "Laptops counted",
+      "laptop dihitung": "laptops counted",
+      " dari ": " of ",
+      "NAMA BRAND": "BRAND NAME",
+      "Ringkasan stock opname": "Stock Opname Summary",
+      "Selisih Quantity": "Quantity Variance",
+      "item tidak sesuai": "items with discrepancies",
+      " tidak dihitung": " not counted",
+      " aktivitas": " activities",
+      "Tersimpan otomatis": "Saved automatically",
+      "Menampilkan ": "Showing ",
+      " barang": " items",
+      "Riwayat pemindaian": "Scan history",
+      "Belum ada Serial Number yang dipindai.": "No serial numbers scanned yet.",
+      "Buka Jadwal →": "Open Schedule →",
+      "Buka Master VEF →": "Open VEF Master →",
+      "Buka Scan Layout →": "Open Scan & Manual →",
+      "Buka Result SO →": "Open Stock Reconciliation →",
+      "Buka Rekap Selisih →": "Open Recap →",
+      "Buka Riwayat Perubahan →": "Open History Changes →",
+      "Data Resource": "Data Resources",
+      "Riwayat Perubahan": "History Changes",
+      "Panduan": "Guide",
+      "About": "About",
+      "Online:": "Online:",
+      "Akun online:": "Online accounts:",
+      "Dashboard": "Dashboard",
+      "Workspace": "Workspace",
+      "Arsip": "Archive",
+      "Arsip stock opname": "Stock Opname Archive",
+      "Bantuan": "Help",
+      "Navigasi utama": "Main navigation",
+      "Pengguna": "User",
+      "Keluar": "Log out",
+      "Ciutkan menu": "Collapse menu",
+      "Perluas menu": "Expand menu",
+      "Dark": "Dark",
+      "Light": "Light",
+      "Cetak": "Print",
+      "Kembali ke Dashboard": "Back to Dashboard",
+      "Arsip sesi yang sudah selesai, termasuk file VEF asli, nama akun, PIC, detail Scan Layout, input manual, Result SO, invoice PJ, dan Rekap Selisih.": "Archive of completed sessions, including original VEF files, account names, PICs, Scan & Manual details, manual entries, Stock Reconciliation, PJ invoices, and Recap.",
+      "Sesi sebelumnya": "Previous sessions",
+      "terbaru di atas": "newest first",
+      "Nama sesi": "Session name",
+      "Pemilik": "Owner",
+      "Nama PIC": "PIC name",
+      "Tanggal sesi": "Session date",
+      "Item dihitung": "Items counted",
+      "Unit VEF dihitung": "VEF units counted",
+      "SN cocok": "Matching serial numbers",
+      "Item sesuai": "Matching items",
+      "Selisih": "Variance",
+      "SN bukan laptop": "Non-laptop serial numbers",
+      "SN bermasalah": "Problematic serial numbers",
+      "Data": "Data",
+      "Buka sesi": "Open session",
+      "Hapus": "Delete",
+      "Data detail tidak tersedia": "Detailed data unavailable",
+      "Belum ada sesi opname yang selesai.": "No completed stock opname sessions yet.",
+      "Lembar arsip dan cetak": "Archive and print sheets",
+      "Lembar kerja arsip": "Archive worksheets",
+      "Cari item code, nama, atau SN": "Search item code, name, or SN",
+      "Cari item code, nama, atau Serial Number dalam lembar arsip": "Search item code, name, or serial number in the archive",
+      "Print / Save PDF": "Print / Save PDF",
+      "Jendela cetak diblokir browser. Izinkan pop-up untuk mencetak atau menyimpan PDF.": "The print window was blocked by your browser. Allow pop-ups to print or save as PDF.",
+      "Data detail sesi tidak tersedia untuk dicetak.": "Session details are unavailable for printing.",
+      "Invoice tanpa nomor": "Invoice without a number",
+      "Tanggal tidak tersedia": "Date unavailable",
+      "Belum ada invoice PJ. Klik untuk mencatat.": "No PJ invoice yet. Click to add one.",
+      "PREC/RETUR tanpa nomor": "PREC/RETURN without a number",
+      "Belum ada Inbound/Retur. Klik untuk mencatat.": "No Inbound/Return yet. Click to add one.",
+      "Klik untuk melihat atau mengedit data.": "Click to view or edit data.",
+      "Klik untuk melihat atau mengedit invoice.": "Click to view or edit invoices.",
+      "Template terbaca, tetapi tab VEF Master belum berisi Serial No dan Item Code.": "The template was read, but the VEF Master sheet does not contain Serial No and Item Code.",
+      "Belum ada data VEF. Unggah workbook stock opname untuk memulai.": "No VEF data yet. Upload a stock opname workbook to get started.",
+      "Result SO · Rekonsiliasi inventaris": "Stock Reconciliation · Inventory reconciliation",
+      "SCAN + MANUAL + PJ dibandingkan dengan VEF + Inbound/Retur. Perhitungan:": "SCAN + MANUAL + PJ compared with VEF + Inbound/Return. Counting mode:",
+      "Sesi opname": "Stock opname session",
+      "Rekonsiliasi sedang berjalan": "Reconciliation in progress",
+      "Rekonsiliasi selesai": "Reconciliation complete",
+      "Unggah workbook di Master VEF untuk memulai sesi.": "Upload a workbook in VEF Master to start a session.",
+      "Jumlah laptop": "Laptop count",
+      "Semua item": "All items",
+      "Item laptop saja": "Laptop items only",
+      "Filter": "Filter",
+      "Semua": "All",
+      "Cari": "Search",
+      "Cari item, SN, brand, atau warehouse": "Search items, serial numbers, brand, or warehouse",
+      "Cari item code, nama, atau Serial No": "Search item code, name, or serial number",
+      "Serial No": "Serial No",
+      "Item Code": "Item Code",
+      "Nama Item": "Item Name",
+      "Brand": "Brand",
+      "Warehouse": "Warehouse",
+      "VEF": "VEF",
+      "SCAN": "SCAN",
+      "MANUAL": "MANUAL",
+      "Inbound/Retur": "Inbound/Return",
+      "PJ": "PJ",
+      "Qty": "Qty",
+      "Status": "Status",
+      "Aksi": "Actions",
+      "Tidak ada data yang cocok dengan pencarian.": "No data matches your search.",
+      "Tidak ada data": "No data",
+      "Belum ada data.": "No data yet.",
+      "Tambah": "Add",
+      "Simpan": "Save",
+      "Simpan perubahan": "Save changes",
+      "Edit": "Edit",
+      "Tutup": "Close",
+      "Kembali": "Back",
+      "Lanjut": "Continue",
+      "Pilih": "Select",
+      "Unggah": "Upload",
+      "Unduh": "Download",
+      "Impor": "Import",
+      "Ekspor": "Export",
+      "Muat ulang": "Refresh",
+      "Tidak ada": "None",
+      "Aktif": "Active",
+      "Belum dimulai": "Not started",
+      "Berjalan": "In progress",
+      "Dihapus": "Deleted",
+      "Cocok": "Match",
+      "Kurang": "Shortage",
+      "Lebih": "Surplus",
+      "Tidak sesuai": "Mismatch",
+      "Belum dihitung": "Not counted",
+      "Nama sesi opname": "Stock opname session name",
+      "Mulai sesi": "Start session",
+      "Akhiri sesi": "End session",
+      "Mulai Stock Opname": "Start Stock Opname",
+      "Akhiri Stock Opname": "Finish Stock Opname",
+      "Tambah manual": "Add manually",
+      "Input manual": "Manual entry",
+      "Scan Serial Number": "Scan Serial Number",
+      "Masukkan Serial Number": "Enter Serial Number",
+      "Pilih rack": "Select rack",
+      "Pilih rak": "Select rack",
+      "Rak": "Rack",
+      "Jumlah": "Quantity",
+      "Nama": "Name",
+      "Catatan": "Notes",
+      "Deskripsi": "Description",
+      "Tanggal": "Date",
+      "Waktu": "Time",
+      "Total": "Total",
+      "Ringkasan": "Summary",
+      "Detail": "Details",
+      "Riwayat": "History",
+      "Pengaturan": "Settings",
+      "Akun": "Account",
+      "Password": "Password",
+      "Username": "Username",
+      "Muat data": "Load data",
+      "Data tersimpan": "Data saved",
+      "Tidak ada perubahan": "No changes",
+      "Wajib diisi": "Required",
+      "Opsional": "Optional",
+      "Pilih file": "Choose file",
+      "Belum ada file dipilih": "No file selected",
+      "Pencarian": "Search",
+      "Sesi": "Session",
+      "PIC": "PIC",
+      "Terakhir diperbarui": "Last updated",
+      "Nama brand": "Brand name",
+      "Periode": "Period",
+      "Bulan": "Month",
+      "Minggu ke-": "Week ",
+      "Minggu 1": "Week 1",
+      "Minggu 2": "Week 2",
+      "Minggu 3": "Week 3",
+      "Minggu 4": "Week 4",
+      "Minggu 5": "Week 5",
+      "Tidak ditemukan": "Not found",
+      "Tidak tersedia": "Unavailable",
+      "Memuat...": "Loading...",
+      "Mohon tunggu...": "Please wait...",
+      "Berhasil": "Success",
+      "Gagal": "Failed",
+      "Peringatan": "Warning",
+      "Konfirmasi": "Confirmation",
+      "Apakah Anda yakin?": "Are you sure?",
+      "Klik untuk membuka detail.": "Click to open details.",
+      "Ringkasan Stock Opname · Live": "Stock Opname Overview · Live",
+      "Statistik dan progres hanya untuk sesi opname yang masih berjalan.": "Statistics and progress for active stock opname sessions only.",
+      "sesi aktif · pantau Scan, Manual, dan rekonsiliasi quantity.": "active sessions · track Scan, Manual, and quantity reconciliation.",
+      "Kelola Jadwal": "Manage Schedule",
+      "Buka kembali lembar Scan Layout, Result SO, dan Rekap Selisih dari sesi yang telah selesai.": "Reopen the Scan & Manual, Stock Reconciliation, and Recap sheets from completed sessions.",
+      "Pilih Nama Brand untuk arsip": "Select a brand for the archive",
+      "Pilih Nama Brand": "Select a brand",
+      "Belum ada arsip selesai": "No completed archives",
+      "Pilih bulan": "Select month",
+      "Pilih week": "Select week",
+      "Komposisi Quantity": "Quantity Composition",
+      "Hasil SO dibandingkan dengan VEF + Inbound/Retur": "Stock Reconciliation compared with VEF + Inbound/Return",
+      "Pembanding": "Comparison",
+      "Akumulasi selisih absolut": "Cumulative absolute variance",
+      "Ringkasan & Status": "Summary & Status",
+      "Item diperiksa, progres, dan SN pada sesi aktif": "Items checked, progress, and serial numbers in the active session",
+      "Status item diperiksa": "Checked item status",
+      "item sesuai dan": "matching items and",
+      "item selisih dari": "items with variance out of",
+      "item diperiksa": "items checked",
+      "Progres keseluruhan": "Overall progress",
+      "Serial Number cocok pada sesi berjalan": "Matching serial numbers in the active session",
+      "Menunggu sesi": "Waiting for session",
+      "terpindai": "scanned",
+      "SN dipindai": "serial numbers scanned",
+      "tersisa": "remaining",
+      "Progres per brand": "Progress by brand",
+      "Sesi aktif saja · SN cocok dibanding target master": "Active sessions only · matching serial numbers vs. master target",
+      "Belum ada sesi berjalan. Unggah workbook pada sesi bernama brand di Master VEF untuk memulai.": "No active sessions. Upload a workbook to a named brand session in VEF Master to get started.",
+      "Pantau progres scan, jumlah item dan unit per warehouse, quantity SCAN/MANUAL/PJ, serta sesi yang masih berjalan.": "Track scan progress, item and unit counts by warehouse, SCAN/MANUAL/PJ quantities, and active sessions.",
+      "Perencanaan stock opname": "Stock Opname Planning",
+      "Jadwal Stock Opname": "Stock Opname Schedule",
+      "Atur ruang lingkup hitung, penanggung jawab, dan sesi kerja untuk setiap brand.": "Set the counting scope, people in charge, and work sessions for each brand.",
+      "Total sesi": "Total sessions",
+      "Sedang dipilih": "Selected",
+      "Mode perhitungan": "Counting mode",
+      "Semua jenis item dari master VEF masuk hitungan.": "All item types from the VEF master are included.",
+      "Hanya item yang terdeteksi sebagai laptop yang dihitung.": "Only items identified as laptops are counted.",
+      "Pilih mode": "Select mode",
+      "Laptop saja": "Laptops only",
+      "PIC belum diisi": "PIC not set",
+      "Nama PIC belum tersedia": "No PIC names available",
+      "Cari dan pilih brand": "Search and select a brand",
+      "Nama Brand belum tersedia": "No brand names available",
+      "Bulan stock opname untuk": "Stock opname month for",
+      "Week stock opname untuk": "Stock opname week for",
+      "Pilihan perhitungan untuk": "Counting options for",
+      "item masuk perhitungan": "items included in calculation",
+      "SN master": "Master serial numbers",
+      "Scan ·": "Scans ·",
+      "Progres serial number": "Serial number progress",
+      "Pemilik sesi ·": "Session owner ·",
+      "Lengkapi Nama Brand, PIC 1, dan PIC 2 terlebih dahulu": "Complete the brand name, PIC 1, and PIC 2 first",
+      "Lihat Stok Opname": "View Stock Opname",
+      "＋ Tambah Sesi": "＋ Add Session",
+      "Ringkasan jadwal stock opname": "Stock opname schedule summary",
+      "Daftar sesi stock opname": "Stock opname session list",
+      "Belum ada sesi stock opname.": "No stock opname sessions yet.",
+      "Data inventaris": "Inventory Data",
+      "Serial Number dipetakan ke item code, brand, dan warehouse.": "Serial numbers are mapped to item codes, brands, and warehouses.",
+      "Data didownload dari VEF": "Downloaded from VEF",
+      "Metadata sumber belum tersedia": "Source metadata unavailable",
+      "Data diupload Stock Opname": "Uploaded to Stock Opname",
+      "Belum diunggah": "Not uploaded",
+      "Hapus semua data": "Delete all data",
+      "↑ Unggah workbook": "↑ Upload workbook",
+      "Hapus data VEF yang aktif sebelum mengunggah workbook baru": "Delete the active VEF data before uploading a new workbook",
+      "Isi Nama Brand di Jadwal terlebih dahulu": "Set the brand name in Schedule first",
+      "Sesi ini hanya dapat diubah oleh pemilik atau Owner": "This session can only be changed by its owner or the Owner",
+      "Ringkasan quantity workbook Master VEF": "VEF Master workbook quantity summary",
+      "Qty Serial Number diunggah": "Serial Numbers Uploaded",
+      "Qty item VEF": "VEF Items",
+      "Qty unit laptop": "Laptop Units",
+      "Qty unit selain laptop": "Non-laptop Units",
+      "Qty keseluruhan": "Total Quantity",
+      "Laptop + selain laptop": "Laptops + non-laptops",
+      "Quantity per Warehouse": "Quantity by Warehouse",
+      "Belum ada data Warehouse.": "No warehouse data yet.",
+      "⊞ Mulai Scan / Hitung": "⊞ Start Scanning / Counting",
+      "Master barang": "Product Master",
+      "bukan laptop": "non-laptops",
+      "Cari item code atau SN": "Search item code or serial number",
+      "Cari item code atau nama": "Search item code or name",
+      "Cari master": "Search master",
+      "tampilkan": "show",
+      "Unggah workbook untuk memuat master VEF.": "Upload a workbook to load the VEF master.",
+      "serial terdaftar": "registered serial numbers",
+      "Belum ada scan.": "No scans yet.",
+      "Belum ada input manual.": "No manual entries yet.",
+      "Target Scan": "Scan Target",
+      "Nomor/Nama": "Number/Name",
+      "Nomor atau nama Rack": "Rack number or name",
+      "Quantity target": "Quantity target",
+      "masalah": "issues",
+      "Isi nama Rack dahulu": "Enter a rack name first",
+      "Isi quantity target dahulu": "Enter a quantity target first",
+      "Pindai SN di": "Scan serial number in",
+      "Catat Scan": "Record Scan",
+      "Cari item code atau nama barang": "Search item code or product name",
+      "Catat Manual": "Record Manually",
+      "Quantity belum diisi": "Quantity not set",
+      "Sesuai ·": "Matching ·",
+      "Kurang ·": "Short ·",
+      "⚠ Over Quantity": "⚠ Over Quantity",
+      "Cocok di VEF": "Matched in VEF",
+      "SN duplikat": "Duplicate serial number",
+      "Bukan laptop": "Non-laptop",
+      "Peringatan:": "Warning:",
+      "Serial Number duplikat": "Duplicate serial number",
+      "Serial Number tidak ditemukan": "Serial number not found",
+      "Tanggal dan waktu:": "Date and time:",
+      "Hasil scan:": "Scan result:",
+      "Hapus input manual": "Delete manual entry",
+      "Hapus scan": "Delete scan",
+      "Hapus rack": "Delete rack",
+      "Kosongkan data rack sebelum menghapus": "Clear rack data before deleting",
+      "Unggah file VEF terlebih dahulu": "Upload a VEF file first",
+      "Cari item dari VEF Master untuk": "Search items from VEF Master for",
+      "Item masuk perhitungan": "Items included in calculation",
+      "Catatan perubahan data dan aktivitas sesi, diurutkan dari yang terbaru.": "Data changes and session activity, ordered from newest to oldest.",
+      "aktivitas tercatat": "activities recorded",
+      "Riwayat perubahan tersimpan per sesi di perangkat ini.": "Change history is stored per session on this device.",
+      "Perubahan terakhir:": "Latest change:",
+      "Aktivitas": "Activity",
+      "Detail perubahan": "Change details",
+      "Belum ada perubahan data.": "No data changes yet.",
+      "Kelola daftar Nama Brand dan Nama PIC yang tersedia di seluruh akun pada kartu Jadwal.": "Manage the brand and PIC name lists available to all accounts in Schedule.",
+      "Pilihan ini menjadi sumber dropdown Nama Brand di Jadwal.": "These choices populate the Brand Name dropdown in Schedule.",
+      "Pilihan ini menjadi sumber dropdown PIC 1 dan PIC 2 di Jadwal.": "These choices populate the PIC 1 and PIC 2 dropdowns in Schedule.",
+      "tersimpan": "saved",
+      "Tambah daftar": "Add to list",
+      "Tempel satu atau banyak nama dari Excel (satu nama per baris)": "Paste one or more names from Excel (one name per line)",
+      "Pilihan ini": "These choices",
+      "Kelola Akun Staf": "Manage Staff Accounts",
+      "Buat akun username, reset password, dan atur akses masuk workspace.": "Create username accounts, reset passwords, and manage workspace access.",
+      "Tambah akun staf": "Add Staff Account",
+      "contoh: stafbaru": "e.g. newstaff",
+      "Buat akun": "Create Account",
+      "Daftar akun": "Account List",
+      "staf": "staff",
+      "Reset password": "Reset Password",
+      "Dinonaktifkan": "Disabled",
+      "Peran": "Role",
+      "Owner": "Owner",
+      "Akun staf": "Staff account",
+      "Belum ada akun staf.": "No staff accounts yet.",
+      "Password sementara ditampilkan satu kali dan harus diganti saat login berikutnya.": "The temporary password is shown once and must be changed at the next login.",
+      "Aktifkan": "Enable",
+      "Nonaktifkan": "Disable",
+      "Panduan lengkap menyiapkan jadwal, memproses VEF, melakukan opname, dan meninjau arsip dengan benar.": "A complete guide to scheduling, processing VEF, performing stock opname, and reviewing archives.",
+      "Kontrol stock opname dalam satu workspace.": "Manage stock opname in one workspace.",
+      "Aplikasi ini membantu tim mengelola master VEF, memindai serial number, dan mencocokkan hasil opname dengan data stok. Aktivitas tersimpan bersama agar dapat dipantau oleh seluruh tim.": "This app helps teams manage the VEF master, scan serial numbers, and reconcile stock opname results. Shared activity is saved so the whole team can monitor progress.",
+      "Panduan menggunakan workspace": "Workspace Guide",
+      "Pantau progres scan, jumlah item dan unit per warehouse, quantity SCAN/MANUAL/PJ, serta sesi yang masih berjalan. Klik tombol pada rincian sesi untuk membuka workspace-nya. Di bagian bawah, pilih brand pada Stock Opname Recorded, lalu tentukan bulan dan week. Tombol View membuka halaman arsip khusus yang menampilkan PIC 1 dan PIC 2; pilih Scan Layout, Result SO, atau Rekap Selisih untuk melihat lembar hanya-baca. Setiap lembar dapat dicetak atau disimpan sebagai PDF melalui dialog print browser.": "Track scan progress, item and unit counts by warehouse, SCAN/MANUAL/PJ quantities, and active sessions. Use the session details button to open a workspace. At the bottom, select a brand in Recorded Stock Opname, then choose a month and week. View opens a dedicated archive page showing PIC 1 and PIC 2; select Scan & Manual, Stock Reconciliation, or Recap to view a read-only sheet. Each sheet can be printed or saved as PDF using your browser's print dialog.",
+      "Tambahkan kartu jadwal, lalu pilih Nama Brand dan PIC 1/PIC 2 dari daftar yang dikelola Owner. Tentukan bulan, week, dan mode hitung laptop saja atau semua item. Ketiga nama wajib terisi sebelum sesi dapat dimulai. Tombol Mulai Stock Opname akan membuka Master VEF; setelah sesi berjalan, tombol berubah menjadi Lihat Stok Opname dan membuka Scan Layout. Kartu hanya dapat dihapus sebelum sesi dimulai dan selama belum berisi data kerja.": "Add a schedule card, then select a brand and PIC 1/PIC 2 from the list managed by the Owner. Set the month, week, and counting mode (laptops only or all items). Complete all three names before starting. Start Stock Opname opens VEF Master; once active, the button changes to View Stock Opname and opens Scan & Manual. A card can only be deleted before the session starts and while it has no work data.",
+      "Setelah memulai jadwal, unggah XLSX/XLS dengan sheet Serial No atau format workbook VEF yang didukung; file CSV dengan kolom Serial No, Item Code, Brand, Warehouse, dan Item Name juga dapat digunakan. Periksa jumlah item, serial, dan quantity per warehouse. Panel menampilkan metadata waktu sumber dan waktu unggah. File sumber disimpan dalam arsip sesi untuk dapat diunduh kembali.": "After starting the schedule, upload an XLSX/XLS file with a Serial No sheet or a supported VEF workbook; CSV files with Serial No, Item Code, Brand, Warehouse, and Item Name columns are also supported. Check item, serial, and quantity totals by warehouse. The panel shows source and upload timestamps. The source file is stored in the session archive for later download.",
+      "Buat rack dan isi label rack (angka atau keterangan teks) serta target scan. Pindai serial number pada rack yang sesuai. Hasil cocok, duplikat, bukan laptop, atau tidak ditemukan tampil pada catatan scan; serial cocok juga menampilkan item code, nama item, serial number, dan waktu saat rinciannya dibuka. Rack dengan SN duplikat diberi tanda peringatan. Untuk barang tanpa serial, cari item dari VEF, pilih hasil yang benar, masukkan quantity, lalu Catat Manual. Catatan manual terbaru akan ditandai dan difokuskan.": "Create a rack, enter its label (a number or text), and set the scan target. Scan serial numbers at the appropriate rack. Matching, duplicate, non-laptop, or not-found results appear in the scan log; matching serials also show the item code, item name, serial number, and timestamp when expanded. Racks with duplicate serial numbers are flagged. For items without serial numbers, search VEF, select the correct item, enter the quantity, then record it manually. The latest manual entry is highlighted.",
+      "Lembar ini menghitung SCAN + MANUAL + PJ dan membandingkan hasilnya dengan VEF. Untuk PJ, klik quantity pada item, lalu isi tanggal/waktu dan nomor invoice. Input hanya diterima jika waktu invoice lebih baru daripada timestamp file VEF yang tercatat di Master VEF. Tekan SO SELESAI setelah pemeriksaan selesai untuk mengunci dan mengarsipkan hasil.": "This sheet totals SCAN + MANUAL + PJ and compares the result with VEF. For PJ, click an item's quantity, then enter the date/time and invoice number. Entries are accepted only when the invoice timestamp is later than the VEF file timestamp in VEF Master. Select FINISH STOCK OPNAME when checks are complete to lock and archive the results.",
+      "Tinjau hanya item yang belum sesuai; kolom selisih membandingkan jumlah SCAN + MANUAL + PJ dengan quantity VEF. Tambahkan catatan untuk menjelaskan kekurangan atau kelebihan. Periksa kembali data sebelum sesi diselesaikan karena hasil yang diarsipkan menjadi rekaman baca-saja.": "Review only items with discrepancies; the variance column compares SCAN + MANUAL + PJ with VEF quantity. Add notes to explain shortages or surpluses. Review the data before completing the session, as archived results are read-only.",
+      "Gunakan Buka sesi untuk meninjau workbook sumber, rincian setiap rack, input manual, seluruh item Result SO, daftar invoice PJ, dan Rekap Selisih. Ekspor XLSX berisi worksheet arsip beserta detail input, sedangkan Print menyusun laporan untuk dicetak atau disimpan sebagai PDF. Arsip lama tetap tersedia walaupun kartu jadwal sudah direset.": "Use Open session to review the source workbook, each rack's details, manual entries, all Stock Reconciliation items, PJ invoices, and Recap. XLSX export includes archive worksheets and input details; Print creates a report to print or save as PDF. Older archives remain available even after a schedule card is reset.",
+      "Lihat aktivitas berdasarkan waktu dan sesi, seperti mulai/selesai opname, scan ditambahkan, input manual, dan perubahan catatan atau quantity. Gunakan riwayat untuk membantu audit dan menelusuri perubahan data.": "Review activity by time and session, including stock opname start/completion, added scans, manual entries, and note or quantity changes. Use history to audit and trace data changes.",
+      "Tambahkan, ubah, atau hapus pilihan Nama Brand dan Nama PIC. Daftar ini dibagikan kepada semua akun dan menjadi sumber pencarian pada kartu Jadwal. Pastikan nama sudah benar sebelum staf memulai sesi.": "Add, edit, or remove brand and PIC names. This list is shared with all accounts and provides search options on Schedule cards. Verify names before staff start a session.",
+      "Buat akun staf, reset password, dan aktifkan atau nonaktifkan akses akun.": "Create staff accounts, reset passwords, and enable or disable account access.",
+      "Aktifitas Stock Opname lebih mudah cepat dan informatif.": "Stock Opname is easier, faster, and more informative.",
+      "Pilih Nama PIC": "Select a PIC",
+      "yang cocok.": " match.",
+      "Minta Owner menambahkannya di Data Resource.": "Ask the Owner to add it in Data Resources.",
+      "Rekonsiliasi per item": "Reconciliation by item",
+      "Item belum sesuai": "Items with discrepancies",
+      "hanya-baca": "read-only",
+      "hasil pencarian": "search results",
+      "Data Result SO tidak tersedia.": "Stock Reconciliation data unavailable.",
+      "Belum ada item bermasalah. Semua item sesuai dengan VEF.": "No problematic items. All items match VEF.",
+      "Hanya item dengan hasil Check tidak sesuai yang ditampilkan. Rumus: SCAN + MANUAL + PJ dibandingkan dengan VEF + Inbound/Retur.": "Only items with a failed check are shown. Formula: SCAN + MANUAL + PJ compared with VEF + Inbound/Return.",
+      "Item bermasalah": "Problem items",
+      "Item tidak sesuai": "Items with discrepancies",
+      "Total kuantitas selisih": "Total quantity variance",
+      "Selisih terhadap VEF": "Variance vs. VEF",
+      "Catatan tersimpan otomatis": "Notes saved automatically",
+      "item bermasalah dari": "problem items out of",
+      "item dihitung": "items counted",
+      "Masukkan catatan": "Add a note",
+      "Tambah catatan": "Add note",
+      "Arsip lembar kerja stock opname · Tampilan hanya-baca": "Stock opname worksheet archive · Read-only",
+      "Periode:": "Period:",
+      "Selesai:": "Completed:",
+      "PIC sesi": "Session PICs",
+      "Kembali ke daftar sesi": "Back to session list",
+      "Hapus sesi": "Delete session",
+      "Sesi ini tidak dapat diubah.": "This session cannot be changed.",
+      "Belum ada item yang cocok dengan VEF Master.": "No items match the VEF Master.",
+      "Tidak ada hasil untuk": "No results for",
+      "file sumber": "source files",
+      "Dari": "From",
+      "unit": "units",
+      "item": "items",
+      "file": "files",
+      "Sesi selesai": "Session completed",
+      "Sesi aktif": "Active sessions",
+      "Sesi opname berhasil dimulai.": "Stock opname session started.",
+      "Sesi stock opname berhasil dihapus.": "Stock opname session deleted.",
+      "Scan ditambahkan": "Scan added",
+      "Scan dihapus": "Scan deleted",
+      "Input manual ditambahkan": "Manual entry added",
+      "Input manual dihapus": "Manual entry deleted",
+      "Rack ditambahkan": "Rack added",
+      "Rack dihapus": "Rack deleted",
+      "Mode perhitungan diubah": "Counting mode changed",
+      "Catatan diperbarui": "Note updated",
+      "Quantity diperbarui": "Quantity updated",
+      "Hasil ekspor": "Export results",
+      "Ekspor XLSX": "Export XLSX",
+      "Unduh file sumber": "Download source file",
+      "Simpan sebagai PDF": "Save as PDF",
+      "Lembar Scan Layout": "Scan & Manual Sheet",
+      "Lembar Result SO": "Stock Reconciliation Sheet",
+      "Lembar Rekap Selisih": "Recap Sheet",
+      "Belum ada data sesi": "No session data yet",
+      "Tanpa nama": "Unnamed",
+      "Tanpa Warehouse": "No Warehouse",
+      "Tidak ada item yang cocok dengan VEF Master.": "No items match the VEF Master.",
+      "Tidak ada hasil untuk pencarian ini.": "No results for this search.",
+      "Data berhasil disimpan.": "Data saved successfully.",
+      "Perubahan berhasil disimpan.": "Changes saved successfully.",
+      "Gagal menyimpan perubahan.": "Failed to save changes.",
+      "Silakan coba lagi.": "Please try again.",
+      "Terjadi kesalahan.": "An error occurred.",
+      "Wajib": "Required",
+      "Cari dan pilih": "Search and select",
+      "Hapus sesi ini": "Delete this session",
+      "Ya, hapus": "Yes, delete",
+      "Tidak": "No",
+      "Lihat detail": "View details",
+      "Sembunyikan detail": "Hide details",
+      "Hasil scan": "Scan result",
+      "Tanggal selesai": "Completion date",
+      "Aktivitas dan audit": "Activity and audit",
+      "Arsip sesi yang sudah selesai": "Completed session archive",
+      "Status sesi": "Session status",
+      "Tindakan": "Actions",
+      "Tanggal dan waktu": "Date and time",
+      "Jumlah data": "Data count",
+      "Data tidak ditemukan": "Data not found",
+      "Data berhasil dihapus.": "Data deleted successfully.",
+      "Pilih bulan dan week": "Select month and week",
+      "View": "View",
+      "Download": "Download",
+      "Print": "Print",
+      "Select": "Select",
+      "Live": "Live",
+      "Burgundy": "Burgundy",
+      "Hijau": "Green",
+    });
+    let currentLanguage = "id";
+    try {
+      const storedLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+      if (storedLanguage === "en" || storedLanguage === "id") currentLanguage = storedLanguage;
+    } catch (error) {
+      console.error("Preferensi bahasa tidak dapat dibaca:", error);
+    }
+    const translatedTextNodes = new WeakMap();
+    const translatedAttributes = new WeakMap();
+    const languageTranslationEntries = Object.entries(LANGUAGE_TRANSLATIONS)
+      .sort(([left], [right]) => right.length - left.length);
+    const phraseTranslationEntries = languageTranslationEntries.filter(([source]) =>
+      source.includes(" ") || /[:/?!.]/.test(source));
+    const phraseTranslationMap = new Map(phraseTranslationEntries);
+    const phraseTranslationPattern = new RegExp(
+      phraseTranslationEntries.map(([source]) => source.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|"),
+      "g"
+    );
+    const exactLanguageTranslations = new Map(languageTranslationEntries.filter(([source]) =>
+      !source.includes(" ") && !/[:/?!.]/.test(source)));
+    const translateText = (text) => {
+      if (currentLanguage !== "en") return text;
+      let translated = text.replace(phraseTranslationPattern, (source) => phraseTranslationMap.get(source));
+      const exact = exactLanguageTranslations.get(text.trim());
+      if (exact) translated = translated.replace(text.trim(), exact);
+      return translated;
+    };
+    function translateDocument(root = document.body) {
+      const userDataSelector = ".product-name, .product-sku, .serial-token, .layout-scan-code, .manual-item-sku, .manual-product-option, .manual-product-option-code, .layout-name, .completed-rack-title, .layout-record-heading, .online-user, .profile-name, .schedule-owner, .brand-name, .recorded-pic-name, .activity-details, .workspace-page-title h1, .recorded-archive-heading h1, .schedule-summary-title, .workspace-name-input, [data-workspace-name], .recorded-period-brand .schedule-select-option, .schedule-resource-option:not(.schedule-select-option), [data-user-content], code";
+      const userDataHeaders = new Set(["Nama", "Name", "Nama sesi", "Session name", "Pemilik", "Owner", "Nama PIC", "PIC name", "Username", "Sesi", "Session", "Item code", "Item Code", "Item Group", "Brand", "Warehouse", "Serial Number"]);
+      const userDataColumns = new Map();
+      const isUserDataCell = (element) => {
+        const cell = element.closest("td");
+        if (!cell) return false;
+        const table = cell.closest("table");
+        if (!table) return false;
+        let protectedColumns = userDataColumns.get(table);
+        if (!protectedColumns) {
+          protectedColumns = new Set();
+          table.querySelectorAll("thead th").forEach((header, index) => {
+            const text = header.textContent.trim();
+            if (userDataHeaders.has(text) || userDataHeaders.has(translateText(text))) protectedColumns.add(index);
+          });
+          userDataColumns.set(table, protectedColumns);
+        }
+        return protectedColumns.has(cell.cellIndex);
+      };
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      let node;
+      while ((node = walker.nextNode())) {
+        if (!node.parentElement || node.parentElement.closest(userDataSelector) || isUserDataCell(node.parentElement)) continue;
+        const saved = translatedTextNodes.get(node);
+        const source = saved && node.nodeValue === saved.translated ? saved.source : node.nodeValue;
+        const translated = translateText(source);
+        if (translated !== node.nodeValue) node.nodeValue = translated;
+        if (saved || translated !== source) translatedTextNodes.set(node, { source, translated });
+      }
+      const attributeNames = ["placeholder", "aria-label", "aria-description", "title", "alt"];
+      root.querySelectorAll?.("*").forEach((element) => {
+        if (element.closest(userDataSelector)) return;
+        attributeNames.forEach((name) => {
+          if (!element.hasAttribute(name)) return;
+          let saved = translatedAttributes.get(element);
+          if (!saved) {
+            saved = new Map();
+            translatedAttributes.set(element, saved);
+          }
+          const current = element.getAttribute(name);
+          const previous = saved.get(name);
+          const source = previous && current === previous.translated ? previous.source : current;
+          const translated = translateText(source);
+          if (translated !== current) element.setAttribute(name, translated);
+          if (previous || translated !== source) saved.set(name, { source, translated });
+        });
+      });
+      root.querySelectorAll?.("[data-language-option]").forEach((button) => { button.setAttribute("aria-pressed", String(button.dataset.languageOption === currentLanguage)); });
+      if (root === document.body) document.documentElement.lang = currentLanguage;
+    }
+    document.addEventListener("click", (event) => {
+      const languageOption = event.target.closest?.("[data-language-option]");
+      if (!languageOption) return;
+      currentLanguage = languageOption.dataset.languageOption === "en" ? "en" : "id";
+      try {
+        localStorage.setItem(LANGUAGE_STORAGE_KEY, currentLanguage);
+      } catch (error) {
+        console.error("Preferensi bahasa tidak dapat disimpan:", error);
+      }
+      document.documentElement.lang = currentLanguage;
+      if (authSession && document.getElementById("main-content")) render();
+      translateDocument();
+    });
+    translateDocument();
+    const languageObserver = new MutationObserver(() => translateDocument());
+    languageObserver.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["placeholder", "aria-label", "aria-description", "title", "alt"]
+    });
     const PAGE_STORAGE_KEY = "ruangstok-last-page:";
     const WORKSPACE_STORAGE_KEY = "ruangstok-current-workspace:";
     const scanAudioSources = { warning: "./assets/warning-duplicate.mp3", match: "./assets/scan-match.mp3" };
@@ -2497,14 +3128,14 @@
       return value ? (/^\d+$/.test(value) ? `Rack ${value}` : value) : "Rack";
     };
     const hasRackNumber = (layout) => Boolean(String(state.layoutNumbers[layout] || "").trim());
-    const formatNumber = (value) => new Intl.NumberFormat("id-ID", { maximumFractionDigits: 2 }).format(value);
-    const formatRupiah = (value) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(value || 0);
-    const formatDate = (value, options = { day: "numeric", month: "long", year: "numeric" }) => new Intl.DateTimeFormat("id-ID", options).format(new Date(value));
+    const formatNumber = (value) => new Intl.NumberFormat(currentLanguage === "en" ? "en-US" : "id-ID", { maximumFractionDigits: 2 }).format(value);
+    const formatRupiah = (value) => new Intl.NumberFormat(currentLanguage === "en" ? "en-US" : "id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(value || 0);
+    const formatDate = (value, options = { day: "numeric", month: "long", year: "numeric" }) => new Intl.DateTimeFormat(currentLanguage === "en" ? "en-US" : "id-ID", options).format(new Date(value));
     function activeWorkspace() {
       return state.workspaces.find((workspace) => workspace.id === state.currentWorkspaceId);
     }
     function activeWorkspaceName() {
-      return activeWorkspace()?.name.trim() || "Nama Brand belum diisi";
+      return activeWorkspace()?.name.trim() || (currentLanguage === "en" ? "Brand name not set" : "Nama Brand belum diisi");
     }
     function workspacePageTitle() {
       const workspace = activeWorkspace();
@@ -2766,6 +3397,7 @@
     const notify = (message) => {
       const toast = document.getElementById("toast");
       toast.textContent = message;
+      translateDocument(toast);
       toast.classList.add("visible");
       clearTimeout(toastTimer);
       toastTimer = setTimeout(() => toast.classList.remove("visible"), 2300);
@@ -2781,6 +3413,7 @@
     function showAuthMessage(message) {
       const target = document.getElementById("auth-message");
       target.textContent = message;
+      translateDocument(target);
       target.classList.toggle("visible", Boolean(message));
       target.classList.remove("success");
     }
@@ -3857,7 +4490,7 @@
       const loggedInName = formatDisplayName(loggedInUsername);
       const availablePresenceUsers = authSession ? (onlineUsersPresenceList.length ? onlineUsersPresenceList : [loggedInName]) : [];
       const onlineMarkup = authSession ? `<div class="online-accounts" aria-live="polite" aria-label="Akun online: ${availablePresenceUsers.map((name) => escapeHtml(name)).join(", ")}"><span class="online-accounts-label">Online:</span>${availablePresenceUsers.map((name) => `<span class="online-user"><span class="online-user-dot" aria-hidden="true"></span><span>${escapeHtml(name)}</span></span>`).join("")}</div>` : "";
-      return `<div class="topline"><div class="topline-heading"><div class="crumb">${escapeHtml(activeWorkspaceName())} <span> / </span> <b>${currentPage === "dashboard" ? "Dashboard" : currentPage === "recorded-archive" ? "Stock Opname Recorded" : currentPage === "opname" ? "Result SO" : currentPage === "layouts" ? "Scan Layout" : currentPage === "workspaces" ? "Jadwal" : currentPage === "products" ? "Master VEF" : currentPage === "recap" ? "Rekap selisih" : currentPage === "completed-sessions" ? "Sesi Stock Opname" : currentPage === "admin-users" ? "Kelola Akun" : currentPage === "data-resources" ? "Data Resource" : currentPage === "about-info" ? "About" : currentPage === "about" ? "Panduan" : "Riwayat Perubahan"}</b></div>${onlineMarkup}</div><div class="top-actions"><span class="today">${formatDate(new Date(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span>${picMarkup}<button class="accent-toggle" type="button" data-accent-toggle aria-label="Ganti tema warna ke burgundy"><span class="accent-swatch" aria-hidden="true"></span><span data-accent-label>Burgundy</span></button><button class="theme-toggle" type="button" data-theme-toggle aria-label="Aktifkan dark mode" aria-pressed="false"><span class="theme-toggle-icon" aria-hidden="true">☾</span><span class="theme-toggle-label">Dark</span></button></div></div>`;
+      return `<div class="topline"><div class="topline-heading"><div class="crumb"><span class="crumb-workspace" data-user-content>${escapeHtml(activeWorkspaceName())}</span> <span> / </span> <b>${currentPage === "dashboard" ? "Dashboard" : currentPage === "recorded-archive" ? "Stock Opname Recorded" : currentPage === "opname" ? "Result SO" : currentPage === "layouts" ? "Scan Layout" : currentPage === "workspaces" ? "Jadwal" : currentPage === "products" ? "Master VEF" : currentPage === "recap" ? "Rekap selisih" : currentPage === "completed-sessions" ? "Sesi Stock Opname" : currentPage === "admin-users" ? "Kelola Akun" : currentPage === "data-resources" ? "Data Resource" : currentPage === "about-info" ? "About" : currentPage === "about" ? "Panduan" : "Riwayat Perubahan"}</b></div>${onlineMarkup}</div><div class="top-actions"><span class="today">${formatDate(new Date(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span>${picMarkup}<div class="language-options" role="group" aria-label="Pilih bahasa"><button class="language-option" type="button" data-language-option="id" aria-label="Bahasa Indonesia" aria-pressed="false"><svg class="language-flag" aria-hidden="true" viewBox="0 0 30 20"><rect width="30" height="10" fill="#ce1126"/><rect y="10" width="30" height="10" fill="#fff"/></svg></button><button class="language-option" type="button" data-language-option="en" aria-label="English" aria-pressed="false"><svg class="language-flag" aria-hidden="true" viewBox="0 0 60 30"><rect width="60" height="30" fill="#012169"/><path d="M0 0 60 30M60 0 0 30" stroke="#fff" stroke-width="6"/><path d="M0 0 60 30M60 0 0 30" stroke="#c8102e" stroke-width="2"/><path d="M30 0v30M0 15h60" stroke="#fff" stroke-width="10"/><path d="M30 0v30M0 15h60" stroke="#c8102e" stroke-width="4"/></svg></button></div><button class="accent-toggle" type="button" data-accent-toggle aria-label="Ganti tema warna ke burgundy"><span class="accent-swatch" aria-hidden="true"></span><span data-accent-label>Burgundy</span></button><button class="theme-toggle" type="button" data-theme-toggle aria-label="Aktifkan dark mode" aria-pressed="false"><span class="theme-toggle-icon" aria-hidden="true">☾</span><span class="theme-toggle-label">Dark</span></button></div></div>`;
     };
     const productRows = (products, active, canEdit) => products.length ? products.map((product, index) => {
       const included = isCountedProduct(product);
@@ -3874,7 +4507,7 @@
       return `<tr class="${included ? "" : "non-laptop-row"}">
         <td class="number-cell">${index + 1}</td>
         <td><div class="product-cell"><div><div class="product-name">${escapeHtml(product.name)}</div><div class="product-sku">${escapeHtml(product.sku)}</div></div></div></td>
-        <td><span class="category-chip">${escapeHtml(product.brand || "-")}</span></td>
+        <td><span class="category-chip" data-user-content>${escapeHtml(product.brand || "-")}</span></td>
         <td class="number-cell quantity-cell">${formatNumber(product.stock)}</td>
         <td class="number-cell quantity-cell">${included ? formatNumber(product.count || 0) : "-"}</td>
         <td class="number-cell quantity-cell">${formatNumber(product.box || 0)}</td>
@@ -3951,7 +4584,7 @@
           <div class="metric"><div class="metric-top">Qty keseluruhan <span class="metric-mark">Σ</span></div><div class="metric-value">${formatNumber(totalUnitCount)} <small>unit</small></div><div class="metric-note">Laptop + selain laptop</div></div>
         </section>
         <section class="master-warehouse-summary" aria-label="Quantity Master VEF per Warehouse"><span class="master-warehouse-title">Quantity per Warehouse</span><div class="master-warehouse-items">${warehouseSummary || '<span class="master-warehouse-empty">Belum ada data Warehouse.</span>'}</div>${hasUploadedMaster ? '<button class="button master-start-scan-button" type="button" data-page-link="layouts">⊞ Mulai Scan / Hitung</button>' : ""}</section>
-        <section class="table-section"><div class="table-toolbar"><div class="table-title">Master barang <span class="table-count">${filtered.length} item · ${filtered.filter(isLaptopProduct).length} laptop · ${filtered.filter((product) => !isLaptopProduct(product)).length} bukan laptop</span></div><div class="filters"><div class="search-wrap"><span class="search-icon">⌕</span><input class="search-input" id="search-input" placeholder="Cari item code atau SN" value="${escapeHtml(searchTerm)}" aria-label="Cari master"></div></div></div><div class="table-scroll"><table><thead><tr><th>No</th><th>Item code</th><th>Item name</th><th>Item Group</th><th>Brand</th><th>Warehouse</th><th>VEF</th><th>Serial Number</th></tr></thead><tbody>${filtered.length ? filtered.map((product, index) => { const serials = serialsByProduct.get(product.id) || []; const laptop = isLaptopProduct(product); const status = laptop ? null : statusFor(product); return `<tr class="${laptop ? "" : "non-laptop-row"}"><td class="number-cell">${index + 1}</td><td class="number-cell">${escapeHtml(product.sku)}</td><td><div class="product-name">${escapeHtml(product.name)}</div>${status ? `<span class="row-status ${status.className}">${status.label}</span>` : ""}</td><td>${escapeHtml(product.itemGroup || "-")}</td><td>${escapeHtml(product.brand || "-")}</td><td>${escapeHtml(product.warehouse || "-")}</td><td>${formatNumber(product.stock)}</td><td>${serials.length ? `<details class="serial-details"><summary>${formatNumber(serials.length)} SN · tampilkan</summary><div class="serial-list">${serials.map((serial) => `<span class="serial-token">${escapeHtml(serial)}</span>`).join("")}</div></details>` : "-"}</td></tr>`; }).join("") : `<tr><td class="empty-row" colspan="8">Unggah workbook untuk memuat master VEF.</td></tr>`}</tbody></table></div><div class="table-footer"><span>${state.serialMaster ? Object.keys(state.serialMaster).length : 0} serial terdaftar</span><span>${escapeHtml(state.importFile || "Belum ada workbook")}</span></div></section>`;
+        <section class="table-section"><div class="table-toolbar"><div class="table-title">Master barang <span class="table-count">${filtered.length} item · ${filtered.filter(isLaptopProduct).length} laptop · ${filtered.filter((product) => !isLaptopProduct(product)).length} bukan laptop</span></div><div class="filters"><div class="search-wrap"><span class="search-icon">⌕</span><input class="search-input" id="search-input" placeholder="Cari item code atau SN" value="${escapeHtml(searchTerm)}" aria-label="Cari master"></div></div></div><div class="table-scroll"><table><thead><tr><th>No</th><th>Item code</th><th>Item name</th><th>Item Group</th><th>Brand</th><th>Warehouse</th><th>VEF</th><th>Serial Number</th></tr></thead><tbody>${filtered.length ? filtered.map((product, index) => { const serials = serialsByProduct.get(product.id) || []; const laptop = isLaptopProduct(product); const status = laptop ? null : statusFor(product); return `<tr class="${laptop ? "" : "non-laptop-row"}"><td class="number-cell">${index + 1}</td><td class="number-cell" data-user-content>${escapeHtml(product.sku)}</td><td><div class="product-name">${escapeHtml(product.name)}</div>${status ? `<span class="row-status ${status.className}">${status.label}</span>` : ""}</td><td data-user-content>${escapeHtml(product.itemGroup || "-")}</td><td data-user-content>${escapeHtml(product.brand || "-")}</td><td data-user-content>${escapeHtml(product.warehouse || "-")}</td><td>${formatNumber(product.stock)}</td><td>${serials.length ? `<details class="serial-details"><summary>${formatNumber(serials.length)} SN · tampilkan</summary><div class="serial-list">${serials.map((serial) => `<span class="serial-token">${escapeHtml(serial)}</span>`).join("")}</div></details>` : "-"}</td></tr>`; }).join("") : `<tr><td class="empty-row" colspan="8">Unggah workbook untuk memuat master VEF.</td></tr>`}</tbody></table></div><div class="table-footer"><span>${state.serialMaster ? Object.keys(state.serialMaster).length : 0} serial terdaftar</span><span data-user-content>${escapeHtml(state.importFile || "Belum ada workbook")}</span></div></section>`;
     }
 
     function renderManualProductOptions(input) {
@@ -4170,7 +4803,7 @@
       const rows = exceptions.map((product, index) => {
         const variance = varianceFor(product);
         const status = statusFor(product);
-        return `<tr><td class="number-cell">${index + 1}</td><td><div class="product-name">${escapeHtml(product.name)}</div><div class="product-sku">${escapeHtml(product.sku)}</div></td><td><span class="category-chip">${escapeHtml(product.brand || "-")}</span></td><td class="number-cell quantity-cell">${formatNumber(product.stock)}</td><td class="number-cell quantity-cell">${formatNumber(product.count || 0)}</td><td class="number-cell quantity-cell">${formatNumber(product.box || 0)}</td><td class="number-cell quantity-cell">${formatNumber(inboundQuantityFor(product.id))}</td><td class="number-cell quantity-cell">${formatNumber(product.pj || 0)}</td><td class="quantity-cell"><span class="variance ${variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td><td><span class="row-status ${status.className}">${status.label}</span></td><td><input class="note-input" aria-label="Catatan ${escapeHtml(product.sku)}" data-note-sku="${escapeHtml(product.sku)}" placeholder="Tambah catatan" value="${escapeHtml(product.note || "")}" ${canEdit ? "" : "disabled"}></td></tr>`;
+        return `<tr><td class="number-cell">${index + 1}</td><td><div class="product-name">${escapeHtml(product.name)}</div><div class="product-sku">${escapeHtml(product.sku)}</div></td><td><span class="category-chip" data-user-content>${escapeHtml(product.brand || "-")}</span></td><td class="number-cell quantity-cell">${formatNumber(product.stock)}</td><td class="number-cell quantity-cell">${formatNumber(product.count || 0)}</td><td class="number-cell quantity-cell">${formatNumber(product.box || 0)}</td><td class="number-cell quantity-cell">${formatNumber(inboundQuantityFor(product.id))}</td><td class="number-cell quantity-cell">${formatNumber(product.pj || 0)}</td><td class="quantity-cell"><span class="variance ${variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td><td><span class="row-status ${status.className}">${status.label}</span></td><td><input class="note-input" aria-label="Catatan ${escapeHtml(product.sku)}" data-note-sku="${escapeHtml(product.sku)}" placeholder="Tambah catatan" value="${escapeHtml(product.note || "")}" ${canEdit ? "" : "disabled"}></td></tr>`;
       }).join("");
       return `${navMarkup()}<section class="page-head archive-page-head recap-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Rekap selisih · Pemeriksaan opname</div>${workspacePageTitle()}<p class="subtitle">Hanya item dengan hasil Check tidak sesuai yang ditampilkan. Rumus: SCAN + MANUAL + PJ dibandingkan dengan VEF + Inbound/Retur.</p></div><span class="category-chip">${exceptions.length} item bermasalah</span></section>${renderSessionAccessNotice()}
         <section class="metric-grid compact-metrics recap-metrics" aria-label="Ringkasan ketidaksesuaian terhadap master VEF">
@@ -4185,12 +4818,12 @@
     function renderHistory() {
       const workspaceNames = new Map(state.workspaces.map((workspace) => [workspace.id, workspace.name]));
       const activities = state.workspaces.flatMap((workspace) => (workspace.data.historyEvents || []).map((activity) => ({ ...activity, workspaceName: workspaceNames.get(activity.workspaceId) || workspace.name }))).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      return `${navMarkup()}<section class="page-head archive-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Aktivitas dan audit</div><h1>Riwayat Perubahan</h1><p class="subtitle">Catatan perubahan data dan aktivitas sesi, diurutkan dari yang terbaru.</p></div></section><div class="history-summary"><div><strong>${activities.length} aktivitas tercatat</strong><div style="font-size:10px;margin-top:3px">Riwayat perubahan tersimpan per sesi di perangkat ini.</div></div><span class="category-chip">${activities.length ? `Perubahan terakhir: ${escapeHtml(formatDate(activities[0].createdAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }))}` : "Belum ada perubahan"}</span></div><section class="table-section"><div class="table-toolbar"><div class="table-title">Riwayat perubahan <span class="table-count">${activities.length} aktivitas · terbaru di atas</span></div></div><div class="table-scroll"><table><thead><tr><th>Waktu</th><th>Sesi</th><th>Aktivitas</th><th>Detail perubahan</th></tr></thead><tbody>${activities.length ? activities.map((activity) => `<tr><td class="activity-time">${escapeHtml(formatDate(activity.createdAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }))}</td><td>${escapeHtml(activity.workspaceName || "Sesi opname")}</td><td><span class="activity-type">${escapeHtml(activity.type)}</span></td><td class="activity-details">${escapeHtml(activity.description)}</td></tr>`).join("") : `<tr><td class="empty-row" colspan="4">Belum ada perubahan data.</td></tr>`}</tbody></table></div></section>`;
+      return `${navMarkup()}<section class="page-head archive-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Aktivitas dan audit</div><h1>Riwayat Perubahan</h1><p class="subtitle">Catatan perubahan data dan aktivitas sesi, diurutkan dari yang terbaru.</p></div></section><div class="history-summary"><div><strong>${activities.length} aktivitas tercatat</strong><div style="font-size:10px;margin-top:3px">Riwayat perubahan tersimpan per sesi di perangkat ini.</div></div><span class="category-chip">${activities.length ? `Perubahan terakhir: ${escapeHtml(formatDate(activities[0].createdAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }))}` : "Belum ada perubahan"}</span></div><section class="table-section"><div class="table-toolbar"><div class="table-title">Riwayat perubahan <span class="table-count">${activities.length} aktivitas · terbaru di atas</span></div></div><div class="table-scroll"><table><thead><tr><th>Waktu</th><th>Sesi</th><th>Aktivitas</th><th>Detail perubahan</th></tr></thead><tbody>${activities.length ? activities.map((activity) => `<tr><td class="activity-time">${escapeHtml(formatDate(activity.createdAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }))}</td><td data-user-content>${escapeHtml(activity.workspaceName || "Sesi opname")}</td><td><span class="activity-type">${escapeHtml(activity.type)}</span></td><td class="activity-details">${escapeHtml(activity.description)}</td></tr>`).join("") : `<tr><td class="empty-row" colspan="4">Belum ada perubahan data.</td></tr>`}</tbody></table></div></section>`;
     }
 
     function renderCompletedSessions() {
       const completed = [...state.sessions].sort((a, b) => new Date(b.finishedAt) - new Date(a.finishedAt));
-      return `${navMarkup()}<section class="page-head archive-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Arsip stock opname</div><h1>Sesi Stock Opname</h1><p class="subtitle">Arsip sesi yang sudah selesai, termasuk file VEF asli, nama akun, PIC, detail Scan Layout, input manual, Result SO, invoice PJ, dan Rekap Selisih.</p></div><span class="category-chip">${completed.length} sesi selesai</span></section><section class="table-section"><div class="table-toolbar"><div class="table-title">Sesi sebelumnya <span class="table-count">${completed.length} sesi selesai · terbaru di atas</span></div></div><div class="table-scroll"><table><thead><tr><th>Nama sesi</th><th>Pemilik</th><th>Nama PIC</th><th>Tanggal sesi</th><th>Item dihitung</th><th>Unit VEF dihitung</th><th>SN cocok</th><th>Item sesuai</th><th>Selisih</th><th>SN bukan laptop</th><th>SN bermasalah</th><th>Data</th></tr></thead><tbody>${completed.length ? completed.map((session) => { const pics = session.picNames || state.workspaces.find((workspace) => workspace.id === session.workspaceId)?.picNames || []; const canDelete = canDeleteCompletedSession(); const countMode = session.countMode === "all" ? "all" : "laptops"; return `<tr><td>${escapeHtml(session.workspaceName || "Sesi opname")}<div class="product-sku">${escapeHtml(archivedSessionMonth(session))} · ${escapeHtml(archivedSessionWeek(session))} · ${(session.workbooks || []).length} file sumber</div></td><td>${escapeHtml(sessionOwnerName(session))}</td><td><div class="product-name">PIC 1: ${escapeHtml(pics[0] || "Belum diisi")}</div><div class="product-sku">PIC 2: ${escapeHtml(pics[1] || "Belum diisi")}</div></td><td><div class="product-name">${escapeHtml(formatDate(session.finishedAt, { day: "numeric", month: "long", year: "numeric" }))}</div><div class="product-sku">${escapeHtml(new Intl.DateTimeFormat("id-ID", { hour: "2-digit", minute: "2-digit" }).format(new Date(session.finishedAt)))}</div></td><td>${session.total} SKU <div class="product-sku">${countModeLabel(countMode)}</div></td><td>${formatNumber(session.expected)}</td><td>${formatNumber(session.scanned)}</td><td><span class="variance zero">${session.matching}</span></td><td>${session.shortages + session.surpluses}</td><td>${formatNumber(session.nonLaptopScans || 0)}</td><td><span class="row-status ${session.issues ? "shortage" : "match"}">${session.issues}</span></td><td><div class="head-buttons">${session.snapshot ? `<button class="button button-secondary" type="button" data-open-completed-session="${escapeHtml(session.id)}">Buka sesi</button>` : `<span class="product-sku">Data detail tidak tersedia</span>`}${canDelete ? `<button class="button button-danger" type="button" data-delete-completed-session="${escapeHtml(session.id)}">Hapus</button>` : ""}</div></td></tr>`; }).join("") : `<tr><td class="empty-row" colspan="12">Belum ada sesi opname yang selesai.</td></tr>`}</tbody></table></div></section>`;
+      return `${navMarkup()}<section class="page-head archive-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Arsip stock opname</div><h1>Sesi Stock Opname</h1><p class="subtitle">Arsip sesi yang sudah selesai, termasuk file VEF asli, nama akun, PIC, detail Scan Layout, input manual, Result SO, invoice PJ, dan Rekap Selisih.</p></div><span class="category-chip">${completed.length} sesi selesai</span></section><section class="table-section"><div class="table-toolbar"><div class="table-title">Sesi sebelumnya <span class="table-count">${completed.length} sesi selesai · terbaru di atas</span></div></div><div class="table-scroll"><table><thead><tr><th>Nama sesi</th><th>Pemilik</th><th>Nama PIC</th><th>Tanggal sesi</th><th>Item dihitung</th><th>Unit VEF dihitung</th><th>SN cocok</th><th>Item sesuai</th><th>Selisih</th><th>SN bukan laptop</th><th>SN bermasalah</th><th>Data</th></tr></thead><tbody>${completed.length ? completed.map((session) => { const pics = session.picNames || state.workspaces.find((workspace) => workspace.id === session.workspaceId)?.picNames || []; const canDelete = canDeleteCompletedSession(); const countMode = session.countMode === "all" ? "all" : "laptops"; return `<tr><td><span data-user-content>${escapeHtml(session.workspaceName || "Sesi opname")}</span><div class="product-sku">${escapeHtml(archivedSessionMonth(session))} · ${escapeHtml(archivedSessionWeek(session))} · ${(session.workbooks || []).length} file sumber</div></td><td>${escapeHtml(sessionOwnerName(session))}</td><td><div class="product-name">PIC 1: ${escapeHtml(pics[0] || "Belum diisi")}</div><div class="product-sku">PIC 2: ${escapeHtml(pics[1] || "Belum diisi")}</div></td><td><div class="product-name">${escapeHtml(formatDate(session.finishedAt, { day: "numeric", month: "long", year: "numeric" }))}</div><div class="product-sku">${escapeHtml(new Intl.DateTimeFormat(currentLanguage === "en" ? "en-US" : "id-ID", { hour: "2-digit", minute: "2-digit" }).format(new Date(session.finishedAt)))}</div></td><td>${session.total} SKU <div class="product-sku">${countModeLabel(countMode)}</div></td><td>${formatNumber(session.expected)}</td><td>${formatNumber(session.scanned)}</td><td><span class="variance zero">${session.matching}</span></td><td>${session.shortages + session.surpluses}</td><td>${formatNumber(session.nonLaptopScans || 0)}</td><td><span class="row-status ${session.issues ? "shortage" : "match"}">${session.issues}</span></td><td><div class="head-buttons">${session.snapshot ? `<button class="button button-secondary" type="button" data-open-completed-session="${escapeHtml(session.id)}">Buka sesi</button>` : `<span class="product-sku">Data detail tidak tersedia</span>`}${canDelete ? `<button class="button button-danger" type="button" data-delete-completed-session="${escapeHtml(session.id)}">Hapus</button>` : ""}</div></td></tr>`; }).join("") : `<tr><td class="empty-row" colspan="12">Belum ada sesi opname yang selesai.</td></tr>`}</tbody></table></div></section>`;
     }
 
     function renderCompletedSessionView() {
@@ -4201,7 +4834,7 @@
       }
       const finishedAt = formatDate(session.finishedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
       const pics = session.picNames || state.workspaces.find((workspace) => workspace.id === session.workspaceId)?.picNames || [];
-      return `${navMarkup()}<section class="page-head"><div><h1>${escapeHtml(session.workspaceName || "Sesi opname")}</h1><p class="subtitle">${escapeHtml(archivedSessionMonth(session))} · ${escapeHtml(archivedSessionWeek(session))} · Pemilik: ${escapeHtml(sessionOwnerName(session))} · PIC 1: ${escapeHtml(pics[0] || "Belum diisi")} · PIC 2: ${escapeHtml(pics[1] || "Belum diisi")} · Selesai ${escapeHtml(finishedAt)}.</p></div><div class="head-buttons"><button class="button button-secondary" id="back-to-completed-sessions">← Kembali ke daftar sesi</button>${canDeleteCompletedSession() ? `<button class="button button-danger" type="button" data-delete-completed-session="${escapeHtml(session.id)}">Hapus sesi</button>` : ""}</div></section><section class="completed-session-view">${renderCompletedSessionDetails(session)}</section>`;
+      return `${navMarkup()}<section class="page-head"><div><h1 data-user-content>${escapeHtml(session.workspaceName || "Sesi opname")}</h1><p class="subtitle">${escapeHtml(archivedSessionMonth(session))} · ${escapeHtml(archivedSessionWeek(session))} · Pemilik: <span data-user-content>${escapeHtml(sessionOwnerName(session))}</span> · PIC 1: <span data-user-content>${escapeHtml(pics[0] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</span> · PIC 2: <span data-user-content>${escapeHtml(pics[1] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</span> · Selesai ${escapeHtml(finishedAt)}.</p></div><div class="head-buttons"><button class="button button-secondary" id="back-to-completed-sessions">← Kembali ke daftar sesi</button>${canDeleteCompletedSession() ? `<button class="button button-danger" type="button" data-delete-completed-session="${escapeHtml(session.id)}">Hapus sesi</button>` : ""}</div></section><section class="completed-session-view">${renderCompletedSessionDetails(session)}</section>`;
     }
 
     function requestDeleteCompletedSession(sessionId) {
@@ -4545,7 +5178,7 @@
         <span class="dashboard-chart-count">${formatNumber(value)}</span>
       </div>`).join("");
       const chartRows = workspaceStats.map(({ workspace, stats }) => `<div class="dashboard-chart-row">
-        <span class="dashboard-chart-name" title="${escapeHtml(workspace.name)}">${escapeHtml(workspace.name || "Tanpa nama")}</span>
+        <span class="dashboard-chart-name" data-user-content title="${escapeHtml(workspace.name)}">${escapeHtml(workspace.name || "Tanpa nama")}</span>
         <div class="dashboard-bar-track" role="progressbar" aria-label="Progres SN ${escapeHtml(workspace.name)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${stats.progress}"><div class="dashboard-bar-fill" style="width:${stats.progress}%"></div></div>
         <span class="dashboard-chart-count">${stats.progress}% · ${formatNumber(stats.scannedSerials)}/${formatNumber(stats.targetSerials)} SN</span>
       </div>`).join("");
@@ -4587,8 +5220,8 @@
     }
 
     function archivedSessionMonth(session) {
-      if (WORKSPACE_MONTHS.includes(session.month)) return session.month;
-      return WORKSPACE_MONTHS[new Date(session.finishedAt).getMonth()];
+      const month = WORKSPACE_MONTHS.includes(session.month) ? session.month : WORKSPACE_MONTHS[new Date(session.finishedAt).getMonth()];
+      return translateText(month);
     }
     function archivedSessionWeek(session) {
       if (WORKSPACE_PERIODS.includes(session.period)) return session.period;
@@ -4650,7 +5283,7 @@
         const included = isCountedProduct(product, countMode);
         const variance = varianceFor(product, inboundEntries);
         const status = statusFor(product, countMode, inboundEntries);
-        return `<tr><td class="number-cell">${index + 1}</td><td><div class="product-name">${escapeHtml(product.name)}</div><div class="product-sku">${escapeHtml(product.sku)}</div></td><td><span class="category-chip">${escapeHtml(product.brand || "-")}</span></td><td class="number-cell quantity-cell">${formatNumber(product.stock)}</td><td class="number-cell quantity-cell">${included ? formatNumber(product.count || 0) : "-"}</td><td class="number-cell quantity-cell">${formatNumber(product.box || 0)}</td><td class="number-cell quantity-cell">${included ? formatNumber(inboundQuantityFor(product.id, inboundEntries)) : "-"}</td><td class="number-cell quantity-cell">${included ? formatNumber(product.pj || 0) : "-"}</td><td class="quantity-cell"><span class="variance ${variance === 0 ? "zero" : variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td><td><span class="row-status ${status.className}">${status.label}</span></td><td>${escapeHtml(product.note || "-")}</td></tr>`;
+        return `<tr><td class="number-cell">${index + 1}</td><td><div class="product-name">${escapeHtml(product.name)}</div><div class="product-sku">${escapeHtml(product.sku)}</div></td><td><span class="category-chip" data-user-content>${escapeHtml(product.brand || "-")}</span></td><td class="number-cell quantity-cell">${formatNumber(product.stock)}</td><td class="number-cell quantity-cell">${included ? formatNumber(product.count || 0) : "-"}</td><td class="number-cell quantity-cell">${formatNumber(product.box || 0)}</td><td class="number-cell quantity-cell">${included ? formatNumber(inboundQuantityFor(product.id, inboundEntries)) : "-"}</td><td class="number-cell quantity-cell">${included ? formatNumber(product.pj || 0) : "-"}</td><td class="quantity-cell"><span class="variance ${variance === 0 ? "zero" : variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td><td><span class="row-status ${status.className}">${status.label}</span></td><td data-user-content>${escapeHtml(product.note || "-")}</td></tr>`;
       }).join("");
       const title = sheet === "recap" ? "Item belum sesuai" : "Rekonsiliasi per item";
       const emptyMessage = query ? `Tidak ada hasil untuk “${escapeHtml(recordedArchiveSearchTerm.trim())}”.` : sheet === "recap" ? "Belum ada item bermasalah. Semua item sesuai dengan VEF." : "Data Result SO tidak tersedia.";
@@ -4772,7 +5405,7 @@
         printWindow.print();
       }, { once: true });
       printWindow.document.open();
-      printWindow.document.write(`<!doctype html><html lang="id" data-theme="${escapeHtml(theme)}" data-accent="${escapeHtml(accent)}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHtml(title)}</title><style>${styles}
+      printWindow.document.write(`<!doctype html><html lang="${currentLanguage}" data-theme="${escapeHtml(theme)}" data-accent="${escapeHtml(accent)}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHtml(title)}</title><style>${styles}
         html[data-accent="burgundy"] { --print-accent: #842b4b; --print-accent-dark: #5d1c35; --print-accent-soft: #f5e7ec; --print-accent-line: #ead1d9; }
         html:not([data-accent="burgundy"]) { --print-accent: #176b5b; --print-accent-dark: #124a41; --print-accent-soft: #e5f2ee; --print-accent-line: #c9dfd0; }
         body.printing-session { background: #fff; display: block; margin: 0; min-height: 0; padding: 12mm; }
@@ -4789,8 +5422,9 @@
         #print-session-root [data-export-session], #print-session-root [data-print-session] { display: none !important; }
         #print-session-root details:not([open]) > :not(summary) { display: block !important; }
         @media print { @page { size: landscape; margin: 12mm; } body.printing-session { padding: 0; } #print-session-root { width: 100%; } }
-      </style></head><body class="printing-session"><main id="print-session-root"><h1>${escapeHtml(title)}</h1><p class="print-session-subtitle">${escapeHtml(subtitle)}</p>${content}</main></body></html>`);
+      </style></head><body class="printing-session"><main id="print-session-root"><h1 data-user-content>${escapeHtml(title)}</h1><p class="print-session-subtitle" data-user-content>${escapeHtml(subtitle)}</p>${content}</main></body></html>`);
       printWindow.document.close();
+      translateDocument(printWindow.document.body);
       return printWindow;
     }
     function printArchivedSession(button) {
@@ -4800,8 +5434,9 @@
         return;
       }
       const pics = session.picNames || [];
-      const subtitle = `${archivedSessionMonth(session)} · ${archivedSessionWeek(session)} · Pemilik: ${sessionOwnerName(session)} · PIC 1: ${pics[0] || "Belum diisi"} · PIC 2: ${pics[1] || "Belum diisi"} · Selesai ${formatDate(session.finishedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}`;
-      openArchivePrintWindow(`${session.workspaceName || "Sesi opname"} · Stock Opname`, subtitle, renderCompletedSessionDetails(session, true));
+      const unset = currentLanguage === "en" ? "Not set" : "Belum diisi";
+      const subtitle = `${archivedSessionMonth(session)} · ${archivedSessionWeek(session)} · ${currentLanguage === "en" ? "Owner" : "Pemilik"}: ${sessionOwnerName(session)} · PIC 1: ${pics[0] || unset} · PIC 2: ${pics[1] || unset} · ${currentLanguage === "en" ? "Completed" : "Selesai"} ${formatDate(session.finishedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}`;
+      openArchivePrintWindow(`${session.workspaceName || (currentLanguage === "en" ? "Stock opname session" : "Sesi opname")} · ${currentLanguage === "en" ? "Stock Reconciliation" : "Stock Opname"}`, subtitle, renderCompletedSessionDetails(session, true));
     }
     function printRecordedSheet() {
       const session = state.sessions.find((item) => item.id === selectedRecordedSessionId);
@@ -4811,8 +5446,9 @@
       }
       const sheetName = selectedRecordedSheet === "layouts" ? "Scan Layout" : selectedRecordedSheet === "result" ? "Result SO" : "Rekap Selisih";
       const pics = session.picNames || [];
-      const subtitle = `${archivedSessionMonth(session)} · ${archivedSessionWeek(session)} · PIC 1: ${pics[0] || "Belum diisi"} · PIC 2: ${pics[1] || "Belum diisi"} · Selesai ${session.finishedAt ? formatDate(session.finishedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "Tidak tersedia"} · Tampilan hanya-baca`;
-      openArchivePrintWindow(`${session.workspaceName || "Sesi opname"} · ${sheetName}`, subtitle, renderRecordedSheet(session, selectedRecordedSheet, true));
+      const unset = currentLanguage === "en" ? "Not set" : "Belum diisi";
+      const subtitle = `${archivedSessionMonth(session)} · ${archivedSessionWeek(session)} · PIC 1: ${pics[0] || unset} · PIC 2: ${pics[1] || unset} · ${currentLanguage === "en" ? "Completed" : "Selesai"} ${session.finishedAt ? formatDate(session.finishedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }) : (currentLanguage === "en" ? "Unavailable" : "Tidak tersedia")} · ${currentLanguage === "en" ? "Read-only view" : "Tampilan hanya-baca"}`;
+      openArchivePrintWindow(`${session.workspaceName || (currentLanguage === "en" ? "Stock opname session" : "Sesi opname")} · ${translateText(sheetName)}`, subtitle, renderRecordedSheet(session, selectedRecordedSheet, true));
     }
 
     function renderWorkspaceSchedule() {
@@ -5102,6 +5738,7 @@
       const main = document.getElementById("main-content");
       main.innerHTML = currentPage === "dashboard" ? renderDashboard() : currentPage === "recorded-archive" ? renderRecordedSessionPage() : currentPage === "opname" ? renderOpname() : currentPage === "layouts" ? renderLayouts() : currentPage === "workspaces" ? renderWorkspaceSchedule() : currentPage === "products" ? renderProducts() : currentPage === "recap" ? renderRecap() : currentPage === "about-info" ? renderAboutWorkspace() : currentPage === "about" ? renderAbout() : currentPage === "admin-users" ? renderAdminUsers() : currentPage === "data-resources" ? renderDataResources() : currentPage === "completed-session-detail" ? renderCompletedSessionView() : currentPage === "completed-sessions" ? renderCompletedSessions() : renderHistory();
       bindPageEvents();
+      translateDocument(document.body);
       if (window.matchMedia("(max-width: 650px)").matches) {
         document.querySelector(".nav-item.active")?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
       }
