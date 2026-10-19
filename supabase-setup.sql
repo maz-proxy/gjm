@@ -54,6 +54,7 @@ create policy "Team members can create shared stock opname state"
       (
         coalesce(data -> 'resources' -> 'brands', '[]'::jsonb) = '[]'::jsonb
         and coalesce(data -> 'resources' -> 'picNames', '[]'::jsonb) = '[]'::jsonb
+        and coalesce(data -> 'resources' -> 'androidApp', 'null'::jsonb) = 'null'::jsonb
       )
       or (
         coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'super_admin'
@@ -110,6 +111,7 @@ begin
   if (
     coalesce(old.data -> 'resources' -> 'brands', '[]'::jsonb) is distinct from coalesce(new.data -> 'resources' -> 'brands', '[]'::jsonb)
     or coalesce(old.data -> 'resources' -> 'picNames', '[]'::jsonb) is distinct from coalesce(new.data -> 'resources' -> 'picNames', '[]'::jsonb)
+    or coalesce(old.data -> 'resources' -> 'androidApp', 'null'::jsonb) is distinct from coalesce(new.data -> 'resources' -> 'androidApp', 'null'::jsonb)
   ) and (
     coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') <> 'super_admin'
     or coalesce(auth.jwt() -> 'app_metadata' ->> 'owner_username', '') <> 'indra'
@@ -408,4 +410,58 @@ create policy "Session owners and super admins can delete archived stock opname 
           and archived.value ->> 'createdByUserId' = auth.uid()::text
       )
     )
+  );
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'stock-opname-app-downloads',
+  'stock-opname-app-downloads',
+  true,
+  52428800,
+  array['application/vnd.android.package-archive']
+)
+on conflict (id) do update
+  set public = excluded.public,
+      file_size_limit = excluded.file_size_limit,
+      allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "Public can read the Android app download" on storage.objects;
+create policy "Public can read the Android app download"
+  on storage.objects for select to anon, authenticated
+  using (bucket_id = 'stock-opname-app-downloads' and name = 'latest.apk');
+
+drop policy if exists "Workspace owner can upload the Android app" on storage.objects;
+create policy "Workspace owner can upload the Android app"
+  on storage.objects for insert to authenticated
+  with check (
+    bucket_id = 'stock-opname-app-downloads'
+    and name = 'latest.apk'
+    and coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'super_admin'
+    and coalesce(auth.jwt() -> 'app_metadata' ->> 'owner_username', '') = 'indra'
+  );
+
+drop policy if exists "Workspace owner can replace the Android app" on storage.objects;
+create policy "Workspace owner can replace the Android app"
+  on storage.objects for update to authenticated
+  using (
+    bucket_id = 'stock-opname-app-downloads'
+    and name = 'latest.apk'
+    and coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'super_admin'
+    and coalesce(auth.jwt() -> 'app_metadata' ->> 'owner_username', '') = 'indra'
+  )
+  with check (
+    bucket_id = 'stock-opname-app-downloads'
+    and name = 'latest.apk'
+    and coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'super_admin'
+    and coalesce(auth.jwt() -> 'app_metadata' ->> 'owner_username', '') = 'indra'
+  );
+
+drop policy if exists "Workspace owner can delete the Android app" on storage.objects;
+create policy "Workspace owner can delete the Android app"
+  on storage.objects for delete to authenticated
+  using (
+    bucket_id = 'stock-opname-app-downloads'
+    and name = 'latest.apk'
+    and coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'super_admin'
+    and coalesce(auth.jwt() -> 'app_metadata' ->> 'owner_username', '') = 'indra'
   );

@@ -926,7 +926,13 @@
     .language-option:hover { border-color: #b8cfc6; }
     .language-option[aria-pressed="true"] { border-color: var(--green); box-shadow: 0 0 0 1px var(--green); }
     .language-flag { border-radius: 50%; display: block; height: 100%; width: 100%; }
-    .auth-language-options { left: 20px; position: absolute; right: auto; top: 18px; z-index: 10; }
+    .auth-top-left { align-items: center; display: flex; gap: 14px; left: 20px; position: absolute; right: auto; top: 18px; z-index: 10; }
+    .auth-install { align-items: center; color: var(--ink); display: flex; gap: 9px; }
+    .auth-install-title { font-size: 11px; font-weight: 700; white-space: nowrap; }
+    .auth-install-button { align-items: center; background: linear-gradient(135deg, #2f9e57, #16783c); border: 1px solid rgba(255,255,255,.24); border-radius: 8px; box-shadow: 0 3px 9px rgba(16,65,48,.18); color: #fff; display: inline-flex; font-size: 10px; font-weight: 700; gap: 6px; min-height: 30px; padding: 0 10px; text-decoration: none; white-space: nowrap; }
+    .auth-install-button:hover { filter: brightness(.95); transform: translateY(-1px); }
+    .auth-install-button svg { fill: currentColor; height: 16px; width: 16px; }
+    .auth-install-button[hidden] { display: none; }
     .workspace-language-options { justify-self: start; margin-bottom: -2px; }
     .accent-swatch { background: var(--green); border: 1px solid rgba(0,0,0,.12); border-radius: 50%; height: 12px; width: 12px; }
     .auth-theme-toggle { position: absolute; right: 20px; top: 18px; }
@@ -935,10 +941,16 @@
       .theme-toggle { min-height: 27px; padding: 4px 7px; }
       .theme-toggle-label { display: none; }
       .accent-toggle { min-height: 27px; padding: 4px 7px; }
-      .auth-language-options { left: 12px; top: 12px; }
+      .auth-top-left { gap: 9px; left: 12px; top: 12px; }
+      .auth-install { gap: 6px; }
+      .auth-install-title { font-size: 10px; }
+      .auth-install-button { min-height: 28px; padding: 0 8px; }
       .auth-theme-toggle { right: 12px; top: 12px; }
       .auth-accent-toggle { right: 62px; top: 12px; }
       .top-account { gap: 6px; }
+    }
+    @media (max-width: 420px) {
+      .auth-accent-toggle { right: 12px; top: 48px; }
     }
     html[data-theme="dark"] {
       color-scheme: dark;
@@ -1214,6 +1226,13 @@
     .resource-empty strong { color: var(--ink); font-size: 11px; }
     .resource-row .auth-input { font-size: 10px; height: 31px; min-width: 0; text-transform: uppercase; }
     .resource-row .button { font-size: 10px; min-height: 29px; padding: 0 9px; }
+    .android-resource-card { grid-column: 1 / -1; }
+    .android-resource-content { align-items: center; display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; padding: 18px 20px; }
+    .android-resource-file { color: var(--muted); display: grid; font-size: 11px; gap: 4px; min-width: 0; }
+    .android-resource-file strong { color: var(--ink); overflow-wrap: anywhere; }
+    .android-resource-actions { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; }
+    .android-resource-input { display: none; }
+    .android-resource-actions .button { min-height: 38px; }
     @media (max-width: 760px) {
       .resource-cards { grid-template-columns: minmax(0, 1fr); }
     }
@@ -1222,6 +1241,9 @@
       .resource-create-form .button { width: 100%; }
       .resource-card .table-toolbar { padding-left: 15px; padding-right: 15px; }
       .resource-row { grid-template-columns: minmax(0, 1fr) auto; }
+      .android-resource-content { align-items: stretch; padding: 15px; }
+      .android-resource-actions { width: 100%; }
+      .android-resource-actions .button { flex: 1; }
       .resource-row .auth-input { grid-column: 1 / -1; }
       .resource-empty { margin-left: 15px; margin-right: 15px; }
     }
@@ -1976,9 +1998,18 @@
     <div class="auth-loading-card"><div class="auth-loading-mark" aria-hidden="true"><img class="brand-monogram" data-brand-emblem src="./assets/brand-emblem-source.png" alt=""></div><div class="auth-loading-spinner" aria-hidden="true"></div><div class="auth-loading-text">Memeriksa sesi login...</div></div>
   </section>
   <section class="auth-screen" id="auth-screen" aria-label="Login">
-    <div class="language-options auth-language-options" role="group" aria-label="Pilih bahasa">
-      <button class="language-option" type="button" data-language-option="id" aria-label="Bahasa Indonesia" aria-pressed="false"><svg class="language-flag" aria-hidden="true" viewBox="0 0 30 20"><rect width="30" height="10" fill="#ce1126"/><rect y="10" width="30" height="10" fill="#fff"/></svg></button>
-      <button class="language-option" type="button" data-language-option="en" aria-label="English" aria-pressed="false"><svg class="language-flag" aria-hidden="true" viewBox="0 0 60 30"><rect width="60" height="30" fill="#012169"/><path d="M0 0 60 30M60 0 0 30" stroke="#fff" stroke-width="6"/><path d="M0 0 60 30M60 0 0 30" stroke="#c8102e" stroke-width="2"/><path d="M30 0v30M0 15h60" stroke="#fff" stroke-width="10"/><path d="M30 0v30M0 15h60" stroke="#c8102e" stroke-width="4"/></svg></button>
+    <div class="auth-top-left">
+     <div class="language-options auth-language-options" role="group" aria-label="Pilih bahasa">
+       <button class="language-option" type="button" data-language-option="id" aria-label="Bahasa Indonesia" aria-pressed="false"><svg class="language-flag" aria-hidden="true" viewBox="0 0 30 20"><rect width="30" height="10" fill="#ce1126"/><rect y="10" width="30" height="10" fill="#fff"/></svg></button>
+       <button class="language-option" type="button" data-language-option="en" aria-label="English" aria-pressed="false"><svg class="language-flag" aria-hidden="true" viewBox="0 0 60 30"><rect width="60" height="30" fill="#012169"/><path d="M0 0 60 30M60 0 0 30" stroke="#fff" stroke-width="6"/><path d="M0 0 60 30M60 0 0 30" stroke="#c8102e" stroke-width="2"/><path d="M30 0v30M0 15h60" stroke="#fff" stroke-width="10"/><path d="M30 0v30M0 15h60" stroke="#c8102e" stroke-width="4"/></svg></button>
+     </div>
+     <div class="auth-install" aria-label="Install on your Android">
+       <span class="auth-install-title">Install on your Android</span>
+       <a class="auth-install-button" id="android-download-link" href="#" download="Stock-Opname.apk" hidden aria-label="Download Android app">
+         <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7.2 8.1 5.6 5.4a.6.6 0 1 1 1-.6l1.7 2.8a10 10 0 0 1 7.4 0l1.7-2.8a.6.6 0 1 1 1 .6l-1.6 2.7a7.8 7.8 0 0 1 3 6.1H4.2a7.8 7.8 0 0 1 3-6.1ZM8 11.2a.8.8 0 1 0 0-1.6.8.8 0 0 0 0 1.6Zm8 0a.8.8 0 1 0 0-1.6.8.8 0 0 0 0 1.6ZM4.2 15.4h15.6v2.1a1.7 1.7 0 0 1-1.7 1.7h-.5v2a.8.8 0 0 1-1.6 0v-2h-6v2a.8.8 0 0 1-1.6 0v-2h-.5a1.7 1.7 0 0 1-1.7-1.7v-2.1Z"/></svg>
+         <span>Download</span>
+       </a>
+     </div>
     </div>
     <button class="theme-toggle auth-theme-toggle" type="button" data-theme-toggle aria-label="Aktifkan dark mode" aria-pressed="false"><span class="theme-toggle-icon" aria-hidden="true">☾</span><span class="theme-toggle-label">Dark</span></button>
     <button class="accent-toggle auth-accent-toggle" type="button" data-accent-toggle aria-label="Ganti tema warna ke burgundy"><span class="accent-swatch" aria-hidden="true"></span><span data-accent-label>Burgundy</span></button>
@@ -2141,6 +2172,29 @@
       "Aktifkan dark mode": "Enable dark mode",
       "Nonaktifkan dark mode": "Disable dark mode",
       "Ganti tema warna ke green": "Switch accent color to green",
+      "Install on your Android": "Install on your Android",
+      "Download Android app": "Download Android app",
+      "Download": "Download",
+      "Unggah APK": "Upload APK",
+      "Hapus APK": "Remove APK",
+      "APK Android": "Android APK",
+      "APK tersedia": "APK available",
+      "Belum ada APK": "No APK uploaded",
+      "Belum ada file APK": "No APK file uploaded",
+      "Pilih file APK untuk mengaktifkan download di halaman login.": "Select an APK file to enable downloads on the login page.",
+      "Kelola daftar Nama Brand, Nama PIC, dan file APK Android yang tersedia bagi seluruh pengguna.": "Manage the Brand and PIC lists and the Android APK available to all users.",
+      "Unggah APK terbaru (maksimal 50 MB) agar tombol Download tersedia di halaman login. Berkas ini dapat diganti oleh Owner kapan saja.": "Upload the latest APK (up to 50 MB) to enable the Download button on the login page. The Owner can replace this file at any time.",
+      "Tambahkan, ubah, atau hapus pilihan Nama Brand dan Nama PIC, serta unggah atau ganti APK yang tersedia untuk diunduh dari halaman login. Daftar dan informasi APK dibagikan kepada seluruh akun.": "Add, edit, or remove Brand and PIC options, and upload or replace the APK available for download on the login page. Lists and APK information are shared with all accounts.",
+      "File APK hanya dapat dikelola oleh Owner.": "Only the Owner can manage the APK file.",
+      "Pilih file aplikasi Android dengan format .apk.": "Select an Android app file in .apk format.",
+      "Ukuran APK melebihi batas 50 MB.": "The APK exceeds the 50 MB size limit.",
+      "APK Android gagal diunggah:": "The Android APK failed to upload:",
+      "APK Android gagal dihapus:": "The Android APK failed to delete:",
+      "MB · diunggah": "MB · uploaded",
+      "APK Android berhasil diunggah dan tersedia di halaman login.": "The Android APK was uploaded and is available on the login page.",
+      "Hapus APK Android dari halaman login?": "Remove the Android APK from the login page?",
+      "APK Android berhasil dihapus dari halaman login.": "The Android APK was removed from the login page.",
+      "Unggah APK terbaru agar tombol Download tersedia di halaman login. Berkas ini dapat diganti oleh Owner kapan saja.": "Upload the latest APK to make the Download button available on the login page. The Owner can replace this file at any time.",
       "Koneksi ke data bersama sedang bermasalah. Perubahan Anda tetap tersimpan di browser dan akan disinkronkan otomatis saat koneksi pulih.": "The shared-data connection is temporarily unavailable. Your changes remain saved in this browser and will sync automatically when the connection returns.",
       "Login menggunakan username dan password dari admin. Data stock opname dibagikan ke seluruh tim.": "Log in with the username and password provided by your administrator. Stock opname data is shared with the whole team.",
       "Masukkan username": "Enter username",
@@ -2882,6 +2936,9 @@
     const SHARED_STATE_TABLE = "stock_opname_state";
     const SHARED_STATE_CHANNEL_NAME = "stock-opname-state:stock-opname-team";
     const WORKBOOK_ARCHIVE_BUCKET = "stock-opname-workbooks";
+    const ANDROID_APP_BUCKET = "stock-opname-app-downloads";
+    const ANDROID_APP_OBJECT = "latest.apk";
+    const ANDROID_APP_MAX_SIZE = 50 * 1024 * 1024;
     const ONLINE_USERS_CHANNEL_NAME = "online-users:stock-opname-team";
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
     let onlineUsersPresenceChannel = null;
@@ -2982,7 +3039,7 @@
     const DEFAULT_LAYOUTS = ["Rack 1"];
     const UNUPLOADED_WORKSPACE_TIMEOUT_MS = 5 * 60 * 1000;
     const WORKSPACE_CLEANUP_INTERVAL_MS = 15 * 1000;
-    const initialState = () => ({ products: [], serialMaster: {}, scanEvents: [], manualEntries: [], pjEntries: [], inboundEntries: [], historyEvents: [], sessions: [], workbookFiles: [], resources: { brands: [], picNames: [] }, activeSession: makeSession(), countMode: "laptops", importFile: "", importMessage: "", importDownloadedAt: "", importUploadedAt: "", layouts: [...DEFAULT_LAYOUTS], layoutQuantities: {}, layoutNumbers: {} });
+    const initialState = () => ({ products: [], serialMaster: {}, scanEvents: [], manualEntries: [], pjEntries: [], inboundEntries: [], historyEvents: [], sessions: [], workbookFiles: [], resources: { brands: [], picNames: [], androidApp: null }, activeSession: makeSession(), countMode: "laptops", importFile: "", importMessage: "", importDownloadedAt: "", importUploadedAt: "", layouts: [...DEFAULT_LAYOUTS], layoutQuantities: {}, layoutNumbers: {} });
     const emptyWorkspaceData = () => ({ products: [], serialMaster: {}, scanEvents: [], manualEntries: [], pjEntries: [], inboundEntries: [], historyEvents: [], workbookFiles: [], activeSession: makeSession(), countMode: "laptops", importFile: "", importMessage: "", importDownloadedAt: "", importUploadedAt: "", layouts: [...DEFAULT_LAYOUTS], layoutQuantities: {}, layoutNumbers: {} });
     const snapshotWorkspaceData = (source) => {
       const products = source.products || [];
@@ -3075,9 +3132,10 @@
     if (!Array.isArray(state.inboundEntries)) state.inboundEntries = [];
     if (!Array.isArray(state.historyEvents)) state.historyEvents = [];
     if (!Array.isArray(state.sessions)) state.sessions = [];
-    if (!state.resources || typeof state.resources !== "object") state.resources = { brands: [], picNames: [] };
+    if (!state.resources || typeof state.resources !== "object") state.resources = { brands: [], picNames: [], androidApp: null };
     if (!Array.isArray(state.resources.brands)) state.resources.brands = [];
     if (!Array.isArray(state.resources.picNames)) state.resources.picNames = [];
+    if (!Object.prototype.hasOwnProperty.call(state.resources, "androidApp")) state.resources.androidApp = null;
     for (const event of state.scanEvents) if (!event.id) event.id = crypto.randomUUID();
     if (!Array.isArray(state.workspaces) || !state.workspaces.length) {
       const first = createWorkspace("", snapshotWorkspaceData(state), true);
@@ -3688,9 +3746,10 @@
       if (!Array.isArray(normalized.historyEvents)) normalized.historyEvents = [];
       if (!Array.isArray(normalized.sessions)) normalized.sessions = [];
       if (!Array.isArray(normalized.workbookFiles)) normalized.workbookFiles = [];
-      if (!normalized.resources || typeof normalized.resources !== "object") normalized.resources = { brands: [], picNames: [] };
+      if (!normalized.resources || typeof normalized.resources !== "object") normalized.resources = { brands: [], picNames: [], androidApp: null };
       if (!Array.isArray(normalized.resources.brands)) normalized.resources.brands = [];
       if (!Array.isArray(normalized.resources.picNames)) normalized.resources.picNames = [];
+      if (!Object.prototype.hasOwnProperty.call(normalized.resources, "androidApp")) normalized.resources.androidApp = null;
       for (const event of normalized.scanEvents) if (!event.id) event.id = crypto.randomUUID();
       if (!Array.isArray(normalized.workspaces) || !normalized.workspaces.length) {
         const first = createWorkspace("", snapshotWorkspaceData(normalized), true);
@@ -6007,7 +6066,7 @@
           ${guide("Langkah 5", "↕", "Rekap Selisih", "Tinjau hanya item yang belum sesuai; kolom selisih membandingkan jumlah SCAN + MANUAL + PJ dengan quantity VEF. Tambahkan catatan untuk menjelaskan kekurangan atau kelebihan. Periksa kembali data sebelum sesi diselesaikan karena hasil yang diarsipkan menjadi rekaman baca-saja.", "recap", "Rekap Selisih")}
           ${guide("Arsip", "▣", "Sesi Stock Opname", "Gunakan Buka sesi untuk meninjau workbook sumber, rincian setiap rack, input manual, seluruh item Result SO, daftar invoice PJ, dan Rekap Selisih. Ekspor XLSX berisi worksheet arsip beserta detail input, sedangkan Print menyusun laporan untuk dicetak atau disimpan sebagai PDF. Arsip lama tetap tersedia walaupun kartu jadwal sudah direset.", "completed-sessions", "Sesi Stock Opname")}
           ${guide("Aktivitas", "◷", "Riwayat Perubahan", "Lihat aktivitas berdasarkan waktu dan sesi, seperti mulai/selesai opname, scan ditambahkan, input manual, dan perubahan catatan atau quantity. Gunakan riwayat untuk membantu audit dan menelusuri perubahan data.", "history", "Riwayat Perubahan")}
-          ${isSuperAdmin() ? guide("Admin", "▧", "Data Resource", "Tambahkan, ubah, atau hapus pilihan Nama Brand dan Nama PIC. Daftar ini dibagikan kepada semua akun dan menjadi sumber pencarian pada kartu Jadwal. Pastikan nama sudah benar sebelum staf memulai sesi.", "data-resources", "Data Resource") : ""}
+          ${isSuperAdmin() ? guide("Admin", "▧", "Data Resource", "Tambahkan, ubah, atau hapus pilihan Nama Brand dan Nama PIC, serta unggah atau ganti APK yang tersedia untuk diunduh dari halaman login. Daftar dan informasi APK dibagikan kepada seluruh akun.", "data-resources", "Data Resource") : ""}
           ${isSuperAdmin() ? guide("Admin", "♙", "Kelola Akun", "Buat akun staf, reset password, dan aktifkan atau nonaktifkan akses akun.", "admin-users", "Kelola Akun") : ""}
         </section>`;
     }
@@ -6026,7 +6085,86 @@
         currentPage = "opname";
         return renderOpname();
       }
-      return `${navMarkup()}<section class="page-head"><div><h1>Data Resource</h1><p class="subtitle">Kelola daftar Nama Brand dan Nama PIC yang tersedia di seluruh akun pada kartu Jadwal.</p></div></section><div class="resource-cards">${renderDataResourceList("brands", "Nama Brand", "Pilihan ini menjadi sumber dropdown Nama Brand di Jadwal.")}${renderDataResourceList("picNames", "Nama PIC", "Pilihan ini menjadi sumber dropdown PIC 1 dan PIC 2 di Jadwal.")}</div>`;
+      const androidApp = state.resources.androidApp;
+      const uploadDate = androidApp?.uploadedAt ? formatDate(androidApp.uploadedAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "";
+      const androidAppCard = `<section class="table-section resource-card android-resource-card"><div class="table-toolbar"><div><div class="table-title">APK Android</div><p class="subtitle">Unggah APK terbaru (maksimal 50 MB) agar tombol Download tersedia di halaman login. Berkas ini dapat diganti oleh Owner kapan saja.</p></div><span class="category-chip">${androidApp?.name ? "APK tersedia" : "Belum ada APK"}</span></div><div class="android-resource-content"><div class="android-resource-file">${androidApp?.name ? `<strong>${escapeHtml(androidApp.name)}</strong><span>${formatNumber((androidApp.size || 0) / (1024 * 1024))} MB${uploadDate ? ` · diunggah ${escapeHtml(uploadDate)}` : ""}</span>` : "<strong>Belum ada file APK</strong><span>Pilih file APK untuk mengaktifkan download di halaman login.</span>"}</div><div class="android-resource-actions"><input class="android-resource-input" id="android-app-file" type="file" accept=".apk,application/vnd.android.package-archive"><button class="button button-primary" id="android-app-upload" type="button">Unggah APK</button><button class="button button-danger" id="android-app-remove" type="button" ${androidApp?.name ? "" : "disabled"}>Hapus APK</button></div></div></section>`;
+      return `${navMarkup()}<section class="page-head"><div><h1>Data Resource</h1><p class="subtitle">Kelola daftar Nama Brand, Nama PIC, dan file APK Android yang tersedia bagi seluruh pengguna.</p></div></section><div class="resource-cards">${renderDataResourceList("brands", "Nama Brand", "Pilihan ini menjadi sumber dropdown Nama Brand di Jadwal.")}${renderDataResourceList("picNames", "Nama PIC", "Pilihan ini menjadi sumber dropdown PIC 1 dan PIC 2 di Jadwal.")}${androidAppCard}</div>`;
+    }
+
+    function androidAppPublicUrl() {
+      return `${SUPABASE_URL}/storage/v1/object/public/${ANDROID_APP_BUCKET}/${ANDROID_APP_OBJECT}`;
+    }
+    async function refreshAndroidDownloadLink() {
+      const link = document.getElementById("android-download-link");
+      if (!link) return;
+      link.hidden = true;
+      try {
+        const response = await fetch(`${androidAppPublicUrl()}?availability=${Date.now()}`, { method: "HEAD", cache: "no-store" });
+        if (!response.ok) return;
+        link.href = `${androidAppPublicUrl()}?download=Stock-Opname.apk&version=${Date.now()}`;
+        link.hidden = false;
+      } catch (error) {
+        console.warn("Ketersediaan APK Android tidak dapat diperiksa:", error);
+      }
+    }
+    async function uploadAndroidApp(file) {
+      if (!isSuperAdmin()) {
+        notify("File APK hanya dapat dikelola oleh Owner.");
+        return;
+      }
+      if (!file || !/\.apk$/i.test(file.name)) {
+        notify("Pilih file aplikasi Android dengan format .apk.");
+        return;
+      }
+      if (file.size > ANDROID_APP_MAX_SIZE) {
+        notify("Ukuran APK melebihi batas 50 MB.");
+        return;
+      }
+      const button = document.getElementById("android-app-upload");
+      if (button) button.disabled = true;
+      try {
+        const { error } = await supabaseClient.storage.from(ANDROID_APP_BUCKET).upload(ANDROID_APP_OBJECT, file, {
+          cacheControl: "60",
+          contentType: "application/vnd.android.package-archive",
+          upsert: true
+        });
+        if (error) throw error;
+        state.resources.androidApp = { name: file.name, size: file.size, uploadedAt: new Date().toISOString() };
+        persist();
+        render();
+        await refreshAndroidDownloadLink();
+        notify("APK Android berhasil diunggah dan tersedia di halaman login.");
+      } catch (error) {
+        console.error("APK Android gagal diunggah:", error);
+        notify(`APK Android gagal diunggah: ${error instanceof Error ? error.message : "kesalahan tidak diketahui"}`);
+      } finally {
+        const currentButton = document.getElementById("android-app-upload");
+        if (currentButton) currentButton.disabled = false;
+      }
+    }
+    async function removeAndroidApp() {
+      if (!isSuperAdmin()) {
+        notify("File APK hanya dapat dikelola oleh Owner.");
+        return;
+      }
+      if (!state.resources.androidApp?.name) return;
+      if (!window.confirm("Hapus APK Android dari halaman login?")) return;
+      const button = document.getElementById("android-app-remove");
+      if (button) button.disabled = true;
+      try {
+        const { error } = await supabaseClient.storage.from(ANDROID_APP_BUCKET).remove([ANDROID_APP_OBJECT]);
+        if (error) throw error;
+        state.resources.androidApp = null;
+        persist();
+        render();
+        await refreshAndroidDownloadLink();
+        notify("APK Android berhasil dihapus dari halaman login.");
+      } catch (error) {
+        console.error("APK Android gagal dihapus:", error);
+        notify(`APK Android gagal dihapus: ${error instanceof Error ? error.message : "kesalahan tidak diketahui"}`);
+        const currentButton = document.getElementById("android-app-remove");
+        if (currentButton) currentButton.disabled = false;
+      }
     }
 
     function saveResource(form) {
@@ -6195,6 +6333,14 @@
         event.preventDefault();
         saveResource(form);
       }));
+      document.getElementById("android-app-upload")?.addEventListener("click", () => document.getElementById("android-app-file")?.click());
+      document.getElementById("android-app-file")?.addEventListener("change", (event) => {
+        const input = event.currentTarget;
+        const file = input.files?.[0];
+        input.value = "";
+        if (file) void uploadAndroidApp(file);
+      });
+      document.getElementById("android-app-remove")?.addEventListener("click", removeAndroidApp);
       document.querySelectorAll("[data-remove-resource]").forEach((button) => button.addEventListener("click", () => removeResource(button.dataset.removeResource, button.dataset.resourceName)));
       document.querySelectorAll("[data-admin-reset]").forEach((button) => button.addEventListener("click", () => administerUser("reset", button.dataset.adminReset)));
       document.querySelectorAll("[data-admin-toggle]").forEach((button) => button.addEventListener("click", () => administerUser("toggle", button.dataset.adminToggle, button.dataset.disabled !== "true")));
@@ -7338,6 +7484,13 @@
     });
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape" && isMobileDrawerEnabled()) setAndroidNavigationOpen(false);
+    });
+    void refreshAndroidDownloadLink();
+    window.addEventListener("focus", () => {
+      if (document.body.classList.contains("auth-locked")) void refreshAndroidDownloadLink();
+    });
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible" && document.body.classList.contains("auth-locked")) void refreshAndroidDownloadLink();
     });
     document.querySelectorAll("[data-logout]").forEach((button) => button.addEventListener("click", requestSignOut));
     document.addEventListener("click", (event) => {
