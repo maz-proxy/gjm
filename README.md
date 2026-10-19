@@ -18,6 +18,8 @@ The workflow packages `index.html` and the login background image from `assets/`
 
 Master VEF uploads show a theme-matched progress dialog while the workbook is processed and archived.
 
+Session changes are restricted to the recorded session owner; Owner accounts retain their administrative override. Sessions without a verifiable owner are read-only to staff.
+
 ## Workspace Back navigation
 
 While signed in, the browser or device Back button moves through workspace pages in this order: Dashboard, Schedule, Master VEF, Scan & Manual, Stock Reconciliation, Recap, History Changes, Session SO, Guide, and About. Back stops at Dashboard.

@@ -3308,23 +3308,8 @@
         || (data.workbookFiles || []).some((workbook) => workbook.sessionId === data.activeSession.id)
       )));
     }
-    function workspaceHasUnownedActiveData(workspace) {
-      const data = workspace?.data || {};
-      const session = data.activeSession || {};
-      return session.status === "active" && (
-        (data.products || []).length > 0
-        || (data.scanEvents || []).length > 0
-        || (data.workbookFiles || []).some((workbook) => workbook.sessionId === session.id)
-      );
-    }
     function canEditWorkspaceSession(workspace) {
-      if (isSuperAdmin()) return true;
-      const userId = authSession?.user?.id;
-      if (!userId || !workspace) return false;
-      const session = workspace.data?.activeSession;
-      if (session?.status === "completed") return true;
-      if (session?.createdByUserId) return session.createdByUserId === userId;
-      return !workspaceHasUnownedActiveData(workspace);
+      return Boolean(workspace && (isSuperAdmin() || workspaceIsOwnedByCurrentUser(workspace)));
     }
     function canEditActiveSession() {
       return canEditWorkspaceSession(activeWorkspace());
