@@ -691,6 +691,12 @@
     .workbook-upload-loading-spinner { animation: workbook-upload-spin .85s linear infinite; border: 3px solid color-mix(in srgb, var(--green) 18%, transparent); border-radius: 50%; border-top-color: var(--green); height: 38px; margin: 0 auto 15px; width: 38px; }
     .workbook-upload-loading-title { color: var(--ink); font-size: 16px; font-weight: 800; }
     .workbook-upload-loading-message { color: var(--muted); font-size: 11px; line-height: 1.55; margin: 7px 0 0; }
+    .workbook-upload-progress-row { align-items: center; display: flex; gap: 11px; margin: 18px auto 0; max-width: 290px; }
+    .workbook-upload-progress { appearance: none; background: color-mix(in srgb, var(--green) 14%, var(--paper)); border: 0; border-radius: 99px; flex: 1; height: 8px; overflow: hidden; }
+    .workbook-upload-progress::-webkit-progress-bar { background: color-mix(in srgb, var(--green) 14%, var(--paper)); border-radius: 99px; }
+    .workbook-upload-progress::-webkit-progress-value { background: var(--green); border-radius: 99px; transition: width .18s ease; }
+    .workbook-upload-progress::-moz-progress-bar { background: var(--green); border-radius: 99px; transition: width .18s ease; }
+    .workbook-upload-progress-value { color: var(--green-dark); font-size: 12px; font-variant-numeric: tabular-nums; font-weight: 800; min-width: 38px; text-align: right; }
     .workbook-upload-loading-footer { align-items: center; color: var(--muted); display: flex; font-size: 9px; gap: 7px; justify-content: center; padding: 12px 18px; }
     .workbook-upload-loading-dot { background: var(--green); border-radius: 50%; box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 12%, transparent); height: 6px; width: 6px; }
     @keyframes workbook-upload-spin { to { transform: rotate(360deg); } }
@@ -2044,6 +2050,7 @@
       <div class="workbook-upload-loading-spinner" aria-hidden="true"></div>
       <div class="workbook-upload-loading-title" id="workbook-upload-loading-title">Mengunggah Master VEF</div>
       <p class="workbook-upload-loading-message" id="workbook-upload-loading-message">Menyiapkan file...</p>
+      <div class="workbook-upload-progress-row"><progress class="workbook-upload-progress" id="workbook-upload-progress" max="100" value="0" aria-label="Progres unggah Master VEF"></progress><span class="workbook-upload-progress-value" id="workbook-upload-progress-value">0%</span></div>
     </div>
     <div class="workbook-upload-loading-footer"><span class="workbook-upload-loading-dot" aria-hidden="true"></span>Mohon tunggu, jangan tutup halaman ini.</div>
   </dialog>
@@ -2121,6 +2128,7 @@
       "Memeriksa sesi login...": "Checking login session...",
       "Memeriksa sesi login": "Checking login session",
       "Pilih bahasa": "Choose language",
+      "Progres unggah Master VEF": "VEF Master upload progress",
       "Ganti tema warna ke burgundy": "Switch accent color to burgundy",
       "Aktifkan dark mode": "Enable dark mode",
       "Nonaktifkan dark mode": "Disable dark mode",
@@ -2378,7 +2386,11 @@
       "Mohon tunggu...": "Please wait...",
       "Mengunggah Master VEF": "Uploading VEF Master",
       "Menyiapkan file...": "Preparing file...",
+      "Membaca file...": "Reading file...",
       "Membaca dan memproses file...": "Reading and processing file...",
+      "Memproses data workbook...": "Processing workbook data...",
+      "Mengunggah arsip file...": "Uploading file archive...",
+      "Unggahan selesai.": "Upload complete.",
       "Mengarsipkan file dengan aman...": "Securely archiving file...",
       "Mohon tunggu, jangan tutup halaman ini.": "Please wait and do not close this page.",
       "Berhasil": "Success",
@@ -3335,7 +3347,7 @@
       const owner = activeWorkspace()?.data?.activeSession;
       return `<div class="history-summary" role="status"><strong>Sesi hanya dapat dilihat.</strong><span>Pengedit: ${escapeHtml(sessionOwnerName(owner))}${owner?.createdByUsername ? " · staf lain tidak dapat mengubah sesi ini" : " · hubungi Owner untuk sesi lama"}.</span></div>`;
     }
-    async function uploadWorkbookArchive(file, sessionId) {
+    async function uploadWorkbookArchive(file, sessionId, onProgress) {
       if (!authSession || !sharedStateReady) throw new Error("Login diperlukan untuk mengarsipkan file VEF.");
       if (file.size > 50 * 1024 * 1024) throw new Error("Ukuran file melebihi batas arsip 50 MB.");
       const extension = file.name.toLocaleLowerCase("id-ID").split(".").pop();
@@ -3346,11 +3358,41 @@
           ? "text/csv"
           : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
       const storagePath = `${state.currentWorkspaceId}/${sessionId}/${crypto.randomUUID()}.${extension}`;
-      const { error } = await supabaseClient.storage.from(WORKBOOK_ARCHIVE_BUCKET).upload(storagePath, file, {
-        contentType,
-        upsert: false
+      const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
+      if (sessionError) throw new Error(`Sesi login tidak dapat diperiksa untuk mengarsipkan file VEF: ${sessionError.message}`);
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) throw new Error("Sesi login kedaluwarsa. Masuk kembali sebelum mengarsipkan file VEF.");
+      const uploadUrl = `${SUPABASE_URL}/storage/v1/object/${encodeURIComponent(WORKBOOK_ARCHIVE_BUCKET)}/${storagePath.split("/").map(encodeURIComponent).join("/")}`;
+      await new Promise((resolve, reject) => {
+        const request = new XMLHttpRequest();
+        request.open("POST", uploadUrl);
+        request.setRequestHeader("apikey", SUPABASE_PUBLISHABLE_KEY);
+        request.setRequestHeader("Authorization", `Bearer ${accessToken}`);
+        request.setRequestHeader("x-upsert", "false");
+        request.upload.addEventListener("progress", (event) => {
+          if (event.lengthComputable) onProgress?.(event.loaded / event.total);
+        });
+        request.addEventListener("load", () => {
+          if (request.status >= 200 && request.status < 300) {
+            resolve();
+            return;
+          }
+          let message = request.statusText || `HTTP ${request.status}`;
+          try {
+            const response = JSON.parse(request.responseText);
+            message = response.message || response.error || message;
+          } catch (error) {
+            console.warn("Respons kesalahan arsip VEF bukan JSON:", error);
+          }
+          reject(new Error(`File VEF gagal diarsipkan: ${message}`));
+        }, { once: true });
+        request.addEventListener("error", () => reject(new Error("File VEF gagal diarsipkan karena koneksi jaringan.")), { once: true });
+        request.addEventListener("abort", () => reject(new Error("Pengarsipan file VEF dibatalkan.")), { once: true });
+        const body = new FormData();
+        body.append("cacheControl", "3600");
+        body.append("", file);
+        request.send(body);
       });
-      if (error) throw new Error(`File VEF gagal diarsipkan: ${error.message}`);
       return {
         id: crypto.randomUUID(),
         name: file.name,
@@ -3433,6 +3475,29 @@
       const dialog = document.getElementById("workbook-upload-loading-dialog");
       document.getElementById("workbook-upload-loading-message").textContent = message;
       translateDocument(dialog);
+    }
+    function setWorkbookUploadProgress(percent) {
+      const value = Math.max(0, Math.min(100, Math.round(percent)));
+      document.getElementById("workbook-upload-progress").value = value;
+      document.getElementById("workbook-upload-progress-value").textContent = `${value}%`;
+    }
+    function readWorkbookFile(file, onProgress) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.addEventListener("progress", (event) => {
+          if (event.lengthComputable) onProgress(event.loaded / event.total);
+        });
+        reader.addEventListener("load", () => {
+          if (!(reader.result instanceof ArrayBuffer)) {
+            reject(new Error("File VEF gagal dibaca sebagai data workbook."));
+            return;
+          }
+          resolve(reader.result);
+        }, { once: true });
+        reader.addEventListener("error", () => reject(reader.error || new Error("File VEF gagal dibaca.")), { once: true });
+        reader.addEventListener("abort", () => reject(new Error("Pembacaan file VEF dibatalkan.")), { once: true });
+        reader.readAsArrayBuffer(file);
+      });
     }
     document.getElementById("workbook-upload-loading-dialog").addEventListener("cancel", (event) => event.preventDefault());
     function closeWorkbookUploadLoading() {
@@ -6672,10 +6737,17 @@
       try {
         const uploadLoadingDialog = document.getElementById("workbook-upload-loading-dialog");
         document.getElementById("workbook-upload-loading-title").textContent = "Mengunggah Master VEF";
-        setWorkbookUploadLoadingMessage("Membaca dan memproses file...");
+        document.getElementById("workbook-upload-progress").value = 0;
+        setWorkbookUploadProgress(0);
+        setWorkbookUploadLoadingMessage("Membaca file...");
         uploadLoadingDialog.showModal();
         await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-        const workbook = XLSX.read(await file.arrayBuffer(), { type: "array", cellDates: true, codepage: 65001 });
+        const fileBuffer = await readWorkbookFile(file, (progress) => setWorkbookUploadProgress(progress * 15));
+        setWorkbookUploadProgress(20);
+        setWorkbookUploadLoadingMessage("Memproses data workbook...");
+        await new Promise((resolve) => requestAnimationFrame(resolve));
+        const workbook = XLSX.read(fileBuffer, { type: "array", cellDates: true, codepage: 65001 });
+        setWorkbookUploadProgress(30);
         if (state.currentWorkspaceId !== uploadWorkspaceId
           || state.activeSession.id !== uploadSessionId
           || authSession?.user?.id !== uploadUserId) {
@@ -6809,8 +6881,11 @@
           return;
         }
         const newSession = makeSession(authSession.user);
-        setWorkbookUploadLoadingMessage("Mengarsipkan file dengan aman...");
-        const archivedWorkbook = await uploadWorkbookArchive(file, newSession.id);
+        setWorkbookUploadLoadingMessage("Mengunggah arsip file...");
+        setWorkbookUploadProgress(35);
+        const archivedWorkbook = await uploadWorkbookArchive(file, newSession.id, (progress) => {
+          setWorkbookUploadProgress(35 + progress * 64);
+        });
         state.products = [...productsByCode.values()].sort((a, b) => a.sku.localeCompare(b.sku, "id-ID"));
         state.serialMaster = serialMaster;
         state.scanEvents = [];
@@ -6837,6 +6912,8 @@
         state.workbookFiles = [...(state.workbookFiles || []), archivedWorkbook];
         persist();
         render();
+        setWorkbookUploadProgress(100);
+        setWorkbookUploadLoadingMessage("Unggahan selesai.");
         closeWorkbookUploadLoading();
         showWorkbookUploadResult(
           "File Master VEF berhasil diunggah",

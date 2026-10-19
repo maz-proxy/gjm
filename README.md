@@ -16,7 +16,7 @@ Use the Indonesian and UK flag buttons on the login screen or in the workspace t
 
 The workflow packages `index.html` and the login background image from `assets/` for publishing. The spreadsheet parser is loaded from jsDelivr, so users need an internet connection to use workbook import/export features.
 
-Master VEF uploads show a theme-matched progress dialog while the workbook is processed and archived.
+Master VEF uploads show a theme-matched percentage progress dialog while the file is read and uploaded to the archive.
 
 Session changes are restricted to the recorded session owner; Owner accounts retain their administrative override. Sessions without a verifiable owner are read-only to staff.
 
