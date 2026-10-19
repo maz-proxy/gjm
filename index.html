@@ -2141,6 +2141,7 @@
       "Aktifkan dark mode": "Enable dark mode",
       "Nonaktifkan dark mode": "Disable dark mode",
       "Ganti tema warna ke green": "Switch accent color to green",
+      "Koneksi ke data bersama sedang bermasalah. Perubahan Anda tetap tersimpan di browser dan akan disinkronkan otomatis saat koneksi pulih.": "The shared-data connection is temporarily unavailable. Your changes remain saved in this browser and will sync automatically when the connection returns.",
       "Login menggunakan username dan password dari admin. Data stock opname dibagikan ke seluruh tim.": "Log in with the username and password provided by your administrator. Stock opname data is shared with the whole team.",
       "Masukkan username": "Enter username",
       "Masukkan password": "Enter password",
@@ -3179,11 +3180,15 @@
     let lastSyncedState = "";
     let syncTimer = null;
     let refreshTimer = null;
+    let refreshRetryTimer = null;
+    let refreshRetryAttempt = 0;
+    let saveRetryAttempt = 0;
     let workspaceCleanupTimer = null;
     const pendingWorkbookUploads = new Set();
     let refreshInProgress = false;
     let saveInProgress = false;
-    let syncErrorShown = false;
+    const syncFailureCounts = { read: 0, write: 0 };
+    const syncErrorKeys = { read: "", write: "" };
 
     const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
     const rackLabel = (layout) => {
@@ -3740,10 +3745,18 @@
       document.body.classList.remove("auth-checking");
       sharedStateReady = false;
       clearTimeout(syncTimer);
+      clearTimeout(refreshRetryTimer);
       clearInterval(refreshTimer);
       clearInterval(workspaceCleanupTimer);
       clearInterval(idleCheckTimer);
       refreshTimer = null;
+      refreshRetryTimer = null;
+      refreshRetryAttempt = 0;
+      saveRetryAttempt = 0;
+      syncFailureCounts.read = 0;
+      syncFailureCounts.write = 0;
+      syncErrorKeys.read = "";
+      syncErrorKeys.write = "";
       refreshPending = false;
       workspaceCleanupTimer = null;
       idleCheckTimer = null;
@@ -3902,6 +3915,53 @@
       }
       return `Gagal menyambungkan data bersama: ${error.message || "kesalahan tidak diketahui"}`;
     }
+    function isTransientSyncError(error) {
+      const rawStatus = error?.status ?? error?.statusCode;
+      const status = Number(rawStatus);
+      return (rawStatus !== undefined && rawStatus !== null && (status === 0 || status === 408 || status === 429 || status >= 500))
+        || /failed to fetch|networkerror|network request failed|fetch failed|timed out|timeout|connection reset|offline/i.test(error?.message || "");
+    }
+    function reportSharedSyncFailure(operation, error) {
+      const transient = isTransientSyncError(error);
+      syncFailureCounts[operation] = transient ? syncFailureCounts[operation] + 1 : 0;
+      if (transient && syncFailureCounts[operation] < 3) {
+        if (syncFailureCounts[operation] === 1) console.warn(`Koneksi ${operation === "read" ? "pembacaan" : "penyimpanan"} data bersama terputus; akan dicoba kembali:`, error);
+        return;
+      }
+      const errorKey = transient ? `${operation}:connection` : `${operation}:${error?.code || error?.message || "unknown"}`;
+      if (syncErrorKeys[operation] === errorKey) return;
+      syncErrorKeys[operation] = errorKey;
+      console.error(`Sinkronisasi data bersama gagal (${operation}):`, error);
+      notify(transient
+        ? "Koneksi ke data bersama sedang bermasalah. Perubahan Anda tetap tersimpan di browser dan akan disinkronkan otomatis saat koneksi pulih."
+        : databaseSetupHint(error));
+    }
+    function resetSharedSyncFailures(operation) {
+      syncFailureCounts[operation] = 0;
+      syncErrorKeys[operation] = "";
+      if (operation === "read") {
+        refreshRetryAttempt = 0;
+        clearTimeout(refreshRetryTimer);
+        refreshRetryTimer = null;
+      } else {
+        saveRetryAttempt = 0;
+      }
+    }
+    function scheduleSharedSyncRetry(operation) {
+      const attempt = operation === "read" ? refreshRetryAttempt++ : saveRetryAttempt++;
+      const backoff = Math.min(30000, 1500 * (2 ** Math.min(attempt, 5)));
+      const delay = Math.round(backoff * (0.8 + Math.random() * 0.4));
+      if (operation === "read") {
+        clearTimeout(refreshRetryTimer);
+        refreshRetryTimer = setTimeout(() => {
+          refreshRetryTimer = null;
+          void refreshSharedState();
+        }, delay);
+      } else {
+        clearTimeout(syncTimer);
+        syncTimer = setTimeout(saveSharedState, delay);
+      }
+    }
     async function readSharedState() {
       return supabaseClient.from(SHARED_STATE_TABLE).select("data, updated_at, version").eq("id", SHARED_STATE_ROW_ID).maybeSingle();
     }
@@ -3979,7 +4039,8 @@
         normalizeWorkspaceClassifications();
         persistLocalState();
         sharedStateReady = true;
-        syncErrorShown = false;
+        resetSharedSyncFailures("read");
+        resetSharedSyncFailures("write");
         currentPage = freshLogin ? "dashboard" : restoreLastPage(session);
         unlockApp(session);
         render();
@@ -4026,7 +4087,7 @@
             remoteUpdatedAt = saved.updated_at;
             remoteVersion = saved.version;
             lastSyncedState = serializedState;
-            syncErrorShown = false;
+            resetSharedSyncFailures("write");
             if (stableSerialize(serializeSharedState(state)) !== serializedState) {
               clearTimeout(syncTimer);
               syncTimer = setTimeout(saveSharedState, 100);
@@ -4052,11 +4113,10 @@
             renderPreservingActiveInput();
           }
         }
-        syncTimer = setTimeout(saveSharedState, 1500);
-        throw new Error("Workspace sedang menerima banyak perubahan bersamaan. Perubahan Anda tetap tersimpan di browser dan sedang dicoba kembali.");
+        console.warn("Workspace sedang menerima banyak perubahan bersamaan; percobaan penyimpanan berikutnya dijadwalkan.");
+        scheduleSharedSyncRetry("write");
       } catch (error) {
         if (authSession?.user?.id !== savingUserId || !sharedStateReady) return;
-        console.error("Gagal menyimpan data workspace bersama:", error);
         if (error?.code === "42501" || /row-level security|permission denied/i.test(error?.message || "")) {
           try {
             const { data: row, error: readError } = await readSharedState();
@@ -4072,12 +4132,11 @@
           } catch (reloadError) {
             console.error("Gagal memuat ulang data setelah akses sesi ditolak:", reloadError);
             notify(`Perubahan sesi ditolak. Gagal memuat data terbaru: ${reloadError.message || "kesalahan tidak diketahui"}`);
-            syncErrorShown = true;
             return;
           }
         }
-        if (!syncErrorShown) notify(databaseSetupHint(error));
-        syncErrorShown = true;
+        reportSharedSyncFailure("write", error);
+        if (isTransientSyncError(error)) scheduleSharedSyncRetry("write");
       } finally {
         saveInProgress = false;
         if (refreshPending && authSession && sharedStateReady) {
@@ -4103,7 +4162,7 @@
         }
         if (authSession?.user?.id !== refreshingUserId || !sharedStateReady) return;
         if (!row) throw new Error("Data workspace bersama tidak ditemukan.");
-        syncErrorShown = false;
+        resetSharedSyncFailures("read");
         const remoteState = normalizeSharedState(row.data);
         if (row.version !== remoteVersion && stableSerialize(remoteState) !== lastSyncedState) {
           const previousState = stableSerialize(state);
@@ -4125,16 +4184,26 @@
         }
       } catch (error) {
         if (authSession?.user?.id !== refreshingUserId || !sharedStateReady) return;
-        if (!syncErrorShown) notify(databaseSetupHint(error));
-        syncErrorShown = true;
+        reportSharedSyncFailure("read", error);
+        if (isTransientSyncError(error)) scheduleSharedSyncRetry("read");
       } finally {
         refreshInProgress = false;
-        if (refreshPending && authSession && sharedStateReady && !saveInProgress && !syncTimer) {
+        if (refreshPending && authSession && sharedStateReady && !saveInProgress && !syncTimer && !refreshRetryTimer) {
           refreshPending = false;
           void refreshSharedState();
         }
       }
     }
+    function resumeSharedStateSync() {
+      if (!authSession || !sharedStateReady) return;
+      if (stableSerialize(serializeSharedState()) !== lastSyncedState) persist();
+      else void refreshSharedState();
+    }
+    window.addEventListener("online", resumeSharedStateSync);
+    window.addEventListener("pageshow", resumeSharedStateSync);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") resumeSharedStateSync();
+    });
     async function signIn(event) {
       event.preventDefault();
       const form = event.currentTarget;
