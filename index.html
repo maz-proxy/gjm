@@ -937,12 +937,18 @@
     .accent-swatch { background: var(--green); border: 1px solid rgba(0,0,0,.12); border-radius: 50%; height: 12px; width: 12px; }
     .auth-theme-toggle { position: absolute; right: 20px; top: 18px; }
     .auth-accent-toggle { position: absolute; right: 82px; top: 18px; }
-    .auth-theme-toggle { height: 26px; min-height: 26px; padding: 0; width: 26px; }
-    .auth-accent-toggle { gap: 0; height: 26px; min-height: 26px; justify-content: center; padding: 0; width: 26px; }
-    .auth-theme-toggle .theme-toggle-icon { font-size: 11px; }
-    .auth-accent-toggle .accent-swatch { height: 9px; width: 9px; }
+    .auth-theme-toggle,
+    .top-actions .theme-toggle { height: 26px; min-height: 26px; padding: 0; width: 26px; }
+    .auth-accent-toggle,
+    .top-actions .accent-toggle { gap: 0; height: 26px; min-height: 26px; justify-content: center; padding: 0; width: 26px; }
+    .auth-theme-toggle .theme-toggle-icon,
+    .top-actions .theme-toggle .theme-toggle-icon { font-size: 11px; }
+    .auth-accent-toggle .accent-swatch,
+    .top-actions .accent-toggle .accent-swatch { height: 9px; width: 9px; }
     .auth-theme-toggle .theme-toggle-label,
-    .auth-accent-toggle [data-accent-label] { display: none; }
+    .auth-accent-toggle [data-accent-label],
+    .top-actions .theme-toggle .theme-toggle-label,
+    .top-actions .accent-toggle [data-accent-label] { display: none; }
     @media (max-width: 650px) {
       .theme-toggle { min-height: 27px; padding: 4px 7px; }
       .theme-toggle-label { display: none; }
