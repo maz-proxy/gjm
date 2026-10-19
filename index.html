@@ -685,6 +685,15 @@
     .upload-success-message { color: var(--muted); font-size: 12px; line-height: 1.65; margin: 0; overflow-wrap: anywhere; }
     .upload-success-dialog .dialog-actions { justify-content: center; }
     .upload-success-dialog .button { min-width: 120px; }
+    .workbook-upload-loading-dialog { background: var(--paper); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 24px 90px rgba(15,34,29,.3); max-width: min(380px, calc(100vw - 32px)); overflow: hidden; padding: 0; text-align: center; width: 100%; }
+    .workbook-upload-loading-dialog::backdrop { background: rgba(12,25,22,.58); backdrop-filter: blur(4px); }
+    .workbook-upload-loading-accent { background: linear-gradient(112deg, color-mix(in srgb, var(--green) 18%, var(--paper)), var(--paper) 82%); border-bottom: 1px solid var(--line); border-top: 3px solid var(--green); padding: 21px 24px 18px; }
+    .workbook-upload-loading-spinner { animation: workbook-upload-spin .85s linear infinite; border: 3px solid color-mix(in srgb, var(--green) 18%, transparent); border-radius: 50%; border-top-color: var(--green); height: 38px; margin: 0 auto 15px; width: 38px; }
+    .workbook-upload-loading-title { color: var(--ink); font-size: 16px; font-weight: 800; }
+    .workbook-upload-loading-message { color: var(--muted); font-size: 11px; line-height: 1.55; margin: 7px 0 0; }
+    .workbook-upload-loading-footer { align-items: center; color: var(--muted); display: flex; font-size: 9px; gap: 7px; justify-content: center; padding: 12px 18px; }
+    .workbook-upload-loading-dot { background: var(--green); border-radius: 50%; box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 12%, transparent); height: 6px; width: 6px; }
+    @keyframes workbook-upload-spin { to { transform: rotate(360deg); } }
     html[data-theme="dark"] .reset-password-success-icon { background: #203b35; border-color: #36594d; color: #9edbc3; }
     html[data-theme="dark"] .reset-password-account,
     html[data-theme="dark"] .reset-password-value { background: #192a27; border-color: var(--line); color: var(--ink); }
@@ -2030,6 +2039,14 @@
     <div class="upload-success-content"><div class="upload-success-icon" aria-hidden="true">✓</div><p class="upload-success-message" id="workbook-upload-success-message"></p></div>
     <div class="dialog-actions"><button class="button button-primary" type="button" data-close="workbook-upload-success-dialog">OK</button></div>
   </dialog>
+  <dialog id="workbook-upload-loading-dialog" class="workbook-upload-loading-dialog" aria-labelledby="workbook-upload-loading-title" aria-describedby="workbook-upload-loading-message" aria-modal="true">
+    <div class="workbook-upload-loading-accent" role="status" aria-live="polite" aria-atomic="true">
+      <div class="workbook-upload-loading-spinner" aria-hidden="true"></div>
+      <div class="workbook-upload-loading-title" id="workbook-upload-loading-title">Mengunggah Master VEF</div>
+      <p class="workbook-upload-loading-message" id="workbook-upload-loading-message">Menyiapkan file...</p>
+    </div>
+    <div class="workbook-upload-loading-footer"><span class="workbook-upload-loading-dot" aria-hidden="true"></span>Mohon tunggu, jangan tutup halaman ini.</div>
+  </dialog>
   <dialog id="pj-entry-dialog" class="feature-dialog">
     <div class="dialog-head"><div><div class="dialog-title" id="pj-entry-title">Tambah quantity PJ</div><div class="dialog-subtitle" id="pj-entry-product"></div></div><button class="dialog-close" type="button" data-close="pj-entry-dialog" aria-label="Tutup">×</button></div>
     <form id="pj-entry-form" class="feature-dialog-form"><label class="auth-field" id="pj-entry-existing-wrap" hidden><span>Pilih invoice untuk diedit</span><select class="auth-input" id="pj-entry-existing"></select></label><label class="auth-field"><span>Tanggal dan waktu invoice</span><input class="auth-input" name="invoiceDate" type="datetime-local" required></label><label class="auth-field"><span>Nomor invoice</span><input class="auth-input" name="invoiceNumber" type="text" maxlength="100" required placeholder="Masukkan nomor invoice"></label><label class="auth-field"><span>Quantity PJ</span><input class="auth-input" name="quantity" type="number" min="1" step="1" required placeholder="Masukkan quantity"></label><div class="dialog-actions"><button class="button button-danger" id="pj-entry-delete" type="button" hidden>Hapus invoice</button><button class="button button-secondary" id="pj-entry-new" type="button">Invoice baru</button><button class="button button-secondary" type="button" data-close="pj-entry-dialog">Batal</button><button class="button button-primary" id="pj-entry-save" type="submit">Simpan PJ</button></div></form>
@@ -2359,6 +2376,11 @@
       "Tidak tersedia": "Unavailable",
       "Memuat...": "Loading...",
       "Mohon tunggu...": "Please wait...",
+      "Mengunggah Master VEF": "Uploading VEF Master",
+      "Menyiapkan file...": "Preparing file...",
+      "Membaca dan memproses file...": "Reading and processing file...",
+      "Mengarsipkan file dengan aman...": "Securely archiving file...",
+      "Mohon tunggu, jangan tutup halaman ini.": "Please wait and do not close this page.",
       "Berhasil": "Success",
       "Gagal": "Failed",
       "Peringatan": "Warning",
@@ -3422,6 +3444,16 @@
       clearTimeout(toastTimer);
       toastTimer = setTimeout(() => toast.classList.remove("visible"), 2300);
     };
+    function setWorkbookUploadLoadingMessage(message) {
+      const dialog = document.getElementById("workbook-upload-loading-dialog");
+      document.getElementById("workbook-upload-loading-message").textContent = message;
+      translateDocument(dialog);
+    }
+    document.getElementById("workbook-upload-loading-dialog").addEventListener("cancel", (event) => event.preventDefault());
+    function closeWorkbookUploadLoading() {
+      const dialog = document.getElementById("workbook-upload-loading-dialog");
+      if (dialog.open) dialog.close();
+    }
     function showWorkbookUploadResult(title, message, success = true) {
       document.getElementById("workbook-upload-success-title").textContent = title;
       document.getElementById("workbook-upload-success-message").textContent = message;
@@ -6653,6 +6685,11 @@
       uploadWorkspace.data.activeSession = state.activeSession;
       persist();
       try {
+        const uploadLoadingDialog = document.getElementById("workbook-upload-loading-dialog");
+        document.getElementById("workbook-upload-loading-title").textContent = "Mengunggah Master VEF";
+        setWorkbookUploadLoadingMessage("Membaca dan memproses file...");
+        uploadLoadingDialog.showModal();
+        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
         const workbook = XLSX.read(await file.arrayBuffer(), { type: "array", cellDates: true, codepage: 65001 });
         if (state.currentWorkspaceId !== uploadWorkspaceId
           || state.activeSession.id !== uploadSessionId
@@ -6780,12 +6817,14 @@
         }
         if (!productsByCode.size) {
           const hasRequiredHeaders = Boolean(vefHeader);
+          closeWorkbookUploadLoading();
           showWorkbookUploadResult("Data VEF belum diimpor", hasRequiredHeaders
             ? "Header Serial No dan Item Code ditemukan, tetapi tidak ada baris dengan Serial No serta Item Code yang terisi. File belum diimpor; periksa isi data di bawah header."
             : "Kolom Serial No dan Item Code tidak ditemukan pada sheet data. File belum diimpor; pastikan kedua header ada pada baris yang sama di sheet VEF Master atau Serial No.", false);
           return;
         }
         const newSession = makeSession(authSession.user);
+        setWorkbookUploadLoadingMessage("Mengarsipkan file dengan aman...");
         const archivedWorkbook = await uploadWorkbookArchive(file, newSession.id);
         state.products = [...productsByCode.values()].sort((a, b) => a.sku.localeCompare(b.sku, "id-ID"));
         state.serialMaster = serialMaster;
@@ -6813,14 +6852,17 @@
         state.workbookFiles = [...(state.workbookFiles || []), archivedWorkbook];
         persist();
         render();
+        closeWorkbookUploadLoading();
         showWorkbookUploadResult(
           "File Master VEF berhasil diunggah",
           `${file.name} berhasil diproses dan diarsipkan: ${formatNumber(state.products.length)} item per warehouse dan ${formatNumber(Object.keys(serialMaster).length)} serial number.`
         );
       } catch (error) {
+        closeWorkbookUploadLoading();
         console.error(error);
         notify(error instanceof Error ? error.message : "Workbook tidak dapat diproses atau diarsipkan.");
       } finally {
+        closeWorkbookUploadLoading();
         pendingWorkbookUploads.delete(uploadWorkspaceId);
       }
     }
