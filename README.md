@@ -16,6 +16,10 @@ Use the Indonesian and UK flag buttons on the login screen or in the workspace t
 
 The workflow packages `index.html` and the login background image from `assets/` for publishing. The spreadsheet parser is loaded from jsDelivr, so users need an internet connection to use workbook import/export features.
 
+## Workspace Back navigation
+
+While signed in, the browser or device Back button moves through workspace pages in this order: Dashboard, Schedule, Master VEF, Scan & Manual, Stock Reconciliation, Recap, History Changes, Session SO, Guide, and About. Back stops at Dashboard.
+
 ## Build the Android APK
 
 The Android app uses Capacitor to package the existing web workspace in a native Android shell. It keeps using the same Supabase project and requires an internet connection for login, shared data, and spreadsheet parsing. **Build Android APK** runs on each relevant push to `main` and can also be started manually from the GitHub Actions tab; download the `stock-opname-debug-apk` artifact from the completed run.

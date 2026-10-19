@@ -3081,6 +3081,8 @@
     normalizeWorkspaceScheduleCards(state.workspaces, state.sessions);
     Object.assign(state, snapshotWorkspaceData(state));
     let currentPage = "opname";
+    const BACK_NAVIGATION_PAGES = ["dashboard", "workspaces", "products", "layouts", "opname", "recap", "history", "completed-sessions", "about", "about-info"];
+    let appBackNavigationInitialized = false;
     let selectedCompletedSessionId = "";
     let selectedRecordedBrand = "";
     let selectedRecordedSessionId = "";
@@ -3096,6 +3098,23 @@
     let searchTerm = "";
     let toastTimer;
     let authSession = null;
+    function initializeAppBackNavigation() {
+      if (appBackNavigationInitialized) return;
+      const backState = { stockOpnameBackNavigation: true };
+      history.pushState(backState, "", location.href);
+      history.pushState(backState, "", location.href);
+      appBackNavigationInitialized = true;
+    }
+    window.addEventListener("popstate", (event) => {
+      if (!authSession || !event.state?.stockOpnameBackNavigation) return;
+      const currentPageIndex = BACK_NAVIGATION_PAGES.indexOf(currentPage);
+      if (currentPageIndex > 0) {
+        currentPage = BACK_NAVIGATION_PAGES[currentPageIndex - 1];
+        searchTerm = "";
+        render();
+      }
+      history.pushState({ stockOpnameBackNavigation: true }, "", location.href);
+    });
     let pendingPasswordChange = null;
     let idleCheckTimer = null;
     let idleActivityStorageKey = "";
@@ -3660,6 +3679,7 @@
       authSession = session;
       document.body.classList.remove("auth-checking");
       document.body.classList.remove("auth-locked");
+      initializeAppBackNavigation();
       const username = session.user.user_metadata?.username || session.user.email || "Pengguna";
       document.getElementById("profile-name").textContent = formatDisplayName(username);
       document.getElementById("profile-role").textContent = isSuperAdmin() ? "owner" : "staf";
