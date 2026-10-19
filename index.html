@@ -1197,16 +1197,20 @@
     .master-page-head .vef-timestamps { border-left-color: #a7dfc7; color: #e2f3ec; }
     .master-page-head .vef-timestamps strong { color: #fff; }
     .recorded-archive-page { display: grid; gap: 17px; }
-    .recorded-archive-head { align-items: flex-start; background: linear-gradient(120deg, color-mix(in srgb, var(--green) 14%, var(--paper)), var(--paper) 72%); border: 1px solid var(--line); border-left: 4px solid var(--green); border-radius: 14px; box-shadow: var(--shadow); display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; padding: 20px 22px; }
+    .recorded-archive-head { align-items: center; background: linear-gradient(112deg, #174b42 0%, #176b5b 62%, #398b73 100%); border: 1px solid rgba(255,255,255,.16); border-radius: 15px; box-shadow: 0 12px 28px rgba(23,76,62,.14); color: #fff; display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; min-height: 142px; overflow: hidden; padding: 20px 26px; position: relative; }
+    .recorded-archive-head::after { background: rgba(205,236,222,.11); border: 1px solid rgba(255,255,255,.12); border-radius: 50%; content: ""; height: 240px; pointer-events: none; position: absolute; right: 19%; top: -172px; width: 240px; }
     .recorded-archive-heading { min-width: 200px; }
-    .recorded-archive-heading h1 { font-size: clamp(22px, 2.2vw, 28px); letter-spacing: -.35px; margin: 0; }
-    .recorded-archive-heading p { color: var(--muted); font-size: 11px; line-height: 1.6; margin: 5px 0 0; }
-    .recorded-archive-meta { color: var(--muted); display: flex; flex-wrap: wrap; font-size: 10px; gap: 6px 14px; margin-top: 10px; }
-    .recorded-archive-meta strong { color: var(--ink); }
+    .recorded-archive-heading, .recorded-pic-list, .recorded-archive-head > .button { position: relative; z-index: 1; }
+    .recorded-archive-heading h1 { color: #fff; font-size: clamp(22px, 2.2vw, 28px); letter-spacing: -.35px; margin: 0; }
+    .recorded-archive-heading p { color: #d5e9df; font-size: 11px; line-height: 1.6; margin: 5px 0 0; }
+    .recorded-archive-meta { color: #d5e9df; display: flex; flex-wrap: wrap; font-size: 10px; gap: 6px 14px; margin-top: 10px; }
+    .recorded-archive-meta strong { color: #fff; }
     .recorded-pic-list { align-content: start; display: flex; flex-wrap: wrap; gap: 9px; }
-    .recorded-pic-card { background: color-mix(in srgb, var(--green) 8%, var(--paper)); border: 1px solid color-mix(in srgb, var(--green) 22%, var(--line)); border-radius: 10px; min-width: 136px; padding: 9px 12px; }
-    .recorded-pic-label { color: var(--muted); display: block; font-size: 9px; font-weight: 800; letter-spacing: .65px; text-transform: uppercase; }
-    .recorded-pic-name { color: var(--green-dark); display: block; font-size: 12px; font-weight: 750; margin-top: 3px; }
+    .recorded-pic-card { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); border-radius: 10px; min-width: 136px; padding: 9px 12px; }
+    .recorded-pic-label { color: #c5e0d4; display: block; font-size: 9px; font-weight: 800; letter-spacing: .65px; text-transform: uppercase; }
+    .recorded-pic-name { color: #fff; display: block; font-size: 12px; font-weight: 750; margin-top: 3px; }
+    .recorded-archive-head > .button-secondary { background: #fff; border-color: rgba(255,255,255,.75); color: #285c4b; }
+    .recorded-archive-head > .button-secondary:hover { background: #eaf5ef; border-color: #fff; }
     .recorded-view-actions { align-items: center; display: grid; gap: 12px; grid-template-columns: auto minmax(180px, 1fr) auto; margin: 0; }
     .recorded-view-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
     .recorded-view-tabs .active { background: var(--green); border-color: var(--green); color: #fff; }
@@ -1231,9 +1235,9 @@
       .recorded-archive-search .search-input { font-size: 10px; }
       .recorded-view-actions > #print-recorded-sheet { font-size: 10px; min-height: 34px; padding: 0 9px; }
     }
-    html[data-theme="dark"] .recorded-archive-head { background: linear-gradient(120deg, color-mix(in srgb, var(--green) 20%, var(--paper)), var(--paper) 72%); }
-    html[data-theme="dark"] .recorded-pic-card { background: color-mix(in srgb, var(--green) 14%, var(--paper)); border-color: color-mix(in srgb, var(--green) 34%, var(--line)); }
-    html[data-theme="dark"] .recorded-pic-name { color: var(--green-dark); }
+    html[data-theme="dark"] .recorded-archive-head { background: linear-gradient(115deg, #14372f, #1a5243 68%, #28654d); box-shadow: 0 3px 7px rgba(0,0,0,.2), 0 14px 30px rgba(0,0,0,.3), inset 0 1px rgba(255,255,255,.1); }
+    html[data-theme="dark"] .recorded-archive-head > .button-secondary { background: #1a2826; border-color: #344744; color: #e5efed; }
+    html[data-theme="dark"] .recorded-archive-head > .button-secondary:hover { background: #243a34; border-color: #536b62; }
     @media print {
       #print-session-root { display: block !important; padding: 0; }
       #print-session-root .completed-export-actions,
@@ -1303,10 +1307,11 @@
       --scrollbar-thumb-hover: #9b6678;
     }
     html[data-accent="burgundy"] body { background-image: radial-gradient(ellipse at 88% 0%, rgba(232,207,216,.62), transparent 36%); }
-    html[data-accent="burgundy"] .recorded-archive-head { background: linear-gradient(120deg, #f5e7ec, #fff8fa 72%); border-color: #ead1d9; border-left-color: #842b4b; }
-    html[data-accent="burgundy"] .recorded-pic-card { background: #f7eaf0; border-color: #dfb9c6; }
-    html[data-accent="burgundy"] .recorded-pic-label { color: #74515d; }
-    html[data-accent="burgundy"] .recorded-pic-name { color: #5d1c35; }
+    html[data-accent="burgundy"] .recorded-archive-head { background: linear-gradient(115deg, #4e192e 0%, #76233f 62%, #9a3b5e 100%); box-shadow: 0 12px 28px var(--accent-shadow); }
+    html[data-accent="burgundy"] .recorded-archive-head::after { background: rgba(244,223,231,.08); }
+    html[data-accent="burgundy"] .recorded-pic-label { color: #f0cbd8; }
+    html[data-accent="burgundy"] .recorded-archive-head > .button-secondary { background: #f4dfe7; border-color: #e6c5d0; color: #531a30; }
+    html[data-accent="burgundy"] .recorded-archive-head > .button-secondary:hover { background: #fbf0f3; border-color: #d9a1b4; }
     html[data-accent="burgundy"] .auth-card { background: #fff5f8; border-color: #e7cbd4; box-shadow: 0 22px 70px rgba(78,25,46,.2); }
     html[data-accent="burgundy"] .auth-input { background: #fffafb; border-color: #e4cbd3; }
     html[data-accent="burgundy"] .auth-input:focus { background: #fff; border-color: #b96a84; box-shadow: 0 0 0 3px rgba(132,43,75,.12); }
@@ -1387,10 +1392,11 @@
       --scrollbar-thumb: #765064;
       --scrollbar-thumb-hover: #b96a84;
     }
-    html[data-accent="burgundy"][data-theme="dark"] .recorded-archive-head { background: linear-gradient(120deg, #392630, #302127 72%); border-color: #523a43; border-left-color: #d786a0; }
-    html[data-accent="burgundy"][data-theme="dark"] .recorded-pic-card { background: #392630; border-color: #634452; }
-    html[data-accent="burgundy"][data-theme="dark"] .recorded-pic-label { color: #d9b8c3; }
-    html[data-accent="burgundy"][data-theme="dark"] .recorded-pic-name { color: #f0b6c7; }
+    html[data-accent="burgundy"][data-theme="dark"] .recorded-archive-head { background: linear-gradient(115deg, #321421 0%, #572238 62%, #76304d 100%); box-shadow: 0 3px 7px rgba(0,0,0,.2), 0 14px 30px rgba(0,0,0,.3), inset 0 1px rgba(255,255,255,.1); }
+    html[data-accent="burgundy"][data-theme="dark"] .recorded-archive-head::after { background: rgba(244,223,231,.06); }
+    html[data-accent="burgundy"][data-theme="dark"] .recorded-pic-label { color: #ecc3d0; }
+    html[data-accent="burgundy"][data-theme="dark"] .recorded-archive-head > .button-secondary { background: #482b37; border-color: #634452; color: #f4dce4; }
+    html[data-accent="burgundy"][data-theme="dark"] .recorded-archive-head > .button-secondary:hover { background: #572f40; border-color: #9a5369; }
     html[data-accent="burgundy"][data-theme="dark"] .logout-confirm-dialog { background: #302127; border-color: #634452; box-shadow: 0 24px 70px rgba(0,0,0,.52); }
     html[data-accent="burgundy"][data-theme="dark"] .logout-confirm-dialog::backdrop { background: rgba(16, 8, 12, .74); }
     html[data-accent="burgundy"] .logout-confirm-dialog .dialog-head { background: linear-gradient(115deg, #f4dfe7, #fff8fa 82%); border-bottom-color: #ead1d9; border-top-color: #842b4b; }
