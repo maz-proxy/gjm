@@ -937,6 +937,10 @@
     .accent-swatch { background: var(--green); border: 1px solid rgba(0,0,0,.12); border-radius: 50%; height: 12px; width: 12px; }
     .auth-theme-toggle { position: absolute; right: 20px; top: 18px; }
     .auth-accent-toggle { position: absolute; right: 82px; top: 18px; }
+    .auth-theme-toggle,
+    .auth-accent-toggle { gap: 0; height: 32px; justify-content: center; padding: 0; width: 32px; }
+    .auth-theme-toggle .theme-toggle-label,
+    .auth-accent-toggle [data-accent-label] { display: none; }
     @media (max-width: 650px) {
       .theme-toggle { min-height: 27px; padding: 4px 7px; }
       .theme-toggle-label { display: none; }
@@ -2011,7 +2015,7 @@
        </a>
      </div>
     </div>
-    <button class="theme-toggle auth-theme-toggle" type="button" data-theme-toggle aria-label="Aktifkan dark mode" aria-pressed="false"><span class="theme-toggle-icon" aria-hidden="true">☾</span><span class="theme-toggle-label">Dark</span></button>
+    <button class="theme-toggle auth-theme-toggle" type="button" data-theme-toggle aria-label="Aktifkan dark mode" aria-pressed="false"><span class="theme-toggle-icon" aria-hidden="true">☾</span><span class="theme-toggle-label" aria-hidden="true">Dark</span></button>
     <button class="accent-toggle auth-accent-toggle" type="button" data-accent-toggle aria-label="Ganti tema warna ke burgundy"><span class="accent-swatch" aria-hidden="true"></span><span data-accent-label>Burgundy</span></button>
     <div class="auth-card">
       <div class="auth-brand"><div class="brand-mark" aria-hidden="true"><img class="brand-monogram" data-brand-emblem src="./assets/brand-emblem-source.png" alt=""></div><div><div class="brand-name">STOCK OPNAME</div></div><span class="auth-copyright">© 2026 M-Maz</span></div>
@@ -2888,7 +2892,7 @@
         const dark = activeTheme === "dark";
         button.setAttribute("aria-pressed", String(dark));
         button.setAttribute("aria-label", dark ? "Aktifkan mode terang" : "Aktifkan dark mode");
-        button.innerHTML = `<span class="theme-toggle-icon" aria-hidden="true">${dark ? "☀" : "☾"}</span><span class="theme-toggle-label">${dark ? "Light" : "Dark"}</span>`;
+        button.innerHTML = `<span class="theme-toggle-icon" aria-hidden="true">${dark ? "☀" : "☾"}</span><span class="theme-toggle-label" aria-hidden="true">${dark ? "Light" : "Dark"}</span>`;
       });
       if (persist) {
         try {
