@@ -578,8 +578,16 @@
     .dashboard-status-match { border-radius: 99px 0 0 99px; }
     .dashboard-status-mismatch { background: #d28749; border-radius: 0 99px 99px 0; }
     .dashboard-status-legend { display: flex; flex-wrap: wrap; gap: 9px 15px; }
-    .dashboard-summary-list { gap: 14px; padding: 0; }
-    .dashboard-summary-fill { background: linear-gradient(90deg, #286344, #86b36a); }
+    .dashboard-summary-list { align-items: end; display: grid; gap: 10px; grid-template-columns: repeat(5, minmax(0, 1fr)); min-height: 204px; padding: 0; }
+    .dashboard-summary-column { display: grid; grid-template-rows: 18px minmax(112px, 1fr) 30px; min-width: 0; text-align: center; }
+    .dashboard-summary-column-value { align-self: center; color: var(--ink); font-family: "Space Grotesk", "Segoe UI", sans-serif; font-size: 10px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .dashboard-summary-column-plot { align-items: end; background: repeating-linear-gradient(to top, transparent 0, transparent calc(25% - 1px), var(--line) calc(25% - 1px), var(--line) 25%); display: flex; justify-content: center; min-height: 0; }
+    .dashboard-summary-column-bar { background: linear-gradient(180deg, #86b36a, #286344); border-radius: 6px 6px 2px 2px; max-width: 32px; min-height: 0; transition: height .55s cubic-bezier(.2,.75,.25,1); width: 58%; }
+    .dashboard-summary-column-bar.sessions { background: linear-gradient(180deg, #b3c98a, #628b55); }
+    .dashboard-summary-column-bar.scanned { background: linear-gradient(180deg, #86bba5, #3b8054); }
+    .dashboard-summary-column-bar.master { background: linear-gradient(180deg, #86b36a, #286344); }
+    .dashboard-summary-column-bar.issues { background: linear-gradient(180deg, #e2aa72, #c67537); }
+    .dashboard-summary-column-label { align-self: start; color: var(--muted); font-size: 8px; font-weight: 600; line-height: 1.2; padding-top: 7px; overflow-wrap: anywhere; }
     .dashboard-charts { display: grid; gap: 14px; grid-template-columns: minmax(240px, .8fr) minmax(0, 1.8fr); margin-bottom: 14px; }
     .dashboard-panel { background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 5px 18px rgba(35,59,38,.035); min-width: 0; overflow: hidden; }
     .dashboard-panel-head { align-items: center; border-bottom: 1px solid #edf1eb; display: flex; justify-content: space-between; min-height: 59px; padding: 12px 17px; }
@@ -2415,6 +2423,7 @@
       "Akumulasi selisih absolut": "Cumulative absolute variance",
       "Ringkasan & Status": "Summary & Status",
       "Item diperiksa, progres, dan SN pada sesi aktif": "Items checked, progress, and serial numbers in the active session",
+      "Perbandingan jumlah indikator · sesi aktif": "Active session indicator counts",
       "Status item diperiksa": "Checked item status",
       "item sesuai dan": "matching items and",
       "item selisih dari": "items with variance out of",
@@ -5292,11 +5301,15 @@
         ["SN bermasalah", total.issues]
       ];
       const statusScale = Math.max(1, ...statusRows.map(([, value]) => value));
-      const statusChartRows = statusRows.map(([name, value]) => `<div class="dashboard-chart-row">
-        <span class="dashboard-chart-name" title="${name}">${name}</span>
-        <div class="dashboard-bar-track" role="progressbar" aria-label="${name}" aria-valuemin="0" aria-valuemax="${statusScale}" aria-valuenow="${value}"><div class="dashboard-bar-fill dashboard-summary-fill" style="width:${(value / statusScale * 100).toFixed(2)}%"></div></div>
-        <span class="dashboard-chart-count">${formatNumber(value)}</span>
-      </div>`).join("");
+      const statusChartRows = statusRows.map(([name, value], index) => {
+        const barHeight = value ? Math.max(2, value / statusScale * 100) : 0;
+        const barType = ["sessions", "products", "scanned", "master", "issues"][index];
+        return `<div class="dashboard-summary-column" role="img" aria-label="${name}: ${formatNumber(value)}">
+          <span class="dashboard-summary-column-value">${formatNumber(value)}</span>
+          <div class="dashboard-summary-column-plot"><span class="dashboard-summary-column-bar ${barType}" style="height:${barHeight.toFixed(2)}%"></span></div>
+          <span class="dashboard-summary-column-label" title="${name}">${name}</span>
+        </div>`;
+      }).join("");
       const chartRows = workspaceStats.map(({ workspace, stats }) => `<div class="dashboard-chart-row">
         <span class="dashboard-chart-name" data-user-content title="${escapeHtml(workspace.name)}">${escapeHtml(workspace.name || "Tanpa nama")}</span>
         <div class="dashboard-bar-track" role="progressbar" aria-label="Progres SN ${escapeHtml(workspace.name)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${stats.progress}"><div class="dashboard-bar-fill" style="width:${stats.progress}%"></div></div>
@@ -5321,10 +5334,10 @@
               <div class="dashboard-quantity-note"><span>Akumulasi selisih absolut</span><strong>${formatNumber(total.absoluteVariance)} unit</strong></div>
             </div>
           </article>
-          <article class="dashboard-panel"><header class="dashboard-panel-head"><div><div class="dashboard-panel-title">Ringkasan &amp; Status</div><div class="dashboard-panel-subtitle">Item diperiksa, progres, dan SN pada sesi aktif</div></div><span class="dashboard-chart-tag">${mismatchPercent}% selisih</span></header>
+          <article class="dashboard-panel"><header class="dashboard-panel-head"><div><div class="dashboard-panel-title">Ringkasan &amp; Status</div><div class="dashboard-panel-subtitle">Perbandingan jumlah indikator · sesi aktif</div></div><span class="dashboard-chart-tag">${mismatchPercent}% selisih</span></header>
             <div class="dashboard-status-content">
               <div class="dashboard-quantity-group"><div class="dashboard-quantity-heading"><span class="dashboard-quantity-label">Status item diperiksa</span><strong class="dashboard-quantity-value">${formatNumber(total.countedSkus)} item</strong></div><div class="dashboard-status-track dashboard-bar-track" role="img" aria-label="${formatNumber(matchingItems)} item sesuai dan ${formatNumber(mismatchItems)} item selisih dari ${formatNumber(total.countedSkus)} item diperiksa"><span class="dashboard-status-match" style="width:${total.countedSkus ? (matchingItems / total.countedSkus * 100).toFixed(2) : 0}%"></span><span class="dashboard-status-mismatch" style="width:${total.countedSkus ? (mismatchItems / total.countedSkus * 100).toFixed(2) : 0}%"></span></div><div class="dashboard-status-legend"><span class="dashboard-quantity-legend-item"><i class="dashboard-quantity-swatch dashboard-status-match"></i>Sesuai <strong>${formatNumber(matchingItems)}</strong></span><span class="dashboard-quantity-legend-item"><i class="dashboard-quantity-swatch dashboard-status-mismatch"></i>Selisih <strong>${formatNumber(mismatchItems)}</strong></span></div></div>
-              <div class="dashboard-chart-list dashboard-summary-list">${statusChartRows}</div>
+              <div class="dashboard-summary-list" role="group" aria-label="Statistik sesi aktif, skala grafik nol hingga ${formatNumber(statusScale)}">${statusChartRows}</div>
             </div>
           </article>
         </section>
