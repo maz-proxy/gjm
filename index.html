@@ -2553,7 +2553,6 @@
       "Kamera tidak ditemukan pada perangkat ini.": "No camera was found on this device.",
       "Kamera sedang digunakan aplikasi lain. Tutup aplikasi tersebut lalu coba lagi.": "The camera is being used by another app. Close it and try again.",
       "Kamera tidak dapat membaca barcode. Pastikan barcode terlihat jelas, lalu coba lagi.": "The camera could not read the barcode. Make sure it is clearly visible and try again.",
-      "Pemindaian barcode mengalami kendala. Tutup pemindai dan coba lagi.": "Barcode scanning encountered a problem. Close the scanner and try again.",
       "Masukkan Serial Number": "Enter Serial Number",
       "Pilih rack": "Select rack",
       "Pilih rak": "Select rack",
@@ -3775,11 +3774,11 @@
         try {
           const reader = new window.ZXingBrowser.BrowserMultiFormatReader();
           let barcodeFound = false;
-          let scanFailed = false;
           const controls = await reader.decodeFromConstraints(
             { audio: false, video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } } },
             document.getElementById("camera-scan-video"),
-            (result, error, scanControls) => {
+            (result, _error, scanControls) => {
+              // ZXing reports normal frame misses through the error callback; keep scanning until a result is found.
               const value = result?.getText()?.trim();
               if (value && !barcodeFound) {
                 barcodeFound = true;
@@ -3790,16 +3789,10 @@
                 setCameraScanStatus("Barcode berhasil dibaca. Tutup pemindai lalu tekan Catat Scan.", "success");
                 scanControls?.stop();
                 cameraReaderControls = null;
-              } else if (error && !["NotFoundException", "ChecksumException", "FormatException"].includes(error.name)) {
-                scanFailed = true;
-                console.error("Pemindaian barcode kamera gagal:", error);
-                setCameraScanStatus("Pemindaian barcode mengalami kendala. Tutup pemindai dan coba lagi.", "error");
-                scanControls?.stop();
-                cameraReaderControls = null;
               }
             }
           );
-          if (!dialog.open || barcodeFound || scanFailed) {
+          if (!dialog.open || barcodeFound) {
             controls.stop();
             return;
           }
