@@ -352,15 +352,13 @@
     .layout-camera-button:disabled { cursor: not-allowed; opacity: .48; }
     .layout-camera-button svg { height: 17px; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; width: 17px; }
     .search-wrap.has-camera-search .search-input,
-    .manual-product-picker.has-camera-search .scan-input,
-    .schedule-resource-picker.has-camera-search .workspace-name-input { padding-right: 39px; }
+    .manual-product-picker.has-camera-search .scan-input { padding-right: 39px; }
     .manual-product-picker.has-camera-search { position: relative; }
     .camera-search-button { align-items: center; background: var(--paper); border: 1px solid var(--line); border-radius: 6px; color: var(--green-dark); display: inline-flex; height: 28px; justify-content: center; padding: 0; position: absolute; right: 4px; top: 50%; transform: translateY(-50%); transition: background .15s ease, border-color .15s ease, color .15s ease; width: 30px; z-index: 13; }
     .camera-search-button:hover:not(:disabled) { background: var(--green-soft); border-color: var(--green); }
     .camera-search-button:disabled { cursor: not-allowed; opacity: .48; }
     .camera-search-button svg { height: 17px; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; width: 17px; }
     .manual-product-picker .camera-search-button { height: 28px; right: 4px; }
-    .schedule-resource-picker .camera-search-button { height: 27px; right: 4px; }
     .camera-scan-dialog { background: var(--paper); border: 1px solid var(--line); border-radius: 15px; box-shadow: var(--shadow); inset: 12px 0 auto; margin-inline: auto; max-height: calc(100vh - 24px); max-width: min(820px, calc(100vw - 24px)); overflow: auto; padding: 0; width: 100%; }
     .camera-scan-dialog::backdrop { background: rgba(17, 27, 26, .16); backdrop-filter: none; -webkit-backdrop-filter: none; }
     .camera-scan-dialog .dialog-head { align-items: center; background: linear-gradient(115deg, color-mix(in srgb, var(--green) 9%, var(--paper)), var(--paper) 78%); border-bottom-color: var(--line); border-top: 3px solid var(--green); gap: 12px; padding: 9px 14px 8px; }
@@ -3770,9 +3768,9 @@
       document.getElementById("camera-focus-indicator")?.classList.remove("visible");
     }
     function attachCameraSearchButtons() {
-      const inputs = document.querySelectorAll(".search-wrap .search-input, [data-manual-product], [data-workspace-resource]");
+      const inputs = document.querySelectorAll(".search-wrap .search-input, [data-manual-product]");
       inputs.forEach((input) => {
-        const host = input.closest(".search-wrap, .manual-product-picker, .schedule-resource-picker");
+        const host = input.closest(".search-wrap, .manual-product-picker");
         if (!host || host.querySelector(".camera-search-button")) return;
         host.classList.add("has-camera-search");
         input.classList.add("camera-search-target");
