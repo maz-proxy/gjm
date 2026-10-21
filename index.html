@@ -367,6 +367,10 @@
     .camera-scan-dialog .dialog-subtitle { margin-top: 3px; }
     .camera-scan-preview { background: #101715; min-height: 210px; overflow: hidden; position: relative; }
     .camera-scan-preview video { display: block; height: min(62vh, 360px); min-height: 210px; object-fit: cover; width: 100%; }
+    .camera-scan-preview.is-tappable { cursor: crosshair; touch-action: manipulation; }
+    .camera-focus-indicator { border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 0 2px rgba(23,107,91,.85), 0 0 16px rgba(0,0,0,.45); height: 54px; left: 50%; opacity: 0; pointer-events: none; position: absolute; top: 50%; transform: translate(-50%,-50%) scale(.72); transition: opacity .15s ease, transform .15s ease; width: 54px; z-index: 2; }
+    .camera-focus-indicator.visible { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+    .camera-focus-indicator::after { border: 1px solid rgba(255,255,255,.92); border-radius: 50%; content: ""; inset: 8px; position: absolute; }
     .camera-scan-frame { border: 2px solid rgba(255,255,255,.86); border-radius: 12px; box-shadow: 0 0 0 999px rgba(0,0,0,.18); height: 92px; left: 12%; pointer-events: none; position: absolute; right: 12%; top: 50%; transform: translateY(-50%); }
     .camera-scan-frame::after { background: #58e6a5; box-shadow: 0 0 12px rgba(88,230,165,.8); content: ""; height: 2px; left: 8px; position: absolute; right: 8px; top: 50%; }
     .camera-scan-status { color: var(--muted); font-size: 12px; line-height: 1.55; min-height: 44px; padding: 11px 18px 6px; }
@@ -2268,8 +2272,8 @@
     <form method="dialog" class="dialog-actions"><button class="button button-secondary" type="submit" value="cancel">Batal</button><button class="button button-primary" id="app-confirm-submit" type="submit" value="confirm">Lanjutkan</button></form>
   </dialog>
   <dialog id="camera-scan-dialog" class="camera-scan-dialog" aria-labelledby="camera-scan-title" aria-describedby="camera-scan-status">
-    <div class="dialog-head"><div><div class="dialog-title" id="camera-scan-title">Pindai barcode</div><div class="dialog-subtitle">Arahkan barcode Serial Number ke dalam bingkai.</div></div><button class="dialog-close" id="camera-scan-close" type="button" aria-label="Tutup pemindai kamera">×</button></div>
-    <div class="camera-scan-preview"><video id="camera-scan-video" autoplay muted playsinline aria-label="Pratinjau kamera untuk pemindaian barcode"></video><div class="camera-scan-frame" aria-hidden="true"></div></div>
+    <div class="dialog-head"><div><div class="dialog-title" id="camera-scan-title">Pindai barcode</div><div class="dialog-subtitle">Arahkan barcode ke bingkai. Ketuk area barcode untuk fokus.</div></div><button class="dialog-close" id="camera-scan-close" type="button" aria-label="Tutup pemindai kamera">×</button></div>
+    <div class="camera-scan-preview"><video id="camera-scan-video" autoplay muted playsinline aria-label="Pratinjau kamera untuk pemindaian barcode"></video><div class="camera-focus-indicator" id="camera-focus-indicator" aria-hidden="true"></div><div class="camera-scan-frame" aria-hidden="true"></div></div>
     <div class="camera-scan-status" id="camera-scan-status" role="status" aria-live="polite">Menghubungkan kamera...</div>
     <div class="dialog-actions"><button class="button button-secondary" id="camera-scan-cancel" type="button">Batal</button></div>
   </dialog>
@@ -2541,6 +2545,10 @@
       "Pindai barcode": "Scan barcode",
       "Pindai dengan kamera": "Scan with camera",
       "Arahkan barcode Serial Number ke dalam bingkai.": "Align the serial-number barcode within the frame.",
+      "Arahkan barcode ke bingkai. Ketuk area barcode untuk fokus.": "Align the barcode in the frame. Tap the barcode area to focus.",
+      "Memfokuskan kamera...": "Focusing camera...",
+      "Autofokus tetap aktif, tetapi kamera ini tidak mendukung fokus pada titik sentuh.": "Autofocus remains on, but this camera does not support tap-to-focus.",
+      "Fokus manual tidak dapat diterapkan. Autofokus tetap aktif.": "Manual focus could not be applied. Autofocus remains on.",
       "Menghubungkan kamera...": "Connecting to camera...",
       "Pindai barcode dengan kamera": "Scan barcode with camera",
       "Tutup pemindai kamera": "Close camera scanner",
@@ -3351,6 +3359,7 @@
     let authSession = null;
     let cameraStream = null;
     let cameraScanTimer = null;
+    let cameraFocusTimer = null;
     let cameraTargetInput = null;
     let cameraBarcodeDetector = null;
     let cameraReaderControls = null;
@@ -3704,7 +3713,9 @@
     }
     function stopCameraScanner() {
       clearTimeout(cameraScanTimer);
+      clearTimeout(cameraFocusTimer);
       cameraScanTimer = null;
+      cameraFocusTimer = null;
       cameraBarcodeDetector = null;
       cameraReaderControls?.stop();
       cameraReaderControls = null;
@@ -3714,6 +3725,8 @@
       }
       const video = document.getElementById("camera-scan-video");
       if (video) video.srcObject = null;
+      document.querySelector(".camera-scan-preview")?.classList.remove("is-tappable");
+      document.getElementById("camera-focus-indicator")?.classList.remove("visible");
     }
     function attachCameraSearchButtons() {
       const inputs = document.querySelectorAll(".search-wrap .search-input, [data-manual-product], [data-workspace-resource]");
@@ -3749,6 +3762,55 @@
         await track.applyConstraints({ advanced: [{ focusMode: "continuous" }] });
       } catch (error) {
         console.warn("Autofokus kamera tidak dapat diatur ke mode kontinu:", error);
+      }
+    }
+    async function focusCameraAtPoint(event) {
+      const preview = event.currentTarget;
+      const video = document.getElementById("camera-scan-video");
+      const track = video.srcObject?.getVideoTracks?.()[0];
+      const capabilities = track?.getCapabilities?.();
+      const supportedConstraints = navigator.mediaDevices.getSupportedConstraints?.() || {};
+      if (!track || !capabilities?.focusMode?.includes("single-shot")
+        || supportedConstraints.pointsOfInterest === false
+        || !video.videoWidth || !video.videoHeight) {
+        setCameraScanStatus("Autofokus tetap aktif, tetapi kamera ini tidak mendukung fokus pada titik sentuh.");
+        return;
+      }
+      const bounds = video.getBoundingClientRect();
+      const scale = Math.max(bounds.width / video.videoWidth, bounds.height / video.videoHeight);
+      const renderedWidth = video.videoWidth * scale;
+      const renderedHeight = video.videoHeight * scale;
+      const offsetX = (renderedWidth - bounds.width) / 2;
+      const offsetY = (renderedHeight - bounds.height) / 2;
+      const x = Math.max(0, Math.min(1, (event.clientX - bounds.left + offsetX) / renderedWidth));
+      const y = Math.max(0, Math.min(1, (event.clientY - bounds.top + offsetY) / renderedHeight));
+      const indicator = document.getElementById("camera-focus-indicator");
+      const previewBounds = preview.getBoundingClientRect();
+      indicator.style.left = `${event.clientX - previewBounds.left}px`;
+      indicator.style.top = `${event.clientY - previewBounds.top}px`;
+      indicator.classList.remove("visible");
+      requestAnimationFrame(() => indicator.classList.add("visible"));
+      setCameraScanStatus("Memfokuskan kamera...");
+      clearTimeout(cameraFocusTimer);
+      try {
+        await track.applyConstraints({
+          advanced: [{
+            focusMode: "single-shot",
+            pointsOfInterest: [{ x, y }]
+          }]
+        });
+        cameraFocusTimer = setTimeout(() => {
+          cameraFocusTimer = null;
+          void requestContinuousAutofocus(video);
+          if (document.getElementById("camera-scan-dialog").open) {
+            setCameraScanStatus("Arahkan barcode ke bingkai. Ketuk area barcode untuk fokus.");
+          }
+          indicator.classList.remove("visible");
+        }, 1400);
+      } catch (error) {
+        console.warn("Fokus pada titik sentuh tidak dapat diterapkan:", error);
+        indicator.classList.remove("visible");
+        setCameraScanStatus("Fokus manual tidak dapat diterapkan. Autofokus tetap aktif.");
       }
     }
     async function detectCameraBarcode() {
@@ -3816,8 +3878,9 @@
             return;
           }
           cameraReaderControls = controls;
+          document.querySelector(".camera-scan-preview")?.classList.add("is-tappable");
           await requestContinuousAutofocus(video);
-          setCameraScanStatus("Arahkan barcode Serial Number ke dalam bingkai.");
+          setCameraScanStatus("Arahkan barcode ke bingkai. Ketuk area barcode untuk fokus.");
           return;
         } catch (error) {
           console.error("Kamera pemindai tidak dapat dibuka:", error);
@@ -3859,8 +3922,9 @@
         const video = document.getElementById("camera-scan-video");
         video.srcObject = stream;
         await video.play();
+        document.querySelector(".camera-scan-preview")?.classList.add("is-tappable");
         await requestContinuousAutofocus(video);
-        setCameraScanStatus("Arahkan barcode Serial Number ke dalam bingkai.");
+        setCameraScanStatus("Arahkan barcode ke bingkai. Ketuk area barcode untuk fokus.");
         void detectCameraBarcode();
       } catch (error) {
         console.error("Kamera pemindai tidak dapat dibuka:", error);
@@ -8071,6 +8135,9 @@
     const cameraScanDialog = document.getElementById("camera-scan-dialog");
     document.getElementById("camera-scan-close").addEventListener("click", () => cameraScanDialog.close());
     document.getElementById("camera-scan-cancel").addEventListener("click", () => cameraScanDialog.close());
+    document.querySelector(".camera-scan-preview").addEventListener("click", (event) => {
+      if (cameraScanDialog.open && event.target.closest("video")) void focusCameraAtPoint(event);
+    });
     cameraScanDialog.addEventListener("close", () => {
       stopCameraScanner();
       const input = cameraTargetInput;
