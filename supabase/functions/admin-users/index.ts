@@ -206,7 +206,7 @@ Deno.serve(async (request: Request) => {
       username,
       role: input.role,
       message: input.role === "resource_admin"
-        ? `Peran ${username} diubah menjadi Super Admin · Data Resource. Logout dan login kembali agar hak akses baru aktif.`
+        ? `Peran ${username} diubah menjadi Super Adm. Logout dan login kembali agar hak akses baru aktif.`
         : `Peran ${username} diubah menjadi Staf. Logout dan login kembali agar perubahan aktif.`,
     }, origin);
   }
