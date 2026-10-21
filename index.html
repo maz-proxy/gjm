@@ -1300,6 +1300,15 @@
     .recorded-pic-card { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); border-radius: 10px; min-width: 136px; padding: 9px 12px; }
     .recorded-pic-label { color: #c5e0d4; display: block; font-size: 9px; font-weight: 800; letter-spacing: .65px; text-transform: uppercase; }
     .recorded-pic-name { color: #fff; display: block; font-size: 12px; font-weight: 750; margin-top: 3px; }
+    .recorded-so-progress { align-content: center; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); border-radius: 10px; display: grid; flex: 0 1 224px; gap: 5px; min-width: 210px; padding: 8px 11px; }
+    .recorded-so-progress-head, .recorded-so-progress-row { align-items: center; display: flex; justify-content: space-between; }
+    .recorded-so-progress-head { color: #c5e0d4; font-size: 9px; font-weight: 800; letter-spacing: .65px; text-transform: uppercase; }
+    .recorded-so-progress-head strong { color: #fff; font-size: 12px; letter-spacing: 0; }
+    .recorded-so-progress-track { background: rgba(0,0,0,.2); border-radius: 99px; height: 5px; overflow: hidden; }
+    .recorded-so-progress-fill { background: #a9e2c4; border-radius: inherit; height: 100%; }
+    .recorded-so-progress-row { color: #e0f0e8; font-size: 9px; gap: 8px; line-height: 1.35; }
+    .recorded-so-progress-row strong { color: #fff; font-size: 9px; font-variant-numeric: tabular-nums; text-align: right; }
+    @media (max-width: 650px) { .recorded-so-progress { flex-basis: 100%; } }
     .recorded-archive-head > .button-secondary { background: #fff; border-color: rgba(255,255,255,.75); color: #285c4b; }
     .recorded-archive-head > .button-secondary:hover { background: #eaf5ef; border-color: #fff; }
     .recorded-view-actions { align-items: center; display: grid; gap: 12px; grid-template-columns: auto minmax(180px, 1fr) auto; margin: 0; }
@@ -2208,6 +2217,10 @@
       "Memeriksa sesi login": "Checking login session",
       "Pilih bahasa": "Choose language",
       "Progres unggah Master VEF": "VEF Master upload progress",
+      "Progres SO": "Stock Opname progress",
+      "Qty selesai": "Qty completed",
+      "Qty kurang": "Qty remaining",
+      "Progres SO berdasarkan total quantity Master VEF": "Stock Opname progress based on total VEF Master quantity",
       "Ganti tema warna ke burgundy": "Switch accent color to burgundy",
       "Aktifkan dark mode": "Enable dark mode",
       "Nonaktifkan dark mode": "Disable dark mode",
@@ -5541,6 +5554,31 @@
       if (WORKSPACE_PERIODS.includes(session.period)) return session.period;
       return new Date(session.finishedAt).getDate() < 16 ? "Week 1" : "Week 2";
     }
+    function recordedSoProgress(session) {
+      const snapshot = session.snapshot || {};
+      const countMode = snapshot.countMode === "all" ? "all" : "laptops";
+      let total = 0;
+      let completed = 0;
+      for (const product of snapshot.products || []) {
+        if (!isCountedProduct(product, countMode)) continue;
+        const stock = Number(product.stock);
+        const expected = Number.isFinite(stock) ? Math.max(0, stock) : 0;
+        const countedQuantity = [product.count, product.box, product.pj].reduce((sum, value) => {
+          const quantity = Number(value);
+          return sum + (Number.isFinite(quantity) ? Math.max(0, quantity) : 0);
+        }, 0);
+        total += expected;
+        completed += Math.min(expected, countedQuantity);
+      }
+      const remaining = Math.max(0, total - completed);
+      return {
+        total,
+        completed,
+        remaining,
+        completedPercent: total ? Math.round(completed / total * 100) : 0,
+        remainingPercent: total ? Math.round(remaining / total * 100) : 0
+      };
+    }
     function closeRecordedEntryDetails() {
       const dialog = document.getElementById("recorded-entry-dialog");
       if (!dialog?.open) return;
@@ -5769,6 +5807,7 @@
         return renderDashboard();
       }
       const pics = session.picNames || [];
+      const soProgress = recordedSoProgress(session);
       const finishedAt = session.finishedAt
         ? formatDate(session.finishedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })
         : "Tidak tersedia";
@@ -5782,6 +5821,12 @@
           <div class="recorded-pic-list" aria-label="PIC sesi">
             <div class="recorded-pic-card"><span class="recorded-pic-label">PIC 1</span><span class="recorded-pic-name">${escapeHtml(pics[0] || "Belum diisi")}</span></div>
             <div class="recorded-pic-card"><span class="recorded-pic-label">PIC 2</span><span class="recorded-pic-name">${escapeHtml(pics[1] || "Belum diisi")}</span></div>
+            <div class="recorded-so-progress" role="group" aria-label="Progres SO berdasarkan total quantity Master VEF">
+              <div class="recorded-so-progress-head"><span>Progres SO</span><strong>${soProgress.completedPercent}%</strong></div>
+              <div class="recorded-so-progress-track" role="progressbar" aria-label="Progres SO" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${soProgress.completedPercent}"><div class="recorded-so-progress-fill" style="width:${soProgress.completedPercent}%"></div></div>
+              <div class="recorded-so-progress-row"><span>Qty selesai</span><strong>${formatNumber(soProgress.completed)} unit · ${soProgress.completedPercent}%</strong></div>
+              <div class="recorded-so-progress-row"><span>Qty kurang</span><strong>${formatNumber(soProgress.remaining)} unit · ${soProgress.remainingPercent}%</strong></div>
+            </div>
           </div>
           <button class="button button-secondary" type="button" data-recorded-return>← Kembali ke Dashboard</button>
         </section>
