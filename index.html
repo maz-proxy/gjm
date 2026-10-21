@@ -3746,13 +3746,36 @@
         host.append(button);
       });
     }
-    function getCameraVideoConstraints() {
-      return {
+    async function getCameraVideoConstraints() {
+      const rearCameraConstraints = {
         facingMode: { ideal: "environment" },
         width: { ideal: 1280 },
         height: { ideal: 720 },
         focusMode: { ideal: "continuous" }
       };
+      const permissionStream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: { facingMode: { ideal: "environment" } }
+      });
+      try {
+        const cameras = await navigator.mediaDevices.enumerateDevices();
+        const macroCamera = cameras.find((device) =>
+          device.kind === "videoinput" && device.deviceId && /\bmacro\b/i.test(device.label)
+        );
+        if (macroCamera) {
+          return {
+            deviceId: { exact: macroCamera.deviceId },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            focusMode: { ideal: "continuous" }
+          };
+        }
+      } catch (error) {
+        console.warn("Kamera makro tidak dapat dideteksi; memakai kamera belakang:", error);
+      } finally {
+        permissionStream.getTracks().forEach((track) => track.stop());
+      }
+      return rearCameraConstraints;
     }
     async function requestContinuousAutofocus(video) {
       const track = video.srcObject?.getVideoTracks?.()[0];
@@ -3855,8 +3878,9 @@
           const reader = new window.ZXingBrowser.BrowserMultiFormatReader();
           const video = document.getElementById("camera-scan-video");
           let barcodeFound = false;
+          const videoConstraints = await getCameraVideoConstraints();
           const controls = await reader.decodeFromConstraints(
-            { audio: false, video: getCameraVideoConstraints() },
+            { audio: false, video: videoConstraints },
             video,
             (result, _error, scanControls) => {
               // ZXing reports normal frame misses through the error callback; keep scanning until a result is found.
@@ -3912,7 +3936,7 @@
         cameraBarcodeDetector = new window.BarcodeDetector({ formats });
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: false,
-          video: getCameraVideoConstraints()
+          video: await getCameraVideoConstraints()
         });
         if (!dialog.open) {
           stream.getTracks().forEach((track) => track.stop());
