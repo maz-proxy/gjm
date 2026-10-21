@@ -360,24 +360,25 @@
     .camera-search-button svg { height: 17px; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; width: 17px; }
     .manual-product-picker .camera-search-button { height: 28px; right: 4px; }
     .schedule-resource-picker .camera-search-button { height: 27px; right: 4px; }
-    .camera-scan-dialog { background: var(--paper); border: 1px solid var(--line); border-radius: 15px; box-shadow: var(--shadow); max-width: min(480px, calc(100vw - 32px)); overflow: hidden; padding: 0; width: 100%; }
-    .camera-scan-dialog::backdrop { background: rgba(17, 27, 26, .64); backdrop-filter: blur(3px); }
-    .camera-scan-dialog .dialog-head { align-items: center; background: linear-gradient(115deg, color-mix(in srgb, var(--green) 9%, var(--paper)), var(--paper) 78%); border-bottom-color: var(--line); border-top: 3px solid var(--green); gap: 12px; padding: 15px 18px 13px; }
+    .camera-scan-dialog { background: var(--paper); border: 1px solid var(--line); border-radius: 15px; box-shadow: var(--shadow); inset: 12px 0 auto; margin-inline: auto; max-height: calc(100vh - 24px); max-width: min(820px, calc(100vw - 24px)); overflow: auto; padding: 0; width: 100%; }
+    .camera-scan-dialog::backdrop { background: rgba(17, 27, 26, .16); backdrop-filter: none; -webkit-backdrop-filter: none; }
+    .camera-scan-dialog .dialog-head { align-items: center; background: linear-gradient(115deg, color-mix(in srgb, var(--green) 9%, var(--paper)), var(--paper) 78%); border-bottom-color: var(--line); border-top: 3px solid var(--green); gap: 12px; padding: 9px 14px 8px; }
     .camera-scan-dialog .dialog-title { font-size: 15px; }
     .camera-scan-dialog .dialog-subtitle { margin-top: 3px; }
-    .camera-scan-preview { background: #101715; min-height: 210px; overflow: hidden; position: relative; }
-    .camera-scan-preview video { display: block; height: min(62vh, 360px); min-height: 210px; object-fit: cover; width: 100%; }
+    .camera-scan-preview { background: #101715; min-height: 0; overflow: hidden; position: relative; }
+    .camera-scan-preview video { display: block; height: clamp(120px, 24vh, 205px); min-height: 0; object-fit: cover; width: 100%; }
     .camera-scan-preview.is-tappable { cursor: crosshair; touch-action: manipulation; }
     .camera-focus-indicator { border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 0 2px rgba(23,107,91,.85), 0 0 16px rgba(0,0,0,.45); height: 54px; left: 50%; opacity: 0; pointer-events: none; position: absolute; top: 50%; transform: translate(-50%,-50%) scale(.72); transition: opacity .15s ease, transform .15s ease; width: 54px; z-index: 2; }
     .camera-focus-indicator.visible { opacity: 1; transform: translate(-50%,-50%) scale(1); }
     .camera-focus-indicator::after { border: 1px solid rgba(255,255,255,.92); border-radius: 50%; content: ""; inset: 8px; position: absolute; }
     .camera-scan-frame { border: 2px solid rgba(255,255,255,.86); border-radius: 12px; box-shadow: 0 0 0 999px rgba(0,0,0,.18); height: 92px; left: 12%; pointer-events: none; position: absolute; right: 12%; top: 50%; transform: translateY(-50%); }
     .camera-scan-frame::after { background: #58e6a5; box-shadow: 0 0 12px rgba(88,230,165,.8); content: ""; height: 2px; left: 8px; position: absolute; right: 8px; top: 50%; }
-    .camera-scan-status { color: var(--muted); font-size: 12px; line-height: 1.55; min-height: 44px; padding: 11px 18px 6px; }
+    .camera-scan-status { color: var(--muted); font-size: 12px; line-height: 1.45; min-height: 0; padding: 7px 14px; }
     .camera-scan-status[data-state="error"] { color: var(--red); }
     .camera-scan-status[data-state="success"] { color: var(--green-dark); font-weight: 700; }
-    .camera-scan-dialog .dialog-actions { background: color-mix(in srgb, var(--green) 5%, var(--canvas)); border-top-color: var(--line); padding: 11px 16px; }
-    html[data-theme="dark"] .camera-scan-dialog::backdrop { background: rgba(0, 0, 0, .72); }
+    .camera-scan-dialog .dialog-actions { background: color-mix(in srgb, var(--green) 5%, var(--canvas)); border-top-color: var(--line); padding: 7px 12px; }
+    @media (max-width: 600px) { .camera-scan-dialog { max-width: calc(100vw - 16px); top: 8px; } .camera-scan-preview video { height: clamp(110px, 22vh, 165px); } }
+    html[data-theme="dark"] .camera-scan-dialog::backdrop { background: rgba(0, 0, 0, .16); backdrop-filter: none; -webkit-backdrop-filter: none; }
     html[data-theme="dark"] .camera-scan-dialog .dialog-actions { background: color-mix(in srgb, var(--green) 9%, var(--paper)); }
     html[data-accent="burgundy"] .layout-camera-button { color: var(--green-dark); }
     .layout-manual-form { align-items: start; background: #f8faf9; display: grid; gap: 7px; grid-template-columns: minmax(0, 1fr) 82px auto; padding: 0 14px 12px; position: relative; }
@@ -2554,6 +2555,7 @@
       "Tutup pemindai kamera": "Close camera scanner",
       "Pratinjau kamera untuk pemindaian barcode": "Camera preview for barcode scanning",
       "Barcode berhasil dibaca. Tutup pemindai lalu tekan Catat Scan.": "Barcode read. Close the scanner, then select Record Scan.",
+      "Barcode berhasil dicatat. Arahkan barcode berikutnya.": "Barcode recorded. Align the next barcode.",
       "Akses kamera memerlukan HTTPS atau localhost dan izin kamera dari browser.": "Camera access requires HTTPS or localhost and browser camera permission.",
       "Pemindai barcode kamera belum didukung browser ini. Coba gunakan Chrome versi terbaru.": "Camera barcode scanning is not supported by this browser. Try the latest version of Chrome.",
       "Browser tidak memiliki format barcode yang didukung untuk dipindai.": "This browser does not support any barcode formats that can be scanned.",
@@ -3363,6 +3365,8 @@
     let cameraTargetInput = null;
     let cameraBarcodeDetector = null;
     let cameraReaderControls = null;
+    let cameraRackScanLocked = false;
+    let cameraRackScanMissTimer = null;
     function initializeAppBackNavigation() {
       if (appBackNavigationInitialized) return;
       const backState = { stockOpnameBackNavigation: true };
@@ -3711,12 +3715,37 @@
       status.textContent = translateText(message);
       status.dataset.state = state;
     }
+    function submitCameraRackScan(value) {
+      const input = cameraTargetInput;
+      const form = input?.matches(".layout-input") ? input.closest("[data-layout-form]") : null;
+      if (!form) return false;
+      const layout = form.dataset.layoutForm;
+      input.value = value;
+      form.requestSubmit();
+      cameraTargetInput = document.querySelector(`[data-layout-form="${CSS.escape(layout)}"] .layout-input`);
+      setCameraScanStatus("Barcode berhasil dicatat. Arahkan barcode berikutnya.", "success");
+      return true;
+    }
+    function markCameraRackBarcodeMissed() {
+      if (!cameraRackScanLocked || cameraRackScanMissTimer) return;
+      cameraRackScanMissTimer = setTimeout(() => {
+        cameraRackScanLocked = false;
+        cameraRackScanMissTimer = null;
+      }, 500);
+    }
+    function markCameraRackBarcodeVisible() {
+      clearTimeout(cameraRackScanMissTimer);
+      cameraRackScanMissTimer = null;
+    }
     function stopCameraScanner() {
       clearTimeout(cameraScanTimer);
       clearTimeout(cameraFocusTimer);
+      clearTimeout(cameraRackScanMissTimer);
       cameraScanTimer = null;
       cameraFocusTimer = null;
+      cameraRackScanMissTimer = null;
       cameraBarcodeDetector = null;
+      cameraRackScanLocked = false;
       cameraReaderControls?.stop();
       cameraReaderControls = null;
       if (cameraStream) {
@@ -3845,6 +3874,16 @@
           const detections = await cameraBarcodeDetector.detect(video);
           const value = detections.find((detection) => detection.rawValue)?.rawValue?.trim();
           if (value) {
+            if (cameraTargetInput?.matches(".layout-input")) {
+              if (!cameraRackScanLocked) {
+                cameraRackScanLocked = true;
+                if (!submitCameraRackScan(value)) cameraRackScanLocked = false;
+              } else {
+                markCameraRackBarcodeVisible();
+              }
+              cameraScanTimer = setTimeout(detectCameraBarcode, 180);
+              return;
+            }
             if (cameraTargetInput?.isConnected) {
               cameraTargetInput.value = value;
               cameraTargetInput.dispatchEvent(new Event("input", { bubbles: true }));
@@ -3853,6 +3892,7 @@
             stopCameraScanner();
             return;
           }
+          markCameraRackBarcodeMissed();
         }
       } catch (error) {
         console.error("Pemindaian barcode kamera gagal:", error);
@@ -3885,6 +3925,18 @@
             (result, _error, scanControls) => {
               // ZXing reports normal frame misses through the error callback; keep scanning until a result is found.
               const value = result?.getText()?.trim();
+              if (cameraTargetInput?.matches(".layout-input")) {
+                if (cameraRackScanLocked) {
+                  if (value) markCameraRackBarcodeVisible();
+                  else markCameraRackBarcodeMissed();
+                  return;
+                }
+                if (value) {
+                  cameraRackScanLocked = true;
+                  if (!submitCameraRackScan(value)) cameraRackScanLocked = false;
+                }
+                return;
+              }
               if (value && !barcodeFound) {
                 barcodeFound = true;
                 if (cameraTargetInput?.isConnected) {
