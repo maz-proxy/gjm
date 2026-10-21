@@ -344,6 +344,38 @@
     .layout-form { display: flex; gap: 7px; padding: 12px 14px; }
     .layout-form .scan-input { height: 36px; }
     .layout-form .button { min-height: 36px; padding: 0 10px; }
+    .layout-scan-field { display: flex; flex: 1; gap: 5px; min-width: 0; }
+    .layout-scan-field .scan-input { flex: 1; }
+    .layout-camera-button { align-items: center; background: var(--paper); border: 1px solid var(--line); border-radius: 6px; color: var(--green-dark); display: inline-flex; flex: 0 0 38px; height: 36px; justify-content: center; padding: 0; transition: background .15s ease, border-color .15s ease, color .15s ease; width: 38px; }
+    .layout-camera-button:hover:not(:disabled) { background: var(--green-soft); border-color: var(--green); }
+    .layout-camera-button:disabled { cursor: not-allowed; opacity: .48; }
+    .layout-camera-button svg { height: 20px; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; width: 20px; }
+    .search-wrap.has-camera-search .search-input,
+    .manual-product-picker.has-camera-search .scan-input,
+    .schedule-resource-picker.has-camera-search .workspace-name-input { padding-right: 39px; }
+    .manual-product-picker.has-camera-search { position: relative; }
+    .camera-search-button { align-items: center; background: var(--paper); border: 1px solid var(--line); border-radius: 6px; color: var(--green-dark); display: inline-flex; height: 28px; justify-content: center; padding: 0; position: absolute; right: 4px; top: 50%; transform: translateY(-50%); transition: background .15s ease, border-color .15s ease, color .15s ease; width: 30px; z-index: 13; }
+    .camera-search-button:hover:not(:disabled) { background: var(--green-soft); border-color: var(--green); }
+    .camera-search-button:disabled { cursor: not-allowed; opacity: .48; }
+    .camera-search-button svg { height: 17px; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; width: 17px; }
+    .manual-product-picker .camera-search-button { height: 28px; right: 4px; }
+    .schedule-resource-picker .camera-search-button { height: 27px; right: 4px; }
+    .camera-scan-dialog { background: var(--paper); border: 1px solid var(--line); border-radius: 15px; box-shadow: var(--shadow); max-width: min(480px, calc(100vw - 32px)); overflow: hidden; padding: 0; width: 100%; }
+    .camera-scan-dialog::backdrop { background: rgba(17, 27, 26, .64); backdrop-filter: blur(3px); }
+    .camera-scan-dialog .dialog-head { align-items: center; background: linear-gradient(115deg, color-mix(in srgb, var(--green) 9%, var(--paper)), var(--paper) 78%); border-bottom-color: var(--line); border-top: 3px solid var(--green); gap: 12px; padding: 15px 18px 13px; }
+    .camera-scan-dialog .dialog-title { font-size: 15px; }
+    .camera-scan-dialog .dialog-subtitle { margin-top: 3px; }
+    .camera-scan-preview { background: #101715; min-height: 210px; overflow: hidden; position: relative; }
+    .camera-scan-preview video { display: block; height: min(62vh, 360px); min-height: 210px; object-fit: cover; width: 100%; }
+    .camera-scan-frame { border: 2px solid rgba(255,255,255,.86); border-radius: 12px; box-shadow: 0 0 0 999px rgba(0,0,0,.18); height: 92px; left: 12%; pointer-events: none; position: absolute; right: 12%; top: 50%; transform: translateY(-50%); }
+    .camera-scan-frame::after { background: #58e6a5; box-shadow: 0 0 12px rgba(88,230,165,.8); content: ""; height: 2px; left: 8px; position: absolute; right: 8px; top: 50%; }
+    .camera-scan-status { color: var(--muted); font-size: 12px; line-height: 1.55; min-height: 44px; padding: 11px 18px 6px; }
+    .camera-scan-status[data-state="error"] { color: var(--red); }
+    .camera-scan-status[data-state="success"] { color: var(--green-dark); font-weight: 700; }
+    .camera-scan-dialog .dialog-actions { background: color-mix(in srgb, var(--green) 5%, var(--canvas)); border-top-color: var(--line); padding: 11px 16px; }
+    html[data-theme="dark"] .camera-scan-dialog::backdrop { background: rgba(0, 0, 0, .72); }
+    html[data-theme="dark"] .camera-scan-dialog .dialog-actions { background: color-mix(in srgb, var(--green) 9%, var(--paper)); }
+    html[data-accent="burgundy"] .layout-camera-button { color: var(--green-dark); }
     .layout-manual-form { align-items: start; background: #f8faf9; display: grid; gap: 7px; grid-template-columns: minmax(0, 1fr) 82px auto; padding: 0 14px 12px; position: relative; }
     .layout-manual-form .scan-input { height: 36px; }
     .layout-manual-form .button { min-height: 36px; padding: 0 10px; }
@@ -2235,8 +2267,15 @@
     <div class="app-confirm-copy" id="app-confirm-copy"></div>
     <form method="dialog" class="dialog-actions"><button class="button button-secondary" type="submit" value="cancel">Batal</button><button class="button button-primary" id="app-confirm-submit" type="submit" value="confirm">Lanjutkan</button></form>
   </dialog>
+  <dialog id="camera-scan-dialog" class="camera-scan-dialog" aria-labelledby="camera-scan-title" aria-describedby="camera-scan-status">
+    <div class="dialog-head"><div><div class="dialog-title" id="camera-scan-title">Pindai barcode</div><div class="dialog-subtitle">Arahkan barcode Serial Number ke dalam bingkai.</div></div><button class="dialog-close" id="camera-scan-close" type="button" aria-label="Tutup pemindai kamera">×</button></div>
+    <div class="camera-scan-preview"><video id="camera-scan-video" autoplay muted playsinline aria-label="Pratinjau kamera untuk pemindaian barcode"></video><div class="camera-scan-frame" aria-hidden="true"></div></div>
+    <div class="camera-scan-status" id="camera-scan-status" role="status" aria-live="polite">Menghubungkan kamera...</div>
+    <div class="dialog-actions"><button class="button button-secondary" id="camera-scan-cancel" type="button">Batal</button></div>
+  </dialog>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/umd/zxing-browser.min.js"></script>
   <script>
     const STORAGE_KEY = "ruangstok-sn-v2";
     const THEME_STORAGE_KEY = "ruangstok-theme";
@@ -2499,6 +2538,22 @@
       "Tambah manual": "Add manually",
       "Input manual": "Manual entry",
       "Scan Serial Number": "Scan Serial Number",
+      "Pindai barcode": "Scan barcode",
+      "Pindai dengan kamera": "Scan with camera",
+      "Arahkan barcode Serial Number ke dalam bingkai.": "Align the serial-number barcode within the frame.",
+      "Menghubungkan kamera...": "Connecting to camera...",
+      "Pindai barcode dengan kamera": "Scan barcode with camera",
+      "Tutup pemindai kamera": "Close camera scanner",
+      "Pratinjau kamera untuk pemindaian barcode": "Camera preview for barcode scanning",
+      "Barcode berhasil dibaca. Tutup pemindai lalu tekan Catat Scan.": "Barcode read. Close the scanner, then select Record Scan.",
+      "Akses kamera memerlukan HTTPS atau localhost dan izin kamera dari browser.": "Camera access requires HTTPS or localhost and browser camera permission.",
+      "Pemindai barcode kamera belum didukung browser ini. Coba gunakan Chrome versi terbaru.": "Camera barcode scanning is not supported by this browser. Try the latest version of Chrome.",
+      "Browser tidak memiliki format barcode yang didukung untuk dipindai.": "This browser does not support any barcode formats that can be scanned.",
+      "Izin kamera ditolak. Aktifkan izin kamera untuk situs ini, lalu coba lagi.": "Camera permission was denied. Enable camera access for this site, then try again.",
+      "Kamera tidak ditemukan pada perangkat ini.": "No camera was found on this device.",
+      "Kamera sedang digunakan aplikasi lain. Tutup aplikasi tersebut lalu coba lagi.": "The camera is being used by another app. Close it and try again.",
+      "Kamera tidak dapat membaca barcode. Pastikan barcode terlihat jelas, lalu coba lagi.": "The camera could not read the barcode. Make sure it is clearly visible and try again.",
+      "Pemindaian barcode mengalami kendala. Tutup pemindai dan coba lagi.": "Barcode scanning encountered a problem. Close the scanner and try again.",
       "Masukkan Serial Number": "Enter Serial Number",
       "Pilih rack": "Select rack",
       "Pilih rak": "Select rack",
@@ -2713,7 +2768,7 @@
       "Pantau progres scan, jumlah item dan unit per warehouse, quantity SCAN/MANUAL/PJ, serta sesi yang masih berjalan. Klik tombol pada rincian sesi untuk membuka workspace-nya. Di bagian bawah, pilih brand pada Stock Opname Recorded, lalu tentukan bulan dan week. Tombol View membuka halaman arsip khusus yang menampilkan PIC 1 dan PIC 2; pilih Scan Layout, Result SO, atau Rekap Selisih untuk melihat lembar hanya-baca. Setiap lembar dapat dicetak atau disimpan sebagai PDF melalui dialog print browser.": "Track scan progress, item and unit counts by warehouse, SCAN/MANUAL/PJ quantities, and active sessions. Use the session details button to open a workspace. At the bottom, select a brand in Recorded Stock Opname, then choose a month and week. View opens a dedicated archive page showing PIC 1 and PIC 2; select Scan & Manual, Stock Reconciliation, or Recap to view a read-only sheet. Each sheet can be printed or saved as PDF using your browser's print dialog.",
       "Tambahkan kartu jadwal, lalu pilih Nama Brand dan PIC 1/PIC 2 dari daftar yang dikelola Owner. Tentukan bulan, week, dan mode hitung laptop saja atau semua item. Ketiga nama wajib terisi sebelum sesi dapat dimulai. Tombol Mulai Stock Opname akan membuka Master VEF; setelah sesi berjalan, tombol berubah menjadi Lihat Stok Opname dan membuka Scan Layout. Kartu hanya dapat dihapus sebelum sesi dimulai dan selama belum berisi data kerja.": "Add a schedule card, then select a brand and PIC 1/PIC 2 from the list managed by the Owner. Set the month, week, and counting mode (laptops only or all items). Complete all three names before starting. Start Stock Opname opens VEF Master; once active, the button changes to View Stock Opname and opens Scan & Manual. A card can only be deleted before the session starts and while it has no work data.",
       "Setelah memulai jadwal, unggah XLSX/XLS dengan sheet Serial No atau format workbook VEF yang didukung; file CSV dengan kolom Serial No, Item Code, Brand, Warehouse, dan Item Name juga dapat digunakan. Periksa jumlah item, serial, dan quantity per warehouse. Panel menampilkan metadata waktu sumber dan waktu unggah. File sumber disimpan dalam arsip sesi untuk dapat diunduh kembali.": "After starting the schedule, upload an XLSX/XLS file with a Serial No sheet or a supported VEF workbook; CSV files with Serial No, Item Code, Brand, Warehouse, and Item Name columns are also supported. Check item, serial, and quantity totals by warehouse. The panel shows source and upload timestamps. The source file is stored in the session archive for later download.",
-      "Buat rack dan isi label rack (angka atau keterangan teks) serta target scan. Pindai serial number pada rack yang sesuai. Hasil cocok, duplikat, bukan laptop, atau tidak ditemukan tampil pada catatan scan; serial cocok juga menampilkan item code, nama item, serial number, dan waktu saat rinciannya dibuka. Rack dengan SN duplikat diberi tanda peringatan. Untuk barang tanpa serial, cari item dari VEF, pilih hasil yang benar, masukkan quantity, lalu Catat Manual. Catatan manual terbaru akan ditandai dan difokuskan.": "Create a rack, enter its label (a number or text), and set the scan target. Scan serial numbers at the appropriate rack. Matching, duplicate, non-laptop, or not-found results appear in the scan log; matching serials also show the item code, item name, serial number, and timestamp when expanded. Racks with duplicate serial numbers are flagged. For items without serial numbers, search VEF, select the correct item, enter the quantity, then record it manually. The latest manual entry is highlighted.",
+      "Buat rack dan isi label rack (angka atau keterangan teks) serta target scan. Pindai serial number pada rack yang sesuai atau gunakan tombol kamera untuk membaca barcode. Hasil cocok, duplikat, bukan laptop, atau tidak ditemukan tampil pada catatan scan; serial cocok juga menampilkan item code, nama item, serial number, dan waktu saat rinciannya dibuka. Rack dengan SN duplikat diberi tanda peringatan. Untuk barang tanpa serial, cari item dari VEF, pilih hasil yang benar, masukkan quantity, lalu Catat Manual. Catatan manual terbaru akan ditandai dan difokuskan.": "Create a rack, enter its label (a number or text), and set the scan target. Scan serial numbers at the appropriate rack or use the camera button to read a barcode. Matching, duplicate, non-laptop, or not-found results appear in the scan log; matching serials also show the item code, item name, serial number, and timestamp when expanded. Racks with duplicate serial numbers are flagged. For items without serial numbers, search VEF, select the correct item, enter the quantity, then record it manually. The latest manual entry is highlighted.",
       "Lembar ini menghitung SCAN + MANUAL + PJ dan membandingkan hasilnya dengan VEF. Untuk PJ, klik quantity pada item, lalu isi tanggal/waktu dan nomor invoice. Input hanya diterima jika waktu invoice lebih baru daripada timestamp file VEF yang tercatat di Master VEF. Tekan SO SELESAI setelah pemeriksaan selesai untuk mengunci dan mengarsipkan hasil.": "This sheet totals SCAN + MANUAL + PJ and compares the result with VEF. For PJ, click an item's quantity, then enter the date/time and invoice number. Entries are accepted only when the invoice timestamp is later than the VEF file timestamp in VEF Master. Select FINISH STOCK OPNAME when checks are complete to lock and archive the results.",
       "Tinjau hanya item yang belum sesuai; kolom selisih membandingkan jumlah SCAN + MANUAL + PJ dengan quantity VEF. Tambahkan catatan untuk menjelaskan kekurangan atau kelebihan. Periksa kembali data sebelum sesi diselesaikan karena hasil yang diarsipkan menjadi rekaman baca-saja.": "Review only items with discrepancies; the variance column compares SCAN + MANUAL + PJ with VEF quantity. Add notes to explain shortages or surpluses. Review the data before completing the session, as archived results are read-only.",
       "Gunakan Buka sesi untuk meninjau workbook sumber, rincian setiap rack, input manual, seluruh item Result SO, daftar invoice PJ, dan Rekap Selisih. Ekspor XLSX berisi worksheet arsip beserta detail input, sedangkan Print menyusun laporan untuk dicetak atau disimpan sebagai PDF. Arsip lama tetap tersedia walaupun kartu jadwal sudah direset.": "Use Open session to review the source workbook, each rack's details, manual entries, all Stock Reconciliation items, PJ invoices, and Recap. XLSX export includes archive worksheets and input details; Print creates a report to print or save as PDF. Older archives remain available even after a schedule card is reset.",
@@ -3295,6 +3350,11 @@
     let searchTerm = "";
     let toastTimer;
     let authSession = null;
+    let cameraStream = null;
+    let cameraScanTimer = null;
+    let cameraTargetInput = null;
+    let cameraBarcodeDetector = null;
+    let cameraReaderControls = null;
     function initializeAppBackNavigation() {
       if (appBackNavigationInitialized) return;
       const backState = { stockOpnameBackNavigation: true };
@@ -3638,6 +3698,169 @@
       clearTimeout(toastTimer);
       toastTimer = setTimeout(() => toast.classList.remove("visible"), 2300);
     };
+    function setCameraScanStatus(message, state = "") {
+      const status = document.getElementById("camera-scan-status");
+      status.textContent = translateText(message);
+      status.dataset.state = state;
+    }
+    function stopCameraScanner() {
+      clearTimeout(cameraScanTimer);
+      cameraScanTimer = null;
+      cameraBarcodeDetector = null;
+      cameraReaderControls?.stop();
+      cameraReaderControls = null;
+      if (cameraStream) {
+        cameraStream.getTracks().forEach((track) => track.stop());
+        cameraStream = null;
+      }
+      const video = document.getElementById("camera-scan-video");
+      if (video) video.srcObject = null;
+    }
+    function attachCameraSearchButtons() {
+      const inputs = document.querySelectorAll(".search-wrap .search-input, [data-manual-product], [data-workspace-resource]");
+      inputs.forEach((input) => {
+        const host = input.closest(".search-wrap, .manual-product-picker, .schedule-resource-picker");
+        if (!host || host.querySelector(".camera-search-button")) return;
+        host.classList.add("has-camera-search");
+        input.classList.add("camera-search-target");
+        const button = document.createElement("button");
+        button.className = "camera-search-button";
+        button.type = "button";
+        button.disabled = input.disabled;
+        button.title = translateText("Pindai dengan kamera");
+        button.setAttribute("aria-label", `${translateText("Pindai dengan kamera")}: ${input.getAttribute("aria-label") || input.placeholder || ""}`);
+        button.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M4 7V5h3m10 0h3v3M4 17v2h3m10 0h3v-3"/><path d="M7 9v6m3-6v6m3-6v6m3-6v6"/></svg>';
+        button.addEventListener("click", () => openCameraScannerForInput(input));
+        host.append(button);
+      });
+    }
+    async function detectCameraBarcode() {
+      const dialog = document.getElementById("camera-scan-dialog");
+      const video = document.getElementById("camera-scan-video");
+      if (!dialog.open || !cameraBarcodeDetector || !cameraStream) return;
+      try {
+        if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+          const detections = await cameraBarcodeDetector.detect(video);
+          const value = detections.find((detection) => detection.rawValue)?.rawValue?.trim();
+          if (value) {
+            if (cameraTargetInput?.isConnected) {
+              cameraTargetInput.value = value;
+              cameraTargetInput.dispatchEvent(new Event("input", { bubbles: true }));
+            }
+            setCameraScanStatus("Barcode berhasil dibaca. Tutup pemindai lalu tekan Catat Scan.", "success");
+            stopCameraScanner();
+            return;
+          }
+        }
+      } catch (error) {
+        console.error("Pemindaian barcode kamera gagal:", error);
+        setCameraScanStatus("Kamera tidak dapat membaca barcode. Pastikan barcode terlihat jelas, lalu coba lagi.", "error");
+        stopCameraScanner();
+        return;
+      }
+      cameraScanTimer = setTimeout(detectCameraBarcode, 180);
+    }
+    async function openCameraScannerForInput(input) {
+      if (!input || input.disabled) return;
+      if (input.matches(".layout-input") && (!requireActiveSessionEdit() || !requireUploadedVefForRack())) return;
+      cameraTargetInput = input;
+      const dialog = document.getElementById("camera-scan-dialog");
+      setCameraScanStatus("Menghubungkan kamera...");
+      if (!dialog.open) dialog.showModal();
+      if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
+        setCameraScanStatus("Akses kamera memerlukan HTTPS atau localhost dan izin kamera dari browser.", "error");
+        return;
+      }
+      if (window.ZXingBrowser?.BrowserMultiFormatReader) {
+        try {
+          const reader = new window.ZXingBrowser.BrowserMultiFormatReader();
+          let barcodeFound = false;
+          let scanFailed = false;
+          const controls = await reader.decodeFromConstraints(
+            { audio: false, video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } } },
+            document.getElementById("camera-scan-video"),
+            (result, error, scanControls) => {
+              const value = result?.getText()?.trim();
+              if (value && !barcodeFound) {
+                barcodeFound = true;
+                if (cameraTargetInput?.isConnected) {
+                  cameraTargetInput.value = value;
+                  cameraTargetInput.dispatchEvent(new Event("input", { bubbles: true }));
+                }
+                setCameraScanStatus("Barcode berhasil dibaca. Tutup pemindai lalu tekan Catat Scan.", "success");
+                scanControls?.stop();
+                cameraReaderControls = null;
+              } else if (error && !["NotFoundException", "ChecksumException", "FormatException"].includes(error.name)) {
+                scanFailed = true;
+                console.error("Pemindaian barcode kamera gagal:", error);
+                setCameraScanStatus("Pemindaian barcode mengalami kendala. Tutup pemindai dan coba lagi.", "error");
+                scanControls?.stop();
+                cameraReaderControls = null;
+              }
+            }
+          );
+          if (!dialog.open || barcodeFound || scanFailed) {
+            controls.stop();
+            return;
+          }
+          cameraReaderControls = controls;
+          setCameraScanStatus("Arahkan barcode Serial Number ke dalam bingkai.");
+          return;
+        } catch (error) {
+          console.error("Kamera pemindai tidak dapat dibuka:", error);
+          const message = error?.name === "NotAllowedError"
+            ? "Izin kamera ditolak. Aktifkan izin kamera untuk situs ini, lalu coba lagi."
+            : error?.name === "NotFoundException" || error?.name === "NotFoundError"
+              ? "Kamera tidak ditemukan pada perangkat ini."
+              : error?.name === "NotReadableError"
+                ? "Kamera sedang digunakan aplikasi lain. Tutup aplikasi tersebut lalu coba lagi."
+                : `Kamera tidak dapat dibuka${error instanceof Error ? `: ${error.message}` : "."}`;
+          setCameraScanStatus(message, "error");
+          stopCameraScanner();
+          return;
+        }
+      }
+      if (typeof window.BarcodeDetector !== "function" || typeof window.BarcodeDetector.getSupportedFormats !== "function") {
+        setCameraScanStatus("Pemindai barcode kamera belum didukung browser ini. Coba gunakan Chrome versi terbaru.", "error");
+        return;
+      }
+      try {
+        const supportedFormats = await window.BarcodeDetector.getSupportedFormats();
+        const formats = ["code_128", "code_39", "ean_13", "ean_8", "qr_code", "upc_a", "upc_e", "itf", "data_matrix"]
+          .filter((format) => supportedFormats.includes(format));
+        if (!dialog.open) return;
+        if (!formats.length) {
+          setCameraScanStatus("Browser tidak memiliki format barcode yang didukung untuk dipindai.", "error");
+          return;
+        }
+        cameraBarcodeDetector = new window.BarcodeDetector({ formats });
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } }
+        });
+        if (!dialog.open) {
+          stream.getTracks().forEach((track) => track.stop());
+          return;
+        }
+        cameraStream = stream;
+        const video = document.getElementById("camera-scan-video");
+        video.srcObject = stream;
+        await video.play();
+        setCameraScanStatus("Arahkan barcode Serial Number ke dalam bingkai.");
+        void detectCameraBarcode();
+      } catch (error) {
+        console.error("Kamera pemindai tidak dapat dibuka:", error);
+        const message = error?.name === "NotAllowedError"
+          ? "Izin kamera ditolak. Aktifkan izin kamera untuk situs ini, lalu coba lagi."
+          : error?.name === "NotFoundError"
+            ? "Kamera tidak ditemukan pada perangkat ini."
+            : error?.name === "NotReadableError"
+              ? "Kamera sedang digunakan aplikasi lain. Tutup aplikasi tersebut lalu coba lagi."
+              : `Kamera tidak dapat dibuka${error instanceof Error ? `: ${error.message}` : "."}`;
+        setCameraScanStatus(message, "error");
+        stopCameraScanner();
+      }
+    }
     function showConfirmDialog(message, { title = "Konfirmasi tindakan", subtitle = "Periksa kembali sebelum melanjutkan.", confirmLabel = "Lanjutkan", destructive = false } = {}) {
       const dialog = document.getElementById("app-confirm-dialog");
       const confirmButton = document.getElementById("app-confirm-submit");
@@ -5049,7 +5272,7 @@
             <div class="layout-card-summary"><div class="layout-quantity-row"><label class="layout-quantity-label" for="quantity-${escapeHtml(layout)}">Target Scan</label><input class="qty-input layout-quantity-input" id="quantity-${escapeHtml(layout)}" type="number" min="0" step="1" inputmode="numeric" aria-label="Quantity target ${escapeHtml(rackName)}" data-layout-quantity="${escapeHtml(layout)}" value="${target ?? ""}" ${!canUseRack ? "disabled" : ""}></div><span class="layout-quantity-status ${quantityStatus.className}" data-layout-quantity-status="${escapeHtml(layout)}">${quantityStatus.label}</span><span class="layout-count">${matched} cocok${nonLaptopScans ? ` · ${nonLaptopScans} bukan laptop` : ""}${issues ? ` · ${issues} masalah` : ""}</span><span class="rack-quantity-summary">Scan <strong>${formatNumber(quantities.scan)}</strong> · Manual <strong>${formatNumber(quantities.manual)}</strong> · Total <strong>${formatNumber(quantities.total)}</strong></span></div>
             <button class="rack-delete-button" type="button" data-delete-rack="${escapeHtml(layout)}" aria-label="Hapus ${escapeHtml(rackName)}" title="${!hasUploadedVef ? "Unggah file VEF terlebih dahulu" : hasRackData ? "Kosongkan data rack sebelum menghapus" : "Hapus rack"}" ${!canUseRack ? "disabled" : ""}>−</button>
           </div>
-          <form class="layout-form" data-layout-form="${escapeHtml(layout)}"><input class="scan-input layout-input" autocomplete="off" placeholder="${rackHasNumber && hasTarget ? `Pindai SN di ${escapeHtml(rackName)}` : !rackHasNumber ? "Isi nama Rack dahulu" : "Isi quantity target dahulu"}" aria-label="Pindai Serial Number di ${escapeHtml(rackName)}" ${scanDisabled ? "disabled" : ""}><button class="button button-primary" type="submit" ${scanDisabled ? "disabled" : ""}>Catat Scan</button></form>
+          <form class="layout-form" data-layout-form="${escapeHtml(layout)}"><div class="layout-scan-field"><input class="scan-input layout-input" autocomplete="off" placeholder="${rackHasNumber && hasTarget ? `Pindai SN di ${escapeHtml(rackName)}` : !rackHasNumber ? "Isi nama Rack dahulu" : "Isi quantity target dahulu"}" aria-label="Pindai Serial Number di ${escapeHtml(rackName)}" ${scanDisabled ? "disabled" : ""}><button class="layout-camera-button" type="button" data-camera-scan="${escapeHtml(layout)}" aria-label="Pindai barcode dengan kamera untuk ${escapeHtml(rackName)}" title="Pindai barcode dengan kamera" ${scanDisabled ? "disabled" : ""}><svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M4 7V5h3m10 0h3v3M4 17v2h3m10 0h3v-3"/><path d="M7 9v6m3-6v6m3-6v6m3-6v6"/></svg></button></div><button class="button button-primary" type="submit" ${scanDisabled ? "disabled" : ""}>Catat Scan</button></form>
           <form class="layout-manual-form" data-manual-form="${escapeHtml(layout)}"><div class="manual-product-picker"><input class="scan-input" type="search" data-manual-product placeholder="${rackHasNumber ? "Cari item code atau nama barang" : "Isi nama Rack dahulu"}" aria-label="Cari item dari VEF Master untuk ${escapeHtml(rackName)}" autocomplete="off" aria-autocomplete="list" aria-expanded="false" ${manualDisabled ? "disabled" : ""}><div class="manual-product-options" role="listbox" aria-label="Hasil pencarian VEF Master"></div></div><input class="scan-input" type="number" min="1" step="1" inputmode="numeric" data-manual-quantity placeholder="Qty" aria-label="Quantity manual untuk ${escapeHtml(rackName)}" ${manualDisabled ? "disabled" : ""}><button class="button button-primary" type="submit" ${manualDisabled ? "disabled" : ""}>Catat Manual</button></form>
           <div class="layout-card-foot"><div class="layout-record-group"><div class="layout-record-heading">Scan</div><div class="layout-scan-list">${scanRows}</div></div><div class="layout-record-group"><div class="layout-record-heading">Manual</div><div class="layout-scan-list">${manualRows}</div></div></div>
         </section>`;
@@ -6304,7 +6527,7 @@
           ${guide("Ringkasan", "▥", "Dashboard", "Pantau progres scan, jumlah item dan unit per warehouse, quantity SCAN/MANUAL/PJ, serta sesi yang masih berjalan. Klik tombol pada rincian sesi untuk membuka workspace-nya. Di bagian bawah, pilih brand pada Stock Opname Recorded, lalu tentukan bulan dan week. Tombol View membuka halaman arsip khusus yang menampilkan PIC 1 dan PIC 2; pilih Scan Layout, Result SO, atau Rekap Selisih untuk melihat lembar hanya-baca. Setiap lembar dapat dicetak atau disimpan sebagai PDF melalui dialog print browser.", "dashboard", "Dashboard")}
           ${guide("Langkah 1", "▦", "Jadwal", "Tambahkan kartu jadwal, lalu pilih Nama Brand dan PIC 1/PIC 2 dari daftar yang dikelola Owner. Tentukan bulan, week, dan mode hitung laptop saja atau semua item. Ketiga nama wajib terisi sebelum sesi dapat dimulai. Tombol Mulai Stock Opname akan membuka Master VEF; setelah sesi berjalan, tombol berubah menjadi Lihat Stok Opname dan membuka Scan Layout. Kartu hanya dapat dihapus sebelum sesi dimulai dan selama belum berisi data kerja.", "workspaces", "Jadwal")}
           ${guide("Langkah 2", "▤", "Master VEF", "Setelah memulai jadwal, unggah XLSX/XLS dengan sheet Serial No atau format workbook VEF yang didukung; file CSV dengan kolom Serial No, Item Code, Brand, Warehouse, dan Item Name juga dapat digunakan. Periksa jumlah item, serial, dan quantity per warehouse. Panel menampilkan metadata waktu sumber dan waktu unggah. File sumber disimpan dalam arsip sesi untuk dapat diunduh kembali.", "products", "Master VEF")}
-          ${guide("Langkah 3", "▦", "Scan Layout", "Buat rack dan isi label rack (angka atau keterangan teks) serta target scan. Pindai serial number pada rack yang sesuai. Hasil cocok, duplikat, bukan laptop, atau tidak ditemukan tampil pada catatan scan; serial cocok juga menampilkan item code, nama item, serial number, dan waktu saat rinciannya dibuka. Rack dengan SN duplikat diberi tanda peringatan. Untuk barang tanpa serial, cari item dari VEF, pilih hasil yang benar, masukkan quantity, lalu Catat Manual. Catatan manual terbaru akan ditandai dan difokuskan.", "layouts", "Scan Layout")}
+          ${guide("Langkah 3", "▦", "Scan Layout", "Buat rack dan isi label rack (angka atau keterangan teks) serta target scan. Pindai serial number pada rack yang sesuai atau gunakan tombol kamera untuk membaca barcode. Hasil cocok, duplikat, bukan laptop, atau tidak ditemukan tampil pada catatan scan; serial cocok juga menampilkan item code, nama item, serial number, dan waktu saat rinciannya dibuka. Rack dengan SN duplikat diberi tanda peringatan. Untuk barang tanpa serial, cari item dari VEF, pilih hasil yang benar, masukkan quantity, lalu Catat Manual. Catatan manual terbaru akan ditandai dan difokuskan.", "layouts", "Scan Layout")}
           ${guide("Langkah 4", "⌗", "Result SO", "Lembar ini menghitung SCAN + MANUAL + PJ dan membandingkan hasilnya dengan VEF. Untuk PJ, klik quantity pada item, lalu isi tanggal/waktu dan nomor invoice. Input hanya diterima jika waktu invoice lebih baru daripada timestamp file VEF yang tercatat di Master VEF. Tekan SO SELESAI setelah pemeriksaan selesai untuk mengunci dan mengarsipkan hasil.", "opname", "Result SO")}
           ${guide("Langkah 5", "↕", "Rekap Selisih", "Tinjau hanya item yang belum sesuai; kolom selisih membandingkan jumlah SCAN + MANUAL + PJ dengan quantity VEF. Tambahkan catatan untuk menjelaskan kekurangan atau kelebihan. Periksa kembali data sebelum sesi diselesaikan karena hasil yang diarsipkan menjadi rekaman baca-saja.", "recap", "Rekap Selisih")}
           ${guide("Arsip", "▣", "Sesi Stock Opname", "Gunakan Buka sesi untuk meninjau workbook sumber, rincian setiap rack, input manual, seluruh item Result SO, daftar invoice PJ, dan Rekap Selisih. Ekspor XLSX berisi worksheet arsip beserta detail input, sedangkan Print menyusun laporan untuk dicetak atau disimpan sebagai PDF. Arsip lama tetap tersedia walaupun kartu jadwal sudah direset.", "completed-sessions", "Sesi Stock Opname")}
@@ -6579,6 +6802,7 @@
     }
 
     function bindPageEvents() {
+      attachCameraSearchButtons();
       document.getElementById("add-workspace-button")?.addEventListener("click", addWorkspace);
       document.getElementById("admin-refresh-users")?.addEventListener("click", loadAdminUsers);
       document.getElementById("copy-reset-password")?.addEventListener("click", async () => {
@@ -6816,6 +7040,10 @@
       document.querySelectorAll("[data-workspace-count-mode]").forEach((select) => select.addEventListener("change", () => updateWorkspaceCountMode(select)));
       document.querySelectorAll("[data-workspace-schedule-field]").forEach((select) => select.addEventListener("change", () => updateWorkspaceScheduleField(select)));
       document.querySelectorAll("[data-layout-form]").forEach((form) => form.addEventListener("submit", handleLayoutScanSubmit));
+      document.querySelectorAll("[data-camera-scan]").forEach((button) => button.addEventListener("click", () => {
+        const input = button.closest("[data-layout-form]")?.querySelector(".layout-input");
+        if (input) openCameraScannerForInput(input);
+      }));
       document.querySelectorAll("[data-manual-form]").forEach((form) => form.addEventListener("submit", handleManualEntrySubmit));
       document.querySelectorAll("[data-manual-product]").forEach((input) => {
         input.addEventListener("focus", () => renderManualProductOptions(input));
@@ -7826,6 +8054,15 @@
     document.getElementById("inbound-entry-delete").addEventListener("click", deleteInboundEntry);
     document.getElementById("confirm-delete-inbound").addEventListener("click", confirmDeleteInboundEntry);
     document.querySelectorAll("[data-close]").forEach((button) => button.addEventListener("click", () => document.getElementById(button.dataset.close).close()));
+    const cameraScanDialog = document.getElementById("camera-scan-dialog");
+    document.getElementById("camera-scan-close").addEventListener("click", () => cameraScanDialog.close());
+    document.getElementById("camera-scan-cancel").addEventListener("click", () => cameraScanDialog.close());
+    cameraScanDialog.addEventListener("close", () => {
+      stopCameraScanner();
+      const input = cameraTargetInput;
+      cameraTargetInput = null;
+      if (input?.isConnected && !input.disabled) input.focus();
+    });
     document.getElementById("confirm-finish").addEventListener("click", finishSession);
     document.getElementById("confirm-delete-master").addEventListener("click", deleteAllMasterData);
     document.getElementById("confirm-delete-completed-session").addEventListener("click", deleteCompletedSession);
