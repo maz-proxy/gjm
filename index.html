@@ -121,34 +121,12 @@
     body.auth-checking .auth-screen, body.auth-checking .app-shell, body.auth-checking .toast, body.auth-checking > dialog { display: none; }
     body.auth-checking .auth-loading { display: flex; }
     .auth-card { animation: dashboard-enter .28s ease both; background: #fff; border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 22px 70px rgba(29,53,36,.13); max-width: 420px; padding: 32px; width: 100%; }
-    .auth-content-stack { display: grid; gap: 14px; margin: auto 0; max-width: 420px; width: 100%; }
-    .public-recorded-shortcut { background: linear-gradient(125deg, #123e35, #1b5948); border: 1px solid rgba(255,255,255,.16); border-radius: 14px; box-shadow: 0 14px 38px rgba(20,55,39,.16); color: #fff; padding: 11px 13px; }
-    .public-recorded-heading { align-items: center; display: flex; gap: 9px; justify-content: space-between; margin-bottom: 7px; }
-    .public-recorded-heading strong { font-size: 13px; }
-    .public-recorded-heading p { color: #c7e0d4; font-size: 10px; margin: 3px 0 0; }
-    .public-recorded-count { background: rgba(255,255,255,.13); border: 1px solid rgba(255,255,255,.2); border-radius: 99px; color: #e5f5eb; flex: 0 0 auto; font-size: 9px; font-weight: 700; padding: 5px 8px; }
-    .public-recorded-controls { display: grid; gap: 5px 7px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    .public-recorded-field { display: grid; gap: 4px; min-width: 0; }
-    .public-recorded-field span { color: #d2e8dd; font-size: 8px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; }
-    .public-recorded-field select { background: #fff; border: 1px solid rgba(255,255,255,.65); border-radius: 7px; color: #20312d; font: inherit; font-size: 10px; height: 31px; min-width: 0; padding: 0 7px; width: 100%; }
-    .public-recorded-field select:focus-visible { outline: 2px solid #bde6cf; outline-offset: 2px; }
-    .public-recorded-status { align-items: center; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15); border-radius: 8px; color: #e1f1e8; display: flex; font-size: 9px; gap: 6px; grid-column: 1 / 3; line-height: 1.3; min-height: 30px; padding: 5px 7px; }
-    .public-recorded-status::before { background: #9bd4bd; border-radius: 50%; content: ""; flex: 0 0 6px; height: 6px; margin-top: 3px; }
-    .public-recorded-status.error { background: rgba(139,58,74,.25); border-color: rgba(255,210,218,.25); color: #ffe0e5; }
-    .public-recorded-actions { align-items: center; display: flex; grid-column: 3; justify-content: flex-end; }
-    .public-recorded-actions .button { min-height: 31px; padding: 0 12px; }
-    .public-recorded-screen { background: var(--canvas); inset: 0; overflow: auto; padding: 24px; position: fixed; z-index: 25; }
-    .public-recorded-screen[hidden] { display: none; }
-    body.public-recorded-open .auth-screen, body.public-recorded-open .auth-footer { display: none; }
     @media (min-width: 851px) {
       .auth-screen { justify-content: flex-start; padding-left: clamp(32px, 8vw, 120px); padding-right: 32px; }
     }
     @media (max-width: 650px) {
       .auth-screen { align-items: flex-start; padding: 78px 15px 24px; }
-      .auth-content-stack { margin: 0 auto; }
       .auth-card { padding: 25px 22px; }
-      .public-recorded-shortcut { padding: 10px 12px; }
-      .public-recorded-screen { padding: 14px; }
     }
     .auth-brand { align-items: center; display: flex; gap: 12px; margin-bottom: 25px; }
     .auth-brand .brand-mark { color: var(--green); flex: 0 0 64px; height: 64px; width: 64px; }
@@ -454,7 +432,6 @@
     .completed-detail-panel { background: #f8fbf7; border: 1px solid var(--line); border-radius: 10px; margin-top: 10px; max-height: 70vh; min-width: min(850px, 75vw); overflow: auto; padding: 16px; }
     .completed-session-view .completed-detail-panel { max-height: none; min-width: 0; }
     .recorded-entry-dialog { background: var(--paper); border: 1px solid var(--line); border-radius: 11px; box-shadow: 0 10px 24px rgba(17, 43, 36, .18); inset: auto; max-height: min(65vh, 400px); max-width: calc(100vw - 24px); margin: 0; overflow: visible; padding: 0; position: fixed; width: min(290px, calc(100vw - 24px)); z-index: 30; }
-    body.auth-locked.public-recorded-open > .recorded-entry-dialog[open] { display: block; }
     .recorded-entry-dialog::before { background: var(--paper); border-left: 1px solid var(--line); border-top: 1px solid var(--line); content: ""; height: 10px; left: var(--bubble-arrow-left, 50%); position: absolute; top: -6px; transform: translateX(-50%) rotate(45deg); width: 10px; }
     .recorded-entry-dialog[data-placement="above"]::before { border: 0; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); bottom: -6px; top: auto; }
     .recorded-entry-dialog .dialog-head { background: linear-gradient(115deg, color-mix(in srgb, var(--green) 10%, var(--paper)), var(--paper) 78%); border-bottom-color: var(--line); border-radius: 10px 10px 0 0; border-top: 3px solid var(--green); padding: 9px 11px 8px; position: relative; }
@@ -2090,17 +2067,6 @@
     </div>
     <button class="theme-toggle auth-theme-toggle" type="button" data-theme-toggle aria-label="Aktifkan dark mode" aria-pressed="false"><span class="theme-toggle-icon" aria-hidden="true">☾</span><span class="theme-toggle-label" aria-hidden="true">Dark</span></button>
     <button class="accent-toggle auth-accent-toggle" type="button" data-accent-toggle aria-label="Ganti tema warna ke burgundy"><span class="accent-swatch" aria-hidden="true"></span><span data-accent-label>Burgundy</span></button>
-    <div class="auth-content-stack">
-    <section class="public-recorded-shortcut" aria-labelledby="public-recorded-title">
-      <div class="public-recorded-heading"><div><strong id="public-recorded-title">Stock Opname Recorded</strong><p>Buka arsip selesai · hanya-baca</p></div><span class="public-recorded-count" id="public-recorded-count">Memuat...</span></div>
-      <div class="public-recorded-controls">
-        <label class="public-recorded-field"><span>Nama Brand</span><select id="public-recorded-brand" disabled><option value="">Memuat arsip...</option></select></label>
-        <label class="public-recorded-field"><span>Bulan</span><select id="public-recorded-month" disabled><option value="">Pilih bulan</option></select></label>
-        <label class="public-recorded-field"><span>Week</span><select id="public-recorded-week" disabled><option value="">Pilih week</option></select></label>
-        <div class="public-recorded-status" id="public-recorded-status" role="status" aria-live="polite">Memuat arsip stock opname...</div>
-        <div class="public-recorded-actions"><button class="button button-primary" id="public-recorded-view" type="button" disabled>View</button></div>
-      </div>
-    </section>
     <div class="auth-card">
       <div class="auth-brand"><div class="brand-mark" aria-hidden="true"><img class="brand-monogram" data-brand-emblem src="./assets/brand-emblem-source.png" alt=""></div><div><div class="brand-name">STOCK OPNAME</div></div><span class="auth-copyright">© 2026 M-Maz</span></div>
       <h1>Login Account</h1>
@@ -2118,9 +2084,7 @@
       <div class="auth-message" id="auth-message" role="alert"></div>
       <p class="auth-help">Akun dibuat oleh admin. Saat pertama kali masuk, Anda akan diminta mengganti password sementara. Jika lupa password, hubungi admin.</p>
     </div>
-    </div>
   </section>
-  <main class="public-recorded-screen" id="public-recorded-screen" hidden></main>
   <div class="auth-footer">© 2026 M-Maz. All rights reserved.</div>
   <div class="app-shell">
     <aside class="sidebar" id="app-sidebar">
@@ -3300,9 +3264,6 @@
     let selectedRecordedSessionId = "";
     let selectedRecordedSheet = "layouts";
     let recordedArchiveSearchTerm = "";
-    let publicRecordedSessions = [];
-    let publicRecordedMode = false;
-    let selectedPublicRecordedBrand = "";
     let recordedEntryTrigger = null;
     let pendingPjProductId = "";
     let pendingPjEntryId = "";
@@ -5602,113 +5563,6 @@
       if (WORKSPACE_PERIODS.includes(session.period)) return session.period;
       return new Date(session.finishedAt).getDate() < 16 ? "Week 1" : "Week 2";
     }
-    function recordedSessionCollection() {
-      return publicRecordedMode ? publicRecordedSessions : state.sessions;
-    }
-    function updatePublicRecordedAvailability() {
-      const brandSelect = document.getElementById("public-recorded-brand");
-      const monthSelect = document.getElementById("public-recorded-month");
-      const weekSelect = document.getElementById("public-recorded-week");
-      const status = document.getElementById("public-recorded-status");
-      const viewButton = document.getElementById("public-recorded-view");
-      if (!brandSelect || !monthSelect || !weekSelect || !status || !viewButton) return;
-      selectedPublicRecordedBrand = brandSelect.value;
-      const sessions = publicRecordedSessions.filter((session) =>
-        session.workspaceName === selectedPublicRecordedBrand &&
-        archivedSessionMonth(session) === monthSelect.value &&
-        archivedSessionWeek(session) === weekSelect.value &&
-        session.snapshot
-      );
-      const matchingSession = sessions.sort((left, right) => new Date(right.finishedAt) - new Date(left.finishedAt))[0];
-      viewButton.disabled = !matchingSession;
-      status.classList.toggle("error", !matchingSession);
-      status.textContent = matchingSession
-        ? `${sessions.length} arsip tersedia`
-        : selectedPublicRecordedBrand
-          ? "Tidak ada arsip pada periode ini"
-          : "Pilih brand dan periode untuk melihat arsip.";
-    }
-    function initializePublicRecordedPicker() {
-      const brandSelect = document.getElementById("public-recorded-brand");
-      const monthSelect = document.getElementById("public-recorded-month");
-      const weekSelect = document.getElementById("public-recorded-week");
-      const count = document.getElementById("public-recorded-count");
-      const status = document.getElementById("public-recorded-status");
-      if (!brandSelect || !monthSelect || !weekSelect || !count || !status) return;
-      count.textContent = `${publicRecordedSessions.length} arsip`;
-      const brands = [...new Set(publicRecordedSessions.map((session) => session.workspaceName).filter(Boolean))]
-        .sort((left, right) => left.localeCompare(right, "id-ID"));
-      brandSelect.innerHTML = brands.length
-        ? `<option value="">Pilih Nama Brand</option>${brands.map((brand) => `<option value="${escapeHtml(brand)}">${escapeHtml(brand)}</option>`).join("")}`
-        : '<option value="">Belum ada arsip selesai</option>';
-      monthSelect.innerHTML = WORKSPACE_MONTHS.map((month) => `<option value="${escapeHtml(translateText(month))}">${escapeHtml(translateText(month))}</option>`).join("");
-      weekSelect.innerHTML = WORKSPACE_PERIODS.map((week) => `<option value="${escapeHtml(week)}">${escapeHtml(week)}</option>`).join("");
-      brandSelect.disabled = !brands.length;
-      monthSelect.disabled = !brands.length;
-      weekSelect.disabled = !brands.length;
-      const latestSession = publicRecordedSessions.slice()
-        .sort((left, right) => new Date(right.finishedAt) - new Date(left.finishedAt))[0];
-      if (latestSession) {
-        brandSelect.value = latestSession.workspaceName;
-        monthSelect.value = archivedSessionMonth(latestSession);
-        weekSelect.value = archivedSessionWeek(latestSession);
-      } else {
-        status.classList.add("error");
-        status.textContent = "Belum ada arsip stock opname yang tersedia.";
-      }
-      updatePublicRecordedAvailability();
-    }
-    async function loadPublicRecordedSessions() {
-      const status = document.getElementById("public-recorded-status");
-      const count = document.getElementById("public-recorded-count");
-      if (!status || !count) return;
-      try {
-        const response = await fetch(`${SUPABASE_URL}/functions/v1/public-recorded-sessions`, {
-          headers: { apikey: SUPABASE_PUBLISHABLE_KEY, Accept: "application/json" },
-        });
-        const result = await response.json();
-        if (!response.ok) throw new Error(result?.error || `Permintaan arsip gagal (${response.status}).`);
-        if (!Array.isArray(result?.sessions)) throw new Error("Respons arsip memiliki format yang tidak valid.");
-        publicRecordedSessions = result.sessions;
-        initializePublicRecordedPicker();
-      } catch (error) {
-        console.error("Arsip Stock Opname Recorded publik gagal dimuat:", error);
-        count.textContent = "Tidak tersedia";
-        status.classList.add("error");
-        status.textContent = `Arsip tidak dapat dimuat: ${error.message || "kesalahan tidak diketahui"}.`;
-      }
-    }
-    function openPublicRecordedSession() {
-      const month = document.getElementById("public-recorded-month")?.value;
-      const week = document.getElementById("public-recorded-week")?.value;
-      const session = publicRecordedSessions
-        .filter((item) => item.workspaceName === selectedPublicRecordedBrand
-          && archivedSessionMonth(item) === month
-          && archivedSessionWeek(item) === week
-          && item.snapshot)
-        .sort((left, right) => new Date(right.finishedAt) - new Date(left.finishedAt))[0];
-      if (!session) {
-        updatePublicRecordedAvailability();
-        return;
-      }
-      publicRecordedMode = true;
-      selectedRecordedSessionId = session.id;
-      selectedRecordedSheet = "layouts";
-      recordedArchiveSearchTerm = "";
-      const screen = document.getElementById("public-recorded-screen");
-      screen.innerHTML = renderRecordedSessionPage();
-      screen.hidden = false;
-      document.body.classList.add("public-recorded-open");
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-    function closePublicRecordedSession() {
-      closeRecordedEntryDetails();
-      publicRecordedMode = false;
-      document.body.classList.remove("public-recorded-open");
-      const screen = document.getElementById("public-recorded-screen");
-      screen.hidden = true;
-      screen.innerHTML = "";
-    }
     function recordedSoProgress(session) {
       const snapshot = session.snapshot || {};
       const countMode = snapshot.countMode === "all" ? "all" : "laptops";
@@ -5777,7 +5631,7 @@
         closeRecordedEntryDetails();
         return;
       }
-      const session = recordedSessionCollection().find((item) => item.id === selectedRecordedSessionId && item.snapshot);
+      const session = state.sessions.find((item) => item.id === selectedRecordedSessionId && item.snapshot);
       const product = session?.snapshot?.products?.find((item) => item.id === productId);
       if (!session || !product) {
         console.error("Detail transaksi arsip tidak dapat dibuka: sesi atau item tidak ditemukan.");
@@ -5956,9 +5810,8 @@
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
     function renderRecordedSessionPage() {
-      const session = recordedSessionCollection().find((item) => item.id === selectedRecordedSessionId && item.snapshot);
+      const session = state.sessions.find((item) => item.id === selectedRecordedSessionId && item.snapshot);
       if (!session) {
-        if (publicRecordedMode) return '<div class="recorded-archive-page"><div class="dashboard-empty">Arsip tidak tersedia.</div><button class="button button-secondary" type="button" data-recorded-return>← Kembali ke Login</button></div>';
         currentPage = "dashboard";
         return renderDashboard();
       }
@@ -5967,7 +5820,7 @@
       const finishedAt = session.finishedAt
         ? formatDate(session.finishedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })
         : "Tidak tersedia";
-      return `${publicRecordedMode ? "" : navMarkup()}<div class="recorded-archive-page">
+      return `${navMarkup()}<div class="recorded-archive-page">
         <section class="recorded-archive-head">
           <div class="recorded-archive-heading">
             <h1>${escapeHtml(session.workspaceName || "Stock Opname Recorded")}</h1>
@@ -5986,7 +5839,7 @@
               <div class="recorded-so-progress-row"><span>Qty kurang</span><strong>${formatNumber(soProgress.remaining)} unit · ${soProgress.remainingPercent}%</strong></div>
             </div>
           </div>
-          <button class="button button-secondary" type="button" data-recorded-return>← Kembali ke ${publicRecordedMode ? "Login" : "Dashboard"}</button>
+          <button class="button button-secondary" type="button" data-recorded-return>← Kembali ke Dashboard</button>
         </section>
         <section class="recorded-view-actions" aria-label="Lembar arsip dan cetak">
           <div class="recorded-view-tabs" role="tablist" aria-label="Lembar kerja arsip">
@@ -6048,7 +5901,7 @@
       openArchivePrintWindow(`${session.workspaceName || (currentLanguage === "en" ? "Stock opname session" : "Sesi opname")} · ${currentLanguage === "en" ? "Stock Reconciliation" : "Stock Opname"}`, subtitle, renderCompletedSessionDetails(session, true));
     }
     function printRecordedSheet() {
-      const session = recordedSessionCollection().find((item) => item.id === selectedRecordedSessionId);
+      const session = state.sessions.find((item) => item.id === selectedRecordedSessionId);
       if (!session?.snapshot) {
         notify("Arsip tidak ditemukan untuk dicetak.");
         return;
@@ -7843,25 +7696,6 @@
     });
     document.querySelectorAll("[data-logout]").forEach((button) => button.addEventListener("click", requestSignOut));
     document.addEventListener("click", (event) => {
-      if (publicRecordedMode) {
-        if (event.target.closest("[data-recorded-return]")) {
-          closePublicRecordedSession();
-          return;
-        }
-        const sheetButton = event.target.closest("[data-recorded-sheet]");
-        if (sheetButton) {
-          selectedRecordedSheet = sheetButton.dataset.recordedSheet;
-          document.getElementById("public-recorded-screen").innerHTML = renderRecordedSessionPage();
-          return;
-        }
-        if (event.target.closest("#print-recorded-sheet")) {
-          printRecordedSheet();
-          return;
-        }
-      } else if (event.target.closest("#public-recorded-view")) {
-        openPublicRecordedSession();
-        return;
-      }
       const recordedEntryButton = event.target.closest("[data-recorded-entry]");
       if (recordedEntryButton) {
         showRecordedEntryDetails(recordedEntryButton.dataset.recordedEntry, recordedEntryButton.dataset.productId, recordedEntryButton);
@@ -7889,31 +7723,9 @@
       if (!document.getElementById("recorded-entry-dialog").contains(event.target)) closeRecordedEntryDetails();
     }, true);
     document.addEventListener("change", (event) => {
-      if (event.target.id === "public-recorded-brand") {
-        const latestSession = publicRecordedSessions
-          .filter((session) => session.workspaceName === event.target.value)
-          .sort((left, right) => new Date(right.finishedAt) - new Date(left.finishedAt))[0];
-        if (latestSession) {
-          document.getElementById("public-recorded-month").value = archivedSessionMonth(latestSession);
-          document.getElementById("public-recorded-week").value = archivedSessionWeek(latestSession);
-        }
-        updatePublicRecordedAvailability();
-      } else if (event.target.id === "public-recorded-month" || event.target.id === "public-recorded-week") {
-        updatePublicRecordedAvailability();
-      }
       if (event.target.id === "recorded-period-month" || event.target.id === "recorded-period-week") {
         updateRecordedPeriodAvailability();
       }
-    });
-    document.addEventListener("input", (event) => {
-      if (!publicRecordedMode || event.target.id !== "recorded-archive-search") return;
-      const cursor = event.target.selectionStart;
-      recordedArchiveSearchTerm = event.target.value;
-      const screen = document.getElementById("public-recorded-screen");
-      screen.innerHTML = renderRecordedSessionPage();
-      const nextSearch = document.getElementById("recorded-archive-search");
-      nextSearch?.focus();
-      nextSearch?.setSelectionRange(cursor, cursor);
     });
     document.getElementById("pj-entry-form").addEventListener("submit", submitPjEntry);
     document.getElementById("pj-entry-delete").addEventListener("click", deletePjEntry);
@@ -7945,7 +7757,6 @@
       if (session && (event === "PASSWORD_RECOVERY" || (event === "SIGNED_IN" && isPasswordSetupLink()))) showPasswordSetup(session);
       if (event === "SIGNED_OUT") {
         document.body.classList.remove("auth-checking");
-        closePublicRecordedSession();
         const message = idleLogoutMessage;
         lockApp();
         pendingPasswordChange = null;
@@ -7954,7 +7765,6 @@
         document.querySelector(".auth-card h1").textContent = "Login Account";
         document.querySelector(".auth-description").textContent = "Login menggunakan username dan password dari admin. Data stock opname dibagikan ke seluruh tim.";
         showAuthMessage(message);
-        void loadPublicRecordedSessions();
         idleLogoutMessage = "";
         idleLogoutInProgress = false;
       }
@@ -7970,7 +7780,6 @@
         else startAuthenticatedSession(data.session);
       } else {
         document.body.classList.remove("auth-checking");
-        void loadPublicRecordedSessions();
       }
     }).catch((error) => {
       document.body.classList.remove("auth-checking");

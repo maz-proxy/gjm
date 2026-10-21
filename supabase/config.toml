@@ -6,6 +6,3 @@ verify_jwt = false
 
 [functions.admin-users]
 verify_jwt = false
-
-[functions.public-recorded-sessions]
-verify_jwt = false
