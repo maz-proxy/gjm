@@ -427,6 +427,28 @@
     .completed-detail summary::-webkit-details-marker { display: none; }
     .completed-detail-panel { background: #f8fbf7; border: 1px solid var(--line); border-radius: 10px; margin-top: 10px; max-height: 70vh; min-width: min(850px, 75vw); overflow: auto; padding: 16px; }
     .completed-session-view .completed-detail-panel { max-height: none; min-width: 0; }
+    .recorded-entry-dialog { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 20px 60px rgba(17, 43, 36, .24); max-height: min(76vh, 560px); max-width: min(430px, calc(100vw - 28px)); overflow: hidden; padding: 0; width: 100%; }
+    .recorded-entry-dialog::backdrop { background: rgba(17, 27, 26, .42); backdrop-filter: blur(2px); }
+    .recorded-entry-dialog .dialog-head { background: linear-gradient(115deg, color-mix(in srgb, var(--green) 10%, var(--paper)), var(--paper) 78%); border-bottom-color: var(--line); border-top: 3px solid var(--green); padding: 13px 15px 11px; }
+    .recorded-entry-dialog .dialog-title { font-size: 14px; }
+    .recorded-entry-dialog .dialog-subtitle { max-width: 340px; overflow-wrap: anywhere; }
+    .recorded-entry-content { max-height: calc(76vh - 74px); overflow: auto; padding: 12px; }
+    .recorded-entry-list { display: grid; gap: 8px; }
+    .recorded-entry-card { background: color-mix(in srgb, var(--green) 4%, var(--paper)); border: 1px solid var(--line); border-radius: 9px; padding: 10px 12px; }
+    .recorded-entry-document { display: grid; gap: 3px; min-width: 0; }
+    .recorded-entry-label, .recorded-entry-meta span { color: var(--muted); font-size: 9px; font-weight: 700; letter-spacing: .35px; text-transform: uppercase; }
+    .recorded-entry-document strong { color: var(--ink); font-size: 12px; overflow-wrap: anywhere; }
+    .recorded-entry-meta { border-top: 1px solid var(--line); display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr) auto; margin-top: 8px; padding-top: 7px; }
+    .recorded-entry-meta > div { display: grid; gap: 2px; }
+    .recorded-entry-meta strong { color: var(--ink); font-size: 11px; font-variant-numeric: tabular-nums; }
+    .recorded-entry-meta > div:last-child { text-align: right; }
+    .recorded-entry-meta small { color: var(--muted); font-size: 9px; font-weight: 500; }
+    .recorded-entry-empty { align-items: center; color: var(--muted); display: flex; flex-direction: column; gap: 5px; padding: 24px 12px; text-align: center; }
+    .recorded-entry-empty strong { color: var(--ink); font-size: 12px; }
+    .recorded-entry-empty span { font-size: 10px; line-height: 1.5; }
+    .recorded-quantity-trigger { background: transparent; border: 0; border-bottom: 1px dashed color-mix(in srgb, var(--green) 55%, transparent); border-radius: 2px; color: var(--green); font: inherit; font-variant-numeric: tabular-nums; min-width: 28px; padding: 2px 4px; }
+    .recorded-quantity-trigger:hover { background: var(--green-soft); border-bottom-style: solid; }
+    .recorded-quantity-trigger:focus-visible { outline: 2px solid color-mix(in srgb, var(--green) 40%, transparent); outline-offset: 2px; }
     .completed-export-actions { display: flex; gap: 8px; margin: 10px 0; }
     .completed-detail-panel h3 { font-size: 13px; margin: 0 0 10px; }
     .completed-racks { display: grid; gap: 9px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); margin-bottom: 18px; }
@@ -2119,6 +2141,10 @@
     <div class="dialog-head"><div><div class="dialog-title" id="inbound-entry-title">Tambah Inbound/Retur</div><div class="dialog-subtitle" id="inbound-entry-product"></div></div><button class="dialog-close" type="button" data-close="inbound-entry-dialog" aria-label="Tutup">×</button></div>
     <form id="inbound-entry-form" class="feature-dialog-form"><label class="auth-field" id="inbound-entry-existing-wrap" hidden><span>Pilih data untuk diedit</span><select class="auth-input" id="inbound-entry-existing"></select></label><label class="auth-field"><span>Tanggal dan waktu PREC/RETUR</span><input class="auth-input" name="entryDate" type="datetime-local" required></label><label class="auth-field"><span>Nomor PREC/RETUR</span><input class="auth-input" name="referenceNumber" type="text" maxlength="100" required placeholder="Masukkan nomor PREC/RETUR"></label><label class="auth-field"><span>Quantity Inbound/Retur</span><input class="auth-input" name="quantity" type="number" min="1" step="1" required placeholder="Masukkan quantity"></label><div class="dialog-actions"><button class="button button-danger" id="inbound-entry-delete" type="button" hidden>Hapus data</button><button class="button button-secondary" id="inbound-entry-new" type="button">Data baru</button><button class="button button-secondary" type="button" data-close="inbound-entry-dialog">Batal</button><button class="button button-primary" id="inbound-entry-save" type="submit">Simpan</button></div></form>
   </dialog>
+  <dialog id="recorded-entry-dialog" class="recorded-entry-dialog" aria-labelledby="recorded-entry-title" aria-describedby="recorded-entry-product">
+    <div class="dialog-head"><div><div class="dialog-title" id="recorded-entry-title"></div><div class="dialog-subtitle" id="recorded-entry-product" data-user-content></div></div><button class="dialog-close" type="button" data-recorded-entry-close aria-label="Tutup">×</button></div>
+    <div class="recorded-entry-content" id="recorded-entry-content"></div>
+  </dialog>
   <dialog id="inbound-delete-confirm-dialog" class="pj-delete-confirm-dialog" aria-labelledby="inbound-delete-confirm-title" aria-describedby="inbound-delete-confirm-copy">
     <div class="dialog-head"><div><div class="dialog-title" id="inbound-delete-confirm-title">Hapus Inbound/Retur?</div></div><button class="dialog-close" type="button" data-close="inbound-delete-confirm-dialog" aria-label="Tutup">×</button></div>
     <div class="pj-delete-confirm-copy" id="inbound-delete-confirm-copy"></div>
@@ -2185,6 +2211,18 @@
       "Aktifkan dark mode": "Enable dark mode",
       "Nonaktifkan dark mode": "Disable dark mode",
       "Ganti tema warna ke green": "Switch accent color to green",
+      "Detail Inbound/Retur": "Inbound/Return details",
+      "Detail PJ": "PJ details",
+      "Nomor PREC/RETUR": "PREC/RETURN number",
+      "Tanggal PREC/RETUR": "PREC/RETURN date",
+      "Nomor invoice": "Invoice number",
+      "Tanggal Invoice": "Invoice date",
+      "Quantity": "Quantity",
+      "unit": "units",
+      "Belum ada detail transaksi": "No transaction details",
+      "Belum ada data invoice atau PREC/RETUR untuk item ini.": "No invoice or PREC/RETURN data is available for this item.",
+      "Lihat detail Inbound/Retur": "View Inbound/Return details",
+      "Lihat detail PJ": "View PJ details",
       "Android Apps": "Android Apps",
       "Download Android app": "Download Android app",
       "Download": "Download",
@@ -5501,6 +5539,46 @@
       if (WORKSPACE_PERIODS.includes(session.period)) return session.period;
       return new Date(session.finishedAt).getDate() < 16 ? "Week 1" : "Week 2";
     }
+    function showRecordedEntryDetails(kind, productId) {
+      const session = state.sessions.find((item) => item.id === selectedRecordedSessionId && item.snapshot);
+      const product = session?.snapshot?.products?.find((item) => item.id === productId);
+      if (!session || !product) {
+        console.error("Detail transaksi arsip tidak dapat dibuka: sesi atau item tidak ditemukan.");
+        return;
+      }
+      const config = kind === "pj"
+        ? { entries: session.snapshot.pjEntries || [], numberKey: "invoiceNumber", dateKey: "invoiceAt", numberLabel: "Nomor invoice", dateLabel: "Tanggal Invoice", title: "Detail PJ" }
+        : kind === "inbound"
+          ? { entries: session.snapshot.inboundEntries || [], numberKey: "referenceNumber", dateKey: "entryAt", numberLabel: "Nomor PREC/RETUR", dateLabel: "Tanggal PREC/RETUR", title: "Detail Inbound/Retur" }
+          : null;
+      if (!config) {
+        console.error("Jenis detail transaksi arsip tidak valid:", kind);
+        return;
+      }
+      const timestampFor = (value) => {
+        const timestamp = Date.parse(value || "");
+        return Number.isFinite(timestamp) ? timestamp : 0;
+      };
+      const entries = config.entries
+        .filter((entry) => entry.productId === product.id || (!entry.productId && entry.sku && entry.sku === product.sku))
+        .slice()
+        .sort((left, right) => timestampFor(right[config.dateKey]) - timestampFor(left[config.dateKey]));
+      const rows = entries.map((entry) => {
+        const date = entry[config.dateKey] ? new Date(entry[config.dateKey]) : null;
+        const formattedDate = date && Number.isFinite(date.getTime())
+          ? formatDate(date, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })
+          : "-";
+        return `<article class="recorded-entry-card"><div class="recorded-entry-document"><span class="recorded-entry-label">${config.numberLabel}</span><strong data-user-content>${escapeHtml(entry[config.numberKey] || "-")}</strong></div><div class="recorded-entry-meta"><div><span>${config.dateLabel}</span><strong>${escapeHtml(formattedDate)}</strong></div><div><span>Quantity</span><strong>${formatNumber(Number(entry.quantity || 0))} <small>unit</small></strong></div></div></article>`;
+      }).join("");
+      const dialog = document.getElementById("recorded-entry-dialog");
+      document.getElementById("recorded-entry-title").textContent = translateText(config.title);
+      document.getElementById("recorded-entry-product").textContent = `${product.name || "-"} · ${product.sku || "-"}`;
+      document.getElementById("recorded-entry-content").innerHTML = rows
+        ? `<div class="recorded-entry-list">${rows}</div>`
+        : `<div class="recorded-entry-empty"><strong>Belum ada detail transaksi</strong><span>Belum ada data invoice atau PREC/RETUR untuk item ini.</span></div>`;
+      translateDocument(dialog);
+      if (!dialog.open) dialog.showModal();
+    }
     function renderRecordedSheet(session, sheet, printMode = false) {
       const snapshot = session.snapshot || {};
       const products = snapshot.products || [];
@@ -5557,7 +5635,13 @@
         const included = isCountedProduct(product, countMode);
         const variance = varianceFor(product, inboundEntries);
         const status = statusFor(product, countMode, inboundEntries);
-        return `<tr><td class="number-cell">${index + 1}</td><td><div class="product-name">${escapeHtml(product.name)}</div><div class="product-sku">${escapeHtml(product.sku)}</div></td><td><span class="category-chip" data-user-content>${escapeHtml(product.brand || "-")}</span></td><td class="number-cell quantity-cell">${formatNumber(product.stock)}</td><td class="number-cell quantity-cell">${included ? formatNumber(product.count || 0) : "-"}</td><td class="number-cell quantity-cell">${formatNumber(product.box || 0)}</td><td class="number-cell quantity-cell">${included ? formatNumber(inboundQuantityFor(product.id, inboundEntries)) : "-"}</td><td class="number-cell quantity-cell">${included ? formatNumber(product.pj || 0) : "-"}</td><td class="quantity-cell"><span class="variance ${variance === 0 ? "zero" : variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td><td><span class="row-status ${status.className}">${status.label}</span></td><td data-user-content>${escapeHtml(product.note || "-")}</td></tr>`;
+        const inboundQuantity = included
+          ? `<button class="recorded-quantity-trigger" type="button" data-recorded-entry="inbound" data-product-id="${escapeHtml(product.id)}" aria-label="Lihat detail Inbound/Retur">${formatNumber(inboundQuantityFor(product.id, inboundEntries))}</button>`
+          : "-";
+        const pjQuantity = included
+          ? `<button class="recorded-quantity-trigger" type="button" data-recorded-entry="pj" data-product-id="${escapeHtml(product.id)}" aria-label="Lihat detail PJ">${formatNumber(product.pj || 0)}</button>`
+          : "-";
+        return `<tr><td class="number-cell">${index + 1}</td><td><div class="product-name">${escapeHtml(product.name)}</div><div class="product-sku">${escapeHtml(product.sku)}</div></td><td><span class="category-chip" data-user-content>${escapeHtml(product.brand || "-")}</span></td><td class="number-cell quantity-cell">${formatNumber(product.stock)}</td><td class="number-cell quantity-cell">${included ? formatNumber(product.count || 0) : "-"}</td><td class="number-cell quantity-cell">${formatNumber(product.box || 0)}</td><td class="number-cell quantity-cell">${inboundQuantity}</td><td class="number-cell quantity-cell">${pjQuantity}</td><td class="quantity-cell"><span class="variance ${variance === 0 ? "zero" : variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td><td><span class="row-status ${status.className}">${status.label}</span></td><td data-user-content>${escapeHtml(product.note || "-")}</td></tr>`;
       }).join("");
       const title = sheet === "recap" ? "Item belum sesuai" : "Rekonsiliasi per item";
       const emptyMessage = query ? `Tidak ada hasil untuk “${escapeHtml(recordedArchiveSearchTerm.trim())}”.` : sheet === "recap" ? "Belum ada item bermasalah. Semua item sesuai dengan VEF." : "Data Result SO tidak tersedia.";
@@ -7507,6 +7591,15 @@
     });
     document.querySelectorAll("[data-logout]").forEach((button) => button.addEventListener("click", requestSignOut));
     document.addEventListener("click", (event) => {
+      const recordedEntryButton = event.target.closest("[data-recorded-entry]");
+      if (recordedEntryButton) {
+        showRecordedEntryDetails(recordedEntryButton.dataset.recordedEntry, recordedEntryButton.dataset.productId);
+        return;
+      }
+      if (event.target.closest("[data-recorded-entry-close]")) {
+        document.getElementById("recorded-entry-dialog").close();
+        return;
+      }
       const toggle = event.target.closest("[data-theme-toggle]");
       if (toggle) applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark", true);
       const accentToggle = event.target.closest("[data-accent-toggle]");
