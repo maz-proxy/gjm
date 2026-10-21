@@ -122,22 +122,21 @@
     body.auth-checking .auth-loading { display: flex; }
     .auth-card { animation: dashboard-enter .28s ease both; background: #fff; border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 22px 70px rgba(29,53,36,.13); max-width: 420px; padding: 32px; width: 100%; }
     .auth-content-stack { display: grid; gap: 14px; margin: auto 0; max-width: 420px; width: 100%; }
-    .public-recorded-shortcut { background: linear-gradient(125deg, #123e35, #1b5948); border: 1px solid rgba(255,255,255,.16); border-radius: 14px; box-shadow: 0 14px 38px rgba(20,55,39,.16); color: #fff; padding: 15px 17px; }
-    .public-recorded-heading { align-items: center; display: flex; gap: 9px; justify-content: space-between; margin-bottom: 10px; }
+    .public-recorded-shortcut { background: linear-gradient(125deg, #123e35, #1b5948); border: 1px solid rgba(255,255,255,.16); border-radius: 14px; box-shadow: 0 14px 38px rgba(20,55,39,.16); color: #fff; padding: 11px 13px; }
+    .public-recorded-heading { align-items: center; display: flex; gap: 9px; justify-content: space-between; margin-bottom: 7px; }
     .public-recorded-heading strong { font-size: 13px; }
     .public-recorded-heading p { color: #c7e0d4; font-size: 10px; margin: 3px 0 0; }
     .public-recorded-count { background: rgba(255,255,255,.13); border: 1px solid rgba(255,255,255,.2); border-radius: 99px; color: #e5f5eb; flex: 0 0 auto; font-size: 9px; font-weight: 700; padding: 5px 8px; }
-    .public-recorded-controls { display: grid; gap: 7px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .public-recorded-controls { display: grid; gap: 5px 7px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .public-recorded-field { display: grid; gap: 4px; min-width: 0; }
-    .public-recorded-field:first-child { grid-column: 1 / -1; }
-    .public-recorded-field span { color: #d2e8dd; font-size: 9px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; }
-    .public-recorded-field select { background: #fff; border: 1px solid rgba(255,255,255,.65); border-radius: 7px; color: #20312d; font: inherit; font-size: 11px; height: 35px; min-width: 0; padding: 0 9px; width: 100%; }
+    .public-recorded-field span { color: #d2e8dd; font-size: 8px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; }
+    .public-recorded-field select { background: #fff; border: 1px solid rgba(255,255,255,.65); border-radius: 7px; color: #20312d; font: inherit; font-size: 10px; height: 31px; min-width: 0; padding: 0 7px; width: 100%; }
     .public-recorded-field select:focus-visible { outline: 2px solid #bde6cf; outline-offset: 2px; }
-    .public-recorded-status { align-items: flex-start; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15); border-radius: 8px; color: #e1f1e8; display: flex; font-size: 10px; gap: 7px; grid-column: 1 / -1; line-height: 1.4; padding: 7px 9px; }
+    .public-recorded-status { align-items: center; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15); border-radius: 8px; color: #e1f1e8; display: flex; font-size: 9px; gap: 6px; grid-column: 1 / 3; line-height: 1.3; min-height: 30px; padding: 5px 7px; }
     .public-recorded-status::before { background: #9bd4bd; border-radius: 50%; content: ""; flex: 0 0 6px; height: 6px; margin-top: 3px; }
     .public-recorded-status.error { background: rgba(139,58,74,.25); border-color: rgba(255,210,218,.25); color: #ffe0e5; }
-    .public-recorded-actions { display: flex; grid-column: 1 / -1; justify-content: flex-end; }
-    .public-recorded-actions .button { min-height: 34px; }
+    .public-recorded-actions { align-items: center; display: flex; grid-column: 3; justify-content: flex-end; }
+    .public-recorded-actions .button { min-height: 31px; padding: 0 12px; }
     .public-recorded-screen { background: var(--canvas); inset: 0; overflow: auto; padding: 24px; position: fixed; z-index: 25; }
     .public-recorded-screen[hidden] { display: none; }
     body.public-recorded-open .auth-screen, body.public-recorded-open .auth-footer { display: none; }
@@ -148,7 +147,7 @@
       .auth-screen { align-items: flex-start; padding: 78px 15px 24px; }
       .auth-content-stack { margin: 0 auto; }
       .auth-card { padding: 25px 22px; }
-      .public-recorded-shortcut { padding: 13px 14px; }
+      .public-recorded-shortcut { padding: 10px 12px; }
       .public-recorded-screen { padding: 14px; }
     }
     .auth-brand { align-items: center; display: flex; gap: 12px; margin-bottom: 25px; }
@@ -5624,9 +5623,9 @@
       viewButton.disabled = !matchingSession;
       status.classList.toggle("error", !matchingSession);
       status.textContent = matchingSession
-        ? `${sessions.length} arsip selesai tersedia untuk ${selectedPublicRecordedBrand} · ${monthSelect.value} · ${weekSelect.value}.`
+        ? `${sessions.length} arsip tersedia`
         : selectedPublicRecordedBrand
-          ? `Belum ada arsip untuk ${selectedPublicRecordedBrand} · ${monthSelect.value} · ${weekSelect.value}.`
+          ? "Tidak ada arsip pada periode ini"
           : "Pilih brand dan periode untuk melihat arsip.";
     }
     function initializePublicRecordedPicker() {
