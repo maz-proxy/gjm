@@ -427,12 +427,13 @@
     .completed-detail summary::-webkit-details-marker { display: none; }
     .completed-detail-panel { background: #f8fbf7; border: 1px solid var(--line); border-radius: 10px; margin-top: 10px; max-height: 70vh; min-width: min(850px, 75vw); overflow: auto; padding: 16px; }
     .completed-session-view .completed-detail-panel { max-height: none; min-width: 0; }
-    .recorded-entry-dialog { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 20px 60px rgba(17, 43, 36, .24); max-height: min(76vh, 560px); max-width: min(430px, calc(100vw - 28px)); overflow: hidden; padding: 0; width: 100%; }
-    .recorded-entry-dialog::backdrop { background: rgba(17, 27, 26, .42); backdrop-filter: blur(2px); }
-    .recorded-entry-dialog .dialog-head { background: linear-gradient(115deg, color-mix(in srgb, var(--green) 10%, var(--paper)), var(--paper) 78%); border-bottom-color: var(--line); border-top: 3px solid var(--green); padding: 13px 15px 11px; }
-    .recorded-entry-dialog .dialog-title { font-size: 14px; }
-    .recorded-entry-dialog .dialog-subtitle { max-width: 340px; overflow-wrap: anywhere; }
-    .recorded-entry-content { max-height: calc(76vh - 74px); overflow: auto; padding: 12px; }
+    .recorded-entry-dialog { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 12px 32px rgba(17, 43, 36, .2); inset: auto; margin: 0; max-height: min(70vh, 480px); max-width: calc(100vw - 24px); overflow: visible; padding: 0; position: fixed; width: min(360px, calc(100vw - 24px)); }
+    .recorded-entry-dialog::before { background: var(--paper); border-left: 1px solid var(--line); border-top: 1px solid var(--line); content: ""; height: 10px; left: var(--bubble-arrow-left, 50%); position: absolute; top: -6px; transform: translateX(-50%) rotate(45deg); width: 10px; }
+    .recorded-entry-dialog[data-placement="above"]::before { border: 0; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); bottom: -6px; top: auto; }
+    .recorded-entry-dialog .dialog-head { background: linear-gradient(115deg, color-mix(in srgb, var(--green) 10%, var(--paper)), var(--paper) 78%); border-bottom-color: var(--line); border-radius: 11px 11px 0 0; border-top: 3px solid var(--green); padding: 12px 14px 10px; position: relative; }
+    .recorded-entry-dialog .dialog-title { font-size: 13px; }
+    .recorded-entry-dialog .dialog-subtitle { max-width: 320px; overflow-wrap: anywhere; }
+    .recorded-entry-content { max-height: calc(70vh - 66px); overflow: auto; padding: 10px; }
     .recorded-entry-list { display: grid; gap: 8px; }
     .recorded-entry-card { background: color-mix(in srgb, var(--green) 4%, var(--paper)); border: 1px solid var(--line); border-radius: 9px; padding: 10px 12px; }
     .recorded-entry-document { display: grid; gap: 3px; min-width: 0; }
@@ -3241,6 +3242,7 @@
     let selectedRecordedSessionId = "";
     let selectedRecordedSheet = "layouts";
     let recordedArchiveSearchTerm = "";
+    let recordedEntryTrigger = null;
     let pendingPjProductId = "";
     let pendingPjEntryId = "";
     let pendingInboundProductId = "";
@@ -5539,7 +5541,49 @@
       if (WORKSPACE_PERIODS.includes(session.period)) return session.period;
       return new Date(session.finishedAt).getDate() < 16 ? "Week 1" : "Week 2";
     }
-    function showRecordedEntryDetails(kind, productId) {
+    function closeRecordedEntryDetails() {
+      const dialog = document.getElementById("recorded-entry-dialog");
+      if (!dialog?.open) return;
+      const trigger = recordedEntryTrigger;
+      recordedEntryTrigger = null;
+      trigger?.setAttribute("aria-expanded", "false");
+      dialog.close();
+      if (trigger?.isConnected) trigger.focus({ preventScroll: true });
+    }
+    function positionRecordedEntryDialog() {
+      const dialog = document.getElementById("recorded-entry-dialog");
+      if (!dialog?.open || !recordedEntryTrigger?.isConnected) {
+        closeRecordedEntryDetails();
+        return;
+      }
+      const triggerRect = recordedEntryTrigger.getBoundingClientRect();
+      const dialogRect = dialog.getBoundingClientRect();
+      const viewportWidth = document.documentElement.clientWidth;
+      const viewportHeight = document.documentElement.clientHeight;
+      const margin = 12;
+      const left = Math.max(margin, Math.min(
+        triggerRect.left + triggerRect.width / 2 - dialogRect.width / 2,
+        viewportWidth - dialogRect.width - margin
+      ));
+      const belowTop = triggerRect.bottom + 9;
+      const placement = belowTop + dialogRect.height <= viewportHeight - margin ? "below" : "above";
+      const preferredTop = placement === "below" ? belowTop : triggerRect.top - dialogRect.height - 9;
+      const top = Math.max(margin, Math.min(preferredTop, viewportHeight - dialogRect.height - margin));
+      const arrowLeft = Math.max(16, Math.min(
+        triggerRect.left + triggerRect.width / 2 - left,
+        dialogRect.width - 16
+      ));
+      dialog.dataset.placement = placement;
+      dialog.style.left = `${left}px`;
+      dialog.style.top = `${top}px`;
+      dialog.style.setProperty("--bubble-arrow-left", `${arrowLeft}px`);
+    }
+    function showRecordedEntryDetails(kind, productId, trigger) {
+      if (!trigger) return;
+      if (document.getElementById("recorded-entry-dialog").open && recordedEntryTrigger === trigger) {
+        closeRecordedEntryDetails();
+        return;
+      }
       const session = state.sessions.find((item) => item.id === selectedRecordedSessionId && item.snapshot);
       const product = session?.snapshot?.products?.find((item) => item.id === productId);
       if (!session || !product) {
@@ -5577,7 +5621,11 @@
         ? `<div class="recorded-entry-list">${rows}</div>`
         : `<div class="recorded-entry-empty"><strong>Belum ada detail transaksi</strong><span>Belum ada data invoice atau PREC/RETUR untuk item ini.</span></div>`;
       translateDocument(dialog);
-      if (!dialog.open) dialog.showModal();
+      recordedEntryTrigger?.setAttribute("aria-expanded", "false");
+      recordedEntryTrigger = trigger;
+      trigger.setAttribute("aria-expanded", "true");
+      if (!dialog.open) dialog.show();
+      positionRecordedEntryDialog();
     }
     function renderRecordedSheet(session, sheet, printMode = false) {
       const snapshot = session.snapshot || {};
@@ -5636,10 +5684,10 @@
         const variance = varianceFor(product, inboundEntries);
         const status = statusFor(product, countMode, inboundEntries);
         const inboundQuantity = included
-          ? `<button class="recorded-quantity-trigger" type="button" data-recorded-entry="inbound" data-product-id="${escapeHtml(product.id)}" aria-label="Lihat detail Inbound/Retur">${formatNumber(inboundQuantityFor(product.id, inboundEntries))}</button>`
+          ? `<button class="recorded-quantity-trigger" type="button" data-recorded-entry="inbound" data-product-id="${escapeHtml(product.id)}" aria-label="Lihat detail Inbound/Retur" aria-haspopup="dialog" aria-expanded="false">${formatNumber(inboundQuantityFor(product.id, inboundEntries))}</button>`
           : "-";
         const pjQuantity = included
-          ? `<button class="recorded-quantity-trigger" type="button" data-recorded-entry="pj" data-product-id="${escapeHtml(product.id)}" aria-label="Lihat detail PJ">${formatNumber(product.pj || 0)}</button>`
+          ? `<button class="recorded-quantity-trigger" type="button" data-recorded-entry="pj" data-product-id="${escapeHtml(product.id)}" aria-label="Lihat detail PJ" aria-haspopup="dialog" aria-expanded="false">${formatNumber(product.pj || 0)}</button>`
           : "-";
         return `<tr><td class="number-cell">${index + 1}</td><td><div class="product-name">${escapeHtml(product.name)}</div><div class="product-sku">${escapeHtml(product.sku)}</div></td><td><span class="category-chip" data-user-content>${escapeHtml(product.brand || "-")}</span></td><td class="number-cell quantity-cell">${formatNumber(product.stock)}</td><td class="number-cell quantity-cell">${included ? formatNumber(product.count || 0) : "-"}</td><td class="number-cell quantity-cell">${formatNumber(product.box || 0)}</td><td class="number-cell quantity-cell">${inboundQuantity}</td><td class="number-cell quantity-cell">${pjQuantity}</td><td class="quantity-cell"><span class="variance ${variance === 0 ? "zero" : variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td><td><span class="row-status ${status.className}">${status.label}</span></td><td data-user-content>${escapeHtml(product.note || "-")}</td></tr>`;
       }).join("");
@@ -6084,6 +6132,7 @@
 
     function render() {
       if ((currentPage === "admin-users" || currentPage === "data-resources") && !isSuperAdmin()) currentPage = "opname";
+      if (document.getElementById("recorded-entry-dialog")?.open) closeRecordedEntryDetails();
       if (authSession) {
         const savedPage = currentPage === "completed-session-detail" ? "completed-sessions" : currentPage === "recorded-archive" ? "dashboard" : currentPage;
         try {
@@ -7593,18 +7642,30 @@
     document.addEventListener("click", (event) => {
       const recordedEntryButton = event.target.closest("[data-recorded-entry]");
       if (recordedEntryButton) {
-        showRecordedEntryDetails(recordedEntryButton.dataset.recordedEntry, recordedEntryButton.dataset.productId);
+        showRecordedEntryDetails(recordedEntryButton.dataset.recordedEntry, recordedEntryButton.dataset.productId, recordedEntryButton);
         return;
       }
       if (event.target.closest("[data-recorded-entry-close]")) {
-        document.getElementById("recorded-entry-dialog").close();
+        closeRecordedEntryDetails();
         return;
       }
+      const recordedEntryDialog = document.getElementById("recorded-entry-dialog");
+      if (recordedEntryDialog.open && !recordedEntryDialog.contains(event.target)) closeRecordedEntryDetails();
       const toggle = event.target.closest("[data-theme-toggle]");
       if (toggle) applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark", true);
       const accentToggle = event.target.closest("[data-accent-toggle]");
       if (accentToggle) applyAccent(document.documentElement.dataset.accent === "burgundy" ? "green" : "burgundy", true);
     });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && document.getElementById("recorded-entry-dialog").open) {
+        event.preventDefault();
+        closeRecordedEntryDetails();
+      }
+    });
+    window.addEventListener("resize", positionRecordedEntryDialog);
+    window.addEventListener("scroll", (event) => {
+      if (!document.getElementById("recorded-entry-dialog").contains(event.target)) closeRecordedEntryDetails();
+    }, true);
     document.addEventListener("change", (event) => {
       if (event.target.id === "recorded-period-month" || event.target.id === "recorded-period-week") {
         updateRecordedPeriodAvailability();
