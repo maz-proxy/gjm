@@ -3733,6 +3733,24 @@
         host.append(button);
       });
     }
+    function getCameraVideoConstraints() {
+      return {
+        facingMode: { ideal: "environment" },
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+        focusMode: { ideal: "continuous" }
+      };
+    }
+    async function requestContinuousAutofocus(video) {
+      const track = video.srcObject?.getVideoTracks?.()[0];
+      const supportedModes = track?.getCapabilities?.().focusMode;
+      if (!track || !supportedModes?.includes("continuous")) return;
+      try {
+        await track.applyConstraints({ advanced: [{ focusMode: "continuous" }] });
+      } catch (error) {
+        console.warn("Autofokus kamera tidak dapat diatur ke mode kontinu:", error);
+      }
+    }
     async function detectCameraBarcode() {
       const dialog = document.getElementById("camera-scan-dialog");
       const video = document.getElementById("camera-scan-video");
@@ -3773,10 +3791,11 @@
       if (window.ZXingBrowser?.BrowserMultiFormatReader) {
         try {
           const reader = new window.ZXingBrowser.BrowserMultiFormatReader();
+          const video = document.getElementById("camera-scan-video");
           let barcodeFound = false;
           const controls = await reader.decodeFromConstraints(
-            { audio: false, video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } } },
-            document.getElementById("camera-scan-video"),
+            { audio: false, video: getCameraVideoConstraints() },
+            video,
             (result, _error, scanControls) => {
               // ZXing reports normal frame misses through the error callback; keep scanning until a result is found.
               const value = result?.getText()?.trim();
@@ -3797,6 +3816,7 @@
             return;
           }
           cameraReaderControls = controls;
+          await requestContinuousAutofocus(video);
           setCameraScanStatus("Arahkan barcode Serial Number ke dalam bingkai.");
           return;
         } catch (error) {
@@ -3829,7 +3849,7 @@
         cameraBarcodeDetector = new window.BarcodeDetector({ formats });
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: false,
-          video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } }
+          video: getCameraVideoConstraints()
         });
         if (!dialog.open) {
           stream.getTracks().forEach((track) => track.stop());
@@ -3839,6 +3859,7 @@
         const video = document.getElementById("camera-scan-video");
         video.srcObject = stream;
         await video.play();
+        await requestContinuousAutofocus(video);
         setCameraScanStatus("Arahkan barcode Serial Number ke dalam bingkai.");
         void detectCameraBarcode();
       } catch (error) {
