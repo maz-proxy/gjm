@@ -51,9 +51,12 @@ The browser app uses the Supabase project URL and publishable key in `index.html
    npx.cmd --yes supabase functions deploy login-with-username --project-ref gyrzbossqkuiawwuqkfo
    npx.cmd --yes supabase functions deploy provision-stock-users --project-ref gyrzbossqkuiawwuqkfo
    npx.cmd --yes supabase functions deploy admin-users --project-ref gyrzbossqkuiawwuqkfo
+   npx.cmd --yes supabase functions deploy public-recorded-sessions --project-ref gyrzbossqkuiawwuqkfo
    ```
 
    On PowerShell, use `npx.cmd` rather than `npx` if script execution is blocked. The functions use Supabase's built-in server-side credentials. Never put a secret or `service_role` key in browser code or commit one to GitHub.
+
+The login page includes a public, read-only Stock Opname Recorded browser. Its `public-recorded-sessions` Edge Function returns archived sessions and their recorded snapshots only; it does not grant anonymous access to `stock_opname_state` or expose active workspaces. Deploy this function after publishing the page update. Its read-only archive contents, including PIC names, serial numbers, invoice/PREC references, and quantities, are intentionally public.
 
 5. Publish the updated `index.html` to GitHub Pages before creating the staff accounts. The updated app is required to securely verify the temporary password and force each person to replace it on first login.
 6. Run the following in the same PowerShell window to create the 19 staff accounts. It creates a random one-time provisioning key, saves it only as a Supabase Edge Function secret, and calls the protected function. The function generates one random temporary password for newly created accounts; it is shown in the result only once.
