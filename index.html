@@ -4304,6 +4304,7 @@
     }
     function lockApp() {
       authSession = null;
+      if (isMobileDrawerEnabled()) setAndroidNavigationOpen(false);
       stopPresenceChannel();
       stopSharedStateChannel();
       document.body.classList.remove("auth-checking");
