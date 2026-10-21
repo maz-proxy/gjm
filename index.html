@@ -1806,7 +1806,14 @@
     html.mobile-drawer-enabled.android-nav-open .android-sidebar-backdrop { opacity: 1; pointer-events: auto; visibility: visible; }
     html.mobile-drawer-enabled body.auth-locked .android-sidebar-handle { display: none; }
     html.mobile-drawer-enabled main { min-height: 100vh; padding-bottom: max(30px, env(safe-area-inset-bottom, 0px)); }
-    html.mobile-drawer-enabled .sidebar-toggle { touch-action: manipulation; }
+    html.mobile-drawer-enabled .android-sidebar-handle,
+    html.mobile-drawer-enabled .android-sidebar-backdrop,
+    html.mobile-drawer-enabled .app-shell > .sidebar button { -webkit-tap-highlight-color: transparent; }
+    html.mobile-drawer-enabled .android-sidebar-handle:focus:not(:focus-visible),
+    html.mobile-drawer-enabled .android-sidebar-backdrop:focus:not(:focus-visible),
+    html.mobile-drawer-enabled .app-shell > .sidebar button:focus:not(:focus-visible) { outline: none; }
+    html.mobile-drawer-enabled .sidebar-toggle,
+    html.mobile-drawer-enabled .app-shell > .sidebar .nav-item { touch-action: manipulation; }
     @media (prefers-reduced-motion: reduce) {
       html.mobile-drawer-enabled .app-shell > .sidebar,
       html.mobile-drawer-enabled .android-sidebar-handle,
