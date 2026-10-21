@@ -3926,8 +3926,7 @@
       }
       try {
         const supportedFormats = await window.BarcodeDetector.getSupportedFormats();
-        const formats = ["code_128", "code_39", "ean_13", "ean_8", "qr_code", "upc_a", "upc_e", "itf", "data_matrix"]
-          .filter((format) => supportedFormats.includes(format));
+        const formats = supportedFormats;
         if (!dialog.open) return;
         if (!formats.length) {
           setCameraScanStatus("Browser tidak memiliki format barcode yang didukung untuk dipindai.", "error");
