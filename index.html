@@ -98,6 +98,20 @@
     html[data-theme="dark"] .logout-confirm-dialog .dialog-actions { background: #1b2823; }
     html[data-accent="burgundy"] .logout-confirm-dialog .button-danger { background: linear-gradient(135deg, #9a3b5e, #742542); border-color: #9a3b5e; color: #fff; }
     html[data-accent="burgundy"] .logout-confirm-dialog .button-danger:hover { background: linear-gradient(135deg, #842b4b, #5d1c35); }
+    .app-confirm-dialog { background: var(--paper); border: 1px solid var(--line); border-radius: 15px; box-shadow: var(--shadow); max-width: min(420px, calc(100vw - 32px)); overflow: hidden; padding: 0; width: 100%; }
+    .app-confirm-dialog::backdrop { background: rgba(17, 27, 26, .58); backdrop-filter: blur(3px); }
+    .app-confirm-dialog .dialog-head { align-items: center; background: linear-gradient(115deg, color-mix(in srgb, var(--green) 9%, var(--paper)), var(--paper) 78%); border-bottom-color: var(--line); border-top: 3px solid var(--green); gap: 13px; padding: 17px 20px 15px; }
+    .app-confirm-dialog[data-tone="danger"] .dialog-head { background: linear-gradient(115deg, color-mix(in srgb, var(--red) 9%, var(--paper)), var(--paper) 78%); border-top-color: var(--red); }
+    .app-confirm-mark { align-items: center; background: var(--green-soft); border-radius: 50%; color: var(--green-dark); display: inline-flex; flex: 0 0 38px; font-size: 19px; font-weight: 800; height: 38px; justify-content: center; width: 38px; }
+    .app-confirm-dialog[data-tone="danger"] .app-confirm-mark { background: var(--red-soft); color: var(--red); }
+    .app-confirm-dialog .dialog-title { font-size: 15px; }
+    .app-confirm-dialog .dialog-subtitle { margin-top: 3px; }
+    .app-confirm-copy { color: var(--muted); font-size: 13px; line-height: 1.6; padding: 17px 21px 19px; }
+    .app-confirm-dialog .dialog-actions { background: color-mix(in srgb, var(--green) 5%, var(--canvas)); border-top-color: var(--line); padding: 12px 18px; }
+    .app-confirm-dialog[data-tone="danger"] .dialog-actions { background: color-mix(in srgb, var(--red) 5%, var(--canvas)); }
+    html[data-theme="dark"] .app-confirm-dialog::backdrop { background: rgba(0, 0, 0, .68); }
+    html[data-theme="dark"] .app-confirm-dialog .dialog-actions { background: color-mix(in srgb, var(--green) 9%, var(--paper)); }
+    html[data-theme="dark"] .app-confirm-dialog[data-tone="danger"] .dialog-actions { background: color-mix(in srgb, var(--red) 9%, var(--paper)); }
     .pj-delete-confirm-dialog { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; max-width: min(390px, calc(100vw - 32px)); overflow: hidden; padding: 0; width: 100%; }
     .pj-delete-confirm-dialog::backdrop { background: rgba(17, 27, 26, .52); backdrop-filter: blur(3px); }
     .pj-delete-confirm-dialog .dialog-head { background: color-mix(in srgb, var(--green) 8%, var(--paper)); border-bottom-color: var(--line); border-top: 3px solid var(--green); padding: 15px 18px 12px; }
@@ -2216,6 +2230,11 @@
     <div class="logout-confirm-copy" id="logout-confirm-copy">Apakah Anda yakin ingin keluar dari workspace?</div>
     <div class="dialog-actions"><button class="button button-secondary" type="button" data-close="logout-confirm-dialog">Batal</button><button class="button button-danger" id="confirm-logout-button" type="button">Ya, Keluar</button></div>
   </dialog>
+  <dialog id="app-confirm-dialog" class="app-confirm-dialog" aria-labelledby="app-confirm-title" aria-describedby="app-confirm-copy">
+    <div class="dialog-head"><span class="app-confirm-mark" id="app-confirm-mark" aria-hidden="true">?</span><div><div class="dialog-title" id="app-confirm-title">Konfirmasi tindakan</div><div class="dialog-subtitle" id="app-confirm-subtitle"></div></div></div>
+    <div class="app-confirm-copy" id="app-confirm-copy"></div>
+    <form method="dialog" class="dialog-actions"><button class="button button-secondary" type="submit" value="cancel">Batal</button><button class="button button-primary" id="app-confirm-submit" type="submit" value="confirm">Lanjutkan</button></form>
+  </dialog>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -3619,6 +3638,22 @@
       clearTimeout(toastTimer);
       toastTimer = setTimeout(() => toast.classList.remove("visible"), 2300);
     };
+    function showConfirmDialog(message, { title = "Konfirmasi tindakan", subtitle = "Periksa kembali sebelum melanjutkan.", confirmLabel = "Lanjutkan", destructive = false } = {}) {
+      const dialog = document.getElementById("app-confirm-dialog");
+      const confirmButton = document.getElementById("app-confirm-submit");
+      document.getElementById("app-confirm-title").textContent = title;
+      document.getElementById("app-confirm-subtitle").textContent = subtitle;
+      document.getElementById("app-confirm-copy").textContent = message;
+      document.getElementById("app-confirm-mark").textContent = destructive ? "!" : "?";
+      dialog.dataset.tone = destructive ? "danger" : "default";
+      confirmButton.textContent = confirmLabel;
+      confirmButton.className = `button ${destructive ? "button-danger" : "button-primary"}`;
+      return new Promise((resolve) => {
+        dialog.addEventListener("close", () => resolve(dialog.returnValue === "confirm"), { once: true });
+        dialog.showModal();
+        dialog.querySelector('[value="cancel"]').focus();
+      });
+    }
     function setWorkbookUploadLoadingMessage(message) {
       const dialog = document.getElementById("workbook-upload-loading-dialog");
       document.getElementById("workbook-upload-loading-message").textContent = message;
@@ -6356,7 +6391,12 @@
         return;
       }
       if (!state.resources.androidApp?.name) return;
-      if (!window.confirm("Hapus APK Android dari halaman login?")) return;
+      if (!await showConfirmDialog("APK Android akan dihapus dari halaman login dan tidak lagi tersedia untuk diunduh.", {
+        title: "Hapus APK Android?",
+        subtitle: "File aplikasi yang tersimpan akan dihapus.",
+        confirmLabel: "Hapus APK",
+        destructive: true
+      })) return;
       const button = document.getElementById("android-app-remove");
       if (button) button.disabled = true;
       try {
@@ -6440,7 +6480,7 @@
       notify(original ? "Data Resource berhasil diperbarui." : "Data Resource berhasil ditambahkan.");
     }
 
-    function removeResource(type, name) {
+    async function removeResource(type, name) {
       if (!canManageDataResources() || (type !== "brands" && type !== "picNames")) {
         notify("Data Resource hanya dapat diubah oleh Super Admin Resource.");
         return;
@@ -6449,7 +6489,12 @@
         notify("Data resource tidak ditemukan.");
         return;
       }
-      if (!window.confirm(`Hapus ${name} dari daftar Data Resource? Nilai yang sudah dipakai pada sesi tetap tersimpan.`)) return;
+      if (!await showConfirmDialog(`${name} akan dihapus dari daftar Data Resource. Nilai yang sudah digunakan pada sesi tetap tersimpan.`, {
+        title: "Hapus Data Resource?",
+        subtitle: "Tindakan ini tidak dapat dibatalkan.",
+        confirmLabel: "Hapus data",
+        destructive: true
+      })) return;
       state.resources[type] = state.resources[type].filter((item) => item !== name);
       persist();
       render();
@@ -6492,8 +6537,23 @@
 
     async function administerUser(action, username, value) {
       if (!isSuperAdmin()) return;
-      if (action === "toggle" && !window.confirm(`${value ? "Aktifkan" : "Nonaktifkan"} akun ${username}?`)) return;
-      if (action === "role" && !window.confirm(`Ubah peran ${username} menjadi ${value === "resource_admin" ? "Super Adm" : "Staf"}?`)) {
+      if (action === "toggle" && !await showConfirmDialog(
+        `Akun ${username} akan ${value ? "dinonaktifkan" : "diaktifkan"}.`,
+        {
+          title: value ? "Nonaktifkan akun?" : "Aktifkan akun?",
+          subtitle: "Status akun akan diperbarui.",
+          confirmLabel: value ? "Nonaktifkan" : "Aktifkan",
+          destructive: value
+        }
+      )) return;
+      if (action === "role" && !await showConfirmDialog(
+        `Peran akun ${username} akan diubah menjadi ${value === "resource_admin" ? "Super Adm" : "Staf"}. Hak akses akun akan mengikuti peran yang dipilih.`,
+        {
+          title: "Ubah peran akun?",
+          subtitle: "Periksa kembali perubahan akses ini.",
+          confirmLabel: "Ubah peran"
+        }
+      )) {
         await loadAdminUsers();
         return;
       }
@@ -7166,7 +7226,15 @@
       if (typeof XLSX === "undefined") { notify("Parser XLSX/CSV tidak termuat. Periksa koneksi internet lalu muat ulang aplikasi."); return; }
       if (!/\.(xlsx|xls|csv)$/i.test(file.name)) { notify("Pilih file Excel .xlsx/.xls atau CSV."); return; }
       if (file.size > 50 * 1024 * 1024) { notify("Ukuran file melebihi batas arsip 50 MB."); return; }
-      if (state.products.length && (state.scanEvents.length || state.manualEntries.length) && !window.confirm("Workbook baru akan mengganti data sesi yang sedang berjalan. Lanjutkan?")) return;
+      if (state.products.length && (state.scanEvents.length || state.manualEntries.length) && !await showConfirmDialog(
+        "Workbook baru akan mengganti data Master VEF dan hasil pencatatan pada sesi yang sedang berjalan.",
+        {
+          title: "Ganti data sesi?",
+          subtitle: "Perubahan ini akan mengganti workbook aktif.",
+          confirmLabel: "Ganti workbook",
+          destructive: true
+        }
+      )) return;
       const uploadWorkspace = activeWorkspace();
       if (!uploadWorkspace) {
         notify("Sesi aktif tidak ditemukan. File tidak diunggah.");
