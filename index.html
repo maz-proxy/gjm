@@ -1296,7 +1296,8 @@
     .recorded-archive-heading p { color: #d5e9df; font-size: 11px; line-height: 1.6; margin: 5px 0 0; }
     .recorded-archive-meta { color: #d5e9df; display: flex; flex-wrap: wrap; font-size: 10px; gap: 6px 14px; margin-top: 10px; }
     .recorded-archive-meta strong { color: #fff; }
-    .recorded-pic-list { align-content: start; display: flex; flex-wrap: wrap; gap: 9px; }
+    .recorded-pic-list { align-content: start; align-items: stretch; display: flex; flex-wrap: nowrap; gap: 9px; }
+    .recorded-pic-cards { align-content: start; display: flex; flex: 0 0 auto; flex-wrap: wrap; gap: 9px; }
     .recorded-pic-card { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); border-radius: 10px; min-width: 136px; padding: 9px 12px; }
     .recorded-pic-label { color: #c5e0d4; display: block; font-size: 9px; font-weight: 800; letter-spacing: .65px; text-transform: uppercase; }
     .recorded-pic-name { color: #fff; display: block; font-size: 12px; font-weight: 750; margin-top: 3px; }
@@ -1308,7 +1309,11 @@
     .recorded-so-progress-fill { background: #a9e2c4; border-radius: inherit; height: 100%; }
     .recorded-so-progress-row { color: #e0f0e8; font-size: 9px; gap: 8px; line-height: 1.35; }
     .recorded-so-progress-row strong { color: #fff; font-size: 9px; font-variant-numeric: tabular-nums; text-align: right; }
-    @media (max-width: 650px) { .recorded-so-progress { flex-basis: 100%; } }
+    @media (max-width: 650px) {
+      .recorded-pic-list { flex-wrap: wrap; }
+      .recorded-pic-cards { flex: 1 1 100%; }
+      .recorded-so-progress { flex-basis: 100%; }
+    }
     .recorded-archive-head > .button-secondary { background: #fff; border-color: rgba(255,255,255,.75); color: #285c4b; }
     .recorded-archive-head > .button-secondary:hover { background: #eaf5ef; border-color: #fff; }
     .recorded-view-actions { align-items: center; display: grid; gap: 12px; grid-template-columns: auto minmax(180px, 1fr) auto; margin: 0; }
@@ -5819,8 +5824,10 @@
             <div class="recorded-archive-meta"><span><strong>Periode:</strong> ${escapeHtml(archivedSessionMonth(session))} · ${escapeHtml(archivedSessionWeek(session))}</span><span><strong>Selesai:</strong> ${escapeHtml(finishedAt)}</span></div>
           </div>
           <div class="recorded-pic-list" aria-label="PIC sesi">
-            <div class="recorded-pic-card"><span class="recorded-pic-label">PIC 1</span><span class="recorded-pic-name">${escapeHtml(pics[0] || "Belum diisi")}</span></div>
-            <div class="recorded-pic-card"><span class="recorded-pic-label">PIC 2</span><span class="recorded-pic-name">${escapeHtml(pics[1] || "Belum diisi")}</span></div>
+            <div class="recorded-pic-cards">
+              <div class="recorded-pic-card"><span class="recorded-pic-label">PIC 1</span><span class="recorded-pic-name">${escapeHtml(pics[0] || "Belum diisi")}</span></div>
+              <div class="recorded-pic-card"><span class="recorded-pic-label">PIC 2</span><span class="recorded-pic-name">${escapeHtml(pics[1] || "Belum diisi")}</span></div>
+            </div>
             <div class="recorded-so-progress" role="group" aria-label="Progres SO berdasarkan total quantity Master VEF">
               <div class="recorded-so-progress-head"><span>Progres SO</span><strong>${soProgress.completedPercent}%</strong></div>
               <div class="recorded-so-progress-track" role="progressbar" aria-label="Progres SO" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${soProgress.completedPercent}"><div class="recorded-so-progress-fill" style="width:${soProgress.completedPercent}%"></div></div>
