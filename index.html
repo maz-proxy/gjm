@@ -140,7 +140,7 @@
       .auth-screen { justify-content: flex-start; padding-left: clamp(32px, 8vw, 120px); padding-right: 32px; }
     }
     @media (max-width: 650px) {
-      .auth-screen { align-items: flex-start; padding: 78px 15px 24px; }
+      .auth-screen { align-items: center; padding: max(20px, env(safe-area-inset-top, 0px)) 15px max(20px, env(safe-area-inset-bottom, 0px)); }
       .auth-card { padding: 25px 22px; }
     }
     .auth-brand { align-items: center; display: flex; gap: 12px; margin-bottom: 25px; }
