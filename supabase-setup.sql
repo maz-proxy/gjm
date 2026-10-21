@@ -101,6 +101,8 @@ declare
   is_workspace_super_admin boolean :=
     coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'super_admin'
     and coalesce(auth.jwt() -> 'app_metadata' ->> 'owner_username', '') = 'indra';
+  is_workspace_resource_admin boolean :=
+    coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'resource_admin';
   old_workspace_ids text[];
   new_workspace_ids text[];
   removed_workspace jsonb;
@@ -108,15 +110,19 @@ declare
   removed_owner_id text;
   removed_owner_names text[];
 begin
-  if (
-    coalesce(old.data -> 'resources' -> 'brands', '[]'::jsonb) is distinct from coalesce(new.data -> 'resources' -> 'brands', '[]'::jsonb)
-    or coalesce(old.data -> 'resources' -> 'picNames', '[]'::jsonb) is distinct from coalesce(new.data -> 'resources' -> 'picNames', '[]'::jsonb)
-    or coalesce(old.data -> 'resources' -> 'androidApp', 'null'::jsonb) is distinct from coalesce(new.data -> 'resources' -> 'androidApp', 'null'::jsonb)
-  ) and (
-    coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') <> 'super_admin'
-    or coalesce(auth.jwt() -> 'app_metadata' ->> 'owner_username', '') <> 'indra'
+  if coalesce(old.data -> 'resources', '{}'::jsonb) is distinct from coalesce(new.data -> 'resources', '{}'::jsonb)
+    and (
+    not is_workspace_super_admin
+    and not (
+      is_workspace_resource_admin
+      and (new.data - 'resources') is not distinct from (old.data - 'resources')
+      and jsonb_typeof(new.data -> 'resources') = 'object'
+      and (coalesce(new.data -> 'resources', '{}'::jsonb) - 'brands' - 'picNames' - 'androidApp')
+        is not distinct from
+        (coalesce(old.data -> 'resources', '{}'::jsonb) - 'brands' - 'picNames' - 'androidApp')
+    )
   ) then
-    raise exception 'Only the workspace super admin can manage shared stock opname resources.'
+    raise exception 'Only the workspace owner or a resource admin can manage shared stock opname resources.'
       using errcode = '42501';
   end if;
 
@@ -436,8 +442,13 @@ create policy "Workspace owner can upload the Android app"
   with check (
     bucket_id = 'stock-opname-app-downloads'
     and name = 'latest.apk'
-    and coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'super_admin'
-    and coalesce(auth.jwt() -> 'app_metadata' ->> 'owner_username', '') = 'indra'
+    and (
+      (
+        coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'super_admin'
+        and coalesce(auth.jwt() -> 'app_metadata' ->> 'owner_username', '') = 'indra'
+      )
+      or coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'resource_admin'
+    )
   );
 
 drop policy if exists "Workspace owner can replace the Android app" on storage.objects;
@@ -446,14 +457,24 @@ create policy "Workspace owner can replace the Android app"
   using (
     bucket_id = 'stock-opname-app-downloads'
     and name = 'latest.apk'
-    and coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'super_admin'
-    and coalesce(auth.jwt() -> 'app_metadata' ->> 'owner_username', '') = 'indra'
+    and (
+      (
+        coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'super_admin'
+        and coalesce(auth.jwt() -> 'app_metadata' ->> 'owner_username', '') = 'indra'
+      )
+      or coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'resource_admin'
+    )
   )
   with check (
     bucket_id = 'stock-opname-app-downloads'
     and name = 'latest.apk'
-    and coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'super_admin'
-    and coalesce(auth.jwt() -> 'app_metadata' ->> 'owner_username', '') = 'indra'
+    and (
+      (
+        coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'super_admin'
+        and coalesce(auth.jwt() -> 'app_metadata' ->> 'owner_username', '') = 'indra'
+      )
+      or coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'resource_admin'
+    )
   );
 
 drop policy if exists "Workspace owner can delete the Android app" on storage.objects;
@@ -462,6 +483,11 @@ create policy "Workspace owner can delete the Android app"
   using (
     bucket_id = 'stock-opname-app-downloads'
     and name = 'latest.apk'
-    and coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'super_admin'
-    and coalesce(auth.jwt() -> 'app_metadata' ->> 'owner_username', '') = 'indra'
+    and (
+      (
+        coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'super_admin'
+        and coalesce(auth.jwt() -> 'app_metadata' ->> 'owner_username', '') = 'indra'
+      )
+      or coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'resource_admin'
+    )
   );

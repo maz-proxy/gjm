@@ -71,7 +71,7 @@ Deno.serve(async (request: Request) => {
     return jsonResponse(403, { error: "Aksi ini hanya untuk Owner." }, origin);
   }
 
-  let input: { action?: string; username?: string; disabled?: boolean };
+  let input: { action?: string; username?: string; disabled?: boolean; role?: string };
   try {
     input = await request.json();
   } catch {
@@ -104,10 +104,13 @@ Deno.serve(async (request: Request) => {
     return jsonResponse(200, {
       users: (mappings || []).map((mapping) => {
         const user = users.find((candidate) => candidate.email === mapping.email);
+        const owner = user?.app_metadata?.role === "super_admin" &&
+          user?.app_metadata?.owner_username === "indra";
         return {
           username: mapping.username,
           disabled: Boolean(user?.banned_until && new Date(user.banned_until).getTime() > Date.now()),
-          superAdmin: user?.app_metadata?.role === "super_admin",
+          superAdmin: owner,
+          resourceAdmin: user?.app_metadata?.role === "resource_admin",
         };
       }),
     }, origin);
@@ -180,6 +183,34 @@ Deno.serve(async (request: Request) => {
   }
   if (!targetUser) return jsonResponse(404, { error: "Akun autentikasi tidak ditemukan." }, origin);
 
+  if (input.action === "set-role") {
+    if (targetUser.app_metadata?.owner_username === "indra") {
+      return jsonResponse(403, { error: "Peran akun Owner tidak dapat diubah." }, origin);
+    }
+    if (input.role !== "staff" && input.role !== "resource_admin") {
+      return jsonResponse(400, { error: "Peran yang dipilih tidak valid." }, origin);
+    }
+    const appMetadata = { ...targetUser.app_metadata };
+    delete appMetadata.owner_username;
+    if (input.role === "resource_admin") appMetadata.role = "resource_admin";
+    else delete appMetadata.role;
+
+    const { error } = await adminClient.auth.admin.updateUserById(targetUser.id, {
+      app_metadata: appMetadata,
+    });
+    if (error) {
+      console.error("Admin account role update failed:", error.message);
+      return jsonResponse(500, { error: "Peran akun gagal diperbarui." }, origin);
+    }
+    return jsonResponse(200, {
+      username,
+      role: input.role,
+      message: input.role === "resource_admin"
+        ? `Peran ${username} diubah menjadi Super Admin · Data Resource. Logout dan login kembali agar hak akses baru aktif.`
+        : `Peran ${username} diubah menjadi Staf. Logout dan login kembali agar perubahan aktif.`,
+    }, origin);
+  }
+
   if (input.action === "reset-password") {
     const { error } = await adminClient.auth.admin.updateUserById(targetUser.id, {
       password: resetTemporaryPassword,
@@ -201,7 +232,7 @@ Deno.serve(async (request: Request) => {
   }
 
   if (input.action === "set-disabled") {
-    if (targetUser.app_metadata?.owner_username === "indra") {
+    if (targetUser.app_metadata?.role === "super_admin" && targetUser.app_metadata?.owner_username === "indra") {
       return jsonResponse(403, { error: "Akun pemilik tidak dapat dinonaktifkan." }, origin);
     }
     if (typeof input.disabled !== "boolean") {

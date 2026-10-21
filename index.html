@@ -81,6 +81,7 @@
     .admin-notice.success { background: var(--green-soft); color: var(--green-dark); }
     .admin-notice.error { background: var(--red-soft); color: var(--red); }
     .admin-create-form { align-items: end; display: grid; gap: 10px; grid-template-columns: minmax(180px, 1fr) auto; }
+    .admin-role-select { max-width: 220px; min-width: 175px; }
     .admin-user-status { color: var(--muted); font-size: 11px; }
     .logout-button { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.17); border-radius: 7px; color: #f4f8f2; font-size: 10px; margin-left: auto; padding: 6px 8px; }
     .logout-button:hover { background: rgba(255,255,255,.18); }
@@ -3920,11 +3921,13 @@
       initializeAppBackNavigation();
       const username = session.user.user_metadata?.username || session.user.email || "Pengguna";
       document.getElementById("profile-name").textContent = formatDisplayName(username);
-      document.getElementById("profile-role").textContent = isSuperAdmin() ? "owner" : "staf";
+      document.getElementById("profile-role").textContent = isSuperAdmin()
+        ? "owner"
+        : isResourceAdmin() ? "super admin · resource" : "staf";
       document.getElementById("admin-users-nav").hidden = !isSuperAdmin();
-      document.getElementById("data-resources-nav").hidden = !isSuperAdmin();
-      document.getElementById("admin-nav-label").hidden = !isSuperAdmin();
-      document.getElementById("admin-navigation").hidden = !isSuperAdmin();
+      document.getElementById("data-resources-nav").hidden = !canManageDataResources();
+      document.getElementById("admin-nav-label").hidden = !canManageDataResources();
+      document.getElementById("admin-navigation").hidden = !canManageDataResources();
       startPresenceChannel();
       beginIdleTracking(session);
     }
@@ -4014,6 +4017,8 @@
     }
     const isSuperAdmin = () => authSession?.user?.app_metadata?.role === "super_admin"
       && authSession?.user?.app_metadata?.owner_username === "indra";
+    const isResourceAdmin = () => authSession?.user?.app_metadata?.role === "resource_admin";
+    const canManageDataResources = () => isSuperAdmin() || isResourceAdmin();
     const formatDisplayName = (username) => String(username || "Pengguna").trim().toLocaleUpperCase("id-ID");
     function databaseSetupHint(error) {
       const message = `${error.message || ""} ${error.details || ""}`;
@@ -6187,7 +6192,8 @@
     }
 
     function render() {
-      if ((currentPage === "admin-users" || currentPage === "data-resources") && !isSuperAdmin()) currentPage = "opname";
+      if ((currentPage === "admin-users" && !isSuperAdmin())
+        || (currentPage === "data-resources" && !canManageDataResources())) currentPage = "opname";
       if (document.getElementById("recorded-entry-dialog")?.open) closeRecordedEntryDetails();
       if (authSession) {
         const savedPage = currentPage === "completed-session-detail" ? "completed-sessions" : currentPage === "recorded-archive" ? "dashboard" : currentPage;
@@ -6268,7 +6274,7 @@
           ${guide("Langkah 5", "↕", "Rekap Selisih", "Tinjau hanya item yang belum sesuai; kolom selisih membandingkan jumlah SCAN + MANUAL + PJ dengan quantity VEF. Tambahkan catatan untuk menjelaskan kekurangan atau kelebihan. Periksa kembali data sebelum sesi diselesaikan karena hasil yang diarsipkan menjadi rekaman baca-saja.", "recap", "Rekap Selisih")}
           ${guide("Arsip", "▣", "Sesi Stock Opname", "Gunakan Buka sesi untuk meninjau workbook sumber, rincian setiap rack, input manual, seluruh item Result SO, daftar invoice PJ, dan Rekap Selisih. Ekspor XLSX berisi worksheet arsip beserta detail input, sedangkan Print menyusun laporan untuk dicetak atau disimpan sebagai PDF. Arsip lama tetap tersedia walaupun kartu jadwal sudah direset.", "completed-sessions", "Sesi Stock Opname")}
           ${guide("Aktivitas", "◷", "Riwayat Perubahan", "Lihat aktivitas berdasarkan waktu dan sesi, seperti mulai/selesai opname, scan ditambahkan, input manual, dan perubahan catatan atau quantity. Gunakan riwayat untuk membantu audit dan menelusuri perubahan data.", "history", "Riwayat Perubahan")}
-          ${isSuperAdmin() ? guide("Admin", "▧", "Data Resource", "Tambahkan, ubah, atau hapus pilihan Nama Brand dan Nama PIC, serta unggah atau ganti APK yang tersedia untuk diunduh dari halaman login. Daftar dan informasi APK dibagikan kepada seluruh akun.", "data-resources", "Data Resource") : ""}
+          ${canManageDataResources() ? guide("Admin", "▧", "Data Resource", "Tambahkan, ubah, atau hapus pilihan Nama Brand dan Nama PIC, serta unggah atau ganti APK yang tersedia untuk diunduh dari halaman login. Daftar dan informasi APK dibagikan kepada seluruh akun.", "data-resources", "Data Resource") : ""}
           ${isSuperAdmin() ? guide("Admin", "♙", "Kelola Akun", "Buat akun staf, reset password, dan aktifkan atau nonaktifkan akses akun.", "admin-users", "Kelola Akun") : ""}
         </section>`;
     }
@@ -6283,13 +6289,13 @@
     }
 
     function renderDataResources() {
-      if (!isSuperAdmin()) {
+      if (!canManageDataResources()) {
         currentPage = "opname";
         return renderOpname();
       }
       const androidApp = state.resources.androidApp;
       const uploadDate = androidApp?.uploadedAt ? formatDate(androidApp.uploadedAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "";
-      const androidAppCard = `<section class="table-section resource-card android-resource-card"><div class="table-toolbar"><div><div class="table-title">APK Android</div><p class="subtitle">Unggah APK terbaru (maksimal 50 MB) agar tombol Download tersedia di halaman login. Berkas ini dapat diganti oleh Owner kapan saja.</p></div><span class="category-chip">${androidApp?.name ? "APK tersedia" : "Belum ada APK"}</span></div><div class="android-resource-content"><div class="android-resource-file">${androidApp?.name ? `<strong>${escapeHtml(androidApp.name)}</strong><span>${formatNumber((androidApp.size || 0) / (1024 * 1024))} MB${uploadDate ? ` · diunggah ${escapeHtml(uploadDate)}` : ""}</span>` : "<strong>Belum ada file APK</strong><span>Pilih file APK untuk mengaktifkan download di halaman login.</span>"}</div><div class="android-resource-actions"><input class="android-resource-input" id="android-app-file" type="file" accept=".apk,application/vnd.android.package-archive"><button class="button button-primary" id="android-app-upload" type="button">Unggah APK</button><button class="button button-danger" id="android-app-remove" type="button" ${androidApp?.name ? "" : "disabled"}>Hapus APK</button></div></div></section>`;
+      const androidAppCard = `<section class="table-section resource-card android-resource-card"><div class="table-toolbar"><div><div class="table-title">APK Android</div><p class="subtitle">Unggah APK terbaru (maksimal 50 MB) agar tombol Download tersedia di halaman login. Berkas ini dapat dikelola oleh Super Admin Resource dan Owner.</p></div><span class="category-chip">${androidApp?.name ? "APK tersedia" : "Belum ada APK"}</span></div><div class="android-resource-content"><div class="android-resource-file">${androidApp?.name ? `<strong>${escapeHtml(androidApp.name)}</strong><span>${formatNumber((androidApp.size || 0) / (1024 * 1024))} MB${uploadDate ? ` · diunggah ${escapeHtml(uploadDate)}` : ""}</span>` : "<strong>Belum ada file APK</strong><span>Pilih file APK untuk mengaktifkan download di halaman login.</span>"}</div><div class="android-resource-actions"><input class="android-resource-input" id="android-app-file" type="file" accept=".apk,application/vnd.android.package-archive"><button class="button button-primary" id="android-app-upload" type="button">Unggah APK</button><button class="button button-danger" id="android-app-remove" type="button" ${androidApp?.name ? "" : "disabled"}>Hapus APK</button></div></div></section>`;
       return `${navMarkup()}<section class="page-head"><div><h1>Data Resource</h1><p class="subtitle">Kelola daftar Nama Brand, Nama PIC, dan file APK Android yang tersedia bagi seluruh pengguna.</p></div></section><div class="resource-cards">${renderDataResourceList("brands", "Nama Brand", "Pilihan ini menjadi sumber dropdown Nama Brand di Jadwal.")}${renderDataResourceList("picNames", "Nama PIC", "Pilihan ini menjadi sumber dropdown PIC 1 dan PIC 2 di Jadwal.")}${androidAppCard}</div>`;
     }
 
@@ -6310,8 +6316,8 @@
       }
     }
     async function uploadAndroidApp(file) {
-      if (!isSuperAdmin()) {
-        notify("File APK hanya dapat dikelola oleh Owner.");
+      if (!canManageDataResources()) {
+        notify("File APK hanya dapat dikelola oleh Super Admin Resource.");
         return;
       }
       if (!file || !/\.apk$/i.test(file.name)) {
@@ -6345,8 +6351,8 @@
       }
     }
     async function removeAndroidApp() {
-      if (!isSuperAdmin()) {
-        notify("File APK hanya dapat dikelola oleh Owner.");
+      if (!canManageDataResources()) {
+        notify("File APK hanya dapat dikelola oleh Super Admin Resource.");
         return;
       }
       if (!state.resources.androidApp?.name) return;
@@ -6370,8 +6376,8 @@
     }
 
     function saveResource(form) {
-      if (!isSuperAdmin()) {
-        notify("Data Resource hanya dapat diubah oleh Owner.");
+      if (!canManageDataResources()) {
+        notify("Data Resource hanya dapat diubah oleh Super Admin Resource.");
         return;
       }
       const type = form.dataset.resourceForm || form.dataset.resourceEditForm;
@@ -6435,8 +6441,8 @@
     }
 
     function removeResource(type, name) {
-      if (!isSuperAdmin() || (type !== "brands" && type !== "picNames")) {
-        notify("Data Resource hanya dapat diubah oleh Owner.");
+      if (!canManageDataResources() || (type !== "brands" && type !== "picNames")) {
+        notify("Data Resource hanya dapat diubah oleh Super Admin Resource.");
         return;
       }
       if (!state.resources[type].includes(name)) {
@@ -6451,7 +6457,7 @@
     }
 
     function renderAdminUsers() {
-      return `${navMarkup()}<section class="page-head"><div><h1>Kelola Akun Staf</h1><p class="subtitle">Buat akun username, reset password, dan atur akses masuk workspace.</p></div></section><section class="table-section"><div class="table-toolbar"><div class="table-title">Tambah akun staf</div></div><form class="admin-create-form" id="admin-create-form"><label class="auth-field"><span>Username</span><input class="auth-input" name="username" type="text" minlength="3" maxlength="30" pattern="[a-z0-9][a-z0-9._-]{2,29}" required placeholder="contoh: stafbaru"></label><button class="button button-primary" type="submit">Buat akun</button></form><div class="admin-notice ${adminNoticeType}" id="admin-notice" ${adminNotice ? "" : "hidden"}>${escapeHtml(adminNotice)}</div></section><section class="table-section"><div class="table-toolbar"><div class="table-title">Daftar akun <span class="table-count">${adminUsers.length} staf</span></div><button class="button button-secondary" id="admin-refresh-users" type="button">Muat ulang</button></div><div class="table-scroll"><table><thead><tr><th>Nama</th><th>Username</th><th>Status</th><th>Peran</th><th>Aksi</th></tr></thead><tbody>${adminUsers.length ? adminUsers.map((user) => `<tr><td>${escapeHtml(formatDisplayName(user.username))}</td><td>${escapeHtml(user.username)}</td><td><span class="row-status ${user.disabled ? "pending" : "match"}">${user.disabled ? "Dinonaktifkan" : "Aktif"}</span></td><td>${user.superAdmin ? "Owner" : "Staf"}</td><td><button class="button button-secondary" type="button" data-admin-reset="${escapeHtml(user.username)}">Reset password</button> ${user.superAdmin ? "" : `<button class="button button-secondary" type="button" data-admin-toggle="${escapeHtml(user.username)}" data-disabled="${user.disabled}">${user.disabled ? "Aktifkan" : "Nonaktifkan"}</button>`}</td></tr>`).join("") : `<tr><td colspan="5">Belum ada akun staf.</td></tr>`}</tbody></table></div><div class="table-footer"><span>Password sementara ditampilkan satu kali dan harus diganti saat login berikutnya.</span></div></section>`;
+      return `${navMarkup()}<section class="page-head"><div><h1>Kelola Akun Staf</h1><p class="subtitle">Buat akun username, reset password, dan atur akses masuk workspace.</p></div></section><section class="table-section"><div class="table-toolbar"><div class="table-title">Tambah akun staf</div></div><form class="admin-create-form" id="admin-create-form"><label class="auth-field"><span>Username</span><input class="auth-input" name="username" type="text" minlength="3" maxlength="30" pattern="[a-z0-9][a-z0-9._-]{2,29}" required placeholder="contoh: stafbaru"></label><button class="button button-primary" type="submit">Buat akun</button></form><div class="admin-notice ${adminNoticeType}" id="admin-notice" ${adminNotice ? "" : "hidden"}>${escapeHtml(adminNotice)}</div></section><section class="table-section"><div class="table-toolbar"><div class="table-title">Daftar akun <span class="table-count">${adminUsers.length} staf</span></div><button class="button button-secondary" id="admin-refresh-users" type="button">Muat ulang</button></div><div class="table-scroll"><table><thead><tr><th>Nama</th><th>Username</th><th>Status</th><th>Peran</th><th>Aksi</th></tr></thead><tbody>${adminUsers.length ? adminUsers.map((user) => `<tr><td>${escapeHtml(formatDisplayName(user.username))}</td><td>${escapeHtml(user.username)}</td><td><span class="row-status ${user.disabled ? "pending" : "match"}">${user.disabled ? "Dinonaktifkan" : "Aktif"}</span></td><td>${user.superAdmin ? "Owner" : `<select class="form-control admin-role-select" data-admin-role="${escapeHtml(user.username)}" aria-label="Peran ${escapeHtml(user.username)}"><option value="staff"${user.resourceAdmin ? "" : " selected"}>Staf</option><option value="resource_admin"${user.resourceAdmin ? " selected" : ""}>Super Admin · Data Resource</option></select>`}</td><td><button class="button button-secondary" type="button" data-admin-reset="${escapeHtml(user.username)}">Reset password</button> ${user.superAdmin ? "" : `<button class="button button-secondary" type="button" data-admin-toggle="${escapeHtml(user.username)}" data-disabled="${user.disabled}">${user.disabled ? "Aktifkan" : "Nonaktifkan"}</button>`}</td></tr>`).join("") : `<tr><td colspan="5">Belum ada akun staf.</td></tr>`}</tbody></table></div><div class="table-footer"><span>Super Admin · Data Resource hanya dapat mengelola Nama Brand, Nama PIC, dan APK Android.</span></div></section>`;
     }
 
     async function loadAdminUsers() {
@@ -6484,15 +6490,22 @@
       document.getElementById("reset-password-dialog").showModal();
     }
 
-    async function administerUser(action, username, disabled) {
+    async function administerUser(action, username, value) {
       if (!isSuperAdmin()) return;
-      if (action === "toggle" && !window.confirm(`${disabled ? "Aktifkan" : "Nonaktifkan"} akun ${username}?`)) return;
+      if (action === "toggle" && !window.confirm(`${value ? "Aktifkan" : "Nonaktifkan"} akun ${username}?`)) return;
+      if (action === "role" && !window.confirm(`Ubah peran ${username} menjadi ${value === "resource_admin" ? "Super Admin · Data Resource" : "Staf"}?`)) {
+        await loadAdminUsers();
+        return;
+      }
       const body = action === "reset"
         ? { action: "reset-password", username }
-        : { action: "set-disabled", username, disabled };
+        : action === "toggle"
+          ? { action: "set-disabled", username, disabled: value }
+          : { action: "set-role", username, role: value };
       const { data, error } = await supabaseClient.functions.invoke("admin-users", { body });
       if (error || data?.error) {
         setAdminNotice(data?.error || await getFunctionErrorMessage(error) || "Aksi akun gagal.", "error");
+        if (action === "role") await loadAdminUsers();
         return;
       }
       if (action === "reset" && (!data?.temporaryPassword || data.username !== username)) {
@@ -6546,6 +6559,7 @@
       document.querySelectorAll("[data-remove-resource]").forEach((button) => button.addEventListener("click", () => removeResource(button.dataset.removeResource, button.dataset.resourceName)));
       document.querySelectorAll("[data-admin-reset]").forEach((button) => button.addEventListener("click", () => administerUser("reset", button.dataset.adminReset)));
       document.querySelectorAll("[data-admin-toggle]").forEach((button) => button.addEventListener("click", () => administerUser("toggle", button.dataset.adminToggle, button.dataset.disabled !== "true")));
+      document.querySelectorAll("[data-admin-role]").forEach((select) => select.addEventListener("change", () => administerUser("role", select.dataset.adminRole, select.value)));
       document.getElementById("import-button")?.addEventListener("click", () => document.getElementById("workbook-input").click());
       document.getElementById("delete-master-button")?.addEventListener("click", () => document.getElementById("delete-master-dialog").showModal());
       document.getElementById("add-rack-button")?.addEventListener("click", addRack);
