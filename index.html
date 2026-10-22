@@ -365,7 +365,7 @@
     .camera-scan-dialog .dialog-title { font-size: 15px; }
     .camera-scan-dialog .dialog-subtitle { margin-top: 3px; }
     .camera-scan-preview { background: #101715; min-height: 0; overflow: hidden; position: relative; }
-    .camera-scan-preview video { display: block; height: clamp(120px, 24vh, 205px); min-height: 0; object-fit: cover; width: 100%; }
+    .camera-scan-preview video { display: block; height: clamp(150px, 30vh, 250px); min-height: 0; object-fit: cover; width: 100%; }
     .camera-scan-preview.is-tappable { cursor: crosshair; touch-action: manipulation; }
     .camera-focus-indicator { border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 0 2px rgba(23,107,91,.85), 0 0 16px rgba(0,0,0,.45); height: 54px; left: 50%; opacity: 0; pointer-events: none; position: absolute; top: 50%; transform: translate(-50%,-50%) scale(.72); transition: opacity .15s ease, transform .15s ease; width: 54px; z-index: 2; }
     .camera-focus-indicator.visible { opacity: 1; transform: translate(-50%,-50%) scale(1); }
@@ -376,7 +376,7 @@
     .camera-scan-status[data-state="error"] { color: var(--red); }
     .camera-scan-status[data-state="success"] { color: var(--green-dark); font-weight: 700; }
     .camera-scan-dialog .dialog-actions { background: color-mix(in srgb, var(--green) 5%, var(--canvas)); border-top-color: var(--line); padding: 7px 12px; }
-    @media (max-width: 600px) { .camera-scan-dialog { max-width: calc(100vw - 16px); top: 8px; } .camera-scan-preview video { height: clamp(110px, 22vh, 165px); } }
+    @media (max-width: 600px) { .camera-scan-dialog { max-width: calc(100vw - 16px); top: 8px; } .camera-scan-preview video { height: clamp(145px, 28vh, 210px); } }
     html[data-theme="dark"] .camera-scan-dialog::backdrop { background: rgba(0, 0, 0, .16); backdrop-filter: none; -webkit-backdrop-filter: none; }
     html[data-theme="dark"] .camera-scan-dialog .dialog-actions { background: color-mix(in srgb, var(--green) 9%, var(--paper)); }
     html[data-accent="burgundy"] .layout-camera-button { color: var(--green-dark); }
@@ -3794,35 +3794,13 @@
       });
     }
     async function getCameraVideoConstraints() {
-      const rearCameraConstraints = {
+      return {
         facingMode: { ideal: "environment" },
-        width: { ideal: 1280 },
-        height: { ideal: 720 },
+        width: { ideal: 1920 },
+        height: { ideal: 1080 },
+        frameRate: { ideal: 30 },
         focusMode: { ideal: "continuous" }
       };
-      const permissionStream = await navigator.mediaDevices.getUserMedia({
-        audio: false,
-        video: { facingMode: { ideal: "environment" } }
-      });
-      try {
-        const cameras = await navigator.mediaDevices.enumerateDevices();
-        const macroCamera = cameras.find((device) =>
-          device.kind === "videoinput" && device.deviceId && /\bmacro\b/i.test(device.label)
-        );
-        if (macroCamera) {
-          return {
-            deviceId: { exact: macroCamera.deviceId },
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-            focusMode: { ideal: "continuous" }
-          };
-        }
-      } catch (error) {
-        console.warn("Kamera makro tidak dapat dideteksi; memakai kamera belakang:", error);
-      } finally {
-        permissionStream.getTracks().forEach((track) => track.stop());
-      }
-      return rearCameraConstraints;
     }
     async function requestContinuousAutofocus(video) {
       const track = video.srcObject?.getVideoTracks?.()[0];
@@ -3933,7 +3911,11 @@
       }
       if (window.ZXingBrowser?.BrowserMultiFormatReader) {
         try {
-          const reader = new window.ZXingBrowser.BrowserMultiFormatReader();
+          // DecodeHintType.TRY_HARDER is 3 in the UMD build; the enum is not exported.
+          const reader = new window.ZXingBrowser.BrowserMultiFormatReader(
+            new Map([[3, true]]),
+            { delayBetweenScanAttempts: 100, delayBetweenScanSuccess: 150 }
+          );
           const video = document.getElementById("camera-scan-video");
           let barcodeFound = false;
           const videoConstraints = await getCameraVideoConstraints();
