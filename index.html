@@ -3409,9 +3409,14 @@
     let lastIdleActivityCheck = 0;
     let idleLogoutInProgress = false;
     let idleLogoutMessage = "";
+    let activeDeviceSessionId = "";
+    let deviceSessionCheckTimer = null;
+    let deviceSessionCheckInProgress = false;
+    let deviceSessionLogoutInProgress = false;
     const IDLE_TIMEOUT_MS = 5 * 60 * 60 * 1000;
     const IDLE_CHECK_INTERVAL_MS = 60 * 1000;
     const IDLE_ACTIVITY_WRITE_INTERVAL_MS = 15 * 1000;
+    const DEVICE_SESSION_CHECK_INTERVAL_MS = 15 * 1000;
     let adminUsers = [];
     let adminNotice = "";
     let adminNoticeType = "success";
@@ -4286,6 +4291,11 @@
     }
     function lockApp() {
       authSession = null;
+      activeDeviceSessionId = "";
+      clearInterval(deviceSessionCheckTimer);
+      deviceSessionCheckTimer = null;
+      deviceSessionCheckInProgress = false;
+      deviceSessionLogoutInProgress = false;
       if (isMobileDrawerEnabled()) setAndroidNavigationOpen(false);
       stopPresenceChannel();
       stopSharedStateChannel();
@@ -4434,6 +4444,10 @@
     const formatDisplayName = (username) => String(username || "Pengguna").trim().toLocaleUpperCase("id-ID");
     function databaseSetupHint(error) {
       const message = `${error.message || ""} ${error.details || ""}`;
+      if (/claim_stock_opname_device_session|is_stock_opname_device_session_active|function .* does not exist|could not find the function/i.test(message)
+        || error.code === "PGRST202" || error.code === "42883") {
+        return "Database belum mendukung login satu perangkat. Minta Owner menjalankan ulang seluruh supabase-setup.sql di Supabase → SQL Editor, lalu login kembali.";
+      }
       if (/column .*version.*does not exist|version.*schema cache/i.test(message)) {
         return "Database belum mendukung penyimpanan bersama yang aman. Minta Owner menjalankan ulang seluruh supabase-setup.sql di Supabase → SQL Editor, lalu muat ulang aplikasi.";
       }
@@ -4465,6 +4479,67 @@
         return `Akses database ditolak: ${error.message || "akun tidak memiliki izin untuk operasi ini."} Pastikan supabase-setup.sql sudah dijalankan dan akun Anda sudah diundang.`;
       }
       return `Gagal menyambungkan data bersama: ${error.message || "kesalahan tidak diketahui"}`;
+    }
+    function createDeviceSessionId() {
+      if (crypto.randomUUID) return crypto.randomUUID();
+      const bytes = new Uint8Array(16);
+      crypto.getRandomValues(bytes);
+      bytes[6] = (bytes[6] & 0x0f) | 0x40;
+      bytes[8] = (bytes[8] & 0x3f) | 0x80;
+      const hex = [...bytes].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+      return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+    }
+    function getDeviceSessionId(userId) {
+      const key = `stock-opname-device-session:${userId}`;
+      try {
+        let sessionId = localStorage.getItem(key);
+        if (!sessionId) {
+          sessionId = createDeviceSessionId();
+          localStorage.setItem(key, sessionId);
+        }
+        return sessionId;
+      } catch (error) {
+        console.warn("ID sesi perangkat tidak dapat disimpan; sesi ini hanya berlaku sampai aplikasi ditutup.", error);
+        return createDeviceSessionId();
+      }
+    }
+    async function claimDeviceSession(session) {
+      const sessionId = getDeviceSessionId(session.user.id);
+      const { error } = await supabaseClient.rpc("claim_stock_opname_device_session", {
+        p_session_id: sessionId
+      });
+      if (error) throw error;
+      activeDeviceSessionId = sessionId;
+      return sessionId;
+    }
+    async function checkDeviceSession() {
+      if (!authSession?.user || !activeDeviceSessionId || deviceSessionCheckInProgress || deviceSessionLogoutInProgress) return;
+      deviceSessionCheckInProgress = true;
+      const checkedUserId = authSession.user.id;
+      const checkedSessionId = activeDeviceSessionId;
+      try {
+        const { data, error } = await supabaseClient.rpc("is_stock_opname_device_session_active", {
+          p_session_id: checkedSessionId
+        });
+        if (error) {
+          console.warn("Status sesi perangkat belum dapat diperiksa; aplikasi akan mencoba kembali.", error);
+          return;
+        }
+        if (data !== false || authSession?.user?.id !== checkedUserId || activeDeviceSessionId !== checkedSessionId) return;
+        deviceSessionLogoutInProgress = true;
+        idleLogoutMessage = "Akun ini telah login di perangkat lain. Sesi pada perangkat ini telah dikeluarkan.";
+        const { error: signOutError } = await supabaseClient.auth.signOut({ scope: "local" });
+        if (signOutError) {
+          console.error("Logout sesi perangkat yang digantikan gagal:", signOutError);
+          lockApp();
+          document.getElementById("login-form").hidden = false;
+          document.getElementById("password-setup-form").hidden = true;
+          showAuthMessage(`${idleLogoutMessage} Logout otomatis gagal: ${signOutError.message}`);
+          idleLogoutMessage = "";
+        }
+      } finally {
+        deviceSessionCheckInProgress = false;
+      }
     }
     function isTransientSyncError(error) {
       const rawStatus = error?.status ?? error?.statusCode;
@@ -4557,6 +4632,9 @@
       setLoginBusy(true);
       showAuthMessage("");
       try {
+        await claimDeviceSession(session);
+        await checkDeviceSession();
+        if (deviceSessionLogoutInProgress || authSession?.user?.id !== session.user.id) return;
         const { data: row, error } = await readSharedState();
         if (error) throw error;
         if (row) {
@@ -4596,6 +4674,8 @@
         unlockApp(session);
         render();
         startSharedStateChannel();
+        clearInterval(deviceSessionCheckTimer);
+        deviceSessionCheckTimer = setInterval(checkDeviceSession, DEVICE_SESSION_CHECK_INTERVAL_MS);
         refreshTimer = setInterval(refreshSharedState, 45000);
         workspaceCleanupTimer = setInterval(() => {
           if (refreshInProgress || syncTimer) return;
@@ -4751,9 +4831,14 @@
       else void refreshSharedState();
     }
     window.addEventListener("online", resumeSharedStateSync);
+    window.addEventListener("online", checkDeviceSession);
     window.addEventListener("pageshow", resumeSharedStateSync);
+    window.addEventListener("pageshow", checkDeviceSession);
     document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") resumeSharedStateSync();
+      if (document.visibilityState === "visible") {
+        resumeSharedStateSync();
+        void checkDeviceSession();
+      }
     });
     async function signIn(event) {
       event.preventDefault();

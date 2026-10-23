@@ -30,8 +30,15 @@ create table if not exists public.stock_opname_usernames (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.stock_opname_device_sessions (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  session_id uuid not null,
+  updated_at timestamptz not null default now()
+);
+
 alter table public.stock_opname_state enable row level security;
 alter table public.stock_opname_usernames enable row level security;
+alter table public.stock_opname_device_sessions enable row level security;
 
 revoke all on table public.stock_opname_state from anon;
 revoke all on table public.stock_opname_state from authenticated;
@@ -39,6 +46,55 @@ grant select, insert, update on table public.stock_opname_state to authenticated
 revoke all on table public.stock_opname_usernames from anon;
 revoke all on table public.stock_opname_usernames from authenticated;
 grant select on table public.stock_opname_usernames to service_role;
+revoke all on table public.stock_opname_device_sessions from anon;
+revoke all on table public.stock_opname_device_sessions from authenticated;
+
+create or replace function public.claim_stock_opname_device_session(p_session_id uuid)
+returns boolean
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  current_user_id uuid := auth.uid();
+begin
+  if current_user_id is null then
+    raise exception 'Authentication is required to claim a device session.' using errcode = '28000';
+  end if;
+  if p_session_id is null then
+    raise exception 'A device session ID is required.' using errcode = '22023';
+  end if;
+
+  insert into public.stock_opname_device_sessions (user_id, session_id, updated_at)
+  values (current_user_id, p_session_id, pg_catalog.now())
+  on conflict (user_id) do update
+    set session_id = excluded.session_id,
+        updated_at = excluded.updated_at;
+  return true;
+end;
+$$;
+
+create or replace function public.is_stock_opname_device_session_active(p_session_id uuid)
+returns boolean
+language sql
+security definer
+set search_path = ''
+as $$
+  select auth.uid() is not null
+    and exists (
+      select 1
+        from public.stock_opname_device_sessions
+       where user_id = auth.uid()
+         and session_id = p_session_id
+    );
+$$;
+
+revoke all on function public.claim_stock_opname_device_session(uuid) from public;
+revoke all on function public.claim_stock_opname_device_session(uuid) from anon;
+grant execute on function public.claim_stock_opname_device_session(uuid) to authenticated;
+revoke all on function public.is_stock_opname_device_session_active(uuid) from public;
+revoke all on function public.is_stock_opname_device_session_active(uuid) from anon;
+grant execute on function public.is_stock_opname_device_session_active(uuid) to authenticated;
 
 drop policy if exists "Team members can read shared stock opname state" on public.stock_opname_state;
 create policy "Team members can read shared stock opname state"
