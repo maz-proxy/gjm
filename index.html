@@ -155,7 +155,9 @@
     .auth-footer { bottom: 22px; color: #929a91; font-size: 10px; position: fixed; right: 26px; text-align: right; z-index: 21; }
     body:not(.auth-locked) .auth-footer, body.auth-checking .auth-footer { display: none; }
     .about-workspace { align-items: center; display: flex; flex-direction: column; justify-content: center; min-height: calc(100vh - 190px); padding: 0 16px 48px; position: relative; text-align: center; }
-    .about-workspace-character { flex: 0 0 auto; height: clamp(260px, 49vh, 380px); margin-top: 0; object-fit: contain; width: auto; }
+    .about-workspace-visual { align-items: center; display: flex; flex: 0 0 auto; justify-content: center; position: relative; }
+    .about-workspace-visual::after { background: radial-gradient(ellipse, rgba(0,0,0,.48), rgba(0,0,0,0) 70%); bottom: 2%; content: ""; filter: blur(8px); height: 12%; left: 17%; position: absolute; right: 17%; z-index: 0; }
+    .about-workspace-character { filter: drop-shadow(0 2px 2px rgba(225,255,244,.16)) drop-shadow(0 8px 7px rgba(0,0,0,.34)); flex: 0 0 auto; height: clamp(260px, 49vh, 380px); margin-top: 0; object-fit: contain; position: relative; width: auto; z-index: 1; }
     .about-workspace-message { color: var(--green-dark); font-family: "Space Grotesk", "Segoe UI", sans-serif; font-size: clamp(24px, 3.2vw, 34px); font-weight: 700; letter-spacing: -.5px; line-height: 1.25; margin: 18px 0 0; max-width: 760px; }
     .about-workspace-footer { bottom: 55px; color: var(--muted); font-size: 12px; font-weight: 700; left: calc(50% + 120px); position: fixed; transform: translateX(-50%); z-index: 2; }
     .about-workspace-footer small { display: block; font-size: 10px; font-weight: 400; margin-top: 4px; }
@@ -6951,7 +6953,7 @@
     }
 
     function renderAboutWorkspace() {
-      return `${navMarkup()}<section class="about-workspace"><img class="about-workspace-character" src="./assets/about-workspace-character.png" alt="Maskot M-Maz memberi tanda jempol"><p class="about-workspace-message">Aktifitas Stock Opname lebih mudah cepat dan informatif.</p><footer class="about-workspace-footer">Developed by M-Maz<small>© 2026 M-Maz. All rights reserved.</small></footer></section>`;
+      return `${navMarkup()}<section class="about-workspace"><div class="about-workspace-visual"><img class="about-workspace-character" src="./assets/about-workspace-logo.png" alt="Logo Stock Opname dengan maskot M-Maz"></div><p class="about-workspace-message">Aktifitas Stock Opname lebih mudah cepat dan informatif.</p><footer class="about-workspace-footer">Developed by M-Maz<small>© 2026 M-Maz. All rights reserved.</small></footer></section>`;
     }
 
     function renderDataResourceList(type, title, description) {
