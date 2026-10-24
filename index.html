@@ -5864,7 +5864,9 @@
     function renderCompletedSessionDetails(session, printMode = false) {
       const snapshot = session.snapshot;
       const scans = snapshot.scanEvents || [];
-      const products = snapshot.products || [];
+      const products = sessionMasterProducts(session);
+      const productsById = new Map(products.map((product) => [product.id, product]));
+      const productsBySku = new Map(products.map((product) => [normalizeField(product.sku), product]));
       const inboundEntries = snapshot.inboundEntries || [];
       const countMode = snapshot.countMode === "all" ? "all" : "laptops";
       const workbooks = session.workbooks || [];
@@ -5880,9 +5882,15 @@
         const manualEntries = (snapshot.manualEntries || []).filter((entry) => entry.layout === layout);
         const scanRows = rackScans.length ? rackScans.slice().reverse().map((scan) => {
           const status = scan.status === "match" ? "Cocok" : scan.status === "duplicate" ? "Duplikat" : scan.status === "non-laptop" ? "Bukan laptop" : "Tidak ditemukan";
-          return `<details class="layout-scan-detail"${printMode ? " open" : ""}><summary class="layout-scan-summary"><span class="layout-scan-code">Item Code: ${escapeHtml(scan.sku || "-")}</span></summary><div class="layout-scan-detail-body"><span>Item Name: ${escapeHtml(scan.name || "-")}</span><span>Serial Number: ${escapeHtml(scan.serial || "-")}</span><span>Hasil: ${escapeHtml(status)}</span><span>Waktu: ${escapeHtml(scan.scannedAt ? formatDate(scan.scannedAt, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "-")}</span></div></details>`;
+          const product = productsById.get(scan.productId) || productsBySku.get(normalizeField(scan.sku));
+          const itemName = product?.name || scan.name || "-";
+          return `<details class="layout-scan-detail"${printMode ? " open" : ""}><summary class="layout-scan-summary layout-scan-summary-live"><span class="layout-scan-code">SN: ${escapeHtml(scan.serial || "-")}</span><span class="layout-scan-watermark">${escapeHtml(itemName)}</span></summary><div class="layout-scan-detail-body"><span>Item Code: ${escapeHtml(scan.sku || "-")}</span><span>Item Name: ${escapeHtml(itemName)}</span><span>Serial Number: ${escapeHtml(scan.serial || "-")}</span><span>Hasil: ${escapeHtml(status)}</span><span>Waktu: ${escapeHtml(scan.scannedAt ? formatDate(scan.scannedAt, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "-")}</span></div></details>`;
         }).join("") : `<div class="completed-rack-meta">Belum ada scan.</div>`;
-        const manualRows = manualEntries.map((entry) => `<details class="layout-scan-detail"${printMode ? " open" : ""}><summary class="layout-scan-summary"><span class="layout-scan-code">Item Code: ${escapeHtml(entry.sku || "-")}</span></summary><div class="layout-scan-detail-body"><span>Item Name: ${escapeHtml(entry.name || "-")}</span><span>Quantity: ${formatNumber(entry.quantity)}</span><span>Waktu input: ${escapeHtml(entry.createdAt ? formatDate(entry.createdAt, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "-")}</span></div></details>`).join("");
+        const manualRows = manualEntries.map((entry) => {
+          const product = productsById.get(entry.productId) || productsBySku.get(normalizeField(entry.sku));
+          const itemName = product?.name || entry.name || "-";
+          return `<details class="layout-scan-detail"${printMode ? " open" : ""}><summary class="layout-scan-summary"><span class="layout-scan-code">Item Code: ${escapeHtml(entry.sku || "-")}</span></summary><div class="layout-scan-detail-body"><span>Item Name: ${escapeHtml(itemName)}</span><span>Quantity: ${formatNumber(entry.quantity)}</span><span>Waktu input: ${escapeHtml(entry.createdAt ? formatDate(entry.createdAt, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "-")}</span></div></details>`;
+        }).join("");
         return `<div class="completed-rack"><div class="completed-rack-title">${escapeHtml(rackNumber ? (/^\d+$/.test(String(rackNumber)) ? `Rack ${rackNumber}` : String(rackNumber)) : layout)}</div><div class="completed-rack-meta">${target === undefined ? `${rackScans.length} scan · target belum diisi` : `${escapeHtml(result.label)}`}</div>${scanRows}${manualRows}</div>`;
       }).join("");
       const productRows = products.map((product, index) => {
@@ -5900,14 +5908,15 @@
       const manualRows = (snapshot.manualEntries || []).map((entry, index) => {
         const rackNumber = snapshot.layoutNumbers?.[entry.layout];
         const rackName = rackNumber ? (/^\d+$/.test(String(rackNumber)) ? `Rack ${rackNumber}` : String(rackNumber)) : entry.layout || "-";
-        return `<tr><td>${index + 1}</td><td>${escapeHtml(entry.sku || "-")}</td><td>${escapeHtml(entry.name || "-")}</td><td>${escapeHtml(rackName)}</td><td>${formatNumber(entry.quantity)}</td><td>${escapeHtml(entry.createdAt ? formatDate(entry.createdAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "-")}</td></tr>`;
+        const product = productsById.get(entry.productId) || productsBySku.get(normalizeField(entry.sku));
+        return `<tr><td>${index + 1}</td><td>${escapeHtml(entry.sku || "-")}</td><td>${escapeHtml(product?.name || entry.name || "-")}</td><td>${escapeHtml(rackName)}</td><td>${formatNumber(entry.quantity)}</td><td>${escapeHtml(entry.createdAt ? formatDate(entry.createdAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "-")}</td></tr>`;
       }).join("");
       const pjRows = (snapshot.pjEntries || []).map((entry, index) => `<tr><td>${index + 1}</td><td>${escapeHtml(entry.sku || "-")}</td><td>${escapeHtml(entry.invoiceNumber || "-")}</td><td>${escapeHtml(entry.invoiceAt ? formatDate(entry.invoiceAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "-")}</td><td>${formatNumber(entry.quantity || 0)}</td></tr>`).join("");
       const inboundRows = inboundEntries.map((entry, index) => `<tr><td>${index + 1}</td><td>${escapeHtml(entry.sku || "-")}</td><td>${escapeHtml(entry.referenceNumber || "-")}</td><td>${escapeHtml(entry.entryAt ? formatDate(entry.entryAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "-")}</td><td>${formatNumber(entry.quantity || 0)}</td></tr>`).join("");
       return `${workbookArchive}
         <div class="completed-export-actions"><button class="button button-primary" type="button" data-export-session="${escapeHtml(session.id)}">↓ Ekspor XLSX</button><button class="button button-secondary" type="button" data-print-session="${escapeHtml(session.id)}">▤ Print</button></div>
         <div class="completed-detail-panel">
-          ${printMode ? "" : `<p class="subtitle">Data didownload dari VEF ${escapeHtml(sourceTimestamp)} · Data diupload Stock Opname ${escapeHtml(uploadedTimestamp)}</p>`}
+          ${printMode ? "" : `<p class="subtitle">Data didownload dari VEF ${escapeHtml(sourceTimestamp)} · Data diupload Stock Opname ${escapeHtml(uploadedTimestamp)}. Referensi Master VEF mengikuti data terbaru pada workspace yang sama; hasil scan/manual tetap snapshot sesi.</p>`}
           <h3>Scan Layout · ${scans.length} scan</h3><div class="completed-racks">${racks || `<div class="completed-rack-meta">Tidak ada data Rack.</div>`}</div>
           <h3>Input Manual · ${(snapshot.manualEntries || []).length} catatan</h3><div class="table-scroll"><table class="completed-result-table"><thead><tr><th>No</th><th>Item Code</th><th>Item Name</th><th>Rack</th><th>Quantity</th><th>Waktu Input</th></tr></thead><tbody>${manualRows || `<tr><td class="empty-row" colspan="6">Belum ada input manual.</td></tr>`}</tbody></table></div>
           <h3>Result SO · ${products.length} item</h3><div class="table-scroll"><table class="completed-result-table"><thead><tr><th>No</th><th>Item code</th><th>Item name</th><th class="quantity-cell">VEF</th><th class="quantity-cell">SCAN</th><th class="quantity-cell">MANUAL</th><th class="quantity-cell">Inbound/Retur</th><th class="quantity-cell">PJ</th><th class="quantity-cell">Selisih</th><th>Check</th><th>Note</th></tr></thead><tbody>${productRows || `<tr><td class="empty-row" colspan="11">Data Result SO tidak tersedia.</td></tr>`}</tbody></table></div>
@@ -5928,6 +5937,7 @@
         return;
       }
       const snapshot = session.snapshot;
+      const products = sessionMasterProducts(session);
       const countMode = snapshot.countMode === "all" ? "all" : "laptops";
       const inboundEntries = snapshot.inboundEntries || [];
       const workbook = XLSX.utils.book_new();
@@ -5939,32 +5949,35 @@
         const rackName = rackNumber ? (/^\d+$/.test(String(rackNumber)) ? `Rack ${rackNumber}` : String(rackNumber)) : layout;
         const target = snapshot.layoutQuantities?.[layout] ?? "";
         if (!rackScans.length) scanRows.push([rackName, target, 0, "", "", "", "Belum ada scan", ""]);
-        else for (const scan of rackScans) scanRows.push([
-          rackName,
-          target,
-          rackScans.length,
-          scan.serial,
-          scan.sku || "",
-          scan.name || "",
-          scan.status === "match" ? "Cocok di VEF" : scan.status === "duplicate" ? "SN duplikat" : scan.status === "non-laptop" ? "Bukan laptop" : "Tidak ditemukan",
-          scan.scannedAt ? formatDate(scan.scannedAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }) : ""
-        ]);
+        else for (const scan of rackScans) {
+          const product = products.find((item) => item.id === scan.productId) || products.find((item) => normalizeField(item.sku) === normalizeField(scan.sku));
+          scanRows.push([
+            rackName,
+            target,
+            rackScans.length,
+            scan.serial,
+            scan.sku || "",
+            product?.name || scan.name || "",
+            scan.status === "match" ? "Cocok di VEF" : scan.status === "duplicate" ? "SN duplikat" : scan.status === "non-laptop" ? "Bukan laptop" : "Tidak ditemukan",
+            scan.scannedAt ? formatDate(scan.scannedAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }) : ""
+          ]);
+        }
       }
       const manualRows = [["Rack", "Item Code", "Item Name", "Warehouse", "Quantity", "Waktu Input"]];
       for (const entry of snapshot.manualEntries || []) {
         const rackNumber = snapshot.layoutNumbers?.[entry.layout];
-        const product = (snapshot.products || []).find((item) => item.id === entry.productId);
+        const product = products.find((item) => item.id === entry.productId) || products.find((item) => normalizeField(item.sku) === normalizeField(entry.sku));
         manualRows.push([
           rackNumber ? (/^\d+$/.test(String(rackNumber)) ? `Rack ${rackNumber}` : String(rackNumber)) : entry.layout,
           entry.sku || product?.sku || "",
-          entry.name || product?.name || "",
+          product?.name || entry.name || "",
           product?.warehouse || "",
           Number(entry.quantity || 0),
           entry.createdAt ? formatDate(entry.createdAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }) : ""
         ]);
       }
       const resultRows = [["No", "Item Code", "Item Name", "Warehouse", "VEF", "SCAN", "MANUAL", "Inbound/Retur", "PJ", "Selisih", "Check", "Note"]];
-      (snapshot.products || []).forEach((product, index) => {
+      products.forEach((product, index) => {
         const included = isCountedProduct(product, countMode);
         const variance = varianceFor(product, inboundEntries);
         resultRows.push([
@@ -5983,7 +5996,7 @@
         ]);
       });
       const recapRows = [["No", "Item Code", "Item Name", "Warehouse", "VEF", "SCAN", "MANUAL", "Inbound/Retur", "PJ", "Selisih", "Check", "Note"]];
-      (snapshot.products || []).filter((product) => isCountedProduct(product, countMode)
+      products.filter((product) => isCountedProduct(product, countMode)
         && varianceFor(product, inboundEntries) !== 0).forEach((product, index) => {
         const variance = varianceFor(product, inboundEntries);
         recapRows.push([
@@ -6205,12 +6218,31 @@
       if (WORKSPACE_PERIODS.includes(session.period)) return session.period;
       return new Date(session.finishedAt).getDate() < 16 ? "Week 1" : "Week 2";
     }
+    function sessionMasterProducts(session) {
+      const snapshotProducts = session.snapshot?.products || [];
+      const workspace = state.workspaces.find((item) => item.id === session.workspaceId);
+      const latestProducts = workspace?.data?.products || [];
+      if (!latestProducts.length) return snapshotProducts;
+      const productKey = (product) => `${normalizeField(product.sku)}::${normalizeField(product.warehouse)}`;
+      const latestByKey = new Map(latestProducts.map((product) => [productKey(product), product]));
+      return snapshotProducts.map((product) => {
+        const master = latestByKey.get(productKey(product));
+        if (!master) return product;
+        const refreshed = { ...product };
+        for (const field of ["sku", "name", "itemGroup", "brand", "warehouse"]) {
+          if (typeof master[field] === "string") refreshed[field] = master[field];
+        }
+        const stock = Number(master.stock);
+        if (master.stock !== null && master.stock !== undefined && Number.isFinite(stock)) refreshed.stock = stock;
+        return refreshed;
+      });
+    }
     function recordedSoProgress(session) {
       const snapshot = session.snapshot || {};
       const countMode = snapshot.countMode === "all" ? "all" : "laptops";
       let total = 0;
       let completed = 0;
-      for (const product of snapshot.products || []) {
+      for (const product of sessionMasterProducts(session)) {
         if (!isCountedProduct(product, countMode)) continue;
         const stock = Number(product.stock);
         const expected = Number.isFinite(stock) ? Math.max(0, stock) : 0;
@@ -6318,7 +6350,7 @@
     }
     function renderRecordedSheet(session, sheet, printMode = false) {
       const snapshot = session.snapshot || {};
-      const products = snapshot.products || [];
+      const products = sessionMasterProducts(session);
       const inboundEntries = snapshot.inboundEntries || [];
       const countMode = snapshot.countMode === "all" ? "all" : "laptops";
       const query = recordedArchiveSearchTerm.trim().toLocaleLowerCase("id-ID");
@@ -6350,13 +6382,15 @@
           const target = snapshot.layoutQuantities?.[layout];
           const scanRows = scans.length ? scans.slice().reverse().map((scan) => {
             const product = productsById.get(scan.productId) || productsBySku.get(String(scan.sku || "").toLocaleLowerCase("id-ID"));
-            const itemType = scan.itemGroup || product?.itemGroup || "-";
+            const itemType = product?.itemGroup || scan.itemGroup || "-";
+            const itemName = product?.name || scan.name || "-";
             const warning = scan.status === "duplicate" ? "Serial Number duplikat" : scan.status === "not-found" ? "Serial Number tidak ditemukan" : "";
-            return `<details class="layout-scan-detail"${printMode ? " open" : ""}><summary class="layout-scan-summary"><span class="layout-scan-code">Item Code: ${escapeHtml(scan.sku || "-")}</span></summary><div class="layout-scan-detail-body"><span>Item Name: ${escapeHtml(scan.name || "-")}</span><span>Serial Number: ${escapeHtml(scan.serial || "-")}</span><span>Tipe: ${escapeHtml(itemType)}</span><span>Hasil: ${escapeHtml(scan.status === "match" ? "Cocok di VEF" : scan.status === "duplicate" ? "Duplikat" : scan.status === "non-laptop" ? "Bukan laptop" : "Tidak ditemukan")}${warning ? ` · ${escapeHtml(warning)}` : ""}</span><span>Waktu: ${escapeHtml(scan.scannedAt ? formatDate(scan.scannedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "-")}</span></div></details>`;
+            return `<details class="layout-scan-detail"${printMode ? " open" : ""}><summary class="layout-scan-summary layout-scan-summary-live"><span class="layout-scan-code">SN: ${escapeHtml(scan.serial || "-")}</span><span class="layout-scan-watermark">${escapeHtml(itemName)}</span></summary><div class="layout-scan-detail-body"><span>Item Code: ${escapeHtml(scan.sku || "-")}</span><span>Item Name: ${escapeHtml(itemName)}</span><span>Serial Number: ${escapeHtml(scan.serial || "-")}</span><span>Tipe: ${escapeHtml(itemType)}</span><span>Hasil: ${escapeHtml(scan.status === "match" ? "Cocok di VEF" : scan.status === "duplicate" ? "Duplikat" : scan.status === "non-laptop" ? "Bukan laptop" : "Tidak ditemukan")}${warning ? ` · ${escapeHtml(warning)}` : ""}</span><span>Waktu: ${escapeHtml(scan.scannedAt ? formatDate(scan.scannedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "-")}</span></div></details>`;
           }).join("") : `<div class="layout-record-empty">${query ? "Tidak ada scan yang cocok di rack ini." : "Belum ada scan."}</div>`;
           const manualRows = manualEntries.length ? manualEntries.slice().reverse().map((entry) => {
             const product = productsById.get(entry.productId) || productsBySku.get(String(entry.sku || "").toLocaleLowerCase("id-ID"));
-            return `<details class="layout-scan-detail"${printMode ? " open" : ""}><summary class="layout-scan-summary"><span class="layout-scan-code">Item Code: ${escapeHtml(entry.sku || "-")}</span></summary><div class="layout-scan-detail-body"><span>Item Name: ${escapeHtml(entry.name || "-")}</span><span>Tipe: ${escapeHtml(product?.itemGroup || "-")}</span><span>Qty: ${formatNumber(entry.quantity)}</span><span>Waktu: ${escapeHtml(entry.createdAt ? formatDate(entry.createdAt, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "-")}</span></div></details>`;
+            const itemName = product?.name || entry.name || "-";
+            return `<details class="layout-scan-detail"${printMode ? " open" : ""}><summary class="layout-scan-summary"><span class="layout-scan-code">Item Code: ${escapeHtml(entry.sku || "-")}</span></summary><div class="layout-scan-detail-body"><span>Item Name: ${escapeHtml(itemName)}</span><span>Tipe: ${escapeHtml(product?.itemGroup || "-")}</span><span>Qty: ${formatNumber(entry.quantity)}</span><span>Waktu: ${escapeHtml(entry.createdAt ? formatDate(entry.createdAt, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "-")}</span></div></details>`;
           }).join("") : `<div class="layout-record-empty">${query ? "Tidak ada input manual yang cocok di rack ini." : "Belum ada input manual."}</div>`;
           return `<article class="layout-card"><div class="layout-card-head"><div><div class="layout-name">${escapeHtml(title)}</div><div class="layout-location">Scan Layout · tampilan arsip</div></div><div class="layout-card-summary"><span class="layout-count">Target ${target === undefined ? "-" : formatNumber(target)} · ${query ? `${scans.length} hasil scan · ${manualEntries.length} hasil manual` : `${allScans.length} scan · ${allManualEntries.reduce((sum, entry) => sum + Number(entry.quantity || 0), 0)} manual`}</span></div></div><div class="layout-card-foot"><div class="layout-record-group"><div class="layout-record-heading">Scan ${query ? `· ${scans.length} hasil` : ""}</div>${scanRows}</div><div class="layout-record-group"><div class="layout-record-heading">Manual ${query ? `· ${manualEntries.length} hasil` : ""}</div>${manualRows}</div></div></article>`;
         }).join("");
@@ -6466,7 +6500,7 @@
         <section class="recorded-archive-head">
           <div class="recorded-archive-heading">
             <h1>${escapeHtml(session.workspaceName || "Stock Opname Recorded")}</h1>
-            <p>Arsip lembar kerja stock opname · Tampilan hanya-baca</p>
+            <p>Arsip lembar kerja stock opname · Tampilan hanya-baca · Referensi Master VEF terbaru di workspace yang sama; hasil sesi tetap snapshot.</p>
             <div class="recorded-archive-meta"><span><strong>Periode:</strong> ${escapeHtml(archivedSessionMonth(session))} · ${escapeHtml(archivedSessionWeek(session))}</span><span><strong>Selesai:</strong> ${escapeHtml(finishedAt)}</span></div>
           </div>
           <div class="recorded-pic-list" aria-label="PIC sesi">
