@@ -3798,24 +3798,42 @@
         host.append(button);
       });
     }
-    async function getCameraVideoConstraints() {
+    function getCameraVideoConstraints() {
       return {
         facingMode: { ideal: "environment" },
         width: { ideal: 1920 },
         height: { ideal: 1080 },
         frameRate: { ideal: 30 },
-        focusMode: { ideal: "continuous" }
+        advanced: [{ focusMode: "continuous" }]
       };
     }
     async function requestContinuousAutofocus(video) {
       const track = video.srcObject?.getVideoTracks?.()[0];
       const supportedModes = track?.getCapabilities?.().focusMode;
-      if (!track || !supportedModes?.includes("continuous")) return;
+      if (!track) return;
+      let focusRequested = false;
+      if (!supportedModes || supportedModes.includes("single-shot")) {
+        const supportsFocusPoints = navigator.mediaDevices.getSupportedConstraints?.().pointsOfInterest !== false;
+        try {
+          await track.applyConstraints({
+            advanced: [{
+              focusMode: "single-shot",
+              ...(supportsFocusPoints ? { pointsOfInterest: [{ x: 0.5, y: 0.5 }] } : {})
+            }]
+          });
+          focusRequested = true;
+        } catch (error) {
+          console.warn("Pemfokusan awal kamera tidak dapat diterapkan:", error);
+        }
+      }
+      if (supportedModes && !supportedModes.includes("continuous")) return focusRequested;
       try {
         await track.applyConstraints({ advanced: [{ focusMode: "continuous" }] });
+        focusRequested = true;
       } catch (error) {
         console.warn("Autofokus kamera tidak dapat diatur ke mode kontinu:", error);
       }
+      return focusRequested;
     }
     async function focusCameraAtPoint(event) {
       const preview = event.currentTarget;
@@ -3823,10 +3841,9 @@
       const track = video.srcObject?.getVideoTracks?.()[0];
       const capabilities = track?.getCapabilities?.();
       const supportedConstraints = navigator.mediaDevices.getSupportedConstraints?.() || {};
-      if (!track || !capabilities?.focusMode?.includes("single-shot")
-        || supportedConstraints.pointsOfInterest === false
+      if (!track || (capabilities?.focusMode && !capabilities.focusMode.includes("single-shot"))
         || !video.videoWidth || !video.videoHeight) {
-        setCameraScanStatus("Autofokus tetap aktif, tetapi kamera ini tidak mendukung fokus pada titik sentuh.");
+        setCameraScanStatus("Kamera ini tidak mendukung pengaturan fokus sentuh.");
         return;
       }
       const bounds = video.getBoundingClientRect();
@@ -3849,7 +3866,7 @@
         await track.applyConstraints({
           advanced: [{
             focusMode: "single-shot",
-            pointsOfInterest: [{ x, y }]
+            ...(supportedConstraints.pointsOfInterest === false ? {} : { pointsOfInterest: [{ x, y }] })
           }]
         });
         cameraFocusTimer = setTimeout(() => {
@@ -3863,7 +3880,7 @@
       } catch (error) {
         console.warn("Fokus pada titik sentuh tidak dapat diterapkan:", error);
         indicator.classList.remove("visible");
-        setCameraScanStatus("Fokus manual tidak dapat diterapkan. Autofokus tetap aktif.");
+        setCameraScanStatus("Fokus sentuh tidak dapat diterapkan. Coba dekatkan barcode ke kamera.");
       }
     }
     async function detectCameraBarcode() {
