@@ -32,6 +32,8 @@ jobs:
         run: |
           mkdir dist
           cp index.html dist/index.html
+          cp favicon.ico dist/favicon.ico
+          cp site.webmanifest dist/site.webmanifest
           cp -R assets dist/assets
           touch dist/.nojekyll
 
