@@ -3827,7 +3827,7 @@
       form.requestSubmit();
       cameraTargetInput = document.querySelector(`[data-layout-form="${CSS.escape(layout)}"] .layout-input`);
       if (document.documentElement.classList.contains("web-camera-scanner-active")) {
-        cameraTargetInput?.closest(".layout-card")?.scrollIntoView({ block: "start", behavior: "smooth" });
+        cameraTargetInput?.closest(".layout-card")?.scrollIntoView({ block: "start", behavior: "auto" });
       }
       setCameraScanStatus("Barcode berhasil dicatat. Arahkan barcode berikutnya.", "success");
       return true;
@@ -3955,7 +3955,7 @@
         if (!dialog.open) dialog.setAttribute("open", "");
         dialog.querySelector("#camera-scan-close").focus({ preventScroll: true });
         if (input?.matches(".layout-input")) {
-          input.closest(".layout-card")?.scrollIntoView({ block: "start", behavior: "smooth" });
+          input.closest(".layout-card")?.scrollIntoView({ block: "start", behavior: "auto" });
         } else {
           dialog.scrollIntoView({ block: "start", behavior: "smooth" });
         }
