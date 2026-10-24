@@ -3944,7 +3944,7 @@
       flashButton.setAttribute("aria-pressed", "false");
       flashButton.setAttribute("aria-label", translateText("Nyalakan flash"));
     }
-    function openWebCameraDialog(dialog) {
+    function openWebCameraDialog(dialog, input) {
       const compactMobileScanner = window.matchMedia("(max-width: 1024px), (pointer: coarse)").matches;
       if (compactMobileScanner) {
         document.documentElement.classList.add("web-camera-scanner-active");
@@ -4183,7 +4183,7 @@
         await startNativeCameraScanner(dialog);
         return;
       }
-      openWebCameraDialog(dialog);
+      openWebCameraDialog(dialog, input);
       if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
         setCameraScanStatus("Akses kamera memerlukan HTTPS atau localhost dan izin kamera dari browser.", "error");
         return;
