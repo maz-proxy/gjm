@@ -5466,6 +5466,8 @@
       const pageLabel = pageLabels[currentPage] || "History Changes";
       return `<div class="topline"><div class="topline-heading"><div class="language-options workspace-language-options" role="group" aria-label="Pilih bahasa"><button class="language-option" type="button" data-language-option="id" aria-label="Bahasa Indonesia" aria-pressed="false"><svg class="language-flag" aria-hidden="true" viewBox="0 0 30 20"><rect width="30" height="10" fill="#ce1126"/><rect y="10" width="30" height="10" fill="#fff"/></svg></button><button class="language-option" type="button" data-language-option="en" aria-label="English" aria-pressed="false"><svg class="language-flag" aria-hidden="true" viewBox="0 0 60 30"><rect width="60" height="30" fill="#012169"/><path d="M0 0 60 30M60 0 0 30" stroke="#fff" stroke-width="6"/><path d="M0 0 60 30M60 0 0 30" stroke="#c8102e" stroke-width="2"/><path d="M30 0v30M0 15h60" stroke="#fff" stroke-width="10"/><path d="M30 0v30M0 15h60" stroke="#c8102e" stroke-width="4"/></svg></button></div><div class="crumb"><span class="crumb-workspace" data-user-content>${escapeHtml(activeWorkspaceName())}</span> <span> / </span> <b data-user-content>${escapeHtml(pageLabel)}</b></div>${onlineMarkup}</div><div class="top-actions"><span class="today">${formatDate(new Date(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span>${picMarkup}<div class="top-theme-controls"><button class="accent-toggle" type="button" data-accent-toggle aria-label="Ganti tema warna ke burgundy"><span class="accent-swatch" aria-hidden="true"></span><span data-accent-label>Burgundy</span></button><button class="theme-toggle" type="button" data-theme-toggle aria-label="Aktifkan dark mode" aria-pressed="false"><span class="theme-toggle-icon" aria-hidden="true">☾</span><span class="theme-toggle-label">Dark</span></button></div></div></div>`;
     };
+    const renderProductIdentity = (product) => `<div class="product-cell"><div><div class="product-name">${escapeHtml(product.name)}</div><div class="product-sku">${escapeHtml(product.sku)}</div></div></div>`;
+    const renderReconciliationTableHead = (includeNote = false) => `<tr><th>No</th><th>Item / item code</th><th>Brand</th><th class="quantity-cell">VEF</th><th class="quantity-cell">SCAN</th><th class="quantity-cell">MANUAL</th><th class="quantity-cell">Inbound/Retur</th><th class="quantity-cell">PJ</th><th class="quantity-cell">Selisih</th><th>Check</th>${includeNote ? "<th>Note</th>" : ""}</tr>`;
     const productRows = (products, active, canEdit) => products.length ? products.map((product, index) => {
       const included = isCountedProduct(product);
       const status = statusFor(product);
@@ -5480,7 +5482,7 @@
         : "Belum ada Inbound/Retur. Klik untuk mencatat.";
       return `<tr class="${included ? "" : "non-laptop-row"}">
         <td class="number-cell">${index + 1}</td>
-        <td><div class="product-cell"><div><div class="product-name">${escapeHtml(product.name)}</div><div class="product-sku">${escapeHtml(product.sku)}</div></div></div></td>
+        <td>${renderProductIdentity(product)}</td>
         <td><span class="category-chip" data-user-content>${escapeHtml(product.brand || "-")}</span></td>
         <td class="number-cell quantity-cell">${formatNumber(product.stock)}</td>
         <td class="number-cell quantity-cell">${included ? formatNumber(product.count || 0) : "-"}</td>
@@ -5517,7 +5519,7 @@
           <div class="metric"><div class="metric-top">Selisih Quantity <span class="metric-mark issue-count">!</span></div><div class="metric-value" id="metric-variance-qty">${totals.variance > 0 ? "+" : ""}${formatNumber(totals.variance)} <small>unit</small></div><div class="metric-note" id="metric-mismatch-note">${totals.mismatched} item tidak sesuai · ${totals.mismatchPercent}%</div></div>
         </section>
         <section class="table-section"><div class="table-toolbar"><div class="table-title">Rekonsiliasi per item <span class="table-count">${filtered.length} dari ${state.products.length} item · ${stats.total} ${state.countMode === "all" ? "item" : "laptop"} dihitung · ${stats.nonLaptop} tidak dihitung · SCAN ${formatNumber(totals.scan)} + MANUAL ${formatNumber(totals.manual)} + PJ ${formatNumber(totals.pj)} = ${formatNumber(totals.total)} / VEF ${formatNumber(totals.expected)} + Inbound/Retur ${formatNumber(totals.inbound)} = ${formatNumber(totals.expectedWithInbound)}</span></div><div class="filters"><div class="search-wrap"><span class="search-icon">⌕</span><input class="search-input" id="search-input" placeholder="Cari item code atau nama" value="${escapeHtml(searchTerm)}" aria-label="Cari item"></div></div></div>
-          <div class="table-scroll"><table><thead><tr><th>No</th><th>Item / item code</th><th>Brand</th><th class="quantity-cell">VEF</th><th class="quantity-cell">SCAN</th><th class="quantity-cell">MANUAL</th><th class="quantity-cell">Inbound/Retur</th><th class="quantity-cell">PJ</th><th class="quantity-cell">Selisih</th><th>Check</th></tr></thead><tbody>${productRows(filtered, active, canEdit)}</tbody></table></div>
+          <div class="table-scroll"><table><thead>${renderReconciliationTableHead()}</thead><tbody>${productRows(filtered, active, canEdit)}</tbody></table></div>
           <div class="table-footer"><span class="auto-save"><span class="save-dot"></span> Tersimpan otomatis</span><span>Menampilkan ${filtered.length} barang</span></div></section>
         <section class="table-section" style="margin-top:15px"><div class="table-toolbar"><div class="table-title">Riwayat pemindaian <span class="table-count">${state.scanEvents.length} scan</span></div></div><div class="table-scroll"><table class="scan-log-table"><thead><tr><th>Waktu</th><th>Serial Number</th><th>Item code</th><th>Rack</th><th>Hasil scan</th></tr></thead><tbody>${latestScans.length ? latestScans.map((scan) => `<tr><td>${escapeHtml(formatDate(scan.scannedAt, { hour: "2-digit", minute: "2-digit", second: "2-digit" }))}</td><td class="scan-log">${escapeHtml(scan.serial)}</td><td>${escapeHtml(scan.sku || "-")}</td><td>${escapeHtml(rackLabel(scan.layout))}</td><td><span class="row-status ${scan.status === "match" ? "match" : scan.status === "non-laptop" ? "non-laptop" : "shortage"}">${scan.status === "match" ? "Cocok di VEF" : scan.status === "duplicate" ? "SN duplikat" : scan.status === "non-laptop" ? "Bukan laptop" : "Tidak ada di VEF"}</span></td></tr>`).join("") : `<tr><td class="empty-row" colspan="5">Belum ada Serial Number yang dipindai.</td></tr>`}</tbody></table></div></section>`;
     }
@@ -5597,6 +5599,36 @@
       return { scan, manual, total: scan + manual };
     }
 
+    function renderScanDetail(scan, { itemName = scan.name || "-", itemGroup = "", printMode = false } = {}) {
+      const status = scan.status === "match" ? "Cocok di VEF" : scan.status === "duplicate" ? "SN duplikat" : scan.status === "non-laptop" ? "Bukan laptop" : "Tidak ditemukan";
+      const warning = scan.status === "duplicate" ? " · Peringatan: Serial Number duplikat" : scan.status === "not-found" ? " · Peringatan: Serial Number tidak ditemukan" : "";
+      const scannedAt = scan.scannedAt
+        ? formatDate(scan.scannedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" })
+        : "-";
+      return `<details class="layout-scan-detail"${printMode ? " open" : ""}><summary class="layout-scan-summary layout-scan-summary-live"><span class="layout-scan-code">SN: ${escapeHtml(scan.serial || "-")}</span><span class="layout-scan-watermark">${escapeHtml(itemName)}</span></summary><div class="layout-scan-detail-body"><span>Item Code: ${escapeHtml(scan.sku || "-")}</span><span>Item Name: ${escapeHtml(itemName)}</span>${itemGroup ? `<span>Tipe: ${escapeHtml(itemGroup)}</span>` : ""}<span>Serial Number: ${escapeHtml(scan.serial || "-")}</span><span>Hasil scan: ${escapeHtml(status)}${warning}</span><span>Tanggal dan waktu: ${escapeHtml(scannedAt)}</span></div></details>`;
+    }
+
+    function renderManualEntryCards(entries, { products = [], canDelete = false, latestEntryId = "", printMode = false } = {}) {
+      const productsById = new Map(products.map((product) => [product.id, product]));
+      const productsBySku = new Map(products.map((product) => [normalizeField(product.sku), product]));
+      const groups = new Map();
+      for (const entry of entries) {
+        const key = entry.productId || normalizeField(entry.sku);
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(entry);
+      }
+      if (!groups.size) return `<div class="layout-record-empty">Belum ada input manual.</div>`;
+      return [...groups.values()].map((group) => {
+        const firstEntry = group[0];
+        const product = productsById.get(firstEntry.productId) || productsBySku.get(normalizeField(firstEntry.sku));
+        const sku = product?.sku || firstEntry.sku || "-";
+        const name = product?.name || firstEntry.name || "-";
+        const total = group.reduce((sum, entry) => sum + Number(entry.quantity || 0), 0);
+        const entryRows = group.slice().reverse().map((entry) => `<div class="manual-item-entry ${entry.id === latestEntryId ? "is-latest" : ""}" data-manual-entry="${escapeHtml(entry.id)}"><span>Qty ${formatNumber(entry.quantity)}${entry.createdAt ? ` · ${escapeHtml(formatDate(entry.createdAt, { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }))}` : ""}</span>${canDelete ? `<button class="layout-delete" type="button" data-delete-manual="${escapeHtml(entry.id)}" aria-label="Hapus input manual ${escapeHtml(sku)} sebanyak ${formatNumber(entry.quantity)}" title="Hapus input manual">×</button>` : ""}</div>`).join("");
+        return `<details class="manual-item-details"${printMode ? " open" : ""} data-manual-product-entry="${escapeHtml(firstEntry.productId || firstEntry.sku)}"><summary class="manual-item-summary"><span class="manual-item-sku">Item Code: ${escapeHtml(sku)}</span></summary><div class="manual-item-expanded"><div class="layout-scan-detail-body"><span>Item Name: ${escapeHtml(name)}</span><span>Total Qty: ${formatNumber(total)}</span></div>${entryRows}</div></details>`;
+      }).join("");
+    }
+
     function renderLayouts() {
       const active = state.activeSession.status === "active";
       const canEdit = canEditActiveSession();
@@ -5628,21 +5660,8 @@
           quantityStatus.className === "different" ? "quantity-over" : "",
           scans.some((scan) => scan.status === "duplicate" || scan.status === "not-found") ? "duplicate-warning" : ""
         ].filter(Boolean).join(" ");
-        const scanRows = scans.length ? scans.slice().reverse().map((scan) => `<div class="layout-scan-row"><details class="layout-scan-detail"><summary class="layout-scan-summary layout-scan-summary-live"><span class="layout-scan-code">SN: ${escapeHtml(scan.serial || "-")}</span><span class="layout-scan-watermark">${escapeHtml(scan.name || "-")}</span></summary><div class="layout-scan-detail-body"><span>Item Code: ${escapeHtml(scan.sku || "-")}</span><span>Item Name: ${escapeHtml(scan.name || "-")}</span><span>Serial Number: ${escapeHtml(scan.serial || "-")}</span><span>Hasil scan: ${escapeHtml(scan.status === "match" ? "Cocok di VEF" : scan.status === "duplicate" ? "SN duplikat" : scan.status === "non-laptop" ? "Bukan laptop" : "Tidak ditemukan")}${scan.status === "duplicate" || scan.status === "not-found" ? " · Peringatan: " + (scan.status === "duplicate" ? "Serial Number duplikat" : "Serial Number tidak ditemukan") : ""}</span><span>Tanggal dan waktu: ${escapeHtml(scan.scannedAt ? formatDate(scan.scannedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "-")}</span></div></details>${canUseRack ? `<button class="layout-delete" type="button" data-delete-scan="${escapeHtml(scan.id)}" aria-label="Hapus scan ${escapeHtml(scan.serial)}" title="Hapus scan">×</button>` : ""}</div>`).join("") : `<div class="layout-record-empty">Belum ada scan.</div>`;
-        const manualGroups = new Map();
-        for (const entry of manualEntries) {
-          const key = entry.productId || entry.sku;
-          if (!manualGroups.has(key)) manualGroups.set(key, []);
-          manualGroups.get(key).push(entry);
-        }
-        const manualRows = manualGroups.size ? [...manualGroups.values()].map((entries) => {
-          const product = state.products.find((item) => item.id === entries[0].productId);
-          const sku = product?.sku || entries[0].sku;
-          const name = product?.name || entries[0].name;
-          const total = entries.reduce((sum, entry) => sum + Number(entry.quantity || 0), 0);
-          const entryRows = entries.slice().reverse().map((entry) => `<div class="manual-item-entry ${entry.id === lastManualEntryId ? "is-latest" : ""}" data-manual-entry="${escapeHtml(entry.id)}"><span>Qty ${formatNumber(entry.quantity)}${entry.createdAt ? ` · ${escapeHtml(formatDate(entry.createdAt, { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }))}` : ""}</span>${canUseRack ? `<button class="layout-delete" type="button" data-delete-manual="${escapeHtml(entry.id)}" aria-label="Hapus input manual ${escapeHtml(sku)} sebanyak ${formatNumber(entry.quantity)}" title="Hapus input manual">×</button>` : ""}</div>`).join("");
-          return `<details class="manual-item-details" data-manual-product-entry="${escapeHtml(entries[0].productId || entries[0].sku)}"><summary class="manual-item-summary"><span class="manual-item-sku">Item Code: ${escapeHtml(sku || "-")}</span></summary><div class="manual-item-expanded"><div class="layout-scan-detail-body"><span>Item Name: ${escapeHtml(name || "-")}</span><span>Total Qty: ${formatNumber(total)}</span></div>${entryRows}</div></details>`;
-        }).join("") : `<div class="layout-record-empty">Belum ada input manual.</div>`;
+        const scanRows = scans.length ? scans.slice().reverse().map((scan) => `<div class="layout-scan-row">${renderScanDetail(scan)}${canUseRack ? `<button class="layout-delete" type="button" data-delete-scan="${escapeHtml(scan.id)}" aria-label="Hapus scan ${escapeHtml(scan.serial)}" title="Hapus scan">×</button>` : ""}</div>`).join("") : `<div class="layout-record-empty">Belum ada scan.</div>`;
+        const manualRows = renderManualEntryCards(manualEntries, { products: state.products, canDelete: canUseRack, latestEntryId: lastManualEntryId });
         const scanDisabled = !state.products.length || !canUseRack || !hasTarget || !rackHasNumber;
         const manualDisabled = !state.products.length || !canUseRack || !rackHasNumber;
         return `<section class="layout-card ${cardClasses}">
@@ -5777,7 +5796,7 @@
       const rows = exceptions.map((product, index) => {
         const variance = varianceFor(product);
         const status = statusFor(product);
-        return `<tr><td class="number-cell">${index + 1}</td><td><div class="product-name">${escapeHtml(product.name)}</div><div class="product-sku">${escapeHtml(product.sku)}</div></td><td><span class="category-chip" data-user-content>${escapeHtml(product.brand || "-")}</span></td><td class="number-cell quantity-cell">${formatNumber(product.stock)}</td><td class="number-cell quantity-cell">${formatNumber(product.count || 0)}</td><td class="number-cell quantity-cell">${formatNumber(product.box || 0)}</td><td class="number-cell quantity-cell">${formatNumber(inboundQuantityFor(product.id))}</td><td class="number-cell quantity-cell">${formatNumber(product.pj || 0)}</td><td class="quantity-cell"><span class="variance ${variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td><td><span class="row-status ${status.className}">${status.label}</span></td><td><input class="note-input" aria-label="Catatan ${escapeHtml(product.sku)}" data-note-sku="${escapeHtml(product.sku)}" placeholder="Tambah catatan" value="${escapeHtml(product.note || "")}" ${canEdit ? "" : "disabled"}></td></tr>`;
+        return `<tr><td class="number-cell">${index + 1}</td><td>${renderProductIdentity(product)}</td><td><span class="category-chip" data-user-content>${escapeHtml(product.brand || "-")}</span></td><td class="number-cell quantity-cell">${formatNumber(product.stock)}</td><td class="number-cell quantity-cell">${formatNumber(product.count || 0)}</td><td class="number-cell quantity-cell">${formatNumber(product.box || 0)}</td><td class="number-cell quantity-cell">${formatNumber(inboundQuantityFor(product.id))}</td><td class="number-cell quantity-cell">${formatNumber(product.pj || 0)}</td><td class="quantity-cell"><span class="variance ${variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td><td><span class="row-status ${status.className}">${status.label}</span></td><td><input class="note-input" aria-label="Catatan ${escapeHtml(product.sku)}" data-note-sku="${escapeHtml(product.sku)}" placeholder="Tambah catatan" value="${escapeHtml(product.note || "")}" ${canEdit ? "" : "disabled"}></td></tr>`;
       }).join("");
       return `${navMarkup()}<section class="page-head archive-page-head recap-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Rekap selisih · Pemeriksaan opname</div>${workspacePageTitle()}<p class="subtitle">Hanya item dengan hasil Check tidak sesuai yang ditampilkan. Rumus: SCAN + MANUAL + PJ dibandingkan dengan VEF + Inbound/Retur.</p></div><span class="category-chip">${exceptions.length} item bermasalah</span></section>${renderSessionAccessNotice()}
         <section class="metric-grid compact-metrics recap-metrics" aria-label="Ringkasan ketidaksesuaian terhadap master VEF">
@@ -5786,7 +5805,7 @@
           <div class="metric"><div class="metric-top">Total kuantitas selisih <span class="metric-mark">Δ</span></div><div class="metric-value">${formatNumber(totals.absoluteVariance)} <small>unit</small></div></div>
           <div class="metric"><div class="metric-top">Selisih terhadap VEF <span class="metric-mark">#</span></div><div class="metric-value">${totals.quantityMismatchPercent}<small>%</small></div></div>
         </section>
-        <section class="table-section"><div class="table-toolbar"><div class="table-title">Item belum sesuai <span class="table-count">${exceptions.length} dari ${totals.count} item · Total SO ${formatNumber(totals.total)} / VEF + Inbound/Retur ${formatNumber(totals.expectedWithInbound)}</span></div></div><div class="table-scroll"><table><thead><tr><th>No</th><th>Item / item code</th><th>Brand</th><th class="quantity-cell">VEF</th><th class="quantity-cell">SCAN</th><th class="quantity-cell">MANUAL</th><th class="quantity-cell">Inbound/Retur</th><th class="quantity-cell">PJ</th><th class="quantity-cell">Selisih</th><th>Check</th><th>Note</th></tr></thead><tbody>${rows || `<tr><td class="empty-row" colspan="11">Belum ada item bermasalah. Semua item sesuai dengan VEF.</td></tr>`}</tbody></table></div><div class="table-footer"><span class="auto-save"><span class="save-dot"></span> Catatan tersimpan otomatis</span><span>${exceptions.length} item bermasalah dari ${totals.count} item dihitung</span></div></section>`;
+        <section class="table-section"><div class="table-toolbar"><div class="table-title">Item belum sesuai <span class="table-count">${exceptions.length} dari ${totals.count} item · Total SO ${formatNumber(totals.total)} / VEF + Inbound/Retur ${formatNumber(totals.expectedWithInbound)}</span></div></div><div class="table-scroll"><table><thead>${renderReconciliationTableHead(true)}</thead><tbody>${rows || `<tr><td class="empty-row" colspan="11">Belum ada item bermasalah. Semua item sesuai dengan VEF.</td></tr>`}</tbody></table></div><div class="table-footer"><span class="auto-save"><span class="save-dot"></span> Catatan tersimpan otomatis</span><span>${exceptions.length} item bermasalah dari ${totals.count} item dihitung</span></div></section>`;
     }
 
     function renderHistory() {
@@ -5881,17 +5900,12 @@
         const result = getLayoutQuantityStatus(rackScans.length, target);
         const manualEntries = (snapshot.manualEntries || []).filter((entry) => entry.layout === layout);
         const scanRows = rackScans.length ? rackScans.slice().reverse().map((scan) => {
-          const status = scan.status === "match" ? "Cocok" : scan.status === "duplicate" ? "Duplikat" : scan.status === "non-laptop" ? "Bukan laptop" : "Tidak ditemukan";
           const product = productsById.get(scan.productId) || productsBySku.get(normalizeField(scan.sku));
           const itemName = product?.name || scan.name || "-";
-          return `<details class="layout-scan-detail"${printMode ? " open" : ""}><summary class="layout-scan-summary layout-scan-summary-live"><span class="layout-scan-code">SN: ${escapeHtml(scan.serial || "-")}</span><span class="layout-scan-watermark">${escapeHtml(itemName)}</span></summary><div class="layout-scan-detail-body"><span>Item Code: ${escapeHtml(scan.sku || "-")}</span><span>Item Name: ${escapeHtml(itemName)}</span><span>Serial Number: ${escapeHtml(scan.serial || "-")}</span><span>Hasil: ${escapeHtml(status)}</span><span>Waktu: ${escapeHtml(scan.scannedAt ? formatDate(scan.scannedAt, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "-")}</span></div></details>`;
+          return `<div class="layout-scan-row">${renderScanDetail(scan, { itemName, printMode })}</div>`;
         }).join("") : `<div class="completed-rack-meta">Belum ada scan.</div>`;
-        const manualRows = manualEntries.map((entry) => {
-          const product = productsById.get(entry.productId) || productsBySku.get(normalizeField(entry.sku));
-          const itemName = product?.name || entry.name || "-";
-          return `<details class="layout-scan-detail"${printMode ? " open" : ""}><summary class="layout-scan-summary"><span class="layout-scan-code">Item Code: ${escapeHtml(entry.sku || "-")}</span></summary><div class="layout-scan-detail-body"><span>Item Name: ${escapeHtml(itemName)}</span><span>Quantity: ${formatNumber(entry.quantity)}</span><span>Waktu input: ${escapeHtml(entry.createdAt ? formatDate(entry.createdAt, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "-")}</span></div></details>`;
-        }).join("");
-        return `<div class="completed-rack"><div class="completed-rack-title">${escapeHtml(rackNumber ? (/^\d+$/.test(String(rackNumber)) ? `Rack ${rackNumber}` : String(rackNumber)) : layout)}</div><div class="completed-rack-meta">${target === undefined ? `${rackScans.length} scan · target belum diisi` : `${escapeHtml(result.label)}`}</div>${scanRows}${manualRows}</div>`;
+        const manualRows = renderManualEntryCards(manualEntries, { products, printMode });
+        return `<div class="completed-rack"><div class="completed-rack-title">${escapeHtml(rackNumber ? (/^\d+$/.test(String(rackNumber)) ? `Rack ${rackNumber}` : String(rackNumber)) : layout)}</div><div class="completed-rack-meta">${target === undefined ? `${rackScans.length} scan · target belum diisi` : `${escapeHtml(result.label)}`}</div>${scanRows}<div class="layout-scan-list">${manualRows}</div></div>`;
       }).join("");
       const productRows = products.map((product, index) => {
         const variance = varianceFor(product, inboundEntries);
@@ -6363,17 +6377,14 @@
           const target = snapshot.layoutQuantities?.[layout];
           const scanRows = scans.length ? scans.slice().reverse().map((scan) => {
             const product = productsById.get(scan.productId) || productsBySku.get(String(scan.sku || "").toLocaleLowerCase("id-ID"));
-            const itemType = product?.itemGroup || scan.itemGroup || "-";
+            const itemType = product?.itemGroup || scan.itemGroup || "";
             const itemName = product?.name || scan.name || "-";
-            const warning = scan.status === "duplicate" ? "Serial Number duplikat" : scan.status === "not-found" ? "Serial Number tidak ditemukan" : "";
-            return `<details class="layout-scan-detail"${printMode ? " open" : ""}><summary class="layout-scan-summary layout-scan-summary-live"><span class="layout-scan-code">SN: ${escapeHtml(scan.serial || "-")}</span><span class="layout-scan-watermark">${escapeHtml(itemName)}</span></summary><div class="layout-scan-detail-body"><span>Item Code: ${escapeHtml(scan.sku || "-")}</span><span>Item Name: ${escapeHtml(itemName)}</span><span>Serial Number: ${escapeHtml(scan.serial || "-")}</span><span>Tipe: ${escapeHtml(itemType)}</span><span>Hasil: ${escapeHtml(scan.status === "match" ? "Cocok di VEF" : scan.status === "duplicate" ? "Duplikat" : scan.status === "non-laptop" ? "Bukan laptop" : "Tidak ditemukan")}${warning ? ` · ${escapeHtml(warning)}` : ""}</span><span>Waktu: ${escapeHtml(scan.scannedAt ? formatDate(scan.scannedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "-")}</span></div></details>`;
+            return `<div class="layout-scan-row">${renderScanDetail(scan, { itemName, itemGroup: itemType, printMode })}</div>`;
           }).join("") : `<div class="layout-record-empty">${query ? "Tidak ada scan yang cocok di rack ini." : "Belum ada scan."}</div>`;
-          const manualRows = manualEntries.length ? manualEntries.slice().reverse().map((entry) => {
-            const product = productsById.get(entry.productId) || productsBySku.get(String(entry.sku || "").toLocaleLowerCase("id-ID"));
-            const itemName = product?.name || entry.name || "-";
-            return `<details class="layout-scan-detail"${printMode ? " open" : ""}><summary class="layout-scan-summary"><span class="layout-scan-code">Item Code: ${escapeHtml(entry.sku || "-")}</span></summary><div class="layout-scan-detail-body"><span>Item Name: ${escapeHtml(itemName)}</span><span>Tipe: ${escapeHtml(product?.itemGroup || "-")}</span><span>Qty: ${formatNumber(entry.quantity)}</span><span>Waktu: ${escapeHtml(entry.createdAt ? formatDate(entry.createdAt, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "-")}</span></div></details>`;
-          }).join("") : `<div class="layout-record-empty">${query ? "Tidak ada input manual yang cocok di rack ini." : "Belum ada input manual."}</div>`;
-          return `<article class="layout-card"><div class="layout-card-head"><div><div class="layout-name">${escapeHtml(title)}</div><div class="layout-location">Scan Layout · tampilan arsip</div></div><div class="layout-card-summary"><span class="layout-count">Target ${target === undefined ? "-" : formatNumber(target)} · ${query ? `${scans.length} hasil scan · ${manualEntries.length} hasil manual` : `${allScans.length} scan · ${allManualEntries.reduce((sum, entry) => sum + Number(entry.quantity || 0), 0)} manual`}</span></div></div><div class="layout-card-foot"><div class="layout-record-group"><div class="layout-record-heading">Scan ${query ? `· ${scans.length} hasil` : ""}</div>${scanRows}</div><div class="layout-record-group"><div class="layout-record-heading">Manual ${query ? `· ${manualEntries.length} hasil` : ""}</div>${manualRows}</div></div></article>`;
+          const manualRows = manualEntries.length
+            ? renderManualEntryCards(manualEntries, { products, printMode })
+            : `<div class="layout-record-empty">${query ? "Tidak ada input manual yang cocok di rack ini." : "Belum ada input manual."}</div>`;
+          return `<article class="layout-card"><div class="layout-card-head"><div><div class="layout-name">${escapeHtml(title)}</div><div class="layout-location">Scan Layout · tampilan arsip</div></div><div class="layout-card-summary"><span class="layout-count">Target ${target === undefined ? "-" : formatNumber(target)} · ${query ? `${scans.length} hasil scan · ${manualEntries.length} hasil manual` : `${allScans.length} scan · ${allManualEntries.reduce((sum, entry) => sum + Number(entry.quantity || 0), 0)} manual`}</span></div></div><div class="layout-card-foot"><div class="layout-record-group"><div class="layout-record-heading">Scan ${query ? `· ${scans.length} hasil` : ""}</div><div class="layout-scan-list">${scanRows}</div></div><div class="layout-record-group"><div class="layout-record-heading">Manual ${query ? `· ${manualEntries.length} hasil` : ""}</div><div class="layout-scan-list">${manualRows}</div></div></div></article>`;
         }).join("");
         const matchingRackCount = (rackMarkup.match(/<article class="layout-card"/g) || []).length;
         const emptyMessage = query ? `Tidak ada item yang cocok dengan “${escapeHtml(recordedArchiveSearchTerm.trim())}”.` : "Tidak ada data Rack.";
@@ -6393,11 +6404,11 @@
         const pjQuantity = included
           ? `<button class="recorded-quantity-trigger" type="button" data-recorded-entry="pj" data-product-id="${escapeHtml(product.id)}" aria-label="Lihat detail PJ" aria-haspopup="dialog" aria-expanded="false">${formatNumber(product.pj || 0)}</button>`
           : "-";
-        return `<tr><td class="number-cell">${index + 1}</td><td><div class="product-name">${escapeHtml(product.name)}</div><div class="product-sku">${escapeHtml(product.sku)}</div></td><td><span class="category-chip" data-user-content>${escapeHtml(product.brand || "-")}</span></td><td class="number-cell quantity-cell">${formatNumber(product.stock)}</td><td class="number-cell quantity-cell">${included ? formatNumber(product.count || 0) : "-"}</td><td class="number-cell quantity-cell">${formatNumber(product.box || 0)}</td><td class="number-cell quantity-cell">${inboundQuantity}</td><td class="number-cell quantity-cell">${pjQuantity}</td><td class="quantity-cell"><span class="variance ${variance === 0 ? "zero" : variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td><td><span class="row-status ${status.className}">${status.label}</span></td><td data-user-content>${escapeHtml(product.note || "-")}</td></tr>`;
+        return `<tr><td class="number-cell">${index + 1}</td><td>${renderProductIdentity(product)}</td><td><span class="category-chip" data-user-content>${escapeHtml(product.brand || "-")}</span></td><td class="number-cell quantity-cell">${formatNumber(product.stock)}</td><td class="number-cell quantity-cell">${included ? formatNumber(product.count || 0) : "-"}</td><td class="number-cell quantity-cell">${formatNumber(product.box || 0)}</td><td class="number-cell quantity-cell">${inboundQuantity}</td><td class="number-cell quantity-cell">${pjQuantity}</td><td class="quantity-cell"><span class="variance ${variance === 0 ? "zero" : variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td><td><span class="row-status ${status.className}">${status.label}</span></td><td data-user-content>${escapeHtml(product.note || "-")}</td></tr>`;
       }).join("");
       const title = sheet === "recap" ? "Item belum sesuai" : "Rekonsiliasi per item";
       const emptyMessage = query ? `Tidak ada hasil untuk “${escapeHtml(recordedArchiveSearchTerm.trim())}”.` : sheet === "recap" ? "Belum ada item bermasalah. Semua item sesuai dengan VEF." : "Data Result SO tidak tersedia.";
-      return `<section class="table-section"><div class="table-toolbar"><div class="table-title">${title} <span class="table-count">${visibleProducts.length} item · hanya-baca${query ? " · hasil pencarian" : ""}</span></div></div><div class="table-scroll"><table><thead><tr><th>No</th><th>Item / item code</th><th>Brand</th><th class="quantity-cell">VEF</th><th class="quantity-cell">SCAN</th><th class="quantity-cell">MANUAL</th><th class="quantity-cell">Inbound/Retur</th><th class="quantity-cell">PJ</th><th class="quantity-cell">Selisih</th><th>Check</th><th>Note</th></tr></thead><tbody>${rows || `<tr><td class="empty-row" colspan="11">${emptyMessage}</td></tr>`}</tbody></table></div></section>`;
+      return `<section class="table-section"><div class="table-toolbar"><div class="table-title">${title} <span class="table-count">${visibleProducts.length} item · hanya-baca${query ? " · hasil pencarian" : ""}</span></div></div><div class="table-scroll"><table><thead>${renderReconciliationTableHead(true)}</thead><tbody>${rows || `<tr><td class="empty-row" colspan="11">${emptyMessage}</td></tr>`}</tbody></table></div></section>`;
     }
     function handleRecordedBrandChange() {
       const brand = document.getElementById("recorded-brand-select")?.value;
