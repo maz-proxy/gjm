@@ -389,9 +389,9 @@
     .camera-scan-dialog .dialog-actions .button { border-radius: 999px; min-height: 42px; padding-inline: 20px; }
     @keyframes camera-scan-line { from { top: 12%; } to { top: 88%; } }
     .camera-scan-frame::after { animation: camera-scan-line 2.2s ease-in-out infinite alternate; }
-    @media (max-width: 767px) {
+    @media (max-width: 1024px), (pointer: coarse) {
       html.web-camera-scanner-active .layout-card { scroll-margin-top: calc(clamp(270px, 42dvh, 380px) + env(safe-area-inset-top, 0px) + 12px); }
-      html.web-camera-scanner-active:not(.capacitor-android) .app-shell { margin-top: calc(clamp(270px, 42dvh, 380px) + env(safe-area-inset-top, 0px) + 16px); }
+      html.web-camera-scanner-active:not(.capacitor-android) .app-shell { padding-top: calc(clamp(270px, 42dvh, 380px) + env(safe-area-inset-top, 0px) + 16px); }
     }
     @media (max-width: 600px) { .camera-scan-dialog { max-width: calc(100vw - 16px); top: 8px; } .camera-scan-preview video { height: clamp(145px, 28vh, 210px); } }
     html[data-theme="dark"] .camera-scan-dialog::backdrop { background: rgba(0, 0, 0, .16); backdrop-filter: none; -webkit-backdrop-filter: none; }
@@ -2123,7 +2123,7 @@
       html[data-accent="burgundy"] .app-shell > .sidebar { background: linear-gradient(100deg, #76233f, #4e192e); border-color: #4e192e; }
       html[data-accent="burgundy"][data-theme="dark"] .app-shell > .sidebar { background: linear-gradient(100deg, #4a1a2d, #321421); border-color: #321421; }
     }
-    @media (max-width: 767px) {
+    @media (max-width: 1024px), (pointer: coarse) {
       html:not(.capacitor-android) .camera-scan-dialog {
         align-content: stretch;
         background: #101715;
@@ -3942,7 +3942,7 @@
       flashButton.setAttribute("aria-label", translateText("Nyalakan flash"));
     }
     function openWebCameraDialog(dialog, input) {
-      const compactMobileScanner = window.matchMedia("(max-width: 767px)").matches;
+      const compactMobileScanner = window.matchMedia("(max-width: 1024px), (pointer: coarse)").matches;
       if (compactMobileScanner) {
         document.documentElement.classList.add("web-camera-scanner-active");
         if (input.matches(".layout-input")) {
