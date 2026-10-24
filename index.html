@@ -5864,7 +5864,7 @@
     function renderCompletedSessionDetails(session, printMode = false) {
       const snapshot = session.snapshot;
       const scans = snapshot.scanEvents || [];
-      const products = sessionMasterProducts(session);
+      const products = snapshot.products || [];
       const productsById = new Map(products.map((product) => [product.id, product]));
       const productsBySku = new Map(products.map((product) => [normalizeField(product.sku), product]));
       const inboundEntries = snapshot.inboundEntries || [];
@@ -5916,7 +5916,7 @@
       return `${workbookArchive}
         <div class="completed-export-actions"><button class="button button-primary" type="button" data-export-session="${escapeHtml(session.id)}">↓ Ekspor XLSX</button><button class="button button-secondary" type="button" data-print-session="${escapeHtml(session.id)}">▤ Print</button></div>
         <div class="completed-detail-panel">
-          ${printMode ? "" : `<p class="subtitle">Data didownload dari VEF ${escapeHtml(sourceTimestamp)} · Data diupload Stock Opname ${escapeHtml(uploadedTimestamp)}. Referensi Master VEF mengikuti data terbaru pada workspace yang sama; hasil scan/manual tetap snapshot sesi.</p>`}
+          ${printMode ? "" : `<p class="subtitle">Data didownload dari VEF ${escapeHtml(sourceTimestamp)} · Data diupload Stock Opname ${escapeHtml(uploadedTimestamp)}. Tampilan arsip mengikuti format Scan & Manual, Stock Reconciliation, dan Recap.</p>`}
           <h3>Scan Layout · ${scans.length} scan</h3><div class="completed-racks">${racks || `<div class="completed-rack-meta">Tidak ada data Rack.</div>`}</div>
           <h3>Input Manual · ${(snapshot.manualEntries || []).length} catatan</h3><div class="table-scroll"><table class="completed-result-table"><thead><tr><th>No</th><th>Item Code</th><th>Item Name</th><th>Rack</th><th>Quantity</th><th>Waktu Input</th></tr></thead><tbody>${manualRows || `<tr><td class="empty-row" colspan="6">Belum ada input manual.</td></tr>`}</tbody></table></div>
           <h3>Result SO · ${products.length} item</h3><div class="table-scroll"><table class="completed-result-table"><thead><tr><th>No</th><th>Item code</th><th>Item name</th><th class="quantity-cell">VEF</th><th class="quantity-cell">SCAN</th><th class="quantity-cell">MANUAL</th><th class="quantity-cell">Inbound/Retur</th><th class="quantity-cell">PJ</th><th class="quantity-cell">Selisih</th><th>Check</th><th>Note</th></tr></thead><tbody>${productRows || `<tr><td class="empty-row" colspan="11">Data Result SO tidak tersedia.</td></tr>`}</tbody></table></div>
@@ -5937,7 +5937,7 @@
         return;
       }
       const snapshot = session.snapshot;
-      const products = sessionMasterProducts(session);
+      const products = snapshot.products || [];
       const countMode = snapshot.countMode === "all" ? "all" : "laptops";
       const inboundEntries = snapshot.inboundEntries || [];
       const workbook = XLSX.utils.book_new();
@@ -6218,31 +6218,12 @@
       if (WORKSPACE_PERIODS.includes(session.period)) return session.period;
       return new Date(session.finishedAt).getDate() < 16 ? "Week 1" : "Week 2";
     }
-    function sessionMasterProducts(session) {
-      const snapshotProducts = session.snapshot?.products || [];
-      const workspace = state.workspaces.find((item) => item.id === session.workspaceId);
-      const latestProducts = workspace?.data?.products || [];
-      if (!latestProducts.length) return snapshotProducts;
-      const productKey = (product) => `${normalizeField(product.sku)}::${normalizeField(product.warehouse)}`;
-      const latestByKey = new Map(latestProducts.map((product) => [productKey(product), product]));
-      return snapshotProducts.map((product) => {
-        const master = latestByKey.get(productKey(product));
-        if (!master) return product;
-        const refreshed = { ...product };
-        for (const field of ["sku", "name", "itemGroup", "brand", "warehouse"]) {
-          if (typeof master[field] === "string") refreshed[field] = master[field];
-        }
-        const stock = Number(master.stock);
-        if (master.stock !== null && master.stock !== undefined && Number.isFinite(stock)) refreshed.stock = stock;
-        return refreshed;
-      });
-    }
     function recordedSoProgress(session) {
       const snapshot = session.snapshot || {};
       const countMode = snapshot.countMode === "all" ? "all" : "laptops";
       let total = 0;
       let completed = 0;
-      for (const product of sessionMasterProducts(session)) {
+      for (const product of snapshot.products || []) {
         if (!isCountedProduct(product, countMode)) continue;
         const stock = Number(product.stock);
         const expected = Number.isFinite(stock) ? Math.max(0, stock) : 0;
@@ -6350,7 +6331,7 @@
     }
     function renderRecordedSheet(session, sheet, printMode = false) {
       const snapshot = session.snapshot || {};
-      const products = sessionMasterProducts(session);
+      const products = snapshot.products || [];
       const inboundEntries = snapshot.inboundEntries || [];
       const countMode = snapshot.countMode === "all" ? "all" : "laptops";
       const query = recordedArchiveSearchTerm.trim().toLocaleLowerCase("id-ID");
@@ -6500,7 +6481,7 @@
         <section class="recorded-archive-head">
           <div class="recorded-archive-heading">
             <h1>${escapeHtml(session.workspaceName || "Stock Opname Recorded")}</h1>
-            <p>Arsip lembar kerja stock opname · Tampilan hanya-baca · Referensi Master VEF terbaru di workspace yang sama; hasil sesi tetap snapshot.</p>
+            <p>Arsip lembar kerja stock opname · Tampilan hanya-baca · Data mengikuti snapshot saat sesi selesai.</p>
             <div class="recorded-archive-meta"><span><strong>Periode:</strong> ${escapeHtml(archivedSessionMonth(session))} · ${escapeHtml(archivedSessionWeek(session))}</span><span><strong>Selesai:</strong> ${escapeHtml(finishedAt)}</span></div>
           </div>
           <div class="recorded-pic-list" aria-label="PIC sesi">
