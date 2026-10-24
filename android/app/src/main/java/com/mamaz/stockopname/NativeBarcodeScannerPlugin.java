@@ -21,9 +21,14 @@ import androidx.camera.core.FocusMeteringAction;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
+import androidx.camera.core.UseCaseGroup;
+import androidx.camera.core.ViewPort;
 import androidx.camera.camera2.interop.Camera2Interop;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
+import androidx.camera.view.transform.CoordinateTransform;
+import androidx.camera.view.transform.ImageProxyTransformFactory;
+import androidx.camera.view.transform.OutputTransform;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.LifecycleOwner;
 import com.getcapacitor.JSObject;
@@ -51,6 +56,8 @@ import java.util.concurrent.TimeUnit;
 )
 public class NativeBarcodeScannerPlugin extends Plugin {
     private final ExecutorService analysisExecutor = Executors.newSingleThreadExecutor();
+    private final ImageProxyTransformFactory imageProxyTransformFactory =
+        createImageProxyTransformFactory();
     private FrameLayout scannerRoot;
     private PreviewView previewView;
     private ProcessCameraProvider cameraProvider;
@@ -182,35 +189,57 @@ public class NativeBarcodeScannerPlugin extends Plugin {
             }
             try {
                 cameraProvider = providerFuture.get();
-                Preview.Builder previewBuilder = new Preview.Builder();
-                new Camera2Interop.Extender<>(previewBuilder).setCaptureRequestOption(
-                    CaptureRequest.CONTROL_AF_MODE,
-                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
-                );
-                Preview preview = previewBuilder.build();
-                preview.setSurfaceProvider(previewView.getSurfaceProvider());
-                ImageAnalysis analysis = new ImageAnalysis.Builder()
-                    .setTargetResolution(new Size(1920, 1080))
-                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                    .build();
-                BarcodeScannerOptions options = new BarcodeScannerOptions.Builder()
-                    .setBarcodeFormats(Barcode.FORMAT_ALL_FORMATS)
-                    .build();
-                barcodeScanner = BarcodeScanning.getClient(options);
-                analysis.setAnalyzer(analysisExecutor, this::analyzeFrame);
-                cameraProvider.unbindAll();
-                camera = cameraProvider.bindToLifecycle(
-                    (LifecycleOwner) getActivity(),
-                    CameraSelector.DEFAULT_BACK_CAMERA,
-                    preview,
-                    analysis
-                );
-                call.resolve();
+                bindCameraUseCases(call);
             } catch (Exception error) {
                 stopScannerInternal();
                 call.reject("Kamera native tidak dapat dimulai.", error);
             }
         }, ContextCompat.getMainExecutor(getContext()));
+    }
+
+    private void bindCameraUseCases(PluginCall call) {
+        if (scannerRoot == null || previewView == null || cameraProvider == null) {
+            call.reject("Pemindai kamera ditutup sebelum kamera siap.");
+            return;
+        }
+        ViewPort viewPort = previewView.getViewPort();
+        if (viewPort == null) {
+            previewView.post(() -> bindCameraUseCases(call));
+            return;
+        }
+        try {
+            Preview.Builder previewBuilder = new Preview.Builder();
+            new Camera2Interop.Extender<>(previewBuilder).setCaptureRequestOption(
+                CaptureRequest.CONTROL_AF_MODE,
+                CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
+            );
+            Preview preview = previewBuilder.build();
+            preview.setSurfaceProvider(previewView.getSurfaceProvider());
+            ImageAnalysis analysis = new ImageAnalysis.Builder()
+                .setTargetResolution(new Size(1920, 1080))
+                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                .build();
+            BarcodeScannerOptions options = new BarcodeScannerOptions.Builder()
+                .setBarcodeFormats(Barcode.FORMAT_ALL_FORMATS)
+                .build();
+            barcodeScanner = BarcodeScanning.getClient(options);
+            analysis.setAnalyzer(analysisExecutor, this::analyzeFrame);
+            UseCaseGroup useCaseGroup = new UseCaseGroup.Builder()
+                .setViewPort(viewPort)
+                .addUseCase(preview)
+                .addUseCase(analysis)
+                .build();
+            cameraProvider.unbindAll();
+            camera = cameraProvider.bindToLifecycle(
+                (LifecycleOwner) getActivity(),
+                CameraSelector.DEFAULT_BACK_CAMERA,
+                useCaseGroup
+            );
+            call.resolve();
+        } catch (Exception error) {
+            stopScannerInternal();
+            call.reject("Kamera native tidak dapat dimulai.", error);
+        }
     }
 
     private void analyzeFrame(ImageProxy imageProxy) {
@@ -230,7 +259,11 @@ public class NativeBarcodeScannerPlugin extends Plugin {
                 boolean barcodeFound = false;
                 for (Barcode barcode : barcodes) {
                     String value = barcode.getRawValue();
-                    if (value == null || value.trim().isEmpty()) continue;
+                    if (
+                        value == null ||
+                        value.trim().isEmpty() ||
+                        !isBarcodeInsideScanFrame(barcode, imageProxy)
+                    ) continue;
                     barcodeFound = true;
                     if (!value.equals(lastBarcodeValue) || now - lastBarcodeEventAt >= 350) {
                         lastBarcodeValue = value;
@@ -251,6 +284,43 @@ public class NativeBarcodeScannerPlugin extends Plugin {
                 android.util.Log.w("NativeBarcodeScanner", "Barcode analysis failed.", error)
             )
             .addOnCompleteListener(analysisExecutor, task -> imageProxy.close());
+    }
+
+    private boolean isBarcodeInsideScanFrame(Barcode barcode, ImageProxy imageProxy) {
+        if (previewView == null || previewView.getWidth() <= 0 || previewView.getHeight() <= 0) {
+            return false;
+        }
+        android.graphics.Rect boundingBox = barcode.getBoundingBox();
+        OutputTransform previewTransform = previewView.getOutputTransform();
+        if (boundingBox == null || previewTransform == null) return false;
+
+        RectF previewBounds = new RectF(boundingBox);
+        CoordinateTransform coordinateTransform = new CoordinateTransform(
+            imageProxyTransformFactory.getOutputTransform(imageProxy),
+            previewTransform
+        );
+        coordinateTransform.mapRect(previewBounds);
+        return isPointInsideScanFrame(
+            previewBounds.centerX(),
+            previewBounds.centerY(),
+            previewView.getWidth(),
+            previewView.getHeight()
+        );
+    }
+
+    static boolean isPointInsideScanFrame(float x, float y, int width, int height) {
+        if (width <= 0 || height <= 0) return false;
+        float frameWidth = width * 0.9f;
+        float frameHeight = Math.min(height * 0.25f, frameWidth * 0.55f);
+        float left = (width - frameWidth) / 2;
+        float top = (height - frameHeight) / 2;
+        return x >= left && x <= left + frameWidth && y >= top && y <= top + frameHeight;
+    }
+
+    private static ImageProxyTransformFactory createImageProxyTransformFactory() {
+        ImageProxyTransformFactory factory = new ImageProxyTransformFactory();
+        factory.setUsingRotationDegrees(true);
+        return factory;
     }
 
     private void focusAt(float x, float y) {
