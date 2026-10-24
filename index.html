@@ -389,6 +389,9 @@
     .camera-scan-dialog .dialog-actions .button { border-radius: 999px; min-height: 42px; padding-inline: 20px; }
     @keyframes camera-scan-line { from { top: 12%; } to { top: 88%; } }
     .camera-scan-frame::after { animation: camera-scan-line 2.2s ease-in-out infinite alternate; }
+    @media (max-width: 767px) {
+      html.web-camera-scanner-active .layout-card { scroll-margin-top: calc(clamp(270px, 42dvh, 380px) + env(safe-area-inset-top, 0px) + 12px); }
+    }
     @media (max-width: 600px) { .camera-scan-dialog { max-width: calc(100vw - 16px); top: 8px; } .camera-scan-preview video { height: clamp(145px, 28vh, 210px); } }
     html[data-theme="dark"] .camera-scan-dialog::backdrop { background: rgba(0, 0, 0, .16); backdrop-filter: none; -webkit-backdrop-filter: none; }
     html[data-theme="dark"] .camera-scan-dialog .dialog-actions { background: color-mix(in srgb, var(--green) 9%, var(--paper)); }
@@ -2123,31 +2126,31 @@
       html:not(.capacitor-android) .camera-scan-dialog {
         align-content: stretch;
         background: #101715;
-        border: 0;
-        border-radius: 0;
+        border: 1px solid rgba(255,255,255,.16);
+        border-radius: 16px;
+        box-shadow: 0 18px 48px rgba(0,0,0,.38);
         color: #fff;
-        grid-template-rows: auto minmax(0, 1fr) auto auto;
-        height: 100vh;
-        height: 100dvh;
-        inset: 0;
-        margin: 0;
-        max-height: none;
-        max-width: none;
+        grid-template-rows: auto minmax(100px, 1fr) auto auto;
+        height: clamp(270px, 42dvh, 380px);
+        inset: max(8px, env(safe-area-inset-top, 0px)) 8px auto;
+        margin: 0 auto;
+        max-height: calc(100dvh - env(safe-area-inset-top, 0px) - 16px);
+        max-width: 560px;
         overflow: hidden;
         padding: 0;
         position: fixed;
-        width: 100vw;
+        width: calc(100% - 16px);
       }
       html:not(.capacitor-android) .camera-scan-dialog[open] { display: grid; }
       html:not(.capacitor-android) .camera-scan-dialog .dialog-head {
         align-items: center;
-        background: linear-gradient(180deg, rgba(16,23,21,.98), rgba(16,23,21,.84));
+        background: #101715;
         border: 0;
         border-radius: 0;
         border-top: 0;
         color: #fff;
         gap: 12px;
-        padding: max(14px, env(safe-area-inset-top, 0px)) 18px 13px;
+        padding: 10px 14px 8px;
         z-index: 1;
       }
       html:not(.capacitor-android) .camera-scan-dialog .dialog-title { color: #fff; font-size: 18px; }
@@ -2155,15 +2158,15 @@
       html:not(.capacitor-android) .camera-scan-dialog .dialog-close { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.16); color: #fff; flex: 0 0 38px; height: 38px; width: 38px; }
       html:not(.capacitor-android) .camera-scan-preview { align-items: center; background: #090d0c; display: flex; min-height: 0; }
       html:not(.capacitor-android) .camera-scan-preview video { height: 100%; min-height: 100%; object-fit: cover; }
-      html:not(.capacitor-android) .camera-scan-frame { border: 2px solid rgba(255,255,255,.94); border-radius: 14px; height: clamp(88px, 15vh, 130px); left: 50%; right: auto; transform: translate(-50%,-50%); width: min(84vw, 460px); }
+      html:not(.capacitor-android) .camera-scan-frame { border: 2px solid rgba(255,255,255,.94); border-radius: 14px; height: clamp(70px, 10vh, 100px); left: 50%; right: auto; transform: translate(-50%,-50%); width: min(84vw, 460px); }
       html:not(.capacitor-android) .camera-scan-frame::after { background: #7effc2; box-shadow: 0 0 14px rgba(88,230,165,.95); height: 2px; }
       html:not(.capacitor-android) .camera-focus-indicator { border-color: #fff; box-shadow: 0 0 0 2px var(--green), 0 0 22px rgba(0,0,0,.7); }
       html:not(.capacitor-android) .camera-scan-status {
         background: #101715;
         color: rgba(255,255,255,.86);
         font-size: 14px;
-        min-height: 52px;
-        padding: 14px 20px;
+        min-height: 38px;
+        padding: 8px 14px;
         text-align: center;
       }
       html:not(.capacitor-android) .camera-scan-status[data-state="error"] { color: #ffb4ab; }
@@ -2174,7 +2177,7 @@
         border: 0;
         gap: 12px;
         justify-content: space-between;
-        padding: 10px 20px max(20px, env(safe-area-inset-bottom, 0px));
+        padding: 6px 14px 10px;
       }
       html:not(.capacitor-android) .camera-scan-dialog .dialog-actions .button { min-width: 112px; }
       html:not(.capacitor-android) .camera-scan-dialog::backdrop { background: #090d0c; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
@@ -3937,6 +3940,19 @@
       flashButton.setAttribute("aria-pressed", "false");
       flashButton.setAttribute("aria-label", translateText("Nyalakan flash"));
     }
+    function openWebCameraDialog(dialog, input) {
+      const compactMobileScanner = window.matchMedia("(max-width: 767px)").matches;
+      if (compactMobileScanner) {
+        document.documentElement.classList.add("web-camera-scanner-active");
+        if (input.matches(".layout-input")) {
+          input.closest(".layout-card")?.scrollIntoView({ block: "start", behavior: "smooth" });
+        }
+      }
+      if (!dialog.open) {
+        if (compactMobileScanner) dialog.show();
+        else dialog.showModal();
+      }
+    }
     async function toggleCameraTorch() {
       const track = cameraStream?.getVideoTracks?.()[0];
       if (!track || track.getCapabilities?.().torch !== true) {
@@ -4157,7 +4173,7 @@
         await startNativeCameraScanner(dialog);
         return;
       }
-      if (!dialog.open) dialog.showModal();
+      openWebCameraDialog(dialog, input);
       if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
         setCameraScanStatus("Akses kamera memerlukan HTTPS atau localhost dan izin kamera dari browser.", "error");
         return;
@@ -8580,6 +8596,7 @@
     });
     cameraScanDialog.addEventListener("close", () => {
       stopCameraScanner();
+      document.documentElement.classList.remove("web-camera-scanner-active");
       const input = cameraTargetInput;
       cameraTargetInput = null;
       if (input?.isConnected && !input.disabled) input.focus();
