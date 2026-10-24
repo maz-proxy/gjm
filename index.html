@@ -3947,6 +3947,47 @@
         setCameraScanStatus("Fokus sentuh tidak dapat diterapkan. Coba dekatkan barcode ke kamera.");
       }
     }
+    function isCameraBarcodeInsideScanFrame(detection, video) {
+      const sourceBox = detection?.boundingBox;
+      let sourceX;
+      let sourceY;
+      if (
+        sourceBox &&
+        Number.isFinite(sourceBox.x) &&
+        Number.isFinite(sourceBox.y) &&
+        Number.isFinite(sourceBox.width) &&
+        Number.isFinite(sourceBox.height)
+      ) {
+        sourceX = sourceBox.x + sourceBox.width / 2;
+        sourceY = sourceBox.y + sourceBox.height / 2;
+      } else {
+        const resultPoints = detection?.getResultPoints?.() ?? detection?.resultPoints;
+        const points = Array.isArray(resultPoints)
+          ? resultPoints.filter((point) => Number.isFinite(point?.x) && Number.isFinite(point?.y))
+          : [];
+        if (!points.length) return false;
+        sourceX = (Math.min(...points.map((point) => point.x)) + Math.max(...points.map((point) => point.x))) / 2;
+        sourceY = (Math.min(...points.map((point) => point.y)) + Math.max(...points.map((point) => point.y))) / 2;
+      }
+
+      if (!video.videoWidth || !video.videoHeight) return false;
+      const videoBounds = video.getBoundingClientRect();
+      const frame = document.querySelector(".camera-scan-frame");
+      const frameBounds = frame?.getBoundingClientRect();
+      if (!frameBounds) return false;
+
+      const scale = Math.max(videoBounds.width / video.videoWidth, videoBounds.height / video.videoHeight);
+      const renderedWidth = video.videoWidth * scale;
+      const renderedHeight = video.videoHeight * scale;
+      const offsetX = (renderedWidth - videoBounds.width) / 2;
+      const offsetY = (renderedHeight - videoBounds.height) / 2;
+      const clientX = videoBounds.left + sourceX * scale - offsetX;
+      const clientY = videoBounds.top + sourceY * scale - offsetY;
+      return clientX >= frameBounds.left &&
+        clientX <= frameBounds.right &&
+        clientY >= frameBounds.top &&
+        clientY <= frameBounds.bottom;
+    }
     async function detectCameraBarcode() {
       const dialog = document.getElementById("camera-scan-dialog");
       const video = document.getElementById("camera-scan-video");
@@ -3954,7 +3995,9 @@
       try {
         if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
           const detections = await cameraBarcodeDetector.detect(video);
-          const value = detections.find((detection) => detection.rawValue)?.rawValue?.trim();
+          const value = detections.find((detection) =>
+            detection.rawValue?.trim() && isCameraBarcodeInsideScanFrame(detection, video)
+          )?.rawValue?.trim();
           if (value) {
             if (cameraTargetInput?.matches(".layout-input")) {
               if (!cameraRackScanLocked) {
@@ -4018,6 +4061,11 @@
             (result, _error, scanControls) => {
               // ZXing reports normal frame misses through the error callback; keep scanning until a result is found.
               const value = result?.getText()?.trim();
+              const insideScanFrame = value && isCameraBarcodeInsideScanFrame(result, video);
+              if (value && !insideScanFrame) {
+                if (cameraTargetInput?.matches(".layout-input")) markCameraRackBarcodeMissed();
+                return;
+              }
               if (!value && cameraTargetInput?.matches(".layout-input")) {
                 markCameraRackBarcodeMissed();
                 return;
