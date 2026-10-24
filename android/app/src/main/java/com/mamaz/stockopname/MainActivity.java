@@ -8,6 +8,12 @@ import androidx.core.view.WindowInsetsControllerCompat;
 public class MainActivity extends BridgeActivity {
 
     @Override
+    public void onCreate(android.os.Bundle savedInstanceState) {
+        registerPlugin(NativeBarcodeScannerPlugin.class);
+        super.onCreate(savedInstanceState);
+    }
+
+    @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
         if (hasFocus) {

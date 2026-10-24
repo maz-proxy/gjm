@@ -3383,6 +3383,9 @@
     let cameraTargetInput = null;
     let cameraBarcodeDetector = null;
     let cameraReaderControls = null;
+    let nativeCameraScanner = null;
+    let nativeCameraScannerActive = false;
+    let nativeCameraListenerHandles = [];
     let cameraRackScanLocked = false;
     let cameraRackScanMissTimer = null;
     function initializeAppBackNavigation() {
@@ -3760,6 +3763,51 @@
       clearTimeout(cameraRackScanMissTimer);
       cameraRackScanMissTimer = null;
     }
+    function handleCameraBarcodeValue(value) {
+      const normalizedValue = String(value || "").trim();
+      if (!normalizedValue) return;
+      if (cameraTargetInput?.matches(".layout-input")) {
+        if (cameraRackScanLocked) {
+          markCameraRackBarcodeVisible();
+          return;
+        }
+        cameraRackScanLocked = true;
+        if (!submitCameraRackScan(normalizedValue)) cameraRackScanLocked = false;
+        return;
+      }
+      if (!cameraTargetInput?.isConnected) return;
+      cameraTargetInput.value = normalizedValue;
+      cameraTargetInput.dispatchEvent(new Event("input", { bubbles: true }));
+      setCameraScanStatus("Barcode berhasil dibaca. Tutup pemindai lalu tekan Catat Scan.", "success");
+      stopCameraScanner();
+    }
+    async function startNativeCameraScanner(dialog) {
+      nativeCameraScanner = window.Capacitor?.Plugins?.NativeBarcodeScanner || null;
+      if (!nativeCameraScanner?.startScanner || !nativeCameraScanner?.addListener) {
+        setCameraScanStatus("Scanner native tidak tersedia. Perbarui APK ke versi terbaru.", "error");
+        return false;
+      }
+      setCameraScanStatus("Menghubungkan kamera native...");
+      try {
+        nativeCameraListenerHandles = await Promise.all([
+          nativeCameraScanner.addListener("barcodeDetected", ({ value }) => handleCameraBarcodeValue(value)),
+          nativeCameraScanner.addListener("barcodeMissed", () => markCameraRackBarcodeMissed()),
+          nativeCameraScanner.addListener("scannerClosed", () => {
+            if (dialog.open) dialog.close();
+          })
+        ]);
+        await nativeCameraScanner.startScanner();
+        nativeCameraScannerActive = true;
+        setCameraScanStatus("Kamera native siap. Ketuk area barcode untuk memfokuskan.");
+        return true;
+      } catch (error) {
+        nativeCameraListenerHandles.forEach((handle) => void handle.remove());
+        nativeCameraListenerHandles = [];
+        console.error("Scanner kamera native gagal dijalankan:", error);
+        setCameraScanStatus(`Scanner kamera native tidak dapat dibuka: ${error.message || "kesalahan tidak diketahui"}`, "error");
+        return false;
+      }
+    }
     function stopCameraScanner() {
       clearTimeout(cameraScanTimer);
       clearTimeout(cameraFocusTimer);
@@ -3767,6 +3815,14 @@
       cameraScanTimer = null;
       cameraFocusTimer = null;
       cameraRackScanMissTimer = null;
+      nativeCameraListenerHandles.forEach((handle) => void handle.remove());
+      nativeCameraListenerHandles = [];
+      if (nativeCameraScannerActive && nativeCameraScanner?.stopScanner) {
+        nativeCameraScannerActive = false;
+        nativeCameraScanner.stopScanner().catch((error) => {
+          console.error("Scanner kamera native gagal dihentikan:", error);
+        });
+      }
       cameraBarcodeDetector = null;
       cameraRackScanLocked = false;
       cameraReaderControls?.stop();
@@ -3927,6 +3983,10 @@
       const dialog = document.getElementById("camera-scan-dialog");
       setCameraScanStatus("Menghubungkan kamera...");
       if (!dialog.open) dialog.showModal();
+      if (isAndroidCapacitor) {
+        await startNativeCameraScanner(dialog);
+        return;
+      }
       if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
         setCameraScanStatus("Akses kamera memerlukan HTTPS atau localhost dan izin kamera dari browser.", "error");
         return;
@@ -3947,25 +4007,17 @@
             (result, _error, scanControls) => {
               // ZXing reports normal frame misses through the error callback; keep scanning until a result is found.
               const value = result?.getText()?.trim();
-              if (cameraTargetInput?.matches(".layout-input")) {
-                if (cameraRackScanLocked) {
-                  if (value) markCameraRackBarcodeVisible();
-                  else markCameraRackBarcodeMissed();
-                  return;
-                }
-                if (value) {
-                  cameraRackScanLocked = true;
-                  if (!submitCameraRackScan(value)) cameraRackScanLocked = false;
-                }
+              if (!value && cameraTargetInput?.matches(".layout-input")) {
+                markCameraRackBarcodeMissed();
+                return;
+              }
+              if (value && cameraTargetInput?.matches(".layout-input")) {
+                handleCameraBarcodeValue(value);
                 return;
               }
               if (value && !barcodeFound) {
                 barcodeFound = true;
-                if (cameraTargetInput?.isConnected) {
-                  cameraTargetInput.value = value;
-                  cameraTargetInput.dispatchEvent(new Event("input", { bubbles: true }));
-                }
-                setCameraScanStatus("Barcode berhasil dibaca. Tutup pemindai lalu tekan Catat Scan.", "success");
+                handleCameraBarcodeValue(value);
                 scanControls?.stop();
                 cameraReaderControls = null;
               }
