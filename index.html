@@ -4,8 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f4f7f6">
+  <link rel="icon" type="image/png" sizes="512x512" href="./assets/stock-opname-icon.png?v=2">
   <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg">
-  <link rel="apple-touch-icon" type="image/png" href="./assets/stock-opname-icon.png">
+  <link rel="apple-touch-icon" type="image/png" href="./assets/stock-opname-icon.png?v=2">
   <script>
     const isAndroidCapacitor = Boolean(window.androidBridge || window.Capacitor?.getPlatform?.() === "android");
     if (isAndroidCapacitor) document.documentElement.classList.add("capacitor-android");
@@ -3050,10 +3051,6 @@
         const sidebarEmblem = createThemedEmblem(colors.sidebar);
         document.querySelectorAll("[data-brand-emblem]").forEach((image) => {
           image.src = image.closest(".auth-brand") ? primaryEmblem : sidebarEmblem;
-        });
-        document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]').forEach((link) => {
-          link.type = "image/png";
-          link.href = primaryEmblem;
         });
       } catch (error) {
         console.error("Ikon brand tidak dapat disesuaikan dengan tema:", error);
