@@ -63,6 +63,11 @@ public class NativeBarcodeScannerPlugin extends Plugin {
     private ProcessCameraProvider cameraProvider;
     private Camera camera;
     private BarcodeScanner barcodeScanner;
+    private volatile OutputTransform previewOutputTransform;
+    private volatile int previewWidth;
+    private volatile int previewHeight;
+    private androidx.lifecycle.Observer<PreviewView.StreamState> previewStreamStateObserver;
+    private View.OnLayoutChangeListener previewLayoutChangeListener;
     private long lastBarcodeEventAt;
     private long lastBarcodeMissEventAt;
     private String lastBarcodeValue = "";
@@ -98,6 +103,23 @@ public class NativeBarcodeScannerPlugin extends Plugin {
                 previewView = new PreviewView(context);
                 previewView.setImplementationMode(PreviewView.ImplementationMode.COMPATIBLE);
                 previewView.setScaleType(PreviewView.ScaleType.FILL_CENTER);
+                previewLayoutChangeListener = (
+                    view,
+                    left,
+                    top,
+                    right,
+                    bottom,
+                    oldLeft,
+                    oldTop,
+                    oldRight,
+                    oldBottom
+                ) -> refreshPreviewOutputTransform();
+                previewView.addOnLayoutChangeListener(previewLayoutChangeListener);
+                previewStreamStateObserver = state -> refreshPreviewOutputTransform();
+                previewView.getPreviewStreamState().observe(
+                    (LifecycleOwner) getActivity(),
+                    previewStreamStateObserver
+                );
                 scannerRoot.addView(
                     previewView,
                     new FrameLayout.LayoutParams(
@@ -235,6 +257,7 @@ public class NativeBarcodeScannerPlugin extends Plugin {
                 CameraSelector.DEFAULT_BACK_CAMERA,
                 useCaseGroup
             );
+            previewView.post(this::refreshPreviewOutputTransform);
             call.resolve();
         } catch (Exception error) {
             stopScannerInternal();
@@ -287,25 +310,47 @@ public class NativeBarcodeScannerPlugin extends Plugin {
     }
 
     private boolean isBarcodeInsideScanFrame(Barcode barcode, ImageProxy imageProxy) {
-        if (previewView == null || previewView.getWidth() <= 0 || previewView.getHeight() <= 0) {
+        OutputTransform previewTransform = previewOutputTransform;
+        int width = previewWidth;
+        int height = previewHeight;
+        if (previewTransform == null || width <= 0 || height <= 0) return false;
+        android.graphics.Rect boundingBox = barcode.getBoundingBox();
+        if (boundingBox == null) return false;
+
+        try {
+            RectF previewBounds = new RectF(boundingBox);
+            CoordinateTransform coordinateTransform = new CoordinateTransform(
+                imageProxyTransformFactory.getOutputTransform(imageProxy),
+                previewTransform
+            );
+            coordinateTransform.mapRect(previewBounds);
+            return isPointInsideScanFrame(
+                previewBounds.centerX(),
+                previewBounds.centerY(),
+                width,
+                height
+            );
+        } catch (IllegalArgumentException | IllegalStateException error) {
+            android.util.Log.w("NativeBarcodeScanner", "Barcode coordinates could not be mapped to the preview.", error);
             return false;
         }
-        android.graphics.Rect boundingBox = barcode.getBoundingBox();
-        OutputTransform previewTransform = previewView.getOutputTransform();
-        if (boundingBox == null || previewTransform == null) return false;
+    }
 
-        RectF previewBounds = new RectF(boundingBox);
-        CoordinateTransform coordinateTransform = new CoordinateTransform(
-            imageProxyTransformFactory.getOutputTransform(imageProxy),
-            previewTransform
-        );
-        coordinateTransform.mapRect(previewBounds);
-        return isPointInsideScanFrame(
-            previewBounds.centerX(),
-            previewBounds.centerY(),
-            previewView.getWidth(),
-            previewView.getHeight()
-        );
+    private void refreshPreviewOutputTransform() {
+        if (previewView == null) {
+            previewOutputTransform = null;
+            previewWidth = 0;
+            previewHeight = 0;
+            return;
+        }
+        previewWidth = previewView.getWidth();
+        previewHeight = previewView.getHeight();
+        try {
+            previewOutputTransform = previewView.getOutputTransform();
+        } catch (IllegalArgumentException | IllegalStateException error) {
+            previewOutputTransform = null;
+            android.util.Log.w("NativeBarcodeScanner", "Preview coordinates are not ready yet.", error);
+        }
     }
 
     static boolean isPointInsideScanFrame(float x, float y, int width, int height) {
@@ -341,6 +386,19 @@ public class NativeBarcodeScannerPlugin extends Plugin {
     }
 
     private void stopScannerInternal() {
+        if (previewView != null) {
+            if (previewLayoutChangeListener != null) {
+                previewView.removeOnLayoutChangeListener(previewLayoutChangeListener);
+            }
+            if (previewStreamStateObserver != null) {
+                previewView.getPreviewStreamState().removeObserver(previewStreamStateObserver);
+            }
+        }
+        previewLayoutChangeListener = null;
+        previewStreamStateObserver = null;
+        previewOutputTransform = null;
+        previewWidth = 0;
+        previewHeight = 0;
         if (cameraProvider != null) {
             cameraProvider.unbindAll();
             cameraProvider = null;

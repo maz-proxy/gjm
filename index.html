@@ -3963,7 +3963,12 @@
       } else {
         const resultPoints = detection?.getResultPoints?.() ?? detection?.resultPoints;
         const points = Array.isArray(resultPoints)
-          ? resultPoints.filter((point) => Number.isFinite(point?.x) && Number.isFinite(point?.y))
+          ? resultPoints
+            .map((point) => ({
+              x: point?.x ?? point?.getX?.(),
+              y: point?.y ?? point?.getY?.()
+            }))
+            .filter((point) => Number.isFinite(point.x) && Number.isFinite(point.y))
           : [];
         if (!points.length) return false;
         sourceX = (Math.min(...points.map((point) => point.x)) + Math.max(...points.map((point) => point.x))) / 2;
