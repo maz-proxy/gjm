@@ -7,9 +7,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="STOCK OPNAME">
   <link rel="manifest" href="./site.webmanifest?v=2">
-  <link rel="icon" href="./favicon.ico?v=1" sizes="any">
-  <link rel="icon" type="image/png" sizes="32x32" href="./assets/favicon-32x32.png?v=1">
-  <link rel="icon" type="image/png" sizes="512x512" href="./assets/stock-opname-icon.png?v=4">
+  <link rel="icon" href="./assets/favicon-green-light.ico?v=1" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="./assets/favicon-green-light-32.png?v=1">
   <link rel="apple-touch-icon" type="image/png" sizes="180x180" href="./assets/apple-touch-icon.png?v=1">
   <script>
     const isAndroidCapacitor = Boolean(window.androidBridge || window.Capacitor?.getPlatform?.() === "android");
@@ -3011,6 +3010,14 @@
     const brandEmblemSource = new Image();
     brandEmblemSource.src = "./assets/brand-emblem-source.png";
     const updateBrandFavicon = async () => {
+      const theme = document.documentElement.dataset.theme === "dark" ? "dark" : "light";
+      const accent = document.documentElement.dataset.accent === "burgundy" ? "burgundy" : "green";
+      const variant = `favicon-${accent}-${theme}`;
+      document.querySelectorAll('link[rel="icon"]').forEach((link) => {
+        link.href = link.type === "image/png"
+          ? `./assets/${variant}-32.png?v=1`
+          : `./assets/${variant}.ico?v=1`;
+      });
       const colors = {
         primary: getComputedStyle(document.documentElement).getPropertyValue("--green").trim() || "#176b5b",
         sidebar: getComputedStyle(document.documentElement).getPropertyValue("--lime").trim() || "#b8d8c9"
