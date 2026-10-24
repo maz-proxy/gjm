@@ -4509,6 +4509,10 @@
         p_session_id: sessionId
       });
       if (error) throw error;
+      const { error: signOutError } = await supabaseClient.auth.signOut({ scope: "others" });
+      if (signOutError) {
+        throw new Error(`Sesi login di perangkat lain gagal dicabut: ${signOutError.message}`);
+      }
       activeDeviceSessionId = sessionId;
       return sessionId;
     }
