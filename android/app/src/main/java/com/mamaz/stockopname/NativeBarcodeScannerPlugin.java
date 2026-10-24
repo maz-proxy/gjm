@@ -116,11 +116,21 @@ public class NativeBarcodeScannerPlugin extends Plugin {
                 });
                 content.addView(
                     scannerRoot,
-                    new ViewGroup.LayoutParams(
+                    new FrameLayout.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT
+                        dp(context, 320),
+                        Gravity.TOP
                     )
                 );
+                content.post(() -> {
+                    if (scannerRoot == null) return;
+                    ViewGroup.LayoutParams params = scannerRoot.getLayoutParams();
+                    params.height = Math.max(
+                        dp(context, 240),
+                        Math.min(dp(context, 380), (int) (content.getHeight() * 0.44f))
+                    );
+                    scannerRoot.setLayoutParams(params);
+                });
                 bindCamera(call);
             } catch (Exception error) {
                 stopScannerInternal();

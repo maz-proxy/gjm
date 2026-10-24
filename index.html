@@ -3785,6 +3785,7 @@
       nativeCameraScanner = window.Capacitor?.Plugins?.NativeBarcodeScanner || null;
       if (!nativeCameraScanner?.startScanner || !nativeCameraScanner?.addListener) {
         setCameraScanStatus("Scanner native tidak tersedia. Perbarui APK ke versi terbaru.", "error");
+        dialog.showModal();
         return false;
       }
       setCameraScanStatus("Menghubungkan kamera native...");
@@ -3793,18 +3794,25 @@
           nativeCameraScanner.addListener("barcodeDetected", ({ value }) => handleCameraBarcodeValue(value)),
           nativeCameraScanner.addListener("barcodeMissed", () => markCameraRackBarcodeMissed()),
           nativeCameraScanner.addListener("scannerClosed", () => {
+            nativeCameraScannerActive = false;
+            clearTimeout(cameraRackScanMissTimer);
+            cameraRackScanMissTimer = null;
+            cameraRackScanLocked = false;
+            nativeCameraListenerHandles.forEach((handle) => void handle.remove());
+            nativeCameraListenerHandles = [];
             if (dialog.open) dialog.close();
           })
         ]);
         await nativeCameraScanner.startScanner();
         nativeCameraScannerActive = true;
-        setCameraScanStatus("Kamera native siap. Ketuk area barcode untuk memfokuskan.");
+        setCameraScanStatus("Kamera native siap. Data hasil scan terlihat pada kartu di bawah preview.");
         return true;
       } catch (error) {
         nativeCameraListenerHandles.forEach((handle) => void handle.remove());
         nativeCameraListenerHandles = [];
         console.error("Scanner kamera native gagal dijalankan:", error);
         setCameraScanStatus(`Scanner kamera native tidak dapat dibuka: ${error.message || "kesalahan tidak diketahui"}`, "error");
+        if (!dialog.open) dialog.showModal();
         return false;
       }
     }
@@ -3982,11 +3990,14 @@
       cameraTargetInput = input;
       const dialog = document.getElementById("camera-scan-dialog");
       setCameraScanStatus("Menghubungkan kamera...");
-      if (!dialog.open) dialog.showModal();
       if (isAndroidCapacitor) {
+        if (input.matches(".layout-input")) {
+          input.closest(".layout-card")?.scrollIntoView({ block: "end", behavior: "smooth" });
+        }
         await startNativeCameraScanner(dialog);
         return;
       }
+      if (!dialog.open) dialog.showModal();
       if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
         setCameraScanStatus("Akses kamera memerlukan HTTPS atau localhost dan izin kamera dari browser.", "error");
         return;
