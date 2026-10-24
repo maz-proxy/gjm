@@ -2135,10 +2135,11 @@
         max-width: 560px;
         overflow: hidden;
         padding: 0;
-        position: relative;
-        top: auto;
+        position: sticky;
+        top: env(safe-area-inset-top, 0px);
         width: calc(100% - 16px);
       }
+      html.web-camera-scanner-active .layout-card { scroll-margin-top: calc(clamp(270px, 42dvh, 380px) + env(safe-area-inset-top, 0px) + 12px); }
       html.web-camera-scanner-active:not(.capacitor-android) .camera-scan-dialog[open] { display: grid; }
       html:not(.capacitor-android) .camera-scan-dialog .dialog-head {
         align-items: center;
@@ -3823,6 +3824,9 @@
       input.value = value;
       form.requestSubmit();
       cameraTargetInput = document.querySelector(`[data-layout-form="${CSS.escape(layout)}"] .layout-input`);
+      if (document.documentElement.classList.contains("web-camera-scanner-active")) {
+        cameraTargetInput?.closest(".layout-card")?.scrollIntoView({ block: "start", behavior: "auto" });
+      }
       setCameraScanStatus("Barcode berhasil dicatat. Arahkan barcode berikutnya.", "success");
       return true;
     }
