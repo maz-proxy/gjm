@@ -391,6 +391,7 @@
     .camera-scan-frame::after { animation: camera-scan-line 2.2s ease-in-out infinite alternate; }
     @media (max-width: 767px) {
       html.web-camera-scanner-active .layout-card { scroll-margin-top: calc(clamp(270px, 42dvh, 380px) + env(safe-area-inset-top, 0px) + 12px); }
+      html.web-camera-scanner-active:not(.capacitor-android) .app-shell { margin-top: calc(clamp(270px, 42dvh, 380px) + env(safe-area-inset-top, 0px) + 16px); }
     }
     @media (max-width: 600px) { .camera-scan-dialog { max-width: calc(100vw - 16px); top: 8px; } .camera-scan-preview video { height: clamp(145px, 28vh, 210px); } }
     html[data-theme="dark"] .camera-scan-dialog::backdrop { background: rgba(0, 0, 0, .16); backdrop-filter: none; -webkit-backdrop-filter: none; }
