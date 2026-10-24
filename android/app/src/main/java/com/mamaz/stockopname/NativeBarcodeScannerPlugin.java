@@ -161,7 +161,7 @@ public class NativeBarcodeScannerPlugin extends Plugin {
                     new FrameLayout.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         dp(context, 320),
-                        Gravity.TOP
+                        Gravity.BOTTOM
                     )
                 );
                 content.post(() -> {
