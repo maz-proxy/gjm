@@ -8,21 +8,23 @@ import org.junit.Test;
 public class NativeBarcodeScannerPluginTest {
 
     @Test
-    public void scanFrameAcceptsPointsInsideGreenFrame() {
-        assertTrue(NativeBarcodeScannerPlugin.isPointInsideScanFrame(200, 150, 400, 300));
-        assertTrue(NativeBarcodeScannerPlugin.isPointInsideScanFrame(25, 150, 400, 300));
+    public void previewAcceptsPointsInsideTheGreenFrameCameraArea() {
+        assertTrue(NativeBarcodeScannerPlugin.isPointInsidePreviewBounds(200, 150, 400, 300));
+        assertTrue(NativeBarcodeScannerPlugin.isPointInsidePreviewBounds(0, 150, 400, 300));
+        assertTrue(NativeBarcodeScannerPlugin.isPointInsidePreviewBounds(400, 150, 400, 300));
     }
 
     @Test
-    public void scanFrameRejectsPointsOutsideGreenFrame() {
-        assertFalse(NativeBarcodeScannerPlugin.isPointInsideScanFrame(10, 150, 400, 300));
-        assertFalse(NativeBarcodeScannerPlugin.isPointInsideScanFrame(200, 110, 400, 300));
-        assertFalse(NativeBarcodeScannerPlugin.isPointInsideScanFrame(200, 190, 400, 300));
+    public void previewRejectsPointsOutsideTheGreenFrameCameraArea() {
+        assertFalse(NativeBarcodeScannerPlugin.isPointInsidePreviewBounds(-1, 150, 400, 300));
+        assertFalse(NativeBarcodeScannerPlugin.isPointInsidePreviewBounds(401, 150, 400, 300));
+        assertFalse(NativeBarcodeScannerPlugin.isPointInsidePreviewBounds(200, -1, 400, 300));
+        assertFalse(NativeBarcodeScannerPlugin.isPointInsidePreviewBounds(200, 301, 400, 300));
     }
 
     @Test
-    public void scanFrameRejectsInvalidPreviewSize() {
-        assertFalse(NativeBarcodeScannerPlugin.isPointInsideScanFrame(0, 0, 0, 300));
-        assertFalse(NativeBarcodeScannerPlugin.isPointInsideScanFrame(0, 0, 400, 0));
+    public void previewRejectsPointsWhenSizeIsInvalid() {
+        assertFalse(NativeBarcodeScannerPlugin.isPointInsidePreviewBounds(0, 0, 0, 300));
+        assertFalse(NativeBarcodeScannerPlugin.isPointInsidePreviewBounds(0, 0, 400, 0));
     }
 }

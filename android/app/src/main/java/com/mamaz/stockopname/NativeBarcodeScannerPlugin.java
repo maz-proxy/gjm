@@ -68,6 +68,7 @@ public class NativeBarcodeScannerPlugin extends Plugin {
     private volatile int previewHeight;
     private androidx.lifecycle.Observer<PreviewView.StreamState> previewStreamStateObserver;
     private View.OnLayoutChangeListener previewLayoutChangeListener;
+    private View.OnLayoutChangeListener scannerRootLayoutChangeListener;
     private long lastBarcodeEventAt;
     private long lastBarcodeMissEventAt;
     private String lastBarcodeValue = "";
@@ -123,8 +124,8 @@ public class NativeBarcodeScannerPlugin extends Plugin {
                 scannerRoot.addView(
                     previewView,
                     new FrameLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT
+                        0,
+                        0
                     )
                 );
 
@@ -136,6 +137,18 @@ public class NativeBarcodeScannerPlugin extends Plugin {
                         ViewGroup.LayoutParams.MATCH_PARENT
                     )
                 );
+                scannerRootLayoutChangeListener = (
+                    view,
+                    left,
+                    top,
+                    right,
+                    bottom,
+                    oldLeft,
+                    oldTop,
+                    oldRight,
+                    oldBottom
+                ) -> updateScannerPreviewLayout();
+                scannerRoot.addOnLayoutChangeListener(scannerRootLayoutChangeListener);
                 addScannerControls(context, scannerRoot);
                 previewView.setOnTouchListener((view, event) -> {
                     if (event.getAction() == MotionEvent.ACTION_UP) {
@@ -159,8 +172,12 @@ public class NativeBarcodeScannerPlugin extends Plugin {
                         Math.min(dp(context, 380), (int) (content.getHeight() * 0.44f))
                     );
                     scannerRoot.setLayoutParams(params);
+                    scannerRoot.post(() -> {
+                        if (scannerRoot == null || previewView == null) return;
+                        updateScannerPreviewLayout();
+                        previewView.post(() -> bindCamera(call));
+                    });
                 });
-                bindCamera(call);
             } catch (Exception error) {
                 stopScannerInternal();
                 call.reject("Kamera native tidak dapat dibuka.", error);
@@ -199,6 +216,20 @@ public class NativeBarcodeScannerPlugin extends Plugin {
             notifyListeners("scannerClosed", new JSObject());
             stopScannerInternal();
         });
+    }
+
+    private void updateScannerPreviewLayout() {
+        if (scannerRoot == null || previewView == null) return;
+        RectF frame = getScanFrameBounds(scannerRoot.getWidth(), scannerRoot.getHeight());
+        if (frame.isEmpty()) return;
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+            Math.round(frame.width()),
+            Math.round(frame.height()),
+            Gravity.TOP | Gravity.START
+        );
+        params.leftMargin = Math.round(frame.left);
+        params.topMargin = Math.round(frame.top);
+        previewView.setLayoutParams(params);
     }
 
     private void bindCamera(PluginCall call) {
@@ -324,7 +355,7 @@ public class NativeBarcodeScannerPlugin extends Plugin {
                 previewTransform
             );
             coordinateTransform.mapRect(previewBounds);
-            return isPointInsideScanFrame(
+            return isPointInsidePreviewBounds(
                 previewBounds.centerX(),
                 previewBounds.centerY(),
                 width,
@@ -353,13 +384,17 @@ public class NativeBarcodeScannerPlugin extends Plugin {
         }
     }
 
-    static boolean isPointInsideScanFrame(float x, float y, int width, int height) {
+    static boolean isPointInsidePreviewBounds(float x, float y, int width, int height) {
         if (width <= 0 || height <= 0) return false;
+        return x >= 0 && x <= width && y >= 0 && y <= height;
+    }
+
+    private static RectF getScanFrameBounds(int width, int height) {
         float frameWidth = width * 0.9f;
         float frameHeight = Math.min(height * 0.25f, frameWidth * 0.55f);
         float left = (width - frameWidth) / 2;
         float top = (height - frameHeight) / 2;
-        return x >= left && x <= left + frameWidth && y >= top && y <= top + frameHeight;
+        return new RectF(left, top, left + frameWidth, top + frameHeight);
     }
 
     private static ImageProxyTransformFactory createImageProxyTransformFactory() {
@@ -386,6 +421,10 @@ public class NativeBarcodeScannerPlugin extends Plugin {
     }
 
     private void stopScannerInternal() {
+        if (scannerRoot != null && scannerRootLayoutChangeListener != null) {
+            scannerRoot.removeOnLayoutChangeListener(scannerRootLayoutChangeListener);
+        }
+        scannerRootLayoutChangeListener = null;
         if (previewView != null) {
             if (previewLayoutChangeListener != null) {
                 previewView.removeOnLayoutChangeListener(previewLayoutChangeListener);
@@ -454,11 +493,7 @@ public class NativeBarcodeScannerPlugin extends Plugin {
         @Override
         protected void onDraw(Canvas canvas) {
             super.onDraw(canvas);
-            float frameWidth = getWidth() * 0.9f;
-            float frameHeight = Math.min(getHeight() * 0.25f, frameWidth * 0.55f);
-            float left = (getWidth() - frameWidth) / 2;
-            float top = (getHeight() - frameHeight) / 2;
-            RectF frame = new RectF(left, top, left + frameWidth, top + frameHeight);
+            RectF frame = getScanFrameBounds(getWidth(), getHeight());
             canvas.drawRect(0, 0, getWidth(), frame.top, shadePaint);
             canvas.drawRect(0, frame.bottom, getWidth(), getHeight(), shadePaint);
             canvas.drawRect(0, frame.top, frame.left, frame.bottom, shadePaint);
