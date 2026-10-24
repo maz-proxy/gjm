@@ -7,6 +7,7 @@ const webDir = path.join(root, "www");
 fs.rmSync(webDir, { recursive: true, force: true });
 fs.mkdirSync(webDir, { recursive: true });
 fs.copyFileSync(path.join(root, "index.html"), path.join(webDir, "index.html"));
+fs.copyFileSync(path.join(root, "site.webmanifest"), path.join(webDir, "site.webmanifest"));
 fs.cpSync(path.join(root, "assets"), path.join(webDir, "assets"), { recursive: true });
 fs.writeFileSync(path.join(webDir, ".nojekyll"), "");
 

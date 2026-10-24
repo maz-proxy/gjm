@@ -4,9 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f4f7f6">
-  <link rel="icon" type="image/png" sizes="512x512" href="./assets/stock-opname-icon.png?v=2">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="STOCK OPNAME">
+  <link rel="manifest" href="./site.webmanifest?v=1">
+  <link rel="icon" type="image/png" sizes="512x512" href="./assets/stock-opname-icon.png?v=3">
   <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg">
-  <link rel="apple-touch-icon" type="image/png" href="./assets/stock-opname-icon.png?v=2">
+  <link rel="apple-touch-icon" type="image/png" sizes="512x512" href="./assets/stock-opname-icon.png?v=3">
   <script>
     const isAndroidCapacitor = Boolean(window.androidBridge || window.Capacitor?.getPlatform?.() === "android");
     if (isAndroidCapacitor) document.documentElement.classList.add("capacitor-android");
