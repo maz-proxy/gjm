@@ -15,6 +15,12 @@
       "purpose": "any"
     },
     {
+      "src": "./assets/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
       "src": "./assets/stock-opname-icon.png",
       "sizes": "512x512",
       "type": "image/png",
