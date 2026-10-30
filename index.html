@@ -3062,6 +3062,11 @@
     document.addEventListener("error", (event) => {
       const image = event.target;
       if (!(image instanceof HTMLImageElement) || !image.matches(".workspace-brand-logo")) return;
+      if (image.dataset.logoFallback && image.dataset.logoFallbackAttempted !== "true") {
+        image.dataset.logoFallbackAttempted = "true";
+        image.src = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(image.dataset.logoFallback)}&sz=128`;
+        return;
+      }
       image.closest(".workspace-brand-icon")?.remove();
     }, true);
     translateDocument();
@@ -3565,13 +3570,16 @@
       KINGSTON: "kingstontechnology",
       LENOVO: "lenovo",
       LG: "lg",
+      LOGITECH: "logitech",
       LOOPS: "loops",
+      MICRON: "micron",
       MOTOROLA: "motorola",
       MSI: "msi",
       NOKIA: "nokia",
       OPPO: "oppo",
       RAZER: "razer",
       SAMSUNG: "samsung",
+      SANDISK: "sandisk",
       SEAGATE: "seagate",
       SHARP: "sharp",
       SONY: "sony",
@@ -3580,11 +3588,130 @@
       VIVO: "vivo",
       XIAOMI: "xiaomi"
     });
+    const BRAND_LOGO_DOMAINS = Object.freeze({
+      "70MAI DASHCAM": "70mai.com",
+      ADVAN: "advan.id",
+      AIWA: "aiwa.us",
+      AMAZFIT: "amazfit.com",
+      ANKER: "anker.com",
+      AOC: "aoc.com",
+      AXIOO: "axiooworld.com",
+      BASEUS: "baseus.com",
+      BENQ: "benq.com",
+      BITDIFENDER: "bitdefender.com",
+      BRICA: "brica.co.id",
+      BROTHER: "brother.com",
+      CANON: "canon.com",
+      COOCAA: "coocaa.com",
+      COROS: "coros.com",
+      DAHUA: "dahuasecurity.com",
+      DEFUNC: "defunc.com",
+      DELL: "dell.com",
+      "DIGITAL ALLIANCE": "digitalalliance.co.id",
+      DJI: "dji.com",
+      DREAME: "dreame.com",
+      DYSON: "dyson.com",
+      EDIFIER: "edifier.com",
+      EPSON: "epson.com",
+      ESR: "esrgear.com",
+      EZVIZ: "ezviz.com",
+      FANTECH: "fantechworld.com",
+      FITBIT: "fitbit.com",
+      GARMIN: "garmin.com",
+      GIGABYTE: "www.gigabyte.com",
+      GOOGLE: "google.com",
+      GOPRO: "gopro.com",
+      "HARMAN KARDON": "harmankardon.com",
+      HECATE: "hecategaming.com",
+      HIKVISION: "hikvision.com",
+      HOLLYLAND: "hollyland.com",
+      HONOR: "honor.com",
+      HP: "hp.com",
+      HUAWEI: "huawei.com",
+      HYPERX: "hyperx.com",
+      IKARAO: "ikarao.com",
+      IMOO: "imoo.com",
+      INFINIX: "infinixmobility.com",
+      "INFINIX LAPTOP": "infinixmobility.com",
+      INFOCUS: "infocus.com",
+      INOI: "inoi.com",
+      INSTA360: "insta360.com",
+      INTEL: "intel.com",
+      IQOO: "iqoo.com",
+      ITEL: "itel-life.com",
+      JABRA: "jabra.com",
+      JBL: "jbl.com",
+      JUMPER: "jumper.com.cn",
+      JUNIPER: "juniper.net",
+      KEYCHRON: "keychron.com",
+      KINGSTON: "kingston.com",
+      LENOVO: "lenovo.com",
+      LEXAR: "lexar.com",
+      LG: "lg.com",
+      LOGITECH: "logitech.com",
+      LOOPS: "loopearplugs.com",
+      MARSHALL: "marshall.com",
+      MAXHUB: "maxhub.com",
+      MICRON: "micron.com",
+      MICROSOFT: "microsoft.com",
+      MIDASFORCE: "midasforce.com",
+      MOTOROLA: "motorola.com",
+      MSI: "msi.com",
+      NOKIA: "nokia.com",
+      NOTHING: "nothing.tech",
+      NUBIA: "nubia.com",
+      OASE: "oase.com",
+      OMEGA: "omega.com",
+      ORAIMO: "oraimo.com",
+      OPPO: "oppo.com",
+      PHILIPS: "philips.com",
+      PIONEER: "pioneer.com",
+      PISEN: "pisen.com.cn",
+      PLAUD: "plaud.ai",
+      RAZER: "razer.com",
+      REALME: "realme.com",
+      REXUS: "rexus.id",
+      SAMSUNG: "samsung.com",
+      SANDISK: "sandisk.com",
+      SEAGATE: "seagate.com",
+      "SEGWAY SCOOTER": "segway.com",
+      SHARP: "sharp.com",
+      SHOKZ: "shokz.com",
+      SONY: "sony.com",
+      SOUNDPEATS: "soundpeats.com",
+      SPC: "spc.es",
+      SPIGEN: "spigen.com",
+      STARLINK: "starlink.com",
+      STEELSERIES: "steelseries.com",
+      TARGUS: "targus.com",
+      TCL: "tcl.com",
+      TECNO: "tecno-mobile.com",
+      TECWARE: "tecware.co",
+      "TP-LINK": "tp-link.com",
+      TRANSCEND: "transcend-info.com",
+      UGREEN: "ugreen.com",
+      "V-GEN": "v-gen.co.id",
+      VENTION: "vention.com",
+      VIEWSONIC: "viewsonic.com",
+      VIOLEDS: "violeds.com",
+      VIVAN: "vivan.co.id",
+      VIVO: "vivo.com",
+      XIAOMI: "mi.com",
+      ZAGG: "zagg.com",
+      ZTE: "ztedevices.com",
+      ZYREX: "zyrex.com"
+    });
     function renderWorkspaceBrandIcon(name) {
       const brand = String(name || "").trim();
       if (!brand) return "";
-      const slug = BRAND_LOGO_SLUGS[brand.toLocaleUpperCase("id-ID")];
-      return slug ? `<span class="workspace-brand-icon" role="img" aria-label="Logo ${escapeHtml(brand)}"><img class="workspace-brand-logo" src="https://cdn.simpleicons.org/${slug}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"></span>` : "";
+      const brandKey = brand.toLocaleUpperCase("id-ID");
+      const slug = BRAND_LOGO_SLUGS[brandKey];
+      const domain = BRAND_LOGO_DOMAINS[brandKey];
+      if (!slug && !domain) return "";
+      const logoUrl = slug
+        ? `https://cdn.simpleicons.org/${slug}`
+        : `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=128`;
+      return `<span class="workspace-brand-icon" role="img" aria-label="Logo ${escapeHtml(brand)}"><img class="workspace-brand-logo" src="${escapeHtml(logoUrl)}" alt="" ${slug && domain ? `data-logo-fallback="${escapeHtml(domain)}"` : ""} loading="lazy" decoding="async" referrerpolicy="no-referrer"></span>`;
     }
     function workspacePageTitle() {
       const workspace = activeWorkspace();
