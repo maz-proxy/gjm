@@ -24,7 +24,7 @@ Session changes are restricted to the recorded session owner; Owner accounts ret
 
 While signed in, the browser or device Back button moves through workspace pages in this order: Dashboard, Schedule, Master VEF, Scan & Manual, Stock Reconciliation, Recap, History Changes, Session SO, Guide, and About. Back stops at Dashboard.
 
-Schedule cards and active-workspace banners show a brand logo when it is available from Simple Icons. Brands without a matching logo, or when a logo cannot load, display a two-letter monogram instead.
+Schedule cards and active-workspace banners show a brand logo when it is available from Simple Icons. Brands without a matching logo, or when a logo cannot load, display only the brand name.
 
 ## Build the Android APK
 
