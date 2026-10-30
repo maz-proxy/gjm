@@ -203,7 +203,13 @@
     .online-accounts-label, .online-accounts-status { color: var(--muted); font-size: 9px; line-height: 1.3; }
     .online-user { align-items: center; color: var(--muted); display: inline-flex; font-size: 9px; gap: 5px; line-height: 1.3; white-space: nowrap; }
     .online-user-dot { background: #39c985; border-radius: 50%; box-shadow: 0 0 0 2px rgba(57,201,133,.16); flex: 0 0 6px; height: 6px; }
-    .workspace-page-title { align-items: baseline; display: flex; flex-wrap: wrap; gap: 9px; }
+    .workspace-page-title { align-items: center; display: flex; flex-wrap: wrap; gap: 9px; }
+    .workspace-brand-icon { align-items: center; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.24); border-radius: 9px; color: #fff; display: inline-flex; flex: 0 0 34px; font-size: 11px; font-weight: 800; height: 34px; justify-content: center; overflow: hidden; width: 34px; }
+    .workspace-brand-icon img { display: block; height: 22px; object-fit: contain; width: 22px; }
+    .workspace-brand-icon[role="img"] { position: relative; }
+    .schedule-card-summary .workspace-brand-icon { background: linear-gradient(145deg, #f0f7f2, #e4f0e8); border-color: #d7e7dc; color: #28724f; flex-basis: 36px; height: 36px; width: 36px; }
+    .schedule-card-summary .workspace-brand-icon img { height: 24px; width: 24px; }
+    .schedule-summary-brand-icon { display: contents; }
     .workspace-period-label { color: #d5e9df; font-size: 10px; font-weight: 600; letter-spacing: .25px; }
     .top-actions { align-items: flex-end; display: flex; flex-direction: column; gap: 2px; }
     .top-theme-controls { align-items: center; display: flex; flex-direction: row; gap: 4px; }
@@ -3053,6 +3059,12 @@
       if (authSession && document.getElementById("main-content")) render();
       translateDocument();
     });
+    document.addEventListener("error", (event) => {
+      const image = event.target;
+      if (!(image instanceof HTMLImageElement) || !image.matches(".workspace-brand-logo")) return;
+      image.hidden = true;
+      image.nextElementSibling?.removeAttribute("hidden");
+    }, true);
     translateDocument();
     const languageObserver = new MutationObserver(() => translateDocument());
     languageObserver.observe(document.body, {
@@ -3531,9 +3543,54 @@
     function activeWorkspaceName() {
       return activeWorkspace()?.name.trim() || (currentLanguage === "en" ? "Brand name not set" : "Nama Brand belum diisi");
     }
+    const BRAND_LOGO_SLUGS = Object.freeze({
+      ACER: "acer",
+      AMD: "amd",
+      APPLE: "apple",
+      ASUS: "asus",
+      BITDIFENDER: "bitdefender",
+      BOSE: "bose",
+      DELL: "dell",
+      DJI: "dji",
+      EPSON: "epson",
+      FITBIT: "fitbit",
+      GARMIN: "garmin",
+      GOOGLE: "google",
+      HONOR: "honor",
+      HP: "hp",
+      HUAWEI: "huawei",
+      HYPERX: "hyperx",
+      INSTA360: "insta360",
+      INTEL: "intel",
+      JBL: "jbl",
+      KINGSTON: "kingstontechnology",
+      LENOVO: "lenovo",
+      LG: "lg",
+      LOOPS: "loops",
+      MOTOROLA: "motorola",
+      MSI: "msi",
+      NOKIA: "nokia",
+      OPPO: "oppo",
+      RAZER: "razer",
+      SAMSUNG: "samsung",
+      SEAGATE: "seagate",
+      SHARP: "sharp",
+      SONY: "sony",
+      STEELSERIES: "steelseries",
+      "TP-LINK": "tplink",
+      VIVO: "vivo",
+      XIAOMI: "xiaomi"
+    });
+    function renderWorkspaceBrandIcon(name) {
+      const brand = String(name || "").trim();
+      if (!brand) return "";
+      const monogram = brand.split(/\s+/).slice(0, 2).map((part) => part.slice(0, 1)).join("").slice(0, 2).toLocaleUpperCase("id-ID");
+      const slug = BRAND_LOGO_SLUGS[brand.toLocaleUpperCase("id-ID")];
+      return `<span class="workspace-brand-icon" role="img" aria-label="Logo ${escapeHtml(brand)}">${slug ? `<img class="workspace-brand-logo" src="https://cdn.simpleicons.org/${slug}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : ""}<span class="workspace-brand-monogram" ${slug ? "hidden" : ""} aria-hidden="true">${escapeHtml(monogram)}</span></span>`;
+    }
     function workspacePageTitle() {
       const workspace = activeWorkspace();
-      return `<div class="workspace-page-title"><h1>${escapeHtml(activeWorkspaceName())}</h1><span class="workspace-period-label">${normalizeWorkspaceMonth(workspace?.month)} · ${normalizeWorkspacePeriod(workspace?.period)}</span></div>`;
+      return `<div class="workspace-page-title">${renderWorkspaceBrandIcon(workspace?.name)}<h1>${escapeHtml(activeWorkspaceName())}</h1><span class="workspace-period-label">${normalizeWorkspaceMonth(workspace?.month)} · ${normalizeWorkspacePeriod(workspace?.period)}</span></div>`;
     }
     function workspaceResourceNames(type, workspaceId = "") {
       const resourceNames = state.resources?.[type] || [];
@@ -6753,6 +6810,7 @@
         const deleteButton = `<button class="rack-delete-button schedule-delete-button" type="button" data-delete-workspace="${escapeHtml(workspace.id)}" aria-label="${canCancelEmptyStartedWorkspace(workspace) ? "Batalkan sesi kosong" : "Hapus kartu"} ${escapeHtml(workspace.name || "Jadwal")}" title="${canDelete ? canDeleteWithoutUpload ? "Hapus sesi pemilik karena file VEF belum diunggah" : canCancelEmptyStartedWorkspace(workspace) ? "Batalkan sesi berjalan yang belum memiliki data" : "Hapus kartu yang belum dimulai" : "Kartu hanya dapat dihapus sebelum stock opname dimulai atau sebelum file VEF diunggah"}" ${canDelete ? "" : "disabled"}>−</button>`;
         return `<details class="schedule-card ${isCurrent ? "current" : ""}">
           <summary class="schedule-card-summary" aria-label="${escapeHtml(workspace.name || "Nama Brand belum diisi")}, ${status}. Klik untuk melihat detail.">
+            <span class="schedule-summary-brand-icon" data-schedule-brand-icon>${renderWorkspaceBrandIcon(workspace.name)}</span>
             <span class="schedule-summary-copy"><strong class="schedule-summary-title">${escapeHtml(workspace.name || "Nama Brand belum diisi")}</strong><span class="schedule-summary-meta"><span data-workspace-schedule-summary="${escapeHtml(workspace.id)}">${month} · ${period}</span>${statsSummary} · ${summaryPicNames}</span></span>
             <span class="schedule-summary-badges"><span class="row-status ${statusClass}">${status}</span>${isCurrent ? '<span class="schedule-current-badge">Sedang dipilih</span>' : ""}</span>
             <span class="schedule-summary-chevron" aria-hidden="true">⌄</span>
@@ -7456,8 +7514,11 @@
       document.querySelectorAll("[data-workspace-name]").forEach((input) => {
         input.addEventListener("input", () => {
           const brand = input.value.trim();
-          const summary = input.closest(".schedule-card")?.querySelector(".schedule-summary-title");
+          const card = input.closest(".schedule-card");
+          const summary = card?.querySelector(".schedule-summary-title");
           if (summary) summary.textContent = brand || "Nama Brand belum diisi";
+          const iconSlot = card?.querySelector("[data-schedule-brand-icon]");
+          if (iconSlot) iconSlot.innerHTML = renderWorkspaceBrandIcon(brand);
         });
         input.addEventListener("change", () => {
         const workspace = state.workspaces.find((item) => item.id === input.dataset.workspaceName);
