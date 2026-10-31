@@ -4196,18 +4196,21 @@
       const inputs = document.querySelectorAll(".search-wrap .search-input, [data-manual-product]");
       inputs.forEach((input) => {
         const host = input.closest(".search-wrap, .manual-product-picker");
-        if (!host || host.querySelector(".camera-search-button")) return;
+        if (!host) return;
         host.classList.add("has-camera-search");
         input.classList.add("camera-search-target");
-        const button = document.createElement("button");
-        button.className = "camera-search-button";
-        button.type = "button";
-        button.disabled = input.disabled;
+        let button = host.querySelector(".camera-search-button");
+        if (!button) {
+          button = document.createElement("button");
+          button.className = "camera-search-button";
+          button.type = "button";
+          button.disabled = input.disabled;
+          button.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M4 7V5h3m10 0h3v3M4 17v2h3m10 0h3v-3"/><path d="M7 9v6m3-6v6m3-6v6m3-6v6"/></svg>';
+          host.append(button);
+        }
         button.title = translateText("Pindai dengan kamera");
         button.setAttribute("aria-label", `${translateText("Pindai dengan kamera")}: ${input.getAttribute("aria-label") || input.placeholder || ""}`);
-        button.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M4 7V5h3m10 0h3v3M4 17v2h3m10 0h3v-3"/><path d="M7 9v6m3-6v6m3-6v6m3-6v6"/></svg>';
         button.addEventListener("click", () => openCameraScannerForInput(input));
-        host.append(button);
       });
     }
     function getCameraVideoConstraints() {
@@ -6019,7 +6022,7 @@
             <button class="rack-delete-button" type="button" data-delete-rack="${escapeHtml(layout)}" aria-label="Hapus ${escapeHtml(rackName)}" title="${!hasUploadedVef ? "Unggah file VEF terlebih dahulu" : hasRackData ? "Kosongkan data rack sebelum menghapus" : "Hapus rack"}" ${!canUseRack ? "disabled" : ""}>−</button>
           </div>
           <form class="layout-form" data-layout-form="${escapeHtml(layout)}"><div class="layout-scan-field"><input class="scan-input layout-input" autocomplete="off" placeholder="${rackHasNumber && hasTarget ? `Pindai SN di ${escapeHtml(rackName)}` : !rackHasNumber ? "Isi nama Rack dahulu" : "Isi quantity target dahulu"}" aria-label="Pindai Serial Number di ${escapeHtml(rackName)}" ${scanDisabled ? "disabled" : ""}><button class="layout-camera-button" type="button" data-camera-scan="${escapeHtml(layout)}" aria-label="Pindai barcode dengan kamera untuk ${escapeHtml(rackName)}" title="Pindai barcode dengan kamera" ${scanDisabled ? "disabled" : ""}><svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M4 7V5h3m10 0h3v3M4 17v2h3m10 0h3v-3"/><path d="M7 9v6m3-6v6m3-6v6m3-6v6"/></svg></button></div><button class="button button-primary" type="submit" ${scanDisabled ? "disabled" : ""}>Catat Scan</button></form>
-          <form class="layout-manual-form" data-manual-form="${escapeHtml(layout)}"><div class="manual-product-picker"><input class="scan-input" type="search" data-manual-product placeholder="${rackHasNumber ? "Cari item code atau nama barang" : "Isi nama Rack dahulu"}" aria-label="Cari item dari VEF Master untuk ${escapeHtml(rackName)}" autocomplete="off" aria-autocomplete="list" aria-expanded="false" ${manualDisabled ? "disabled" : ""}><div class="manual-product-options" role="listbox" aria-label="Hasil pencarian VEF Master"></div></div><input class="scan-input" type="number" min="1" step="1" inputmode="numeric" data-manual-quantity placeholder="Qty" aria-label="Quantity manual untuk ${escapeHtml(rackName)}" ${manualDisabled ? "disabled" : ""}><button class="button button-primary" type="submit" ${manualDisabled ? "disabled" : ""}>Catat Manual</button></form>
+          <form class="layout-manual-form" data-manual-form="${escapeHtml(layout)}"><div class="manual-product-picker has-camera-search"><input class="scan-input camera-search-target" type="search" data-manual-product placeholder="${rackHasNumber ? "Cari item code atau nama barang" : "Isi nama Rack dahulu"}" aria-label="Cari item dari VEF Master untuk ${escapeHtml(rackName)}" autocomplete="off" aria-autocomplete="list" aria-expanded="false" ${manualDisabled ? "disabled" : ""}><button class="camera-search-button" type="button" aria-label="Pindai dengan kamera" title="Pindai dengan kamera" ${manualDisabled ? "disabled" : ""}><svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M4 7V5h3m10 0h3v3M4 17v2h3m10 0h3v-3"/><path d="M7 9v6m3-6v6m3-6v6m3-6v6"/></svg></button><div class="manual-product-options" role="listbox" aria-label="Hasil pencarian VEF Master"></div></div><input class="scan-input" type="number" min="1" step="1" inputmode="numeric" data-manual-quantity placeholder="Qty" aria-label="Quantity manual untuk ${escapeHtml(rackName)}" ${manualDisabled ? "disabled" : ""}><button class="button button-primary" type="submit" ${manualDisabled ? "disabled" : ""}>Catat Manual</button></form>
           <div class="layout-card-foot"><div class="layout-record-group"><div class="layout-record-heading">Scan</div><div class="layout-scan-list">${scanRows}</div></div><div class="layout-record-group"><div class="layout-record-heading">Manual</div><div class="layout-scan-list">${manualRows}</div></div></div>
         </section>`;
       }).join("");
