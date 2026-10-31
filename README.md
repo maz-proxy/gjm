@@ -26,7 +26,7 @@ The team chat updates without re-rendering the rest of the page, follows the act
 
 While signed in, the browser or device Back button moves through workspace pages in this order: Dashboard, Schedule, Master VEF, Scan & Manual, Stock Reconciliation, Recap, History Changes, Session SO, Guide, and About. Back stops at Dashboard.
 
-Schedule cards, active-workspace banners, the dashboard's per-brand progress chart, completed-session archives, Stock Opname Recorded sheets, and their print/PDF versions use a Simple Icons logo when available and otherwise try the brand's website favicon. Print/PDF sheets always use a high-contrast white theme, with PIC 1 and PIC 2 signature lines at the bottom. Brands without a verified logo source, or whose logo cannot load, display only the brand name.
+Schedule cards, active-workspace banners, the dashboard's per-brand progress chart, completed-session archives, Stock Opname Recorded sheets, and their print/PDF versions use a Simple Icons logo when available and otherwise try the brand's website favicon. Print/PDF sheets always use a high-contrast white theme; reconciliation quantities and statuses are centered, the Note column is wider, and short PIC 1/PIC 2 signature lines have centered names below. Brands without a verified logo source, or whose logo cannot load, display only the brand name.
 
 ## Build the Android APK
 
