@@ -26,7 +26,7 @@ The team chat updates without re-rendering the rest of the page, follows the act
 
 While signed in, the browser or device Back button moves through workspace pages in this order: Dashboard, Schedule, Master VEF, Scan & Manual, Stock Reconciliation, Recap, History Changes, Session SO, Guide, and About. Back stops at Dashboard.
 
-Schedule cards, active-workspace banners, the dashboard's per-brand progress chart, completed-session archives, and the Stock Opname Recorded brand picker use a Simple Icons logo when available and otherwise try the brand's website favicon. Brands without a verified logo source, or whose logo cannot load, display only the brand name.
+Schedule cards, active-workspace banners, the dashboard's per-brand progress chart, completed-session archives, Stock Opname Recorded sheets, and their print/PDF versions use a Simple Icons logo when available and otherwise try the brand's website favicon. Brands without a verified logo source, or whose logo cannot load, display only the brand name.
 
 ## Build the Android APK
 

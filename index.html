@@ -7218,7 +7218,7 @@
         <div id="recorded-sheet-content" class="recorded-sheet-content">${renderRecordedSheet(session, selectedRecordedSheet)}</div>
       </div>`;
     }
-    function openArchivePrintWindow(title, subtitle, content) {
+    function openArchivePrintWindow(title, subtitle, content, brandName = "") {
       const printWindow = window.open("", "_blank");
       if (!printWindow) {
         notify("Jendela cetak diblokir browser. Izinkan pop-up untuk mencetak atau menyimpan PDF.");
@@ -7227,7 +7227,40 @@
       const styles = [...document.querySelectorAll("style")].map((style) => style.textContent || "").join("\n").replace(/<\/style/gi, "<\\/style");
       const theme = document.documentElement.dataset.theme || "light";
       const accent = document.documentElement.dataset.accent || "green";
-      printWindow.addEventListener("load", () => {
+      printWindow.addEventListener("load", async () => {
+        const logoImages = [...printWindow.document.querySelectorAll(".print-session-heading .workspace-brand-logo")];
+        await Promise.all(logoImages.map((image) => new Promise((resolve) => {
+          let settled = false;
+          const timeout = setTimeout(finish, 10000);
+          function finish() {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timeout);
+            image.removeEventListener("load", handleLoad);
+            image.removeEventListener("error", handleError);
+            resolve();
+          }
+          function handleLoad() {
+            finish();
+          }
+          function handleError() {
+            const fallbackDomain = image.dataset.logoFallback;
+            if (fallbackDomain && image.dataset.logoFallbackAttempted !== "true") {
+              image.dataset.logoFallbackAttempted = "true";
+              image.src = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(fallbackDomain)}&sz=128`;
+              return;
+            }
+            image.closest(".workspace-brand-icon")?.remove();
+            finish();
+          }
+          image.addEventListener("load", handleLoad);
+          image.addEventListener("error", handleError);
+          image.loading = "eager";
+          if (image.complete) {
+            if (image.naturalWidth) finish();
+            else handleError();
+          }
+        })));
         printWindow.focus();
         printWindow.print();
       }, { once: true });
@@ -7238,7 +7271,10 @@
         body.printing-session { background: #fff; display: block; margin: 0; min-height: 0; padding: 12mm; }
         #print-session-root { display: block; margin: 0 auto; max-width: none; padding: 0; }
         #print-session-root, #print-session-root *, #print-session-root *::before, #print-session-root *::after { box-shadow: none !important; text-shadow: none !important; }
-        #print-session-root h1 { color: var(--print-accent-dark); font-size: 21px; margin: 0 0 4px; }
+        #print-session-root .print-session-heading { align-items: center; display: flex; gap: 10px; margin: 0 0 4px; }
+        #print-session-root .print-session-heading .workspace-brand-icon { flex: 0 0 50px; height: 50px; width: 50px; }
+        #print-session-root .print-session-heading .workspace-brand-icon img { height: 48px; width: 48px; }
+        #print-session-root h1 { color: var(--print-accent-dark); font-size: 21px; margin: 0; }
         #print-session-root > .print-session-subtitle { color: #64746f; font-size: 10px; margin: 0 0 14px; }
         #print-session-root th { background: var(--print-accent-soft); color: var(--print-accent-dark); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         #print-session-root .table-section, #print-session-root .layout-card, #print-session-root .completed-rack { border-color: var(--print-accent-line); }
@@ -7249,7 +7285,7 @@
         #print-session-root [data-export-session], #print-session-root [data-print-session] { display: none !important; }
         #print-session-root details:not([open]) > :not(summary) { display: block !important; }
         @media print { @page { size: landscape; margin: 12mm; } body.printing-session { padding: 0; } #print-session-root { width: 100%; } }
-      </style></head><body class="printing-session"><main id="print-session-root"><h1 data-user-content>${escapeHtml(title)}</h1><p class="print-session-subtitle" data-user-content>${escapeHtml(subtitle)}</p>${content}</main></body></html>`);
+      </style></head><body class="printing-session"><main id="print-session-root"><div class="print-session-heading">${renderWorkspaceBrandIcon(brandName)}<h1 data-user-content>${escapeHtml(title)}</h1></div><p class="print-session-subtitle" data-user-content>${escapeHtml(subtitle)}</p>${content}</main></body></html>`);
       printWindow.document.close();
       translateDocument(printWindow.document.body);
       return printWindow;
@@ -7263,7 +7299,7 @@
       const pics = session.picNames || [];
       const unset = currentLanguage === "en" ? "Not set" : "Belum diisi";
       const subtitle = `${archivedSessionMonth(session)} · ${archivedSessionWeek(session)} · ${currentLanguage === "en" ? "Owner" : "Pemilik"}: ${sessionOwnerName(session)} · PIC 1: ${pics[0] || unset} · PIC 2: ${pics[1] || unset} · ${currentLanguage === "en" ? "Completed" : "Selesai"} ${formatDate(session.finishedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}`;
-      openArchivePrintWindow(`${session.workspaceName || (currentLanguage === "en" ? "Stock opname session" : "Sesi opname")} · ${currentLanguage === "en" ? "Stock Reconciliation" : "Stock Opname"}`, subtitle, renderCompletedSessionDetails(session, true));
+      openArchivePrintWindow(`${session.workspaceName || (currentLanguage === "en" ? "Stock opname session" : "Sesi opname")} · ${currentLanguage === "en" ? "Stock Reconciliation" : "Stock Opname"}`, subtitle, renderCompletedSessionDetails(session, true), session.workspaceName);
     }
     function printRecordedSheet() {
       const session = state.sessions.find((item) => item.id === selectedRecordedSessionId);
@@ -7275,7 +7311,7 @@
       const pics = session.picNames || [];
       const unset = currentLanguage === "en" ? "Not set" : "Belum diisi";
       const subtitle = `${archivedSessionMonth(session)} · ${archivedSessionWeek(session)} · PIC 1: ${pics[0] || unset} · PIC 2: ${pics[1] || unset} · ${currentLanguage === "en" ? "Completed" : "Selesai"} ${session.finishedAt ? formatDate(session.finishedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }) : (currentLanguage === "en" ? "Unavailable" : "Tidak tersedia")} · ${currentLanguage === "en" ? "Read-only view" : "Tampilan hanya-baca"}`;
-      openArchivePrintWindow(`${session.workspaceName || (currentLanguage === "en" ? "Stock opname session" : "Sesi opname")} · ${translateText(sheetName)}`, subtitle, renderRecordedSheet(session, selectedRecordedSheet, true));
+      openArchivePrintWindow(`${session.workspaceName || (currentLanguage === "en" ? "Stock opname session" : "Sesi opname")} · ${translateText(sheetName)}`, subtitle, renderRecordedSheet(session, selectedRecordedSheet, true), session.workspaceName);
     }
 
     function renderWorkspaceSchedule() {
