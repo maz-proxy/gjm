@@ -709,6 +709,9 @@
     .dashboard-legend-dot.remaining { background: #dfe8dd; }
     .dashboard-chart-list { display: grid; gap: 16px; padding: 18px 19px; }
     .dashboard-chart-row { display: grid; gap: 9px; grid-template-columns: minmax(72px, .62fr) minmax(80px, 1.6fr) auto; }
+    .dashboard-chart-row.has-brand-logo { align-items: center; grid-template-columns: 38px minmax(72px, .62fr) minmax(80px, 1.6fr) auto; }
+    .dashboard-chart-row .workspace-brand-icon { color: var(--green); flex-basis: 36px; height: 36px; width: 36px; }
+    .dashboard-chart-row .workspace-brand-icon img { height: 34px; width: 34px; }
     .dashboard-chart-name { font-size: 10px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .dashboard-chart-count { color: var(--muted); font-size: 9px; text-align: right; white-space: nowrap; }
     .dashboard-bar-track { align-self: center; background: #edf1eb; border-radius: 99px; height: 8px; overflow: hidden; }
@@ -735,6 +738,7 @@
       .dashboard-charts { grid-template-columns: minmax(0, 1fr); }
       .dashboard-chart-list { gap: 14px; padding: 15px; }
       .dashboard-chart-row { grid-template-columns: minmax(64px, .7fr) minmax(70px, 1.5fr) auto; }
+      .dashboard-chart-row.has-brand-logo { grid-template-columns: 34px minmax(64px, .7fr) minmax(70px, 1.5fr) auto; }
       .schedule-overview { align-items: flex-start; flex-direction: column; gap: 15px; padding: 18px; }
       .schedule-overview-stats { flex: 1 1 100%; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; }
       .schedule-overview-stat { min-width: 0; padding: 8px 9px; }
@@ -3067,6 +3071,7 @@
         image.src = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(image.dataset.logoFallback)}&sz=128`;
         return;
       }
+      image.closest(".dashboard-chart-row")?.classList.remove("has-brand-logo");
       image.closest(".workspace-brand-icon")?.remove();
     }, true);
     translateDocument();
@@ -6500,11 +6505,15 @@
           <span class="dashboard-summary-column-label" title="${name}">${name}</span>
         </div>`;
       }).join("");
-      const chartRows = workspaceStats.map(({ workspace, stats }) => `<div class="dashboard-chart-row">
+      const chartRows = workspaceStats.map(({ workspace, stats }) => {
+        const brandIcon = renderWorkspaceBrandIcon(workspace.name);
+        return `<div class="dashboard-chart-row${brandIcon ? " has-brand-logo" : ""}">
+        ${brandIcon}
         <span class="dashboard-chart-name" data-user-content title="${escapeHtml(workspace.name)}">${escapeHtml(workspace.name || "Tanpa nama")}</span>
         <div class="dashboard-bar-track" role="progressbar" aria-label="Progres SN ${escapeHtml(workspace.name)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${stats.progress}"><div class="dashboard-bar-fill" style="width:${stats.progress}%"></div></div>
         <span class="dashboard-chart-count">${stats.progress}% · ${formatNumber(stats.scannedSerials)}/${formatNumber(stats.targetSerials)} SN</span>
-      </div>`).join("");
+      </div>`;
+      }).join("");
       return `${navMarkup()}<div class="dashboard-page">
         <div class="dashboard-top-row">
           <section class="page-head dashboard-hero"><div class="dashboard-hero-copy"><div class="dashboard-hero-eyebrow">Ringkasan Stock Opname · Live</div><h1>Dashboard Sesi Berjalan</h1><p class="subtitle">Statistik dan progres hanya untuk sesi opname yang masih berjalan.</p><div class="dashboard-overview"><p>${total.active} sesi aktif · pantau Scan, Manual, dan rekonsiliasi quantity.</p><span class="dashboard-date">${formatDate(new Date(), { day: "numeric", month: "long", year: "numeric" })}</span></div></div><button class="button dashboard-hero-action" data-page-link="workspaces">Kelola Jadwal →</button></section>
