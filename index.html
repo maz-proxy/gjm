@@ -238,14 +238,29 @@
     .chat-message-edited { font-style: italic; }
     html[data-theme="dark"] .chat-message { background: color-mix(in srgb, hsl(var(--chat-user-hue) 68% 70%) 17%, var(--paper)); border-color: color-mix(in srgb, hsl(var(--chat-user-hue) 68% 70%) 37%, var(--line)); }
     html[data-theme="dark"] .chat-message-sender { color: hsl(var(--chat-user-hue) 68% 76%); }
-    .chat-compose { align-items: end; border-top: 1px solid var(--line); display: flex; gap: 7px; padding: 9px; }
-    .chat-compose textarea { background: var(--paper); border: 1px solid var(--line); border-radius: 9px; color: var(--ink); flex: 1; font: 11px/1.4 "DM Sans", "Segoe UI", sans-serif; max-height: 100px; min-height: 38px; min-width: 0; padding: 9px; resize: vertical; }
+    .chat-compose { align-items: end; border-top: 1px solid var(--line); display: grid; gap: 7px; grid-template-columns: minmax(0, 1fr) auto; padding: 9px; }
+    .chat-compose textarea { background: var(--paper); border: 1px solid var(--line); border-radius: 9px; color: var(--ink); font: 11px/1.4 "DM Sans", "Segoe UI", sans-serif; grid-column: 1; max-height: 100px; min-height: 38px; min-width: 0; padding: 9px; resize: vertical; }
     .chat-compose textarea:focus { border-color: var(--green); outline: 2px solid color-mix(in srgb, var(--green) 15%, transparent); }
-    .chat-compose-actions { display: flex; flex: 0 0 auto; gap: 5px; }
-    .chat-send, .chat-cancel-edit { align-items: center; background: var(--green); border: 0; border-radius: 9px; color: #fff; cursor: pointer; display: inline-flex; flex: 0 0 38px; height: 38px; justify-content: center; }
+    .chat-compose-files { display: flex; flex-wrap: wrap; gap: 5px; grid-column: 1 / -1; }
+    .chat-selected-file { align-items: center; background: var(--green-soft); border: 1px solid var(--line); border-radius: 7px; color: var(--ink); display: inline-flex; font-size: 9px; gap: 5px; max-width: 100%; padding: 4px 6px; }
+    .chat-selected-file span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .chat-selected-file button { background: transparent; border: 0; border-radius: 4px; color: var(--muted); line-height: 1; padding: 2px 4px; }
+    .chat-compose-actions { align-items: center; display: flex; gap: 5px; grid-column: 2; }
+    .chat-attach, .chat-send, .chat-cancel-edit { align-items: center; background: var(--green); border: 0; border-radius: 9px; color: #fff; cursor: pointer; display: inline-flex; flex: 0 0 38px; height: 38px; justify-content: center; }
+    .chat-attach { background: var(--green-soft); color: var(--green-dark); }
+    .chat-attach svg { fill: none; height: 18px; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; width: 18px; }
     .chat-cancel-edit { background: var(--green-soft); color: var(--green-dark); font-size: 10px; }
-    .chat-send:disabled { cursor: not-allowed; opacity: .48; }
+    .chat-send:disabled, .chat-attach:disabled { cursor: not-allowed; opacity: .48; }
     .chat-send svg { fill: none; height: 17px; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; width: 17px; }
+    .chat-message-attachments { display: grid; gap: 6px; margin-top: 6px; }
+    .chat-image-link { display: block; max-width: 220px; }
+    .chat-image { background: var(--green-soft); border: 1px solid var(--line); border-radius: 8px; display: block; max-height: 220px; max-width: 100%; object-fit: contain; }
+    .chat-file-link { align-items: center; background: color-mix(in srgb, var(--paper) 60%, transparent); border: 1px solid var(--line); border-radius: 8px; color: var(--ink); display: flex; font-size: 9px; gap: 7px; max-width: 240px; min-width: 0; padding: 7px; text-decoration: none; }
+    .chat-file-link:hover { border-color: var(--green); }
+    .chat-file-icon { color: var(--green-dark); font-size: 15px; }
+    .chat-file-copy { min-width: 0; }
+    .chat-file-name { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .chat-file-size { color: var(--muted); display: block; font-size: 8px; }
     .chat-incoming-preview { animation: dropdown-enter .16s ease-out; background: var(--paper); border: 1px solid var(--line); border-radius: 11px; box-shadow: 0 10px 28px rgba(20,40,35,.2); color: var(--ink); cursor: pointer; font: inherit; max-width: min(260px, calc(100vw - 32px)); padding: 9px 12px; position: absolute; right: calc(100% + 9px); text-align: left; top: 0; width: 230px; z-index: 61; }
     .chat-incoming-preview strong { display: block; font-size: 10px; margin-bottom: 3px; }
     .chat-incoming-preview span { display: -webkit-box; font-size: 10px; line-height: 1.4; overflow: hidden; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
@@ -3269,6 +3284,9 @@
     const SHARED_STATE_TABLE = "stock_opname_state";
     const SHARED_STATE_CHANNEL_NAME = "stock-opname-state:stock-opname-team";
     const WORKBOOK_ARCHIVE_BUCKET = "stock-opname-workbooks";
+    const CHAT_ATTACHMENT_BUCKET = "stock-opname-chat-attachments";
+    const CHAT_ATTACHMENT_MAX_SIZE = 50 * 1024 * 1024;
+    const CHAT_ATTACHMENT_MAX_COUNT = 10;
     const ANDROID_APP_BUCKET = "stock-opname-app-downloads";
     const ANDROID_APP_OBJECT = "latest.apk";
     const ANDROID_APP_MAX_SIZE = 50 * 1024 * 1024;
@@ -3543,6 +3561,9 @@
     let chatIncomingPreview = null;
     let chatIncomingPreviewTimer = null;
     let chatAudioContext = null;
+    let chatSelectedFiles = [];
+    let chatUploadInProgress = false;
+    const chatAttachmentUrlCache = new Map();
     let cameraStream = null;
     let cameraScanTimer = null;
     let cameraFocusTimer = null;
@@ -4768,9 +4789,21 @@
       }
       const normalized = { ...initialState(), ...source };
       if (!Array.isArray(normalized.chatMessages)) normalized.chatMessages = [];
-      normalized.chatMessages = normalized.chatMessages.filter((message) =>
-        message && typeof message.id === "string" && typeof message.senderId === "string"
-        && typeof message.text === "string" && typeof message.createdAt === "string");
+      normalized.chatMessages = normalized.chatMessages
+        .filter((message) =>
+          message && typeof message.id === "string" && typeof message.senderId === "string"
+          && typeof message.text === "string" && typeof message.createdAt === "string")
+        .map((message) => ({
+          ...message,
+          attachments: (Array.isArray(message.attachments) ? message.attachments : []).filter((attachment) =>
+            attachment && typeof attachment.storagePath === "string"
+            && attachment.storagePath.startsWith(`${message.senderId}/`)
+            && typeof attachment.name === "string"
+            && typeof attachment.contentType === "string"
+            && Number.isFinite(attachment.size) && attachment.size >= 0
+            && attachment.size <= CHAT_ATTACHMENT_MAX_SIZE).slice(0, CHAT_ATTACHMENT_MAX_COUNT)
+        }))
+        .filter((message) => message.text.trim() || message.attachments.length);
       if (!normalized.chatReadAt || typeof normalized.chatReadAt !== "object" || Array.isArray(normalized.chatReadAt)) normalized.chatReadAt = {};
       if (!Array.isArray(normalized.layouts) || !normalized.layouts.length) normalized.layouts = [...DEFAULT_LAYOUTS];
       if (!normalized.layoutQuantities || typeof normalized.layoutQuantities !== "object") normalized.layoutQuantities = {};
@@ -4845,6 +4878,8 @@
       stopSharedStateChannel();
       chatPanelOpen = false;
       chatEditingMessageId = "";
+      chatSelectedFiles = [];
+      chatUploadInProgress = false;
       chatIncomingPreview = null;
       clearTimeout(chatIncomingPreviewTimer);
       chatIncomingPreviewTimer = null;
@@ -5949,6 +5984,73 @@
       for (const character of senderId) hash = (Math.imul(hash, 31) + character.charCodeAt(0)) | 0;
       return (hash >>> 0) % 360;
     }
+    function renderChatSelectedFilesMarkup() {
+      return chatSelectedFiles.map((file, index) =>
+        `<span class="chat-selected-file"><span>${escapeHtml(file.name)} · ${formatNumber(file.size / 1024)} KB</span><button type="button" data-chat-remove-file="${index}" aria-label="Hapus lampiran ${escapeHtml(file.name)}">×</button></span>`
+      ).join("");
+    }
+    function isChatImageAttachment(attachment) {
+      return /^image\/(png|jpe?g|gif|webp|bmp|avif)$/i.test(attachment.contentType);
+    }
+    function updateChatSelectedFiles() {
+      const container = document.getElementById("chat-compose-files");
+      if (!container) return;
+      container.innerHTML = renderChatSelectedFilesMarkup();
+      container.querySelectorAll("[data-chat-remove-file]").forEach((button) => {
+        button.addEventListener("click", () => {
+          chatSelectedFiles.splice(Number(button.dataset.chatRemoveFile), 1);
+          updateChatSelectedFiles();
+          document.getElementById("chat-attachment-input")?.focus({ preventScroll: true });
+        });
+      });
+    }
+    async function uploadChatAttachment(file, userId) {
+      if (!userId) throw new Error("Login tidak ditemukan. File tidak diunggah.");
+      const storagePath = `${userId}/${crypto.randomUUID()}`;
+      const contentType = file.type || "application/octet-stream";
+      const { data, error } = await supabaseClient.storage.from(CHAT_ATTACHMENT_BUCKET).upload(storagePath, file, {
+        cacheControl: "3600",
+        contentType,
+        upsert: false
+      });
+      if (error) throw error;
+      return {
+        id: crypto.randomUUID(),
+        name: file.name,
+        size: file.size,
+        contentType,
+        storagePath: data.path || storagePath
+      };
+    }
+    async function hydrateChatAttachments() {
+      const elements = [...document.querySelectorAll("[data-chat-file-path]")];
+      await Promise.all(elements.map(async (element) => {
+        const path = element.dataset.chatFilePath;
+        const name = element.dataset.chatFileName || "attachment";
+        const image = element.dataset.chatImagePath !== undefined;
+        const cacheKey = `${path}:${image ? "preview" : name}`;
+        try {
+          let cached = chatAttachmentUrlCache.get(cacheKey);
+          if (!cached || cached.expiresAt <= Date.now()) {
+            const options = image ? {} : { download: name };
+            const { data, error } = await supabaseClient.storage.from(CHAT_ATTACHMENT_BUCKET)
+              .createSignedUrl(path, 3600, options);
+            if (error) throw error;
+            cached = { url: data.signedUrl, expiresAt: Date.now() + 55 * 60 * 1000 };
+            chatAttachmentUrlCache.set(cacheKey, cached);
+          }
+          if (!element.isConnected) return;
+          element.setAttribute("href", cached.url);
+          if (image) {
+            const preview = element.querySelector("img");
+            if (preview) preview.src = cached.url;
+          }
+        } catch (error) {
+          console.error("Chat attachment URL could not be created:", error);
+          if (element.isConnected) element.textContent = "File tidak dapat dibuka";
+        }
+      }));
+    }
     function renderChatMarkup() {
       const unreadCount = chatUnreadCount();
       const unreadBadge = unreadCount
@@ -5966,16 +6068,20 @@
             : "";
           const editedLabel = currentLanguage === "en" ? "edited" : "diedit";
           const editLabel = currentLanguage === "en" ? "Edit" : "Ubah";
-          return `<article class="chat-message${ownMessage ? " own" : ""}" style="--chat-user-hue:${chatSenderHue(message.senderId)}"><span class="chat-message-sender" data-user-content>${escapeHtml(senderName)}</span><div class="chat-message-text" data-user-content>${escapeHtml(message.text)}</div><div class="chat-message-meta">${message.editedAt ? `<span class="chat-message-edited">${editedLabel}</span>` : ""}<time>${escapeHtml(sentAt)}</time>${ownMessage ? `<button class="chat-message-edit" type="button" data-chat-edit="${escapeHtml(message.id)}" aria-label="${editLabel} pesan">✎ ${editLabel}</button>` : ""}</div></article>`;
+          const attachments = (message.attachments || []).map((attachment) => isChatImageAttachment(attachment)
+            ? `<a class="chat-image-link" data-chat-file-path="${escapeHtml(attachment.storagePath)}" data-chat-file-name="${escapeHtml(attachment.name)}" data-chat-image-path target="_blank" rel="noopener noreferrer" aria-label="Buka foto ${escapeHtml(attachment.name)}"><img class="chat-image" alt="${escapeHtml(attachment.name)}" loading="lazy"></a>`
+            : `<a class="chat-file-link" data-chat-file-path="${escapeHtml(attachment.storagePath)}" data-chat-file-name="${escapeHtml(attachment.name)}" target="_blank" rel="noopener noreferrer"><span class="chat-file-icon" aria-hidden="true">📎</span><span class="chat-file-copy"><span class="chat-file-name">${escapeHtml(attachment.name)}</span><span class="chat-file-size">${formatNumber(attachment.size / 1024)} KB</span></span></a>`
+          ).join("");
+          return `<article class="chat-message${ownMessage ? " own" : ""}" style="--chat-user-hue:${chatSenderHue(message.senderId)}"><span class="chat-message-sender" data-user-content>${escapeHtml(senderName)}</span>${message.text ? `<div class="chat-message-text" data-user-content>${escapeHtml(message.text)}</div>` : ""}${attachments ? `<div class="chat-message-attachments">${attachments}</div>` : ""}<div class="chat-message-meta">${message.editedAt ? `<span class="chat-message-edited">${editedLabel}</span>` : ""}<time>${escapeHtml(sentAt)}</time>${ownMessage ? `<button class="chat-message-edit" type="button" data-chat-edit="${escapeHtml(message.id)}" aria-label="${editLabel} pesan">✎ ${editLabel}</button>` : ""}</div></article>`;
         }).join("")
-        : `<div class="chat-empty">Belum ada percakapan. Kirim pesan pertama untuk memulai chat tim.</div>`;
+        : `<div class="chat-empty">Belum ada percakapan. Kirim pesan atau lampiran pertama untuk memulai chat tim.</div>`;
       const editingMessage = messages.find((message) => message.id === chatEditingMessageId);
       const editMode = Boolean(editingMessage && editingMessage.senderId === userId);
       const panelMarkup = chatPanelOpen
-        ? `<section class="chat-panel" aria-label="Percakapan antar akun"><header class="chat-panel-head"><div><strong>Chat tim</strong><small>Pesan untuk semua akun</small></div><button class="chat-close" id="chat-close" type="button" aria-label="Tutup chat">×</button></header><div class="chat-message-list" id="chat-message-list" role="log" aria-live="polite" aria-relevant="additions text">${messageMarkup}</div><form class="chat-compose" id="chat-compose"><textarea id="chat-message-input" maxlength="1000" aria-label="${editMode ? "Edit pesan chat" : "Tulis pesan chat"}" placeholder="${editMode ? "Ubah pesan..." : "Tulis pesan..."}" required>${editMode ? escapeHtml(editingMessage.text) : ""}</textarea><div class="chat-compose-actions">${editMode ? `<button class="chat-cancel-edit" id="chat-cancel-edit" type="button" aria-label="Batalkan edit">×</button>` : ""}<button class="chat-send" type="submit" aria-label="${editMode ? "Simpan perubahan" : "Kirim pesan"}" title="${editMode ? "Simpan perubahan" : "Kirim pesan"}">${editMode ? "✓" : '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4 20-7ZM22 2 11 13"/></svg>'}</button></div></form></section>`
+        ? `<section class="chat-panel" aria-label="Percakapan antar akun"><header class="chat-panel-head"><div><strong>Chat tim</strong><small>Pesan untuk semua akun</small></div><button class="chat-close" id="chat-close" type="button" aria-label="Tutup chat">×</button></header><div class="chat-message-list" id="chat-message-list" role="log" aria-live="polite" aria-relevant="additions text">${messageMarkup}</div><form class="chat-compose" id="chat-compose"><input id="chat-attachment-input" type="file" accept="*/*" multiple hidden><div class="chat-compose-files" id="chat-compose-files">${renderChatSelectedFilesMarkup()}</div><textarea id="chat-message-input" maxlength="1000" aria-label="${editMode ? "Edit pesan chat" : "Tulis pesan chat"}" placeholder="${editMode ? "Ubah pesan..." : "Tulis pesan..."}">${editMode ? escapeHtml(editingMessage.text) : ""}</textarea><div class="chat-compose-actions">${editMode ? `<button class="chat-cancel-edit" id="chat-cancel-edit" type="button" aria-label="Batalkan edit">×</button>` : `<button class="chat-attach" id="chat-attach-button" type="button" aria-label="Lampirkan foto atau dokumen" title="Lampirkan foto atau dokumen" ${chatUploadInProgress ? "disabled" : ""}><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m21.4 11.6-8.5 8.5a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"/></svg></button>`}<button class="chat-send" type="submit" aria-label="${editMode ? "Simpan perubahan" : "Kirim pesan"}" title="${editMode ? "Simpan perubahan" : chatUploadInProgress ? "Mengunggah lampiran..." : "Kirim pesan"}" ${chatUploadInProgress ? "disabled" : ""}>${editMode ? "✓" : chatUploadInProgress ? "…" : '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4 20-7ZM22 2 11 13"/></svg>'}</button></div></form></section>`
         : "";
       const incomingMarkup = chatIncomingPreview
-        ? `<button class="chat-incoming-preview" id="chat-preview-open" type="button" aria-live="polite" aria-label="Buka pesan chat dari ${escapeHtml(chatIncomingPreview.senderName || "Pengguna")}"><strong data-user-content>${escapeHtml(chatIncomingPreview.senderName || "Pesan baru")}</strong><span data-user-content>${escapeHtml(chatIncomingPreview.text)}</span></button>`
+        ? `<button class="chat-incoming-preview" id="chat-preview-open" type="button" aria-live="polite" aria-label="Buka pesan chat dari ${escapeHtml(chatIncomingPreview.senderName || "Pengguna")}"><strong data-user-content>${escapeHtml(chatIncomingPreview.senderName || "Pesan baru")}</strong><span data-user-content>${escapeHtml(chatIncomingPreview.text || (chatIncomingPreview.attachments?.length ? `📎 ${chatIncomingPreview.attachments.length} lampiran` : "Lampiran baru"))}</span></button>`
         : "";
       return `<div class="top-date-chat" id="top-date-chat"><button class="top-chat-button" id="chat-toggle" type="button" aria-label="Buka chat${unreadCount ? `, ${unreadCount} pesan belum dibaca` : ""}" aria-expanded="${chatPanelOpen}"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H5l-2 2v-9.5A7.5 7.5 0 0 1 10.5 4H12a8 8 0 0 1 8 7.5Z"/><path d="M8 11h8m-8 4h5"/></svg><span class="top-chat-label">Chat</span>${unreadBadge}</button><span class="today">${formatDate(new Date(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span>${incomingMarkup}${panelMarkup}</div>`;
     }
@@ -7809,6 +7915,7 @@
     }
 
     function bindChatEvents() {
+      void hydrateChatAttachments();
       document.getElementById("chat-toggle")?.addEventListener("click", () => {
         unlockChatAudio();
         chatPanelOpen = !chatPanelOpen;
@@ -7828,6 +7935,7 @@
       document.getElementById("chat-close")?.addEventListener("click", () => {
         chatPanelOpen = false;
         chatEditingMessageId = "";
+        chatSelectedFiles = [];
         refreshChatWidget();
       });
       document.getElementById("chat-preview-open")?.addEventListener("click", () => {
@@ -7844,23 +7952,45 @@
         button.addEventListener("click", () => {
           const message = (state.chatMessages || []).find((item) => item.id === button.dataset.chatEdit);
           if (!message || message.senderId !== authSession?.user?.id) return;
+          chatSelectedFiles = [];
           chatEditingMessageId = message.id;
           refreshChatWidget();
           focusChatInput(true);
         });
+      });
+      document.getElementById("chat-attach-button")?.addEventListener("click", () => {
+        document.getElementById("chat-attachment-input")?.click();
+      });
+      document.getElementById("chat-attachment-input")?.addEventListener("change", (event) => {
+        const selected = [...(event.target.files || [])];
+        event.target.value = "";
+        const remainingSlots = CHAT_ATTACHMENT_MAX_COUNT - chatSelectedFiles.length;
+        const accepted = selected.filter((file) => file.size <= CHAT_ATTACHMENT_MAX_SIZE).slice(0, Math.max(remainingSlots, 0));
+        if (selected.some((file) => file.size > CHAT_ATTACHMENT_MAX_SIZE)) {
+          notify("Setiap lampiran maksimal 50 MB.");
+        }
+        if (selected.length > accepted.length && !selected.some((file) => file.size > CHAT_ATTACHMENT_MAX_SIZE)) {
+          notify("Maksimal 10 file untuk satu pesan.");
+        }
+        chatSelectedFiles.push(...accepted);
+        updateChatSelectedFiles();
+        focusChatInput();
       });
       document.getElementById("chat-cancel-edit")?.addEventListener("click", () => {
         chatEditingMessageId = "";
         refreshChatWidget();
         focusChatInput();
       });
-      document.getElementById("chat-compose")?.addEventListener("submit", (event) => {
+      document.getElementById("chat-compose")?.addEventListener("submit", async (event) => {
         event.preventDefault();
+        if (chatUploadInProgress) return;
         const input = document.getElementById("chat-message-input");
         const text = input?.value.trim();
-        if (!text || !authSession?.user?.id) return;
+        if ((!text && !chatSelectedFiles.length) || !authSession?.user?.id) return;
+        const senderId = authSession.user.id;
+        const username = authSession.user.user_metadata?.username || authSession.user.email || "Pengguna";
         const editingMessage = (state.chatMessages || []).find((message) =>
-          message.id === chatEditingMessageId && message.senderId === authSession.user.id);
+          message.id === chatEditingMessageId && message.senderId === senderId);
         if (chatEditingMessageId && !editingMessage) {
           chatEditingMessageId = "";
           refreshChatWidget();
@@ -7868,6 +7998,7 @@
           return;
         }
         if (editingMessage) {
+          if (!text) return;
           editingMessage.text = text.slice(0, 1000);
           editingMessage.editedAt = new Date().toISOString();
           chatEditingMessageId = "";
@@ -7877,16 +8008,78 @@
           focusChatInput();
           return;
         }
-        const username = authSession.user.user_metadata?.username || authSession.user.email || "Pengguna";
+        const attachments = [];
+        if (chatSelectedFiles.length) {
+          const filesToUpload = [...chatSelectedFiles];
+          const uploadedPaths = [];
+          const submitButton = event.currentTarget.querySelector(".chat-send");
+          const attachButton = document.getElementById("chat-attach-button");
+          const textarea = document.getElementById("chat-message-input");
+          chatUploadInProgress = true;
+          if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.textContent = "…";
+            submitButton.title = "Mengunggah lampiran...";
+          }
+          if (attachButton) attachButton.disabled = true;
+          if (textarea) textarea.disabled = true;
+          try {
+            for (const file of filesToUpload) {
+              const attachment = await uploadChatAttachment(file, senderId);
+              attachments.push(attachment);
+              uploadedPaths.push(attachment.storagePath);
+            }
+          } catch (error) {
+            if (uploadedPaths.length) {
+              try {
+                const { error: cleanupError } = await supabaseClient.storage.from(CHAT_ATTACHMENT_BUCKET).remove(uploadedPaths);
+                if (cleanupError) console.error("Partially uploaded chat attachments could not be removed:", cleanupError);
+              } catch (cleanupError) {
+                console.error("Partially uploaded chat attachments could not be removed:", cleanupError);
+              }
+            }
+            chatUploadInProgress = false;
+            if (submitButton) {
+              submitButton.disabled = false;
+              submitButton.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4 20-7ZM22 2 11 13"/></svg>';
+              submitButton.title = "Kirim pesan";
+            }
+            if (attachButton) attachButton.disabled = false;
+            if (textarea) textarea.disabled = false;
+            console.error("Chat attachments could not be uploaded:", error);
+            const detail = /bucket not found/i.test(error?.message || "")
+              ? "Bucket lampiran chat belum tersedia. Minta Owner menjalankan supabase-setup.sql terbaru."
+              : `Lampiran chat gagal diunggah: ${error instanceof Error ? error.message : "kesalahan tidak diketahui"}`;
+            notify(detail);
+            return;
+          }
+          chatUploadInProgress = false;
+        }
+        if (authSession?.user?.id !== senderId) {
+          if (attachments.length) {
+            try {
+              const { error } = await supabaseClient.storage.from(CHAT_ATTACHMENT_BUCKET)
+                .remove(attachments.map((attachment) => attachment.storagePath));
+              if (error) console.error("Chat attachments from a signed-out user could not be removed:", error);
+            } catch (error) {
+              console.error("Chat attachments from a signed-out user could not be removed:", error);
+            }
+          }
+          chatUploadInProgress = false;
+          notify("Akun berubah saat lampiran diunggah. Pesan tidak dikirim.");
+          return;
+        }
         const createdAt = new Date().toISOString();
         state.chatMessages = [...(state.chatMessages || []), {
           id: crypto.randomUUID(),
-          senderId: authSession.user.id,
+          senderId,
           senderName: formatDisplayName(username),
-          text: text.slice(0, 1000),
-          createdAt
+          text: (text || "").slice(0, 1000),
+          createdAt,
+          attachments
         }];
-        state.chatReadAt = { ...(state.chatReadAt || {}), [authSession.user.id]: createdAt };
+        chatSelectedFiles = [];
+        state.chatReadAt = { ...(state.chatReadAt || {}), [senderId]: createdAt };
         persist();
         refreshChatWidget();
         scrollChatToLatest();

@@ -476,6 +476,40 @@ create policy "Session owners and super admins can delete archived stock opname 
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
+  'stock-opname-chat-attachments',
+  'stock-opname-chat-attachments',
+  false,
+  52428800,
+  null
+)
+on conflict (id) do update
+  set public = excluded.public,
+      file_size_limit = excluded.file_size_limit,
+      allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "Team members can read chat attachments" on storage.objects;
+create policy "Team members can read chat attachments"
+  on storage.objects for select to authenticated
+  using (bucket_id = 'stock-opname-chat-attachments');
+
+drop policy if exists "Team members can upload their own chat attachments" on storage.objects;
+create policy "Team members can upload their own chat attachments"
+  on storage.objects for insert to authenticated
+  with check (
+    bucket_id = 'stock-opname-chat-attachments'
+    and split_part(name, '/', 1) = auth.uid()::text
+  );
+
+drop policy if exists "Team members can delete their own chat attachments" on storage.objects;
+create policy "Team members can delete their own chat attachments"
+  on storage.objects for delete to authenticated
+  using (
+    bucket_id = 'stock-opname-chat-attachments'
+    and split_part(name, '/', 1) = auth.uid()::text
+  );
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
   'stock-opname-app-downloads',
   'stock-opname-app-downloads',
   true,
