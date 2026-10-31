@@ -528,6 +528,14 @@
     .recorded-quantity-trigger:focus-visible { outline: 2px solid color-mix(in srgb, var(--green) 40%, transparent); outline-offset: 2px; }
     .completed-export-actions { display: flex; gap: 8px; margin: 10px 0; }
     .completed-detail-panel h3 { font-size: 13px; margin: 0 0 10px; }
+    .completed-session-brand, .completed-session-title { align-items: center; display: flex; gap: 9px; min-width: 0; }
+    .completed-session-brand .workspace-brand-icon { flex: 0 0 34px; height: 34px; width: 34px; }
+    .completed-session-brand .workspace-brand-icon img { height: 32px; width: 32px; }
+    .completed-session-title .workspace-brand-icon { flex: 0 0 54px; height: 54px; width: 54px; }
+    .completed-session-title .workspace-brand-icon img { height: 52px; width: 52px; }
+    .recorded-archive-title { align-items: center; display: flex; gap: 10px; }
+    .recorded-archive-title .workspace-brand-icon { flex: 0 0 56px; height: 56px; width: 56px; }
+    .recorded-archive-title .workspace-brand-icon img { height: 54px; width: 54px; }
     .completed-racks { display: grid; gap: 9px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); margin-bottom: 18px; }
     .completed-rack { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
     .completed-rack-title { font-size: 11px; font-weight: 700; }
@@ -1477,6 +1485,14 @@
     .recorded-card .recorded-brand-picker .schedule-select-chevron { color: var(--green); font-size: 15px; }
     .recorded-card.recorded-brand-select-open { overflow: visible; z-index: 20; }
     .recorded-card .recorded-brand-picker .schedule-select-options { z-index: 40; }
+    .recorded-card .recorded-brand-picker .brand-logo-option { gap: 9px; justify-content: flex-start; }
+    .recorded-card .recorded-brand-picker .brand-logo-option .workspace-brand-icon { flex: 0 0 28px; height: 28px; width: 28px; }
+    .recorded-card .recorded-brand-picker .brand-logo-option .workspace-brand-icon img { height: 26px; width: 26px; }
+    .recorded-card .recorded-brand-picker .brand-logo-option span:last-child { overflow: hidden; text-overflow: ellipsis; }
+    .recorded-card .recorded-brand-picker [data-schedule-select-label].brand-logo-label { align-items: center; display: flex; gap: 9px; min-width: 0; }
+    .recorded-card .recorded-brand-picker .brand-logo-label .workspace-brand-icon { flex: 0 0 32px; height: 32px; width: 32px; }
+    .recorded-card .recorded-brand-picker .brand-logo-label .workspace-brand-icon img { height: 30px; width: 30px; }
+    .recorded-card .recorded-brand-picker .brand-logo-label > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     html[data-theme="dark"] .schedule-select-trigger { background: #14211f; border-color: #3a514b; color: var(--ink); }
     html[data-theme="dark"] .schedule-select-option[aria-selected="true"] { background: #203b35; color: #d9f1e4; }
     html[data-accent="burgundy"] {
@@ -3755,9 +3771,18 @@
       closeScheduleResourceOptions(input);
       input.dispatchEvent(new Event("change", { bubbles: true }));
     }
-    function renderScheduleDropdown(triggerId, label, selectClass, attributes, options, selectedValue, disabled = false) {
-      const optionMarkup = options.map(([value, text]) => `<button class="schedule-resource-option schedule-select-option" type="button" role="option" data-schedule-select-option="${escapeHtml(value)}" aria-selected="${value === selectedValue}">${escapeHtml(text)}</button>`).join("");
-      return `<div class="schedule-select-picker"><select class="${selectClass} schedule-native-select" ${attributes} aria-hidden="true" tabindex="-1" ${disabled ? "disabled" : ""}>${options.map(([value, text]) => `<option value="${escapeHtml(value)}" ${value === selectedValue ? "selected" : ""}>${escapeHtml(text)}</option>`).join("")}</select><button class="schedule-select-trigger" id="${escapeHtml(triggerId)}" type="button" aria-label="${escapeHtml(label)}" aria-haspopup="listbox" aria-expanded="false" aria-controls="${escapeHtml(triggerId)}-options" ${disabled ? "disabled" : ""}><span data-schedule-select-label>${escapeHtml(options.find(([value]) => value === selectedValue)?.[1] || selectedValue)}</span><span class="schedule-select-chevron" aria-hidden="true">⌄</span></button><div class="schedule-resource-options schedule-select-options" id="${escapeHtml(triggerId)}-options" role="listbox" aria-label="${escapeHtml(label)}"><div class="schedule-resource-options-heading">${escapeHtml(label)}</div>${optionMarkup}</div></div>`;
+    function renderScheduleDropdown(triggerId, label, selectClass, attributes, options, selectedValue, disabled = false, withBrandLogos = false) {
+      const optionMarkup = options.map(([value, text]) => {
+        const content = withBrandLogos && value
+          ? `${renderWorkspaceBrandIcon(value)}<span>${escapeHtml(text)}</span>`
+          : escapeHtml(text);
+        return `<button class="schedule-resource-option schedule-select-option${withBrandLogos ? " brand-logo-option" : ""}" type="button" role="option" data-schedule-select-option="${escapeHtml(value)}" aria-selected="${value === selectedValue}">${content}</button>`;
+      }).join("");
+      const selectedText = options.find(([value]) => value === selectedValue)?.[1] || selectedValue;
+      const selectedLabel = withBrandLogos && selectedValue
+        ? `${renderWorkspaceBrandIcon(selectedValue)}<span>${escapeHtml(selectedText)}</span>`
+        : escapeHtml(selectedText);
+      return `<div class="schedule-select-picker${withBrandLogos ? " brand-logo-picker" : ""}"><select class="${selectClass} schedule-native-select" ${attributes} aria-hidden="true" tabindex="-1" ${disabled ? "disabled" : ""}>${options.map(([value, text]) => `<option value="${escapeHtml(value)}" ${value === selectedValue ? "selected" : ""}>${escapeHtml(text)}</option>`).join("")}</select><button class="schedule-select-trigger" id="${escapeHtml(triggerId)}" type="button" aria-label="${escapeHtml(label)}" aria-haspopup="listbox" aria-expanded="false" aria-controls="${escapeHtml(triggerId)}-options" ${disabled ? "disabled" : ""}><span data-schedule-select-label${withBrandLogos ? ` class="brand-logo-label"` : ""}>${selectedLabel}</span><span class="schedule-select-chevron" aria-hidden="true">⌄</span></button><div class="schedule-resource-options schedule-select-options" id="${escapeHtml(triggerId)}-options" role="listbox" aria-label="${escapeHtml(label)}"><div class="schedule-resource-options-heading">${escapeHtml(label)}</div>${optionMarkup}</div></div>`;
     }
     function closeScheduleDropdown(picker) {
       picker?.classList.remove("open");
@@ -6139,7 +6164,7 @@
 
     function renderCompletedSessions() {
       const completed = [...state.sessions].sort((a, b) => new Date(b.finishedAt) - new Date(a.finishedAt));
-      return `${navMarkup()}<section class="page-head archive-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Arsip stock opname</div><h1>Sesi Stock Opname</h1><p class="subtitle">Arsip sesi yang sudah selesai, termasuk file VEF asli, nama akun, PIC, detail Scan Layout, input manual, Result SO, invoice PJ, dan Rekap Selisih.</p></div><span class="category-chip">${completed.length} sesi selesai</span></section><section class="table-section"><div class="table-toolbar"><div class="table-title">Sesi sebelumnya <span class="table-count">${completed.length} sesi selesai · terbaru di atas</span></div></div><div class="table-scroll"><table><thead><tr><th>Nama sesi</th><th>Pemilik</th><th>Nama PIC</th><th>Tanggal sesi</th><th>Item dihitung</th><th>Unit VEF dihitung</th><th>SN cocok</th><th>Item sesuai</th><th>Selisih</th><th>SN bukan laptop</th><th>SN bermasalah</th><th>Data</th></tr></thead><tbody>${completed.length ? completed.map((session) => { const pics = session.picNames || state.workspaces.find((workspace) => workspace.id === session.workspaceId)?.picNames || []; const canDelete = canDeleteCompletedSession(); const countMode = session.countMode === "all" ? "all" : "laptops"; return `<tr><td><span data-user-content>${escapeHtml(session.workspaceName || "Sesi opname")}</span><div class="product-sku">${escapeHtml(archivedSessionMonth(session))} · ${escapeHtml(archivedSessionWeek(session))} · ${(session.workbooks || []).length} file sumber</div></td><td>${escapeHtml(sessionOwnerName(session))}</td><td><div class="product-name">PIC 1: ${escapeHtml(pics[0] || "Belum diisi")}</div><div class="product-sku">PIC 2: ${escapeHtml(pics[1] || "Belum diisi")}</div></td><td><div class="product-name">${escapeHtml(formatDate(session.finishedAt, { day: "numeric", month: "long", year: "numeric" }))}</div><div class="product-sku">${escapeHtml(new Intl.DateTimeFormat(currentLanguage === "en" ? "en-US" : "id-ID", { hour: "2-digit", minute: "2-digit" }).format(new Date(session.finishedAt)))}</div></td><td>${session.total} SKU <div class="product-sku">${countModeLabel(countMode)}</div></td><td>${formatNumber(session.expected)}</td><td>${formatNumber(session.scanned)}</td><td><span class="variance zero">${session.matching}</span></td><td>${session.shortages + session.surpluses}</td><td>${formatNumber(session.nonLaptopScans || 0)}</td><td><span class="row-status ${session.issues ? "shortage" : "match"}">${session.issues}</span></td><td><div class="head-buttons">${session.snapshot ? `<button class="button button-secondary" type="button" data-open-completed-session="${escapeHtml(session.id)}">Buka sesi</button>` : `<span class="product-sku">Data detail tidak tersedia</span>`}${canDelete ? `<button class="button button-danger" type="button" data-delete-completed-session="${escapeHtml(session.id)}">Hapus</button>` : ""}</div></td></tr>`; }).join("") : `<tr><td class="empty-row" colspan="12">Belum ada sesi opname yang selesai.</td></tr>`}</tbody></table></div></section>`;
+      return `${navMarkup()}<section class="page-head archive-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Arsip stock opname</div><h1>Sesi Stock Opname</h1><p class="subtitle">Arsip sesi yang sudah selesai, termasuk file VEF asli, nama akun, PIC, detail Scan Layout, input manual, Result SO, invoice PJ, dan Rekap Selisih.</p></div><span class="category-chip">${completed.length} sesi selesai</span></section><section class="table-section"><div class="table-toolbar"><div class="table-title">Sesi sebelumnya <span class="table-count">${completed.length} sesi selesai · terbaru di atas</span></div></div><div class="table-scroll"><table><thead><tr><th>Nama sesi</th><th>Pemilik</th><th>Nama PIC</th><th>Tanggal sesi</th><th>Item dihitung</th><th>Unit VEF dihitung</th><th>SN cocok</th><th>Item sesuai</th><th>Selisih</th><th>SN bukan laptop</th><th>SN bermasalah</th><th>Data</th></tr></thead><tbody>${completed.length ? completed.map((session) => { const pics = session.picNames || state.workspaces.find((workspace) => workspace.id === session.workspaceId)?.picNames || []; const canDelete = canDeleteCompletedSession(); const countMode = session.countMode === "all" ? "all" : "laptops"; const sessionName = session.workspaceName || "Sesi opname"; return `<tr><td><div class="completed-session-brand">${renderWorkspaceBrandIcon(sessionName)}<span data-user-content>${escapeHtml(sessionName)}</span></div><div class="product-sku">${escapeHtml(archivedSessionMonth(session))} · ${escapeHtml(archivedSessionWeek(session))} · ${(session.workbooks || []).length} file sumber</div></td><td>${escapeHtml(sessionOwnerName(session))}</td><td><div class="product-name">PIC 1: ${escapeHtml(pics[0] || "Belum diisi")}</div><div class="product-sku">PIC 2: ${escapeHtml(pics[1] || "Belum diisi")}</div></td><td><div class="product-name">${escapeHtml(formatDate(session.finishedAt, { day: "numeric", month: "long", year: "numeric" }))}</div><div class="product-sku">${escapeHtml(new Intl.DateTimeFormat(currentLanguage === "en" ? "en-US" : "id-ID", { hour: "2-digit", minute: "2-digit" }).format(new Date(session.finishedAt)))}</div></td><td>${session.total} SKU <div class="product-sku">${countModeLabel(countMode)}</div></td><td>${formatNumber(session.expected)}</td><td>${formatNumber(session.scanned)}</td><td><span class="variance zero">${session.matching}</span></td><td>${session.shortages + session.surpluses}</td><td>${formatNumber(session.nonLaptopScans || 0)}</td><td><span class="row-status ${session.issues ? "shortage" : "match"}">${session.issues}</span></td><td><div class="head-buttons">${session.snapshot ? `<button class="button button-secondary" type="button" data-open-completed-session="${escapeHtml(session.id)}">Buka sesi</button>` : `<span class="product-sku">Data detail tidak tersedia</span>`}${canDelete ? `<button class="button button-danger" type="button" data-delete-completed-session="${escapeHtml(session.id)}">Hapus</button>` : ""}</div></td></tr>`; }).join("") : `<tr><td class="empty-row" colspan="12">Belum ada sesi opname yang selesai.</td></tr>`}</tbody></table></div></section>`;
     }
 
     function renderCompletedSessionView() {
@@ -6150,7 +6175,8 @@
       }
       const finishedAt = formatDate(session.finishedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
       const pics = session.picNames || state.workspaces.find((workspace) => workspace.id === session.workspaceId)?.picNames || [];
-      return `${navMarkup()}<section class="page-head"><div><h1 data-user-content>${escapeHtml(session.workspaceName || "Sesi opname")}</h1><p class="subtitle">${escapeHtml(archivedSessionMonth(session))} · ${escapeHtml(archivedSessionWeek(session))} · Pemilik: <span data-user-content>${escapeHtml(sessionOwnerName(session))}</span> · PIC 1: <span data-user-content>${escapeHtml(pics[0] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</span> · PIC 2: <span data-user-content>${escapeHtml(pics[1] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</span> · Selesai ${escapeHtml(finishedAt)}.</p></div><div class="head-buttons"><button class="button button-secondary" id="back-to-completed-sessions">← Kembali ke daftar sesi</button>${canDeleteCompletedSession() ? `<button class="button button-danger" type="button" data-delete-completed-session="${escapeHtml(session.id)}">Hapus sesi</button>` : ""}</div></section><section class="completed-session-view">${renderCompletedSessionDetails(session)}</section>`;
+      const sessionName = session.workspaceName || "Sesi opname";
+      return `${navMarkup()}<section class="page-head"><div><div class="completed-session-title">${renderWorkspaceBrandIcon(sessionName)}<h1 data-user-content>${escapeHtml(sessionName)}</h1></div><p class="subtitle">${escapeHtml(archivedSessionMonth(session))} · ${escapeHtml(archivedSessionWeek(session))} · Pemilik: <span data-user-content>${escapeHtml(sessionOwnerName(session))}</span> · PIC 1: <span data-user-content>${escapeHtml(pics[0] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</span> · PIC 2: <span data-user-content>${escapeHtml(pics[1] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</span> · Selesai ${escapeHtml(finishedAt)}.</p></div><div class="head-buttons"><button class="button button-secondary" id="back-to-completed-sessions">← Kembali ke daftar sesi</button>${canDeleteCompletedSession() ? `<button class="button button-danger" type="button" data-delete-completed-session="${escapeHtml(session.id)}">Hapus sesi</button>` : ""}</div></section><section class="completed-session-view">${renderCompletedSessionDetails(session)}</section>`;
     }
 
     function requestDeleteCompletedSession(sessionId) {
@@ -6518,7 +6544,7 @@
         <div class="dashboard-top-row">
           <section class="page-head dashboard-hero"><div class="dashboard-hero-copy"><div class="dashboard-hero-eyebrow">Ringkasan Stock Opname · Live</div><h1>Dashboard Sesi Berjalan</h1><p class="subtitle">Statistik dan progres hanya untuk sesi opname yang masih berjalan.</p><div class="dashboard-overview"><p>${total.active} sesi aktif · pantau Scan, Manual, dan rekonsiliasi quantity.</p><span class="dashboard-date">${formatDate(new Date(), { day: "numeric", month: "long", year: "numeric" })}</span></div></div><button class="button dashboard-hero-action" data-page-link="workspaces">Kelola Jadwal →</button></section>
           <section class="table-section recorded-card"><div class="table-toolbar"><div><div class="table-title">Stock Opname Recorded</div><p class="subtitle">Buka kembali lembar Scan Layout, Result SO, dan Rekap Selisih dari sesi yang telah selesai.</p></div><span class="category-chip">${recordedSessions.length} arsip selesai</span></div><div class="recorded-brand-picker"><div class="recorded-period-controls">
-            <label class="auth-field recorded-period-brand"><span>Nama Brand</span>${renderScheduleDropdown("recorded-brand-trigger", "Pilih Nama Brand untuk arsip", "recorded-brand-native", 'id="recorded-brand-select"', [["", recordedBrands.length ? "Pilih Nama Brand" : "Belum ada arsip selesai"], ...recordedBrands.map((brand) => [brand, brand])], "", !recordedBrands.length)}</label>
+            <label class="auth-field recorded-period-brand"><span>Nama Brand</span>${renderScheduleDropdown("recorded-brand-trigger", "Pilih Nama Brand untuk arsip", "recorded-brand-native", 'id="recorded-brand-select"', [["", recordedBrands.length ? "Pilih Nama Brand" : "Belum ada arsip selesai"], ...recordedBrands.map((brand) => [brand, brand])], "", !recordedBrands.length, true)}</label>
             <label class="auth-field"><span>Bulan</span>${renderScheduleDropdown("recorded-month-trigger", "Pilih bulan", "schedule-period-select", 'id="recorded-period-month"', WORKSPACE_MONTHS.map((month) => [month, month]), WORKSPACE_MONTHS[new Date().getMonth()], true)}</label>
             <label class="auth-field"><span>Week</span>${renderScheduleDropdown("recorded-week-trigger", "Pilih week", "schedule-period-select", 'id="recorded-period-week"', [["Week 1", "Week 1"], ["Week 2", "Week 2"]], archivedSessionWeek({ finishedAt: new Date().toISOString() }), true)}</label>
             <div id="recorded-period-availability" class="recorded-period-availability" role="status" aria-live="polite" hidden></div>
@@ -6818,7 +6844,7 @@
       return `${navMarkup()}<div class="recorded-archive-page">
         <section class="recorded-archive-head">
           <div class="recorded-archive-heading">
-            <h1>${escapeHtml(session.workspaceName || "Stock Opname Recorded")}</h1>
+            <div class="recorded-archive-title">${renderWorkspaceBrandIcon(session.workspaceName)}<h1>${escapeHtml(session.workspaceName || "Stock Opname Recorded")}</h1></div>
             <p>Arsip lembar kerja stock opname · Tampilan hanya-baca · Data mengikuti snapshot saat sesi selesai.</p>
             <div class="recorded-archive-meta"><span><strong>Periode:</strong> ${escapeHtml(archivedSessionMonth(session))} · ${escapeHtml(archivedSessionWeek(session))}</span><span><strong>Selesai:</strong> ${escapeHtml(finishedAt)}</span></div>
           </div>
@@ -7782,7 +7808,14 @@
         }, 0));
         select.addEventListener("change", () => {
           const label = picker.querySelector("[data-schedule-select-label]");
-          if (label) label.textContent = select.selectedOptions[0]?.textContent || "";
+          if (label && picker.classList.contains("brand-logo-picker")) {
+            const brand = select.value;
+            label.innerHTML = brand
+              ? `${renderWorkspaceBrandIcon(brand)}<span>${escapeHtml(select.selectedOptions[0]?.textContent || brand)}</span>`
+              : escapeHtml(select.selectedOptions[0]?.textContent || "");
+          } else if (label) {
+            label.textContent = select.selectedOptions[0]?.textContent || "";
+          }
         });
       });
       document.querySelectorAll("[data-workspace-count-mode]").forEach((select) => select.addEventListener("change", () => updateWorkspaceCountMode(select)));
