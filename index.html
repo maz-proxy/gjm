@@ -2218,7 +2218,7 @@
      </div>
      <div class="auth-install" aria-label="Android Apps">
        <span class="auth-install-title">Android Apps</span>
-       <a class="auth-install-button" id="android-download-link" href="#" download="Stock-Opname.apk" hidden aria-label="Download Android app">
+       <a class="auth-install-button" id="android-download-link" href="#" download="Stock Opname v.1.5.apk" hidden aria-label="Download Android app">
          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7.2 8.1 5.6 5.4a.6.6 0 1 1 1-.6l1.7 2.8a10 10 0 0 1 7.4 0l1.7-2.8a.6.6 0 1 1 1 .6l-1.6 2.7a7.8 7.8 0 0 1 3 6.1H4.2a7.8 7.8 0 0 1 3-6.1ZM8 11.2a.8.8 0 1 0 0-1.6.8.8 0 0 0 0 1.6Zm8 0a.8.8 0 1 0 0-1.6.8.8 0 0 0 0 1.6ZM4.2 15.4h15.6v2.1a1.7 1.7 0 0 1-1.7 1.7h-.5v2a.8.8 0 0 1-1.6 0v-2h-6v2a.8.8 0 0 1-1.6 0v-2h-.5a1.7 1.7 0 0 1-1.7-1.7v-2.1Z"/></svg>
          <span>Download</span>
        </a>
@@ -7335,7 +7335,7 @@
       try {
         const response = await fetch(`${androidAppPublicUrl()}?availability=${Date.now()}`, { method: "HEAD", cache: "no-store" });
         if (!response.ok) return;
-        link.href = `${androidAppPublicUrl()}?download=Stock-Opname.apk&version=${Date.now()}`;
+        link.href = `${androidAppPublicUrl()}?download=${encodeURIComponent("Stock Opname v.1.5.apk")}&version=${Date.now()}`;
         link.hidden = false;
       } catch (error) {
         console.warn("Ketersediaan APK Android tidak dapat diperiksa:", error);
