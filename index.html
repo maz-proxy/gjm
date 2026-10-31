@@ -220,7 +220,7 @@
     .top-chat-button svg { fill: none; height: 17px; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; width: 17px; }
     .top-chat-label { font-size: 10px; font-weight: 700; }
     .top-chat-unread { align-items: center; background: #d83a4b; border: 2px solid var(--paper); border-radius: 999px; color: #fff; display: flex; font-size: 8px; font-weight: 800; height: 17px; justify-content: center; min-width: 17px; padding: 0 3px; position: absolute; right: -6px; top: -6px; }
-    .chat-panel { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 18px 48px rgba(20,40,35,.24); color: var(--ink); display: grid; grid-template-rows: auto minmax(0, 1fr) auto; height: min(440px, calc(100dvh - 100px)); max-height: 440px; overflow: hidden; position: absolute; right: 0; top: calc(100% + 9px); width: min(360px, calc(100vw - 32px)); z-index: 60; }
+    .chat-panel { animation: chat-panel-enter .2s cubic-bezier(.2,.7,.2,1); background: var(--paper); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 18px 48px rgba(20,40,35,.24); color: var(--ink); display: grid; grid-template-rows: auto minmax(0, 1fr) auto; height: min(440px, calc(100dvh - 100px)); max-height: 440px; overflow: hidden; position: absolute; right: 0; top: calc(100% + 9px); width: min(360px, calc(100vw - 32px)); z-index: 60; }
     .chat-panel-head { align-items: center; background: color-mix(in srgb, var(--green) 9%, var(--paper)); border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; padding: 12px 14px; }
     .chat-panel-head strong { font-size: 13px; }
     .chat-panel-head small { color: var(--muted); display: block; font-size: 9px; margin-top: 2px; }
@@ -232,23 +232,23 @@
     .chat-message.own { align-self: flex-end; background: color-mix(in srgb, var(--green) 17%, var(--paper)); border-color: color-mix(in srgb, var(--green) 25%, var(--line)); border-radius: 12px 12px 4px 12px; }
     .chat-message-sender { color: var(--green-dark); display: block; font-size: 9px; font-weight: 800; margin-bottom: 3px; }
     .chat-message-text { font-size: 11px; line-height: 1.45; overflow-wrap: anywhere; white-space: pre-wrap; }
-    .chat-message-time { color: var(--muted); display: block; font-size: 8px; margin-top: 4px; text-align: right; }
+    .chat-message-meta { align-items: center; color: var(--muted); display: flex; font-size: 8px; gap: 7px; justify-content: flex-end; margin-top: 4px; }
+    .chat-message-edit { background: transparent; border: 0; border-radius: 5px; color: var(--green-dark); font-size: 8px; padding: 2px 4px; }
+    .chat-message-edit:hover, .chat-message-edit:focus-visible { background: var(--green-soft); outline: 0; }
+    .chat-message-edited { font-style: italic; }
     .chat-compose { align-items: end; border-top: 1px solid var(--line); display: flex; gap: 7px; padding: 9px; }
     .chat-compose textarea { background: var(--paper); border: 1px solid var(--line); border-radius: 9px; color: var(--ink); flex: 1; font: 11px/1.4 "DM Sans", "Segoe UI", sans-serif; max-height: 100px; min-height: 38px; min-width: 0; padding: 9px; resize: vertical; }
     .chat-compose textarea:focus { border-color: var(--green); outline: 2px solid color-mix(in srgb, var(--green) 15%, transparent); }
-    .chat-send { align-items: center; background: var(--green); border: 0; border-radius: 9px; color: #fff; cursor: pointer; display: inline-flex; flex: 0 0 38px; height: 38px; justify-content: center; }
+    .chat-compose-actions { display: flex; flex: 0 0 auto; gap: 5px; }
+    .chat-send, .chat-cancel-edit { align-items: center; background: var(--green); border: 0; border-radius: 9px; color: #fff; cursor: pointer; display: inline-flex; flex: 0 0 38px; height: 38px; justify-content: center; }
+    .chat-cancel-edit { background: var(--green-soft); color: var(--green-dark); font-size: 10px; }
     .chat-send:disabled { cursor: not-allowed; opacity: .48; }
     .chat-send svg { fill: none; height: 17px; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; width: 17px; }
-    .chat-incoming-preview { animation: dropdown-enter .16s ease-out; background: #fff; border: 1px solid #d5e5dc; border-radius: 11px; box-shadow: 0 10px 28px rgba(20,40,35,.2); color: #20312d; cursor: pointer; font: inherit; max-width: min(260px, calc(100vw - 32px)); padding: 9px 12px; position: absolute; right: calc(100% + 9px); text-align: left; top: 0; width: 230px; z-index: 61; }
+    .chat-incoming-preview { animation: dropdown-enter .16s ease-out; background: var(--paper); border: 1px solid var(--line); border-radius: 11px; box-shadow: 0 10px 28px rgba(20,40,35,.2); color: var(--ink); cursor: pointer; font: inherit; max-width: min(260px, calc(100vw - 32px)); padding: 9px 12px; position: absolute; right: calc(100% + 9px); text-align: left; top: 0; width: 230px; z-index: 61; }
     .chat-incoming-preview strong { display: block; font-size: 10px; margin-bottom: 3px; }
     .chat-incoming-preview span { display: -webkit-box; font-size: 10px; line-height: 1.4; overflow: hidden; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
-    html[data-theme="dark"] .top-chat-button { background: #14211f; border-color: #3a514b; color: var(--ink); }
-    html[data-theme="dark"] .chat-panel { background: #14211f; border-color: #3a514b; }
-    html[data-theme="dark"] .chat-panel-head { background: #1b302a; border-color: #3a514b; }
-    html[data-theme="dark"] .chat-message { background: #1b302a; border-color: #3a514b; }
-    html[data-theme="dark"] .chat-message.own { background: #23463b; border-color: #356b58; }
-    html[data-theme="dark"] .chat-compose textarea { background: #101a18; border-color: #3a514b; color: var(--ink); }
-    html[data-theme="dark"] .chat-incoming-preview { background: #1b302a; border-color: #3a514b; color: var(--ink); }
+    @keyframes chat-panel-enter { from { opacity: 0; transform: translateY(-5px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    @media (prefers-reduced-motion: reduce) { .chat-panel { animation: none; } }
     .top-pics { color: var(--muted); font-size: 10px; text-align: right; }
     .page-head { align-items: flex-end; display: flex; gap: 24px; justify-content: space-between; margin-bottom: 25px; }
     .layout-page-head { align-items: center; background: linear-gradient(112deg, #174b42 0%, #176b5b 62%, #398b73 100%); border: 1px solid rgba(255,255,255,.16); border-radius: 15px; box-shadow: 0 12px 28px rgba(23,76,62,.14); color: #fff; display: flex; gap: 24px; justify-content: space-between; margin-bottom: 17px; min-height: 142px; overflow: hidden; padding: 22px 26px; position: relative; }
@@ -3537,8 +3537,10 @@
     let toastTimer;
     let authSession = null;
     let chatPanelOpen = false;
+    let chatEditingMessageId = "";
     let chatIncomingPreview = null;
     let chatIncomingPreviewTimer = null;
+    let chatAudioContext = null;
     let cameraStream = null;
     let cameraScanTimer = null;
     let cameraFocusTimer = null;
@@ -4840,6 +4842,7 @@
       stopPresenceChannel();
       stopSharedStateChannel();
       chatPanelOpen = false;
+      chatEditingMessageId = "";
       chatIncomingPreview = null;
       clearTimeout(chatIncomingPreviewTimer);
       chatIncomingPreviewTimer = null;
@@ -5279,6 +5282,7 @@
           if (readError) throw readError;
           if (!row) throw new Error("Data workspace bersama tidak ditemukan saat menggabungkan perubahan.");
           const previousActiveData = stableSerialize(activeWorkspace()?.data || {});
+          const previousChatState = stableSerialize({ chatMessages: state.chatMessages, chatReadAt: state.chatReadAt });
           const remoteState = normalizeSharedState(row.data);
           const localState = normalizeSharedState(JSON.parse(stableSerialize(state)));
           const localMessageIds = new Set((localState.chatMessages || []).map((message) => message.id));
@@ -5292,8 +5296,10 @@
           remoteUpdatedAt = row.updated_at;
           remoteVersion = row.version;
           lastSyncedState = stableSerialize(remoteState);
-          if (stableSerialize(activeWorkspace()?.data || {}) !== previousActiveData || incomingMessages.length) {
+          if (stableSerialize(activeWorkspace()?.data || {}) !== previousActiveData) {
             renderPreservingActiveInput();
+          } else if (stableSerialize({ chatMessages: state.chatMessages, chatReadAt: state.chatReadAt }) !== previousChatState || incomingMessages.length) {
+            refreshChatWidget();
             if (chatPanelOpen) scrollChatToLatest();
           }
         }
@@ -5350,6 +5356,7 @@
         const remoteState = normalizeSharedState(row.data);
         if (row.version !== remoteVersion && stableSerialize(remoteState) !== lastSyncedState) {
           const previousState = stableSerialize(state);
+          const previousNonChatState = serializeStateWithoutChat(state);
           const localState = normalizeSharedState(JSON.parse(stableSerialize(state)));
           const localMessageIds = new Set((localState.chatMessages || []).map((message) => message.id));
           const incomingMessages = (remoteState.chatMessages || []).filter((message) =>
@@ -5361,7 +5368,10 @@
           remoteVersion = row.version;
           lastSyncedState = stableSerialize(remoteState);
           persistLocalState();
-          if (stableSerialize(state) !== previousState) renderPreservingActiveInput();
+          if (stableSerialize(state) !== previousState) {
+            if (serializeStateWithoutChat(state) !== previousNonChatState) renderPreservingActiveInput();
+            else refreshChatWidget();
+          }
           if (incomingMessages.length && chatPanelOpen) scrollChatToLatest();
           if (stableSerialize(serializeSharedState(state)) !== lastSyncedState) {
             clearTimeout(syncTimer);
@@ -5876,6 +5886,7 @@
       const userId = authSession?.user?.id;
       const incoming = messages.filter((message) => message.senderId !== userId);
       if (!incoming.length) return;
+      playChatNotification();
       const sortedIncoming = incoming.sort((left, right) => Date.parse(left.createdAt) - Date.parse(right.createdAt));
       const latest = sortedIncoming[sortedIncoming.length - 1];
       if (chatPanelOpen) {
@@ -5887,8 +5898,49 @@
       chatIncomingPreviewTimer = setTimeout(() => {
         chatIncomingPreview = null;
         chatIncomingPreviewTimer = null;
-        render();
+        refreshChatWidget();
       }, 5000);
+    }
+    function unlockChatAudio() {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return;
+      try {
+        chatAudioContext ||= new AudioContextClass();
+        if (chatAudioContext.state === "suspended") {
+          void chatAudioContext.resume().catch((error) => console.warn("Audio not available for chat notifications:", error));
+        }
+      } catch (error) {
+        console.warn("Chat notification sound could not be enabled:", error);
+      }
+    }
+    window.addEventListener("pointerdown", unlockChatAudio, { once: true, passive: true });
+    window.addEventListener("keydown", unlockChatAudio, { once: true });
+    function playChatNotification() {
+      const context = chatAudioContext;
+      if (!context) return;
+      const play = () => {
+        if (context.state !== "running") return;
+        const startAt = context.currentTime;
+        [659.25, 880].forEach((frequency, index) => {
+          const oscillator = context.createOscillator();
+          const gain = context.createGain();
+          const noteStart = startAt + index * 0.13;
+          oscillator.frequency.value = frequency;
+          oscillator.type = "sine";
+          gain.gain.setValueAtTime(0.0001, noteStart);
+          gain.gain.exponentialRampToValueAtTime(0.12, noteStart + 0.025);
+          gain.gain.exponentialRampToValueAtTime(0.0001, noteStart + 0.19);
+          oscillator.connect(gain);
+          gain.connect(context.destination);
+          oscillator.start(noteStart);
+          oscillator.stop(noteStart + 0.2);
+        });
+      };
+      if (context.state === "suspended") {
+        void context.resume().then(play).catch((error) => console.warn("Chat notification sound could not be played:", error));
+      } else {
+        play();
+      }
     }
     function renderChatMarkup() {
       const unreadCount = chatUnreadCount();
@@ -5905,16 +5957,37 @@
           const sentAt = Number.isFinite(Date.parse(message.createdAt))
             ? formatDate(message.createdAt, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
             : "";
-          return `<article class="chat-message${ownMessage ? " own" : ""}"><span class="chat-message-sender" data-user-content>${escapeHtml(senderName)}</span><div class="chat-message-text" data-user-content>${escapeHtml(message.text)}</div><time class="chat-message-time">${escapeHtml(sentAt)}</time></article>`;
+          const editedLabel = currentLanguage === "en" ? "edited" : "diedit";
+          const editLabel = currentLanguage === "en" ? "Edit" : "Ubah";
+          return `<article class="chat-message${ownMessage ? " own" : ""}"><span class="chat-message-sender" data-user-content>${escapeHtml(senderName)}</span><div class="chat-message-text" data-user-content>${escapeHtml(message.text)}</div><div class="chat-message-meta">${message.editedAt ? `<span class="chat-message-edited">${editedLabel}</span>` : ""}<time>${escapeHtml(sentAt)}</time>${ownMessage ? `<button class="chat-message-edit" type="button" data-chat-edit="${escapeHtml(message.id)}" aria-label="${editLabel} pesan">✎ ${editLabel}</button>` : ""}</div></article>`;
         }).join("")
         : `<div class="chat-empty">Belum ada percakapan. Kirim pesan pertama untuk memulai chat tim.</div>`;
+      const editingMessage = messages.find((message) => message.id === chatEditingMessageId);
+      const editMode = Boolean(editingMessage && editingMessage.senderId === userId);
       const panelMarkup = chatPanelOpen
-        ? `<section class="chat-panel" aria-label="Percakapan antar akun"><header class="chat-panel-head"><div><strong>Chat tim</strong><small>Pesan untuk semua akun</small></div><button class="chat-close" id="chat-close" type="button" aria-label="Tutup chat">×</button></header><div class="chat-message-list" id="chat-message-list" role="log" aria-live="polite" aria-relevant="additions">${messageMarkup}</div><form class="chat-compose" id="chat-compose"><textarea id="chat-message-input" maxlength="1000" aria-label="Tulis pesan chat" placeholder="Tulis pesan..." required></textarea><button class="chat-send" type="submit" aria-label="Kirim pesan"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4 20-7ZM22 2 11 13"/></svg></button></form></section>`
+        ? `<section class="chat-panel" aria-label="Percakapan antar akun"><header class="chat-panel-head"><div><strong>Chat tim</strong><small>Pesan untuk semua akun</small></div><button class="chat-close" id="chat-close" type="button" aria-label="Tutup chat">×</button></header><div class="chat-message-list" id="chat-message-list" role="log" aria-live="polite" aria-relevant="additions text">${messageMarkup}</div><form class="chat-compose" id="chat-compose"><textarea id="chat-message-input" maxlength="1000" aria-label="${editMode ? "Edit pesan chat" : "Tulis pesan chat"}" placeholder="${editMode ? "Ubah pesan..." : "Tulis pesan..."}" required>${editMode ? escapeHtml(editingMessage.text) : ""}</textarea><div class="chat-compose-actions">${editMode ? `<button class="chat-cancel-edit" id="chat-cancel-edit" type="button" aria-label="Batalkan edit">×</button>` : ""}<button class="chat-send" type="submit" aria-label="${editMode ? "Simpan perubahan" : "Kirim pesan"}" title="${editMode ? "Simpan perubahan" : "Kirim pesan"}">${editMode ? "✓" : '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4 20-7ZM22 2 11 13"/></svg>'}</button></div></form></section>`
         : "";
       const incomingMarkup = chatIncomingPreview
         ? `<button class="chat-incoming-preview" id="chat-preview-open" type="button" aria-live="polite" aria-label="Buka pesan chat dari ${escapeHtml(chatIncomingPreview.senderName || "Pengguna")}"><strong data-user-content>${escapeHtml(chatIncomingPreview.senderName || "Pesan baru")}</strong><span data-user-content>${escapeHtml(chatIncomingPreview.text)}</span></button>`
         : "";
-      return `<div class="top-date-chat"><button class="top-chat-button" id="chat-toggle" type="button" aria-label="Buka chat${unreadCount ? `, ${unreadCount} pesan belum dibaca` : ""}" aria-expanded="${chatPanelOpen}"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H5l-2 2v-9.5A7.5 7.5 0 0 1 10.5 4H12a8 8 0 0 1 8 7.5Z"/><path d="M8 11h8m-8 4h5"/></svg><span class="top-chat-label">Chat</span>${unreadBadge}</button><span class="today">${formatDate(new Date(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span>${incomingMarkup}${panelMarkup}</div>`;
+      return `<div class="top-date-chat" id="top-date-chat"><button class="top-chat-button" id="chat-toggle" type="button" aria-label="Buka chat${unreadCount ? `, ${unreadCount} pesan belum dibaca` : ""}" aria-expanded="${chatPanelOpen}"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H5l-2 2v-9.5A7.5 7.5 0 0 1 10.5 4H12a8 8 0 0 1 8 7.5Z"/><path d="M8 11h8m-8 4h5"/></svg><span class="top-chat-label">Chat</span>${unreadBadge}</button><span class="today">${formatDate(new Date(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span>${incomingMarkup}${panelMarkup}</div>`;
+    }
+    function refreshChatWidget() {
+      const widget = document.getElementById("top-date-chat");
+      if (!widget) return;
+      widget.outerHTML = renderChatMarkup();
+      bindChatEvents();
+    }
+    function serializeStateWithoutChat(source) {
+      const { chatMessages, chatReadAt, ...rest } = source;
+      return stableSerialize(rest);
+    }
+    function focusChatInput(selectText = false) {
+      const input = document.getElementById("chat-message-input");
+      if (!input) return;
+      input.focus({ preventScroll: true });
+      if (selectText) input.select();
+      else input.setSelectionRange(input.value.length, input.value.length);
     }
     function scrollChatToLatest() {
       requestAnimationFrame(() => {
@@ -7728,25 +7801,27 @@
       if (action === "reset" && data.temporaryPassword) showResetPasswordDialog(username, data.temporaryPassword);
     }
 
-    function bindPageEvents() {
-      attachCameraSearchButtons();
+    function bindChatEvents() {
       document.getElementById("chat-toggle")?.addEventListener("click", () => {
+        unlockChatAudio();
         chatPanelOpen = !chatPanelOpen;
         if (chatPanelOpen) {
           chatIncomingPreview = null;
           clearTimeout(chatIncomingPreviewTimer);
           chatIncomingPreviewTimer = null;
+          chatEditingMessageId = "";
           markChatMessagesRead();
         }
-        render();
+        refreshChatWidget();
         if (chatPanelOpen) {
           scrollChatToLatest();
-          document.getElementById("chat-message-input")?.focus({ preventScroll: true });
+          focusChatInput();
         }
       });
       document.getElementById("chat-close")?.addEventListener("click", () => {
         chatPanelOpen = false;
-        render();
+        chatEditingMessageId = "";
+        refreshChatWidget();
       });
       document.getElementById("chat-preview-open")?.addEventListener("click", () => {
         chatPanelOpen = true;
@@ -7754,15 +7829,47 @@
         clearTimeout(chatIncomingPreviewTimer);
         chatIncomingPreviewTimer = null;
         markChatMessagesRead();
-        render();
+        refreshChatWidget();
         scrollChatToLatest();
-        document.getElementById("chat-message-input")?.focus({ preventScroll: true });
+        focusChatInput();
+      });
+      document.querySelectorAll("[data-chat-edit]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const message = (state.chatMessages || []).find((item) => item.id === button.dataset.chatEdit);
+          if (!message || message.senderId !== authSession?.user?.id) return;
+          chatEditingMessageId = message.id;
+          refreshChatWidget();
+          focusChatInput(true);
+        });
+      });
+      document.getElementById("chat-cancel-edit")?.addEventListener("click", () => {
+        chatEditingMessageId = "";
+        refreshChatWidget();
+        focusChatInput();
       });
       document.getElementById("chat-compose")?.addEventListener("submit", (event) => {
         event.preventDefault();
         const input = document.getElementById("chat-message-input");
         const text = input?.value.trim();
         if (!text || !authSession?.user?.id) return;
+        const editingMessage = (state.chatMessages || []).find((message) =>
+          message.id === chatEditingMessageId && message.senderId === authSession.user.id);
+        if (chatEditingMessageId && !editingMessage) {
+          chatEditingMessageId = "";
+          refreshChatWidget();
+          notify("Pesan tidak dapat diedit karena sudah tidak tersedia.");
+          return;
+        }
+        if (editingMessage) {
+          editingMessage.text = text.slice(0, 1000);
+          editingMessage.editedAt = new Date().toISOString();
+          chatEditingMessageId = "";
+          persist();
+          refreshChatWidget();
+          scrollChatToLatest();
+          focusChatInput();
+          return;
+        }
         const username = authSession.user.user_metadata?.username || authSession.user.email || "Pengguna";
         const createdAt = new Date().toISOString();
         state.chatMessages = [...(state.chatMessages || []), {
@@ -7774,10 +7881,15 @@
         }];
         state.chatReadAt = { ...(state.chatReadAt || {}), [authSession.user.id]: createdAt };
         persist();
-        render();
+        refreshChatWidget();
         scrollChatToLatest();
-        document.getElementById("chat-message-input")?.focus({ preventScroll: true });
+        focusChatInput();
       });
+    }
+
+    function bindPageEvents() {
+      attachCameraSearchButtons();
+      bindChatEvents();
       document.getElementById("add-workspace-button")?.addEventListener("click", addWorkspace);
       document.getElementById("admin-refresh-users")?.addEventListener("click", loadAdminUsers);
       document.getElementById("copy-reset-password")?.addEventListener("click", async () => {
