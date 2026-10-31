@@ -214,6 +214,41 @@
     .top-actions { align-items: flex-end; display: flex; flex-direction: column; gap: 2px; }
     .top-theme-controls { align-items: center; display: flex; flex-direction: row; gap: 4px; }
     .today { color: #656c61; font-size: 12px; }
+    .top-date-chat { align-items: center; display: flex; gap: 9px; position: relative; }
+    .top-chat-button { align-items: center; background: var(--paper); border: 1px solid var(--line); border-radius: 9px; color: var(--ink); cursor: pointer; display: inline-flex; gap: 6px; justify-content: center; min-height: 34px; padding: 0 9px; position: relative; }
+    .top-chat-button:hover, .top-chat-button:focus-visible { border-color: var(--green); box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 14%, transparent); outline: 0; }
+    .top-chat-button svg { fill: none; height: 17px; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; width: 17px; }
+    .top-chat-label { font-size: 10px; font-weight: 700; }
+    .top-chat-unread { align-items: center; background: #d83a4b; border: 2px solid var(--paper); border-radius: 999px; color: #fff; display: flex; font-size: 8px; font-weight: 800; height: 17px; justify-content: center; min-width: 17px; padding: 0 3px; position: absolute; right: -6px; top: -6px; }
+    .chat-panel { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 18px 48px rgba(20,40,35,.24); color: var(--ink); display: grid; grid-template-rows: auto minmax(0, 1fr) auto; height: min(440px, calc(100dvh - 100px)); max-height: 440px; overflow: hidden; position: absolute; right: 0; top: calc(100% + 9px); width: min(360px, calc(100vw - 32px)); z-index: 60; }
+    .chat-panel-head { align-items: center; background: color-mix(in srgb, var(--green) 9%, var(--paper)); border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; padding: 12px 14px; }
+    .chat-panel-head strong { font-size: 13px; }
+    .chat-panel-head small { color: var(--muted); display: block; font-size: 9px; margin-top: 2px; }
+    .chat-close { align-items: center; background: transparent; border: 0; border-radius: 7px; color: var(--muted); cursor: pointer; display: inline-flex; font-size: 20px; height: 30px; justify-content: center; width: 30px; }
+    .chat-close:hover, .chat-close:focus-visible { background: var(--green-soft); color: var(--ink); outline: 0; }
+    .chat-message-list { align-content: start; display: flex; flex-direction: column; gap: 9px; overflow-y: auto; overscroll-behavior: contain; padding: 12px; }
+    .chat-empty { color: var(--muted); font-size: 11px; margin: auto; padding: 20px; text-align: center; }
+    .chat-message { align-self: flex-start; background: color-mix(in srgb, var(--green) 8%, var(--paper)); border: 1px solid var(--line); border-radius: 12px 12px 12px 4px; max-width: 84%; min-width: 90px; padding: 8px 10px; }
+    .chat-message.own { align-self: flex-end; background: color-mix(in srgb, var(--green) 17%, var(--paper)); border-color: color-mix(in srgb, var(--green) 25%, var(--line)); border-radius: 12px 12px 4px 12px; }
+    .chat-message-sender { color: var(--green-dark); display: block; font-size: 9px; font-weight: 800; margin-bottom: 3px; }
+    .chat-message-text { font-size: 11px; line-height: 1.45; overflow-wrap: anywhere; white-space: pre-wrap; }
+    .chat-message-time { color: var(--muted); display: block; font-size: 8px; margin-top: 4px; text-align: right; }
+    .chat-compose { align-items: end; border-top: 1px solid var(--line); display: flex; gap: 7px; padding: 9px; }
+    .chat-compose textarea { background: var(--paper); border: 1px solid var(--line); border-radius: 9px; color: var(--ink); flex: 1; font: 11px/1.4 "DM Sans", "Segoe UI", sans-serif; max-height: 100px; min-height: 38px; min-width: 0; padding: 9px; resize: vertical; }
+    .chat-compose textarea:focus { border-color: var(--green); outline: 2px solid color-mix(in srgb, var(--green) 15%, transparent); }
+    .chat-send { align-items: center; background: var(--green); border: 0; border-radius: 9px; color: #fff; cursor: pointer; display: inline-flex; flex: 0 0 38px; height: 38px; justify-content: center; }
+    .chat-send:disabled { cursor: not-allowed; opacity: .48; }
+    .chat-send svg { fill: none; height: 17px; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; width: 17px; }
+    .chat-incoming-preview { animation: dropdown-enter .16s ease-out; background: #fff; border: 1px solid #d5e5dc; border-radius: 11px; box-shadow: 0 10px 28px rgba(20,40,35,.2); color: #20312d; cursor: pointer; font: inherit; max-width: min(260px, calc(100vw - 32px)); padding: 9px 12px; position: absolute; right: calc(100% + 9px); text-align: left; top: 0; width: 230px; z-index: 61; }
+    .chat-incoming-preview strong { display: block; font-size: 10px; margin-bottom: 3px; }
+    .chat-incoming-preview span { display: -webkit-box; font-size: 10px; line-height: 1.4; overflow: hidden; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+    html[data-theme="dark"] .top-chat-button { background: #14211f; border-color: #3a514b; color: var(--ink); }
+    html[data-theme="dark"] .chat-panel { background: #14211f; border-color: #3a514b; }
+    html[data-theme="dark"] .chat-panel-head { background: #1b302a; border-color: #3a514b; }
+    html[data-theme="dark"] .chat-message { background: #1b302a; border-color: #3a514b; }
+    html[data-theme="dark"] .chat-message.own { background: #23463b; border-color: #356b58; }
+    html[data-theme="dark"] .chat-compose textarea { background: #101a18; border-color: #3a514b; color: var(--ink); }
+    html[data-theme="dark"] .chat-incoming-preview { background: #1b302a; border-color: #3a514b; color: var(--ink); }
     .top-pics { color: var(--muted); font-size: 10px; text-align: right; }
     .page-head { align-items: flex-end; display: flex; gap: 24px; justify-content: space-between; margin-bottom: 25px; }
     .layout-page-head { align-items: center; background: linear-gradient(112deg, #174b42 0%, #176b5b 62%, #398b73 100%); border: 1px solid rgba(255,255,255,.16); border-radius: 15px; box-shadow: 0 12px 28px rgba(23,76,62,.14); color: #fff; display: flex; gap: 24px; justify-content: space-between; margin-bottom: 17px; min-height: 142px; overflow: hidden; padding: 22px 26px; position: relative; }
@@ -848,6 +883,8 @@
       .topline { margin-bottom: 22px; }
       .online-accounts { max-width: min(75vw, 480px); }
       .today { display: none; }
+      .chat-panel { position: fixed; right: 12px; top: 60px; }
+      .chat-incoming-preview { position: fixed; right: 12px; top: 60px; }
       .top-account-email { max-width: 145px; }
       .page-head { align-items: flex-start; flex-direction: column; gap: 15px; margin-bottom: 17px; }
       .layout-page-head { align-items: stretch; flex-direction: column; gap: 12px; min-height: 0; padding: 16px; }
@@ -2396,6 +2433,16 @@
       "Memeriksa sesi login...": "Checking login session...",
       "Memeriksa sesi login": "Checking login session",
       "Pilih bahasa": "Choose language",
+      "Buka chat": "Open chat",
+      "Tutup chat": "Close chat",
+      "Percakapan antar akun": "Account chat",
+      "Chat tim": "Team chat",
+      "Pesan untuk semua akun": "Messages for all accounts",
+      "Belum ada percakapan. Kirim pesan pertama untuk memulai chat tim.": "No messages yet. Send the first message to start a team chat.",
+      "Tulis pesan...": "Write a message...",
+      "Kirim pesan": "Send message",
+      "Anda": "You",
+      "Pesan baru": "New message",
       "Progres unggah Master VEF": "VEF Master upload progress",
       "Progres SO": "Stock Opname progress",
       "Qty selesai": "Qty completed",
@@ -3325,7 +3372,7 @@
     const DEFAULT_LAYOUTS = ["Rack 1"];
     const UNUPLOADED_WORKSPACE_TIMEOUT_MS = 5 * 60 * 1000;
     const WORKSPACE_CLEANUP_INTERVAL_MS = 15 * 1000;
-    const initialState = () => ({ products: [], serialMaster: {}, scanEvents: [], manualEntries: [], pjEntries: [], inboundEntries: [], historyEvents: [], sessions: [], workbookFiles: [], resources: { brands: [], picNames: [], androidApp: null }, activeSession: makeSession(), countMode: "laptops", importFile: "", importMessage: "", importDownloadedAt: "", importUploadedAt: "", layouts: [...DEFAULT_LAYOUTS], layoutQuantities: {}, layoutNumbers: {} });
+    const initialState = () => ({ products: [], serialMaster: {}, scanEvents: [], manualEntries: [], pjEntries: [], inboundEntries: [], historyEvents: [], sessions: [], workbookFiles: [], chatMessages: [], chatReadAt: {}, resources: { brands: [], picNames: [], androidApp: null }, activeSession: makeSession(), countMode: "laptops", importFile: "", importMessage: "", importDownloadedAt: "", importUploadedAt: "", layouts: [...DEFAULT_LAYOUTS], layoutQuantities: {}, layoutNumbers: {} });
     const emptyWorkspaceData = () => ({ products: [], serialMaster: {}, scanEvents: [], manualEntries: [], pjEntries: [], inboundEntries: [], historyEvents: [], workbookFiles: [], activeSession: makeSession(), countMode: "laptops", importFile: "", importMessage: "", importDownloadedAt: "", importUploadedAt: "", layouts: [...DEFAULT_LAYOUTS], layoutQuantities: {}, layoutNumbers: {} });
     const snapshotWorkspaceData = (source) => {
       const products = source.products || [];
@@ -3418,6 +3465,8 @@
     if (!Array.isArray(state.inboundEntries)) state.inboundEntries = [];
     if (!Array.isArray(state.historyEvents)) state.historyEvents = [];
     if (!Array.isArray(state.sessions)) state.sessions = [];
+    if (!Array.isArray(state.chatMessages)) state.chatMessages = [];
+    if (!state.chatReadAt || typeof state.chatReadAt !== "object" || Array.isArray(state.chatReadAt)) state.chatReadAt = {};
     if (!state.resources || typeof state.resources !== "object") state.resources = { brands: [], picNames: [], androidApp: null };
     if (!Array.isArray(state.resources.brands)) state.resources.brands = [];
     if (!Array.isArray(state.resources.picNames)) state.resources.picNames = [];
@@ -3487,6 +3536,9 @@
     let searchTerm = "";
     let toastTimer;
     let authSession = null;
+    let chatPanelOpen = false;
+    let chatIncomingPreview = null;
+    let chatIncomingPreviewTimer = null;
     let cameraStream = null;
     let cameraScanTimer = null;
     let cameraFocusTimer = null;
@@ -4711,6 +4763,11 @@
         throw new Error("Format data workspace di database tidak valid.");
       }
       const normalized = { ...initialState(), ...source };
+      if (!Array.isArray(normalized.chatMessages)) normalized.chatMessages = [];
+      normalized.chatMessages = normalized.chatMessages.filter((message) =>
+        message && typeof message.id === "string" && typeof message.senderId === "string"
+        && typeof message.text === "string" && typeof message.createdAt === "string");
+      if (!normalized.chatReadAt || typeof normalized.chatReadAt !== "object" || Array.isArray(normalized.chatReadAt)) normalized.chatReadAt = {};
       if (!Array.isArray(normalized.layouts) || !normalized.layouts.length) normalized.layouts = [...DEFAULT_LAYOUTS];
       if (!normalized.layoutQuantities || typeof normalized.layoutQuantities !== "object") normalized.layoutQuantities = {};
       if (!normalized.layoutNumbers || typeof normalized.layoutNumbers !== "object") normalized.layoutNumbers = {};
@@ -4782,6 +4839,10 @@
       if (isMobileDrawerEnabled()) setAndroidNavigationOpen(false);
       stopPresenceChannel();
       stopSharedStateChannel();
+      chatPanelOpen = false;
+      chatIncomingPreview = null;
+      clearTimeout(chatIncomingPreviewTimer);
+      chatIncomingPreviewTimer = null;
       document.body.classList.remove("auth-checking");
       sharedStateReady = false;
       clearTimeout(syncTimer);
@@ -5220,15 +5281,20 @@
           const previousActiveData = stableSerialize(activeWorkspace()?.data || {});
           const remoteState = normalizeSharedState(row.data);
           const localState = normalizeSharedState(JSON.parse(stableSerialize(state)));
+          const localMessageIds = new Set((localState.chatMessages || []).map((message) => message.id));
+          const incomingMessages = (remoteState.chatMessages || []).filter((message) =>
+            !localMessageIds.has(message.id) && message.senderId !== savingUserId);
           state = mergeSharedState(JSON.parse(lastSyncedState), localState, remoteState);
+          showIncomingChatPreview(incomingMessages);
           applyLocalWorkspacePreference(state, savingUserId);
           persistLocalState();
           pendingState = normalizeSharedState(JSON.parse(stableSerialize(serializeSharedState(state))));
           remoteUpdatedAt = row.updated_at;
           remoteVersion = row.version;
           lastSyncedState = stableSerialize(remoteState);
-          if (stableSerialize(activeWorkspace()?.data || {}) !== previousActiveData) {
+          if (stableSerialize(activeWorkspace()?.data || {}) !== previousActiveData || incomingMessages.length) {
             renderPreservingActiveInput();
+            if (chatPanelOpen) scrollChatToLatest();
           }
         }
         console.warn("Workspace sedang menerima banyak perubahan bersamaan; percobaan penyimpanan berikutnya dijadwalkan.");
@@ -5285,13 +5351,18 @@
         if (row.version !== remoteVersion && stableSerialize(remoteState) !== lastSyncedState) {
           const previousState = stableSerialize(state);
           const localState = normalizeSharedState(JSON.parse(stableSerialize(state)));
+          const localMessageIds = new Set((localState.chatMessages || []).map((message) => message.id));
+          const incomingMessages = (remoteState.chatMessages || []).filter((message) =>
+            !localMessageIds.has(message.id) && message.senderId !== refreshingUserId);
           state = mergeSharedState(JSON.parse(lastSyncedState), localState, remoteState);
+          showIncomingChatPreview(incomingMessages);
           applyLocalWorkspacePreference(state, refreshingUserId);
           remoteUpdatedAt = row.updated_at;
           remoteVersion = row.version;
           lastSyncedState = stableSerialize(remoteState);
           persistLocalState();
           if (stableSerialize(state) !== previousState) renderPreservingActiveInput();
+          if (incomingMessages.length && chatPanelOpen) scrollChatToLatest();
           if (stableSerialize(serializeSharedState(state)) !== lastSyncedState) {
             clearTimeout(syncTimer);
             syncTimer = setTimeout(saveSharedState, 100);
@@ -5786,6 +5857,71 @@
         quantityMismatchPercent: expectedWithInbound ? Math.round(absoluteVariance / expectedWithInbound * 100) : (absoluteVariance ? 100 : 0)
       };
     }
+    function chatUnreadCount() {
+      const userId = authSession?.user?.id;
+      if (!userId) return 0;
+      const lastReadAt = Date.parse(state.chatReadAt?.[userId] || "");
+      return (state.chatMessages || []).filter((message) =>
+        message.senderId !== userId && Number.isFinite(Date.parse(message.createdAt))
+        && Date.parse(message.createdAt) > (Number.isFinite(lastReadAt) ? lastReadAt : 0)).length;
+    }
+    function markChatMessagesRead() {
+      const userId = authSession?.user?.id;
+      if (!userId || !chatUnreadCount()) return false;
+      state.chatReadAt = { ...(state.chatReadAt || {}), [userId]: new Date().toISOString() };
+      persist();
+      return true;
+    }
+    function showIncomingChatPreview(messages) {
+      const userId = authSession?.user?.id;
+      const incoming = messages.filter((message) => message.senderId !== userId);
+      if (!incoming.length) return;
+      const sortedIncoming = incoming.sort((left, right) => Date.parse(left.createdAt) - Date.parse(right.createdAt));
+      const latest = sortedIncoming[sortedIncoming.length - 1];
+      if (chatPanelOpen) {
+        markChatMessagesRead();
+        return;
+      }
+      chatIncomingPreview = latest;
+      clearTimeout(chatIncomingPreviewTimer);
+      chatIncomingPreviewTimer = setTimeout(() => {
+        chatIncomingPreview = null;
+        chatIncomingPreviewTimer = null;
+        render();
+      }, 5000);
+    }
+    function renderChatMarkup() {
+      const unreadCount = chatUnreadCount();
+      const unreadBadge = unreadCount
+        ? `<span class="top-chat-unread" aria-label="${unreadCount} pesan belum dibaca">${unreadCount > 99 ? "99+" : unreadCount}</span>`
+        : "";
+      const messages = [...(state.chatMessages || [])].sort((left, right) =>
+        Date.parse(left.createdAt) - Date.parse(right.createdAt));
+      const userId = authSession?.user?.id;
+      const messageMarkup = messages.length
+        ? messages.map((message) => {
+          const ownMessage = message.senderId === userId;
+          const senderName = ownMessage ? (currentLanguage === "en" ? "You" : "Anda") : (message.senderName || "Pengguna");
+          const sentAt = Number.isFinite(Date.parse(message.createdAt))
+            ? formatDate(message.createdAt, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
+            : "";
+          return `<article class="chat-message${ownMessage ? " own" : ""}"><span class="chat-message-sender" data-user-content>${escapeHtml(senderName)}</span><div class="chat-message-text" data-user-content>${escapeHtml(message.text)}</div><time class="chat-message-time">${escapeHtml(sentAt)}</time></article>`;
+        }).join("")
+        : `<div class="chat-empty">Belum ada percakapan. Kirim pesan pertama untuk memulai chat tim.</div>`;
+      const panelMarkup = chatPanelOpen
+        ? `<section class="chat-panel" aria-label="Percakapan antar akun"><header class="chat-panel-head"><div><strong>Chat tim</strong><small>Pesan untuk semua akun</small></div><button class="chat-close" id="chat-close" type="button" aria-label="Tutup chat">×</button></header><div class="chat-message-list" id="chat-message-list" role="log" aria-live="polite" aria-relevant="additions">${messageMarkup}</div><form class="chat-compose" id="chat-compose"><textarea id="chat-message-input" maxlength="1000" aria-label="Tulis pesan chat" placeholder="Tulis pesan..." required></textarea><button class="chat-send" type="submit" aria-label="Kirim pesan"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4 20-7ZM22 2 11 13"/></svg></button></form></section>`
+        : "";
+      const incomingMarkup = chatIncomingPreview
+        ? `<button class="chat-incoming-preview" id="chat-preview-open" type="button" aria-live="polite" aria-label="Buka pesan chat dari ${escapeHtml(chatIncomingPreview.senderName || "Pengguna")}"><strong data-user-content>${escapeHtml(chatIncomingPreview.senderName || "Pesan baru")}</strong><span data-user-content>${escapeHtml(chatIncomingPreview.text)}</span></button>`
+        : "";
+      return `<div class="top-date-chat"><button class="top-chat-button" id="chat-toggle" type="button" aria-label="Buka chat${unreadCount ? `, ${unreadCount} pesan belum dibaca` : ""}" aria-expanded="${chatPanelOpen}"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H5l-2 2v-9.5A7.5 7.5 0 0 1 10.5 4H12a8 8 0 0 1 8 7.5Z"/><path d="M8 11h8m-8 4h5"/></svg><span class="top-chat-label">Chat</span>${unreadBadge}</button><span class="today">${formatDate(new Date(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span>${incomingMarkup}${panelMarkup}</div>`;
+    }
+    function scrollChatToLatest() {
+      requestAnimationFrame(() => {
+        const list = document.getElementById("chat-message-list");
+        if (list) list.scrollTop = list.scrollHeight;
+      });
+    }
     const navMarkup = () => {
       const pics = activeWorkspace()?.picNames || [];
       const showPics = currentPage === "opname" || currentPage === "layouts" || currentPage === "products";
@@ -5811,7 +5947,7 @@
         "data-resources": "Data Resource"
       };
       const pageLabel = pageLabels[currentPage] || "History Changes";
-      return `<div class="topline"><div class="topline-heading"><div class="language-options workspace-language-options" role="group" aria-label="Pilih bahasa"><button class="language-option" type="button" data-language-option="id" aria-label="Bahasa Indonesia" aria-pressed="false"><svg class="language-flag" aria-hidden="true" viewBox="0 0 30 20"><rect width="30" height="10" fill="#ce1126"/><rect y="10" width="30" height="10" fill="#fff"/></svg></button><button class="language-option" type="button" data-language-option="en" aria-label="English" aria-pressed="false"><svg class="language-flag" aria-hidden="true" viewBox="0 0 60 30"><rect width="60" height="30" fill="#012169"/><path d="M0 0 60 30M60 0 0 30" stroke="#fff" stroke-width="6"/><path d="M0 0 60 30M60 0 0 30" stroke="#c8102e" stroke-width="2"/><path d="M30 0v30M0 15h60" stroke="#fff" stroke-width="10"/><path d="M30 0v30M0 15h60" stroke="#c8102e" stroke-width="4"/></svg></button></div><div class="crumb"><span class="crumb-workspace" data-user-content>${escapeHtml(activeWorkspaceName())}</span> <span> / </span> <b data-user-content>${escapeHtml(pageLabel)}</b></div>${onlineMarkup}</div><div class="top-actions"><span class="today">${formatDate(new Date(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span>${picMarkup}<div class="top-theme-controls"><button class="accent-toggle" type="button" data-accent-toggle aria-label="Ganti tema warna ke burgundy"><span class="accent-swatch" aria-hidden="true"></span><span data-accent-label>Burgundy</span></button><button class="theme-toggle" type="button" data-theme-toggle aria-label="Aktifkan dark mode" aria-pressed="false"><span class="theme-toggle-icon" aria-hidden="true">☾</span><span class="theme-toggle-label">Dark</span></button></div></div></div>`;
+      return `<div class="topline"><div class="topline-heading"><div class="language-options workspace-language-options" role="group" aria-label="Pilih bahasa"><button class="language-option" type="button" data-language-option="id" aria-label="Bahasa Indonesia" aria-pressed="false"><svg class="language-flag" aria-hidden="true" viewBox="0 0 30 20"><rect width="30" height="10" fill="#ce1126"/><rect y="10" width="30" height="10" fill="#fff"/></svg></button><button class="language-option" type="button" data-language-option="en" aria-label="English" aria-pressed="false"><svg class="language-flag" aria-hidden="true" viewBox="0 0 60 30"><rect width="60" height="30" fill="#012169"/><path d="M0 0 60 30M60 0 0 30" stroke="#fff" stroke-width="6"/><path d="M0 0 60 30M60 0 0 30" stroke="#c8102e" stroke-width="2"/><path d="M30 0v30M0 15h60" stroke="#fff" stroke-width="10"/><path d="M30 0v30M0 15h60" stroke="#c8102e" stroke-width="4"/></svg></button></div><div class="crumb"><span class="crumb-workspace" data-user-content>${escapeHtml(activeWorkspaceName())}</span> <span> / </span> <b data-user-content>${escapeHtml(pageLabel)}</b></div>${onlineMarkup}</div><div class="top-actions">${renderChatMarkup()}${picMarkup}<div class="top-theme-controls"><button class="accent-toggle" type="button" data-accent-toggle aria-label="Ganti tema warna ke burgundy"><span class="accent-swatch" aria-hidden="true"></span><span data-accent-label>Burgundy</span></button><button class="theme-toggle" type="button" data-theme-toggle aria-label="Aktifkan dark mode" aria-pressed="false"><span class="theme-toggle-icon" aria-hidden="true">☾</span><span class="theme-toggle-label">Dark</span></button></div></div></div>`;
     };
     const renderProductIdentity = (product) => `<div class="product-cell"><div><div class="product-name">${escapeHtml(product.name)}</div><div class="product-sku">${escapeHtml(product.sku)}</div></div></div>`;
     const renderReconciliationTableHead = (includeNote = false) => `<tr><th>No</th><th>Item / item code</th><th>Brand</th><th class="quantity-cell">VEF</th><th class="quantity-cell">SCAN</th><th class="quantity-cell">MANUAL</th><th class="quantity-cell">Inbound/Retur</th><th class="quantity-cell">PJ</th><th class="quantity-cell">Selisih</th><th>Check</th>${includeNote ? "<th>Note</th>" : ""}</tr>`;
@@ -7594,6 +7730,54 @@
 
     function bindPageEvents() {
       attachCameraSearchButtons();
+      document.getElementById("chat-toggle")?.addEventListener("click", () => {
+        chatPanelOpen = !chatPanelOpen;
+        if (chatPanelOpen) {
+          chatIncomingPreview = null;
+          clearTimeout(chatIncomingPreviewTimer);
+          chatIncomingPreviewTimer = null;
+          markChatMessagesRead();
+        }
+        render();
+        if (chatPanelOpen) {
+          scrollChatToLatest();
+          document.getElementById("chat-message-input")?.focus({ preventScroll: true });
+        }
+      });
+      document.getElementById("chat-close")?.addEventListener("click", () => {
+        chatPanelOpen = false;
+        render();
+      });
+      document.getElementById("chat-preview-open")?.addEventListener("click", () => {
+        chatPanelOpen = true;
+        chatIncomingPreview = null;
+        clearTimeout(chatIncomingPreviewTimer);
+        chatIncomingPreviewTimer = null;
+        markChatMessagesRead();
+        render();
+        scrollChatToLatest();
+        document.getElementById("chat-message-input")?.focus({ preventScroll: true });
+      });
+      document.getElementById("chat-compose")?.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const input = document.getElementById("chat-message-input");
+        const text = input?.value.trim();
+        if (!text || !authSession?.user?.id) return;
+        const username = authSession.user.user_metadata?.username || authSession.user.email || "Pengguna";
+        const createdAt = new Date().toISOString();
+        state.chatMessages = [...(state.chatMessages || []), {
+          id: crypto.randomUUID(),
+          senderId: authSession.user.id,
+          senderName: formatDisplayName(username),
+          text: text.slice(0, 1000),
+          createdAt
+        }];
+        state.chatReadAt = { ...(state.chatReadAt || {}), [authSession.user.id]: createdAt };
+        persist();
+        render();
+        scrollChatToLatest();
+        document.getElementById("chat-message-input")?.focus({ preventScroll: true });
+      });
       document.getElementById("add-workspace-button")?.addEventListener("click", addWorkspace);
       document.getElementById("admin-refresh-users")?.addEventListener("click", loadAdminUsers);
       document.getElementById("copy-reset-password")?.addEventListener("click", async () => {
