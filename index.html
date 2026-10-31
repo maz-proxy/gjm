@@ -3223,6 +3223,8 @@
     const ANDROID_APP_BUCKET = "stock-opname-app-downloads";
     const ANDROID_APP_OBJECT = "latest.apk";
     const ANDROID_APP_MAX_SIZE = 50 * 1024 * 1024;
+    const ANDROID_APP_INITIAL_VERSION = "1.5";
+    const ANDROID_APP_NAME_PREFIX = "Stock Opname v.";
     const ONLINE_USERS_CHANNEL_NAME = "online-users:stock-opname-team";
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
     let onlineUsersPresenceChannel = null;
@@ -7328,14 +7330,32 @@
     function androidAppPublicUrl() {
       return `${SUPABASE_URL}/storage/v1/object/public/${ANDROID_APP_BUCKET}/${ANDROID_APP_OBJECT}`;
     }
+    function currentAndroidAppVersion() {
+      const app = state.resources?.androidApp;
+      const storedVersion = state.resources?.androidAppVersion || app?.version;
+      if (typeof storedVersion === "string" && /^\d+\.\d+$/.test(storedVersion)) return storedVersion;
+      const match = String(app?.name || "").match(/^Stock Opname v\.(\d+)\.(\d+)\.apk$/i);
+      return match ? `${match[1]}.${match[2]}` : "";
+    }
+    function androidAppFileName(version) {
+      return `${ANDROID_APP_NAME_PREFIX}${version}.apk`;
+    }
+    function nextAndroidAppVersion() {
+      const currentVersion = currentAndroidAppVersion();
+      if (!currentVersion) return ANDROID_APP_INITIAL_VERSION;
+      const [major, minor] = currentVersion.split(".").map(Number);
+      return `${major}.${minor + 1}`;
+    }
     async function refreshAndroidDownloadLink() {
       const link = document.getElementById("android-download-link");
       if (!link) return;
       link.hidden = true;
+      const fileName = androidAppFileName(currentAndroidAppVersion() || ANDROID_APP_INITIAL_VERSION);
+      link.download = fileName;
       try {
         const response = await fetch(`${androidAppPublicUrl()}?availability=${Date.now()}`, { method: "HEAD", cache: "no-store" });
         if (!response.ok) return;
-        link.href = `${androidAppPublicUrl()}?download=${encodeURIComponent("Stock Opname v.1.5.apk")}&version=${Date.now()}`;
+        link.href = `${androidAppPublicUrl()}?download=${encodeURIComponent(fileName)}&version=${Date.now()}`;
         link.hidden = false;
       } catch (error) {
         console.warn("Ketersediaan APK Android tidak dapat diperiksa:", error);
@@ -7356,6 +7376,8 @@
       }
       const button = document.getElementById("android-app-upload");
       if (button) button.disabled = true;
+      const version = nextAndroidAppVersion();
+      const name = androidAppFileName(version);
       try {
         const { error } = await supabaseClient.storage.from(ANDROID_APP_BUCKET).upload(ANDROID_APP_OBJECT, file, {
           cacheControl: "60",
@@ -7363,7 +7385,8 @@
           upsert: true
         });
         if (error) throw error;
-        state.resources.androidApp = { name: file.name, size: file.size, uploadedAt: new Date().toISOString() };
+        state.resources.androidAppVersion = version;
+        state.resources.androidApp = { name, version, size: file.size, uploadedAt: new Date().toISOString() };
         persist();
         render();
         await refreshAndroidDownloadLink();
