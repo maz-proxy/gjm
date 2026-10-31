@@ -255,6 +255,11 @@ set search_path = ''
 as $$
 declare
   current_user_id text := auth.uid()::text;
+  current_user_names text[] := array_remove(array[
+    lower(nullif(btrim(auth.jwt() -> 'user_metadata' ->> 'username'), '')),
+    lower(nullif(btrim(auth.jwt() -> 'app_metadata' ->> 'username'), '')),
+    lower(nullif(btrim(auth.jwt() ->> 'email'), ''))
+  ], null);
   is_workspace_super_admin boolean :=
     coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'super_admin'
     and coalesce(auth.jwt() -> 'app_metadata' ->> 'owner_username', '') = 'indra';
@@ -269,6 +274,7 @@ declare
   old_session_id text;
   new_session_id text;
   old_session_has_data boolean;
+  is_current_user_pic boolean;
   old_archive jsonb;
   new_archive jsonb;
   archive_workspace jsonb;
@@ -308,11 +314,23 @@ begin
         from jsonb_array_elements(coalesce(old_workspace_data -> 'workbookFiles', '[]'::jsonb)) as workbook(value)
         where workbook.value ->> 'sessionId' = old_session_id
       );
+    is_current_user_pic := exists (
+      select 1
+      from jsonb_array_elements_text(coalesce(old_workspace -> 'picNames', '[]'::jsonb)) as pic(name)
+      where lower(btrim(pic.name)) = any(current_user_names)
+    );
 
     if (old_workspace -> 'name') is distinct from (new_workspace -> 'name')
-      or (old_workspace -> 'picNames') is distinct from (new_workspace -> 'picNames') then
+      or (old_workspace -> 'picNames') is distinct from (new_workspace -> 'picNames')
+      or (old_workspace -> 'month') is distinct from (new_workspace -> 'month')
+      or (old_workspace -> 'period') is distinct from (new_workspace -> 'period')
+      or (old_workspace -> 'startedAt') is distinct from (new_workspace -> 'startedAt')
+      or (old_workspace -> 'scheduleCreatedAt') is distinct from (new_workspace -> 'scheduleCreatedAt')
+      or (old_workspace -> 'scheduleOwnerUserId') is distinct from (new_workspace -> 'scheduleOwnerUserId')
+      or (old_workspace -> 'scheduleOwnerUsername') is distinct from (new_workspace -> 'scheduleOwnerUsername')
+      or (old_workspace -> 'schedulePlaceholder') is distinct from (new_workspace -> 'schedulePlaceholder') then
       if coalesce(old_active_session ->> 'status', 'active') = 'active'
-        and old_session_has_data
+        and (old_session_has_data or coalesce(old_workspace ->> 'startedAt', '') <> '')
         and old_owner_id is distinct from current_user_id then
         raise exception 'This active stock opname session belongs to another user.'
           using errcode = '42501';
@@ -321,6 +339,10 @@ begin
 
     if old_workspace_data is distinct from new_workspace_data then
       if old_session_id is distinct from new_session_id then
+        if old_owner_id is not null and old_owner_id is distinct from current_user_id then
+          raise exception 'Only the session owner can restart or replace the active session.'
+            using errcode = '42501';
+        end if;
         if new_owner_id is distinct from current_user_id then
           raise exception 'A new stock opname session must be created by its authenticated owner.'
             using errcode = '42501';
@@ -332,7 +354,9 @@ begin
             using errcode = '42501';
         end if;
       else
-        if old_owner_id is not null and old_owner_id is distinct from current_user_id then
+        if old_owner_id is not null
+          and old_owner_id is distinct from current_user_id
+          and not (coalesce(old_active_session ->> 'status', 'active') = 'active' and is_current_user_pic) then
           raise exception 'This active stock opname session belongs to another user.'
             using errcode = '42501';
         end if;
@@ -340,7 +364,19 @@ begin
           raise exception 'This legacy stock opname session has no owner; ask the super admin to manage it.'
             using errcode = '42501';
         end if;
-        if new_owner_id is not null and new_owner_id is distinct from current_user_id then
+        if old_owner_id is distinct from current_user_id
+          and is_current_user_pic
+          and (
+            (old_active_session -> 'status') is distinct from (new_active_session -> 'status')
+            or (old_active_session -> 'startedAt') is distinct from (new_active_session -> 'startedAt')
+            or (old_active_session -> 'finishedAt') is distinct from (new_active_session -> 'finishedAt')
+            or (old_active_session -> 'createdByUsername') is distinct from (new_active_session -> 'createdByUsername')
+          ) then
+          raise exception 'Only the session owner can finish or restart the active session.'
+            using errcode = '42501';
+        end if;
+        if (old_owner_id is not null and new_owner_id is distinct from old_owner_id)
+          or (old_owner_id is null and new_owner_id is not null and new_owner_id is distinct from current_user_id) then
           raise exception 'A stock opname session owner cannot be changed by another user.'
             using errcode = '42501';
         end if;
