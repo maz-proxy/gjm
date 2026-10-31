@@ -228,14 +228,16 @@
     .chat-close:hover, .chat-close:focus-visible { background: var(--green-soft); color: var(--ink); outline: 0; }
     .chat-message-list { align-content: start; display: flex; flex-direction: column; gap: 9px; overflow-y: auto; overscroll-behavior: contain; padding: 12px; }
     .chat-empty { color: var(--muted); font-size: 11px; margin: auto; padding: 20px; text-align: center; }
-    .chat-message { align-self: flex-start; background: color-mix(in srgb, var(--green) 8%, var(--paper)); border: 1px solid var(--line); border-radius: 12px 12px 12px 4px; max-width: 84%; min-width: 90px; padding: 8px 10px; }
-    .chat-message.own { align-self: flex-end; background: color-mix(in srgb, var(--green) 17%, var(--paper)); border-color: color-mix(in srgb, var(--green) 25%, var(--line)); border-radius: 12px 12px 4px 12px; }
-    .chat-message-sender { color: var(--green-dark); display: block; font-size: 9px; font-weight: 800; margin-bottom: 3px; }
+    .chat-message { align-self: flex-start; background: color-mix(in srgb, hsl(var(--chat-user-hue) 56% 40%) 11%, var(--paper)); border: 1px solid color-mix(in srgb, hsl(var(--chat-user-hue) 56% 40%) 28%, var(--line)); border-radius: 12px 12px 12px 4px; max-width: 84%; min-width: 90px; padding: 8px 10px; }
+    .chat-message.own { align-self: flex-end; border-radius: 12px 12px 4px 12px; }
+    .chat-message-sender { color: hsl(var(--chat-user-hue) 56% 36%); display: block; font-size: 9px; font-weight: 800; margin-bottom: 3px; }
     .chat-message-text { font-size: 11px; line-height: 1.45; overflow-wrap: anywhere; white-space: pre-wrap; }
     .chat-message-meta { align-items: center; color: var(--muted); display: flex; font-size: 8px; gap: 7px; justify-content: flex-end; margin-top: 4px; }
     .chat-message-edit { background: transparent; border: 0; border-radius: 5px; color: var(--green-dark); font-size: 8px; padding: 2px 4px; }
     .chat-message-edit:hover, .chat-message-edit:focus-visible { background: var(--green-soft); outline: 0; }
     .chat-message-edited { font-style: italic; }
+    html[data-theme="dark"] .chat-message { background: color-mix(in srgb, hsl(var(--chat-user-hue) 68% 70%) 17%, var(--paper)); border-color: color-mix(in srgb, hsl(var(--chat-user-hue) 68% 70%) 37%, var(--line)); }
+    html[data-theme="dark"] .chat-message-sender { color: hsl(var(--chat-user-hue) 68% 76%); }
     .chat-compose { align-items: end; border-top: 1px solid var(--line); display: flex; gap: 7px; padding: 9px; }
     .chat-compose textarea { background: var(--paper); border: 1px solid var(--line); border-radius: 9px; color: var(--ink); flex: 1; font: 11px/1.4 "DM Sans", "Segoe UI", sans-serif; max-height: 100px; min-height: 38px; min-width: 0; padding: 9px; resize: vertical; }
     .chat-compose textarea:focus { border-color: var(--green); outline: 2px solid color-mix(in srgb, var(--green) 15%, transparent); }
@@ -5942,6 +5944,11 @@
         play();
       }
     }
+    function chatSenderHue(senderId) {
+      let hash = 0;
+      for (const character of senderId) hash = (Math.imul(hash, 31) + character.charCodeAt(0)) | 0;
+      return (hash >>> 0) % 360;
+    }
     function renderChatMarkup() {
       const unreadCount = chatUnreadCount();
       const unreadBadge = unreadCount
@@ -5959,7 +5966,7 @@
             : "";
           const editedLabel = currentLanguage === "en" ? "edited" : "diedit";
           const editLabel = currentLanguage === "en" ? "Edit" : "Ubah";
-          return `<article class="chat-message${ownMessage ? " own" : ""}"><span class="chat-message-sender" data-user-content>${escapeHtml(senderName)}</span><div class="chat-message-text" data-user-content>${escapeHtml(message.text)}</div><div class="chat-message-meta">${message.editedAt ? `<span class="chat-message-edited">${editedLabel}</span>` : ""}<time>${escapeHtml(sentAt)}</time>${ownMessage ? `<button class="chat-message-edit" type="button" data-chat-edit="${escapeHtml(message.id)}" aria-label="${editLabel} pesan">✎ ${editLabel}</button>` : ""}</div></article>`;
+          return `<article class="chat-message${ownMessage ? " own" : ""}" style="--chat-user-hue:${chatSenderHue(message.senderId)}"><span class="chat-message-sender" data-user-content>${escapeHtml(senderName)}</span><div class="chat-message-text" data-user-content>${escapeHtml(message.text)}</div><div class="chat-message-meta">${message.editedAt ? `<span class="chat-message-edited">${editedLabel}</span>` : ""}<time>${escapeHtml(sentAt)}</time>${ownMessage ? `<button class="chat-message-edit" type="button" data-chat-edit="${escapeHtml(message.id)}" aria-label="${editLabel} pesan">✎ ${editLabel}</button>` : ""}</div></article>`;
         }).join("")
         : `<div class="chat-empty">Belum ada percakapan. Kirim pesan pertama untuk memulai chat tim.</div>`;
       const editingMessage = messages.find((message) => message.id === chatEditingMessageId);

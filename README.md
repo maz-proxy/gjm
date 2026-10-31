@@ -20,7 +20,7 @@ Master VEF uploads show a theme-matched percentage progress dialog while the fil
 
 Session changes are restricted to the recorded session owner; Owner accounts retain their administrative override. Sessions without a verifiable owner are read-only to staff.
 
-The team chat updates without re-rendering the rest of the page, follows the active light/dark and accent themes, and can edit messages sent by the current account. Incoming messages play a short notification sound after the first page interaction; browser audio/autoplay settings may prevent playback.
+The team chat updates without re-rendering the rest of the page, follows the active light/dark and accent themes, and gives each account a consistent bubble colour. Users can edit messages sent by their own account. Incoming messages play a short notification sound after the first page interaction; browser audio/autoplay settings may prevent playback.
 
 ## Workspace Back navigation
 
