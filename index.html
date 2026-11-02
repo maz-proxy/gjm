@@ -3091,7 +3091,7 @@
       !source.includes(" ") && !/[:/?!.]/.test(source)));
     const translateText = (text) => {
       if (currentLanguage !== "en") {
-        return text.replace(/\bNama Brand\b/g, "Nama Brand / Gudang").replace(/\bNama brand\b/g, "Nama brand / Gudang");
+        return text.replace(/\bNama Brand\b(?!\s*\/\s*Gudang)/g, "Nama Brand / Gudang").replace(/\bNama brand\b(?!\s*\/\s*Gudang)/g, "Nama brand / Gudang");
       }
       let translated = text.replace(phraseTranslationPattern, (source) => phraseTranslationMap.get(source));
       const exact = exactLanguageTranslations.get(text.trim());
