@@ -20,7 +20,7 @@ Master VEF uploads show a theme-matched percentage progress dialog while the fil
 
 For an active session, the recorded owner and the accounts named as PIC 1 or PIC 2 can edit the working sheets. Only the session owner or Owner can change schedule ownership, clear the Master VEF, finish the session, or start a new session. Completed sessions and their archives remain protected. The database trigger enforces the same owner/PIC rule; run the updated full `supabase-setup.sql` in Supabase → SQL Editor to enable PIC editing server-side.
 
-The team chat updates without re-rendering the rest of the page, follows the active light/dark and accent themes, and gives each account a consistent bubble colour. Users can edit messages sent by their own account. The Chat button sits to the left of the theme controls. Incoming messages play a short notification sound after the first page interaction; browser audio/autoplay settings may prevent playback.
+The team chat updates without re-rendering the rest of the page, follows the active light/dark and accent themes, and gives each account a consistent bubble colour. Users can edit messages sent by their own account. Messages older than 24 hours move automatically from Chat to the read-only Archive tab, keeping the active conversation clear while preserving archived messages and attachments. The Chat button sits to the left of the theme controls. Incoming messages play a short notification sound after the first page interaction; browser audio/autoplay settings may prevent playback.
 
 ## Workspace Back navigation
 
