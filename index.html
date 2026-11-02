@@ -3096,7 +3096,7 @@
       let translated = text.replace(phraseTranslationPattern, (source) => phraseTranslationMap.get(source));
       const exact = exactLanguageTranslations.get(text.trim());
       if (exact) translated = translated.replace(text.trim(), exact);
-      return translated.replace(/\b(Brand|brand)(?: name)?\b/g, (label) =>
+      return translated.replace(/\b(Brand|brand)(?:\s*\/\s*[Ww]arehouse)?(?: name)?\b/g, (label) =>
         label[0] === label[0].toUpperCase()
           ? label.toLowerCase().includes("name") ? "Brand / Warehouse name" : "Brand / Warehouse"
           : label.toLowerCase().includes("name") ? "brand / warehouse name" : "brand / warehouse");
@@ -3671,8 +3671,11 @@
     function activeWorkspace() {
       return state.workspaces.find((workspace) => workspace.id === state.currentWorkspaceId);
     }
+    function emptyBrandNameLabel() {
+      return currentLanguage === "en" ? "Brand / Warehouse name not set" : "Nama Brand / Gudang belum diisi";
+    }
     function activeWorkspaceName() {
-      return activeWorkspace()?.name.trim() || (currentLanguage === "en" ? "Brand name not set" : "Nama Brand belum diisi");
+      return activeWorkspace()?.name.trim() || emptyBrandNameLabel();
     }
     const BRAND_LOGO_SLUGS = Object.freeze({
       ACER: "acer",
@@ -7438,16 +7441,16 @@
               <div class="schedule-stat"><strong>${formatNumber(serials)}</strong><span>SN master</span></div>
               <div class="schedule-stat"><strong>${formatNumber(data.scanEvents.length)}</strong><span>Scan · ${data.layouts.length} layout</span></div>
             </div>
-            <div class="schedule-progress"><div class="schedule-progress-head"><span>Progres serial number</span><strong>${stats.progress}% · ${formatNumber(stats.scannedSerials)} / ${formatNumber(stats.targetSerials)}</strong></div><div class="dashboard-bar-track" role="progressbar" aria-label="Progres ${escapeHtml(workspace.name || "Nama Brand belum diisi")}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${stats.progress}"><div class="dashboard-bar-fill" style="width:${stats.progress}%"></div></div></div>`
+            <div class="schedule-progress"><div class="schedule-progress-head"><span>Progres serial number</span><strong>${stats.progress}% · ${formatNumber(stats.scannedSerials)} / ${formatNumber(stats.targetSerials)}</strong></div><div class="dashboard-bar-track" role="progressbar" aria-label="Progres ${escapeHtml(workspace.name || emptyBrandNameLabel())}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${stats.progress}"><div class="dashboard-bar-fill" style="width:${stats.progress}%"></div></div></div>`
           : "";
         const modeDisabled = !canEdit || isCompleted;
         const canDeleteWithoutUpload = canDeleteUnuploadedWorkspace(workspace);
         const canDelete = canRemoveWorkspace(workspace);
         const deleteButton = `<button class="rack-delete-button schedule-delete-button" type="button" data-delete-workspace="${escapeHtml(workspace.id)}" aria-label="${canCancelEmptyStartedWorkspace(workspace) ? "Batalkan sesi kosong" : "Hapus kartu"} ${escapeHtml(workspace.name || "Jadwal")}" title="${canDelete ? canDeleteWithoutUpload ? "Hapus sesi pemilik karena file VEF belum diunggah" : canCancelEmptyStartedWorkspace(workspace) ? "Batalkan sesi berjalan yang belum memiliki data" : "Hapus kartu yang belum dimulai" : "Kartu hanya dapat dihapus sebelum stock opname dimulai atau sebelum file VEF diunggah"}" ${canDelete ? "" : "disabled"}>−</button>`;
         return `<details class="schedule-card ${isCurrent ? "current" : ""}">
-          <summary class="schedule-card-summary" aria-label="${escapeHtml(workspace.name || "Nama Brand belum diisi")}, ${status}. Klik untuk melihat detail.">
+          <summary class="schedule-card-summary" aria-label="${escapeHtml(workspace.name || emptyBrandNameLabel())}, ${status}. Klik untuk melihat detail.">
             <span class="schedule-summary-brand-icon" data-schedule-brand-icon>${renderWorkspaceBrandIcon(workspace.name)}</span>
-            <span class="schedule-summary-copy"><strong class="schedule-summary-title">${escapeHtml(workspace.name || "Nama Brand belum diisi")}</strong><span class="schedule-summary-meta"><span data-workspace-schedule-summary="${escapeHtml(workspace.id)}">${month} · ${period}</span>${statsSummary} · ${summaryPicNames}</span></span>
+            <span class="schedule-summary-copy"><strong class="schedule-summary-title">${escapeHtml(workspace.name || emptyBrandNameLabel())}</strong><span class="schedule-summary-meta"><span data-workspace-schedule-summary="${escapeHtml(workspace.id)}">${month} · ${period}</span>${statsSummary} · ${summaryPicNames}</span></span>
             <span class="schedule-summary-badges"><span class="row-status ${statusClass}">${status}</span>${isCurrent ? '<span class="schedule-current-badge">Sedang dipilih</span>' : ""}</span>
             <span class="schedule-summary-chevron" aria-hidden="true">⌄</span>
           </summary>
@@ -7455,8 +7458,8 @@
             <div class="schedule-card-title">
               <div class="schedule-brand-fields">
                 <div class="schedule-brand-field"><label for="workspace-brand-${escapeHtml(workspace.id)}">Nama Brand</label><div class="schedule-resource-picker"><input class="workspace-name-input schedule-picker" id="workspace-brand-${escapeHtml(workspace.id)}" data-workspace-name="${escapeHtml(workspace.id)}" data-workspace-resource="brands" data-workspace-id="${escapeHtml(workspace.id)}" aria-label="Nama Brand" placeholder="${state.resources.brands.length ? "Cari dan pilih brand" : "Nama Brand belum tersedia"}" value="${escapeHtml(workspace.name)}" autocomplete="off" aria-autocomplete="list" aria-expanded="false" ${canEdit && !hasStarted && !isCompleted ? "" : 'disabled title="Brand sesi berjalan atau selesai tidak dapat diubah"'}><div class="schedule-resource-options" role="listbox" aria-label="Pilihan Nama Brand"></div></div></div>
-                <div class="schedule-brand-field"><label for="workspace-month-trigger-${escapeHtml(workspace.id)}">Bulan</label>${renderScheduleDropdown(`workspace-month-trigger-${workspace.id}`, `Bulan stock opname untuk ${workspace.name || "Nama Brand belum diisi"}`, "schedule-period-select", `id="workspace-month-${escapeHtml(workspace.id)}" data-workspace-schedule-field="month" data-workspace-id="${escapeHtml(workspace.id)}"`, WORKSPACE_MONTHS.map((option) => [option, option]), month, !canEdit || hasStarted || isCompleted)}</div>
-                <div class="schedule-brand-field"><label for="workspace-period-trigger-${escapeHtml(workspace.id)}">Week</label>${renderScheduleDropdown(`workspace-period-trigger-${workspace.id}`, `Week stock opname untuk ${workspace.name || "Nama Brand belum diisi"}`, "schedule-period-select", `id="workspace-period-${escapeHtml(workspace.id)}" data-workspace-schedule-field="period" data-workspace-id="${escapeHtml(workspace.id)}"`, WORKSPACE_PERIODS.map((option) => [option, option]), period, !canEdit || hasStarted || isCompleted)}</div>
+                <div class="schedule-brand-field"><label for="workspace-month-trigger-${escapeHtml(workspace.id)}">Bulan</label>${renderScheduleDropdown(`workspace-month-trigger-${workspace.id}`, `Bulan stock opname untuk ${workspace.name || emptyBrandNameLabel()}`, "schedule-period-select", `id="workspace-month-${escapeHtml(workspace.id)}" data-workspace-schedule-field="month" data-workspace-id="${escapeHtml(workspace.id)}"`, WORKSPACE_MONTHS.map((option) => [option, option]), month, !canEdit || hasStarted || isCompleted)}</div>
+                <div class="schedule-brand-field"><label for="workspace-period-trigger-${escapeHtml(workspace.id)}">Week</label>${renderScheduleDropdown(`workspace-period-trigger-${workspace.id}`, `Week stock opname untuk ${workspace.name || emptyBrandNameLabel()}`, "schedule-period-select", `id="workspace-period-${escapeHtml(workspace.id)}" data-workspace-schedule-field="period" data-workspace-id="${escapeHtml(workspace.id)}"`, WORKSPACE_PERIODS.map((option) => [option, option]), period, !canEdit || hasStarted || isCompleted)}</div>
               </div>
               ${hasUploadedVef ? `<div class="schedule-card-subtitle">${formatNumber(stats.countedSkus)} item masuk perhitungan</div>` : ""}
             </div>
@@ -7468,11 +7471,11 @@
           <div class="schedule-card-body">
             <div class="schedule-mode-box">
               <div class="schedule-mode-copy"><div class="schedule-mode-title">Mode perhitungan</div><div class="schedule-mode-hint">${countMode === "all" ? "Semua jenis item dari master VEF masuk hitungan." : "Hanya item yang terdeteksi sebagai laptop yang dihitung."}</div></div>
-              <div class="schedule-mode-control"><label for="count-mode-trigger-${escapeHtml(workspace.id)}">Pilih mode</label>${renderScheduleDropdown(`count-mode-trigger-${workspace.id}`, `Pilihan perhitungan untuk ${workspace.name || "Nama Brand belum diisi"}`, "workspace-count-mode", `id="count-mode-${escapeHtml(workspace.id)}" data-workspace-count-mode="${escapeHtml(workspace.id)}"`, [["all", "Semua item"], ["laptops", "Laptop saja"]], countMode, modeDisabled)}</div>
+              <div class="schedule-mode-control"><label for="count-mode-trigger-${escapeHtml(workspace.id)}">Pilih mode</label>${renderScheduleDropdown(`count-mode-trigger-${workspace.id}`, `Pilihan perhitungan untuk ${workspace.name || emptyBrandNameLabel()}`, "workspace-count-mode", `id="count-mode-${escapeHtml(workspace.id)}" data-workspace-count-mode="${escapeHtml(workspace.id)}"`, [["all", "Semua item"], ["laptops", "Laptop saja"]], countMode, modeDisabled)}</div>
             </div>
             <div class="schedule-pics">
-              <div class="schedule-pic-field"><label for="pic-${escapeHtml(workspace.id)}-1">PIC 1</label><div class="schedule-resource-picker"><input class="workspace-name-input schedule-picker" id="pic-${escapeHtml(workspace.id)}-1" data-workspace-pic="${escapeHtml(workspace.id)}" data-workspace-resource="picNames" data-workspace-id="${escapeHtml(workspace.id)}" data-pic-index="0" aria-label="PIC 1 ${escapeHtml(workspace.name || "Nama Brand belum diisi")}" placeholder="${state.resources.picNames.length ? "Cari dan pilih PIC 1" : "Nama PIC belum tersedia"}" value="${escapeHtml(workspace.picNames[0])}" autocomplete="off" aria-autocomplete="list" aria-expanded="false" ${canEdit && !hasStarted && !isCompleted ? "" : 'disabled title="PIC sesi berjalan atau selesai tidak dapat diubah"'}><div class="schedule-resource-options" role="listbox" aria-label="Pilihan PIC 1"></div></div></div>
-              <div class="schedule-pic-field"><label for="pic-${escapeHtml(workspace.id)}-2">PIC 2</label><div class="schedule-resource-picker"><input class="workspace-name-input schedule-picker" id="pic-${escapeHtml(workspace.id)}-2" data-workspace-pic="${escapeHtml(workspace.id)}" data-workspace-resource="picNames" data-workspace-id="${escapeHtml(workspace.id)}" data-pic-index="1" aria-label="PIC 2 ${escapeHtml(workspace.name || "Nama Brand belum diisi")}" placeholder="${state.resources.picNames.length ? "Cari dan pilih PIC 2" : "Nama PIC belum tersedia"}" value="${escapeHtml(workspace.picNames[1])}" autocomplete="off" aria-autocomplete="list" aria-expanded="false" ${canEdit && !hasStarted && !isCompleted ? "" : 'disabled title="PIC sesi berjalan atau selesai tidak dapat diubah"'}><div class="schedule-resource-options" role="listbox" aria-label="Pilihan PIC 2"></div></div></div>
+              <div class="schedule-pic-field"><label for="pic-${escapeHtml(workspace.id)}-1">PIC 1</label><div class="schedule-resource-picker"><input class="workspace-name-input schedule-picker" id="pic-${escapeHtml(workspace.id)}-1" data-workspace-pic="${escapeHtml(workspace.id)}" data-workspace-resource="picNames" data-workspace-id="${escapeHtml(workspace.id)}" data-pic-index="0" aria-label="PIC 1 ${escapeHtml(workspace.name || emptyBrandNameLabel())}" placeholder="${state.resources.picNames.length ? "Cari dan pilih PIC 1" : "Nama PIC belum tersedia"}" value="${escapeHtml(workspace.picNames[0])}" autocomplete="off" aria-autocomplete="list" aria-expanded="false" ${canEdit && !hasStarted && !isCompleted ? "" : 'disabled title="PIC sesi berjalan atau selesai tidak dapat diubah"'}><div class="schedule-resource-options" role="listbox" aria-label="Pilihan PIC 1"></div></div></div>
+              <div class="schedule-pic-field"><label for="pic-${escapeHtml(workspace.id)}-2">PIC 2</label><div class="schedule-resource-picker"><input class="workspace-name-input schedule-picker" id="pic-${escapeHtml(workspace.id)}-2" data-workspace-pic="${escapeHtml(workspace.id)}" data-workspace-resource="picNames" data-workspace-id="${escapeHtml(workspace.id)}" data-pic-index="1" aria-label="PIC 2 ${escapeHtml(workspace.name || emptyBrandNameLabel())}" placeholder="${state.resources.picNames.length ? "Cari dan pilih PIC 2" : "Nama PIC belum tersedia"}" value="${escapeHtml(workspace.picNames[1])}" autocomplete="off" aria-autocomplete="list" aria-expanded="false" ${canEdit && !hasStarted && !isCompleted ? "" : 'disabled title="PIC sesi berjalan atau selesai tidak dapat diubah"'}><div class="schedule-resource-options" role="listbox" aria-label="Pilihan PIC 2"></div></div></div>
             </div>
             ${statsPanel}
           </div>
@@ -8364,7 +8367,7 @@
           const brand = input.value.trim();
           const card = input.closest(".schedule-card");
           const summary = card?.querySelector(".schedule-summary-title");
-          if (summary) summary.textContent = brand || "Nama Brand belum diisi";
+          if (summary) summary.textContent = brand || emptyBrandNameLabel();
           const iconSlot = card?.querySelector("[data-schedule-brand-icon]");
           if (iconSlot) iconSlot.innerHTML = renderWorkspaceBrandIcon(brand);
         });
@@ -8375,7 +8378,7 @@
           notify(`Sesi hanya dapat diubah oleh ${sessionOwnerName(workspace.data.activeSession)} atau Owner.`);
           input.value = workspace.name;
           const summary = input.closest(".schedule-card")?.querySelector(".schedule-summary-title");
-          if (summary) summary.textContent = workspace.name || "Nama Brand belum diisi";
+          if (summary) summary.textContent = workspace.name || emptyBrandNameLabel();
           return;
         }
         const brand = input.value.trim();
@@ -8383,7 +8386,7 @@
           notify("Pilih Nama Brand dari Data Resource Owner.");
           input.value = workspace.name;
           const summary = input.closest(".schedule-card")?.querySelector(".schedule-summary-title");
-          if (summary) summary.textContent = workspace.name || "Nama Brand belum diisi";
+          if (summary) summary.textContent = workspace.name || emptyBrandNameLabel();
           return;
         }
         workspace.name = brand;
