@@ -1945,7 +1945,7 @@
     html[data-accent="burgundy"] .workspace-count-mode:focus,
     html[data-accent="burgundy"] .workspace-name-input:focus,
     html[data-accent="burgundy"] .schedule-period-select:focus,
-    html[data-accent="burgundy"] .schedule-select-trigger:focus-visible,
+    html[data-accent="burgundy"] .schedule-select-trigger:focus-visible { background: #fffafb; border-color: #b96a84; box-shadow: 0 0 0 2px rgba(132,43,75,.1); color: #432431; }
     html[data-accent="burgundy"] .layout-page-head,
     html[data-accent="burgundy"] .result-page-head,
     html[data-accent="burgundy"] .archive-page-head,
@@ -3392,8 +3392,8 @@
     const DEFAULT_LAYOUTS = ["Rack 1"];
     const UNUPLOADED_WORKSPACE_TIMEOUT_MS = 5 * 60 * 1000;
     const WORKSPACE_CLEANUP_INTERVAL_MS = 15 * 1000;
-    const initialState = () => ({ products: [], serialMaster: {}, scanEvents: [], manualEntries: [], pjEntries: [], inboundEntries: [], historyEvents: [], sessions: [], workbookFiles: [], chatMessages: [], chatReadAt: {}, resources: { brands: [], picNames: [], androidApp: null }, activeSession: makeSession(), countMode: "laptops", importFile: "", importMessage: "", importDownloadedAt: "", importUploadedAt: "", layouts: [...DEFAULT_LAYOUTS], layoutQuantities: {}, layoutNumbers: {} });
-    const emptyWorkspaceData = () => ({ products: [], serialMaster: {}, scanEvents: [], manualEntries: [], pjEntries: [], inboundEntries: [], historyEvents: [], workbookFiles: [], activeSession: makeSession(), countMode: "laptops", importFile: "", importMessage: "", importDownloadedAt: "", importUploadedAt: "", layouts: [...DEFAULT_LAYOUTS], layoutQuantities: {}, layoutNumbers: {} });
+    const initialState = () => ({ products: [], serialMaster: {}, scanEvents: [], manualEntries: [], pjEntries: [], inboundEntries: [], historyEvents: [], sessions: [], workbookFiles: [], chatMessages: [], chatReadAt: {}, resources: { brands: [], picNames: [], androidApp: null }, activeSession: makeSession(), countMode: "all", importFile: "", importMessage: "", importDownloadedAt: "", importUploadedAt: "", layouts: [...DEFAULT_LAYOUTS], layoutQuantities: {}, layoutNumbers: {} });
+    const emptyWorkspaceData = () => ({ products: [], serialMaster: {}, scanEvents: [], manualEntries: [], pjEntries: [], inboundEntries: [], historyEvents: [], workbookFiles: [], activeSession: makeSession(), countMode: "all", importFile: "", importMessage: "", importDownloadedAt: "", importUploadedAt: "", layouts: [...DEFAULT_LAYOUTS], layoutQuantities: {}, layoutNumbers: {} });
     const snapshotWorkspaceData = (source) => {
       const products = source.products || [];
       const sourceLayouts = Array.isArray(source.layouts) && source.layouts.length ? source.layouts : [...DEFAULT_LAYOUTS];
@@ -3410,7 +3410,7 @@
         .map((product) => ({ id: crypto.randomUUID(), productId: product.id, sku: product.sku, name: product.name, layout: layouts[0], quantity: Number(product.box), createdAt: new Date().toISOString() }));
       const boxTotals = new Map();
       for (const entry of manualEntries) boxTotals.set(entry.productId, (boxTotals.get(entry.productId) || 0) + Number(entry.quantity || 0));
-      return { products: products.map((product) => ({ ...product, box: boxTotals.get(product.id) || 0 })), serialMaster: source.serialMaster || {}, scanEvents: source.scanEvents || [], manualEntries, pjEntries: Array.isArray(source.pjEntries) ? source.pjEntries : [], inboundEntries: Array.isArray(source.inboundEntries) ? source.inboundEntries : [], historyEvents: source.historyEvents || [], workbookFiles: Array.isArray(source.workbookFiles) ? source.workbookFiles : [], activeSession: source.activeSession || makeSession(), countMode: source.countMode === "all" ? "all" : "laptops", importFile: source.importFile || "", importMessage: source.importMessage || "", importDownloadedAt: source.importDownloadedAt || "", importUploadedAt: source.importUploadedAt || "", layouts, layoutQuantities: source.layoutQuantities || {}, layoutNumbers: source.layoutNumbers || {} };
+      return { products: products.map((product) => ({ ...product, box: boxTotals.get(product.id) || 0 })), serialMaster: source.serialMaster || {}, scanEvents: source.scanEvents || [], manualEntries, pjEntries: Array.isArray(source.pjEntries) ? source.pjEntries : [], inboundEntries: Array.isArray(source.inboundEntries) ? source.inboundEntries : [], historyEvents: source.historyEvents || [], workbookFiles: Array.isArray(source.workbookFiles) ? source.workbookFiles : [], activeSession: source.activeSession || makeSession(), countMode: source.countMode === "laptops" ? "laptops" : "all", importFile: source.importFile || "", importMessage: source.importMessage || "", importDownloadedAt: source.importDownloadedAt || "", importUploadedAt: source.importUploadedAt || "", layouts, layoutQuantities: source.layoutQuantities || {}, layoutNumbers: source.layoutNumbers || {} };
     };
     const createWorkspace = (name = "", data = emptyWorkspaceData(), schedulePlaceholder = false) => ({ id: crypto.randomUUID(), name, month: normalizeWorkspaceMonth(""), period: normalizeWorkspacePeriod(""), picNames: ["", ""], startedAt: "", scheduleCreatedAt: "", scheduleOwnerUserId: "", scheduleOwnerUsername: "", uploadActivityAt: "", schedulePlaceholder, data });
     const isEmptyScheduleWorkspace = (workspace, sessions = []) => {
@@ -3432,7 +3432,7 @@
         && !data.importDownloadedAt
         && !data.importUploadedAt
         && !data.importMessage
-        && data.countMode !== "all"
+        && data.countMode !== "laptops"
         && normalizeWorkspaceMonth(workspace.month) === normalizeWorkspaceMonth("")
         && normalizeWorkspacePeriod(workspace.period) === normalizeWorkspacePeriod("")
         && !sessions.some((session) => session.workspaceId === workspace.id)
@@ -3504,7 +3504,7 @@
         workspace.period = normalizeWorkspacePeriod(workspace.period);
         workspace.startedAt = typeof workspace.startedAt === "string" ? workspace.startedAt : "";
         if (!workspace.data) workspace.data = emptyWorkspaceData();
-        if (workspace.data.countMode !== "all") workspace.data.countMode = "laptops";
+        if (workspace.data.countMode !== "laptops") workspace.data.countMode = "all";
         if (!Array.isArray(workspace.picNames)) workspace.picNames = ["", ""];
         workspace.picNames = [workspace.picNames[0] || "", workspace.picNames[1] || ""];
       });
@@ -6580,7 +6580,7 @@
       const productsById = new Map(products.map((product) => [product.id, product]));
       const productsBySku = new Map(products.map((product) => [normalizeField(product.sku), product]));
       const inboundEntries = snapshot.inboundEntries || [];
-      const countMode = snapshot.countMode === "all" ? "all" : "laptops";
+      const countMode = snapshot.countMode === "laptops" ? "laptops" : "all";
       const workbooks = session.workbooks || [];
       const sourceTimestamp = snapshot.importDownloadedAt ? formatDate(snapshot.importDownloadedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "Metadata tidak tersedia";
       const uploadedTimestamp = snapshot.importUploadedAt ? formatDate(snapshot.importUploadedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "Tidak tersedia";
@@ -6645,7 +6645,7 @@
       }
       const snapshot = session.snapshot;
       const products = snapshot.products || [];
-      const countMode = snapshot.countMode === "all" ? "all" : "laptops";
+      const countMode = snapshot.countMode === "laptops" ? "laptops" : "all";
       const inboundEntries = snapshot.inboundEntries || [];
       const workbook = XLSX.utils.book_new();
       const scanRows = [["Rack", "Quantity Target", "Jumlah Scan", "Serial Number", "Item Code", "Item Name", "Hasil Scan", "Waktu Scan"]];
@@ -6760,7 +6760,7 @@
     function getWorkspaceDashboardStats(workspace) {
       const data = workspace.data || emptyWorkspaceData();
       const products = Array.isArray(data.products) ? data.products : [];
-      const countMode = data.countMode === "all" ? "all" : "laptops";
+      const countMode = data.countMode === "laptops" ? "laptops" : "all";
       const countedProducts = products.filter((product) => isCountedProduct(product, countMode));
       const countedProductIds = new Set(countedProducts.map((product) => product.id));
       const serialMaster = data.serialMaster || {};
@@ -6931,7 +6931,7 @@
     }
     function recordedSoProgress(session) {
       const snapshot = session.snapshot || {};
-      const countMode = snapshot.countMode === "all" ? "all" : "laptops";
+      const countMode = snapshot.countMode === "laptops" ? "laptops" : "all";
       let total = 0;
       let completed = 0;
       for (const product of snapshot.products || []) {
@@ -7044,7 +7044,7 @@
       const snapshot = session.snapshot || {};
       const products = snapshot.products || [];
       const inboundEntries = snapshot.inboundEntries || [];
-      const countMode = snapshot.countMode === "all" ? "all" : "laptops";
+      const countMode = snapshot.countMode === "laptops" ? "laptops" : "all";
       const query = recordedArchiveSearchTerm.trim().toLocaleLowerCase("id-ID");
       const productsById = new Map(products.map((product) => [product.id, product]));
       const productsBySku = new Map(products.map((product) => [String(product.sku || "").toLocaleLowerCase("id-ID"), product]));
@@ -7347,7 +7347,7 @@
         const status = isCompleted ? "Selesai" : hasStarted ? "Berjalan" : "Belum dimulai";
         const statusClass = isCompleted ? "match" : hasStarted ? "different" : "pending";
         const serials = Object.keys(data.serialMaster || {}).length;
-        const countMode = data.countMode === "all" ? "all" : "laptops";
+        const countMode = data.countMode === "laptops" ? "laptops" : "all";
         const month = normalizeWorkspaceMonth(workspace.month);
         const period = normalizeWorkspacePeriod(workspace.period);
         const summaryPicNames = (workspace.picNames || []).filter(Boolean).map(escapeHtml).join(" & ") || "PIC belum diisi";
@@ -7412,7 +7412,7 @@
       const keepScheduleCardOpen = select.closest("details.schedule-card")?.open;
       const countMode = select.value === "all" ? "all" : "laptops";
       if (!workspace || !canEditWorkspaceSession(workspace) || workspace.data.activeSession.status === "completed") {
-        select.value = workspace?.data.countMode === "all" ? "all" : "laptops";
+        select.value = workspace?.data.countMode === "laptops" ? "laptops" : "all";
         notify("Mode perhitungan sesi ini tidak dapat diubah.");
         return;
       }
@@ -8776,7 +8776,7 @@
     function normalizeWorkspaceClassifications() {
       for (const workspace of state.workspaces) {
         const data = workspace.data;
-        reclassifyScanEvents(data.scanEvents || [], data.serialMaster, data.countMode === "all" ? "all" : "laptops");
+        reclassifyScanEvents(data.scanEvents || [], data.serialMaster, data.countMode === "laptops" ? "laptops" : "all");
         for (const product of data.products || []) {
           product.count = (data.scanEvents || []).filter((event) => event.status === "match" && event.productId === product.id).length;
           product.box = (data.manualEntries || []).filter((entry) => entry.productId === product.id).reduce((sum, entry) => sum + Number(entry.quantity || 0), 0);
