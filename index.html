@@ -211,11 +211,11 @@
     .schedule-card-summary .workspace-brand-icon img { height: 88px; width: 88px; }
     .schedule-summary-brand-icon { display: contents; }
     .workspace-period-label { color: #d5e9df; font-size: 10px; font-weight: 600; letter-spacing: .25px; }
-    .top-actions { align-items: flex-end; display: flex; flex-direction: column; gap: 2px; }
-    .top-action-controls { align-items: center; display: flex; flex-wrap: wrap; gap: 9px; justify-content: flex-end; }
+    .top-actions { align-items: flex-end; display: flex; flex-direction: column; gap: 7px; }
+    .top-action-controls { align-items: center; display: flex; flex-wrap: wrap; gap: 18px; justify-content: flex-end; }
     .top-theme-controls { align-items: center; display: flex; flex-direction: row; gap: 4px; }
     .today { color: #656c61; font-size: 12px; }
-    .top-date-chat { align-items: center; display: flex; gap: 9px; position: relative; }
+    .top-date-chat { align-items: center; display: flex; position: relative; }
     .top-chat-button { align-items: center; background: var(--paper); border: 1px solid var(--line); border-radius: 9px; color: var(--ink); cursor: pointer; display: inline-flex; gap: 6px; justify-content: center; min-height: 34px; padding: 0 9px; position: relative; }
     .top-chat-button:hover, .top-chat-button:focus-visible { border-color: var(--green); box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 14%, transparent); outline: 0; }
     .top-chat-button svg { fill: none; height: 17px; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; width: 17px; }
@@ -900,7 +900,7 @@
       main { padding: 20px 14px 30px; }
       .topline { margin-bottom: 22px; }
       .online-accounts { max-width: min(75vw, 480px); }
-      .today { display: none; }
+      .today { font-size: 11px; }
       .chat-panel { position: fixed; right: 12px; top: 60px; }
       .chat-incoming-preview { position: fixed; right: 12px; top: 60px; }
       .top-account-email { max-width: 145px; }
@@ -6126,7 +6126,7 @@
       const incomingMarkup = chatIncomingPreview
         ? `<button class="chat-incoming-preview" id="chat-preview-open" type="button" aria-live="polite" aria-label="Buka pesan chat dari ${escapeHtml(chatIncomingPreview.senderName || "Pengguna")}"><strong data-user-content>${escapeHtml(chatIncomingPreview.senderName || "Pesan baru")}</strong><span data-user-content>${escapeHtml(chatIncomingPreview.text || (chatIncomingPreview.attachments?.length ? `📎 ${chatIncomingPreview.attachments.length} lampiran` : "Lampiran baru"))}</span></button>`
         : "";
-      return `<div class="top-date-chat" id="top-date-chat"><button class="top-chat-button" id="chat-toggle" type="button" aria-label="Buka chat${unreadCount ? `, ${unreadCount} pesan belum dibaca` : ""}" aria-expanded="${chatPanelOpen}"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H5l-2 2v-9.5A7.5 7.5 0 0 1 10.5 4H12a8 8 0 0 1 8 7.5Z"/><path d="M8 11h8m-8 4h5"/></svg><span class="top-chat-label">Chat</span>${unreadBadge}</button><span class="today">${formatDate(new Date(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span>${incomingMarkup}${panelMarkup}</div>`;
+      return `<div class="top-date-chat" id="top-date-chat"><button class="top-chat-button" id="chat-toggle" type="button" aria-label="Buka chat${unreadCount ? `, ${unreadCount} pesan belum dibaca` : ""}" aria-expanded="${chatPanelOpen}"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H5l-2 2v-9.5A7.5 7.5 0 0 1 10.5 4H12a8 8 0 0 1 8 7.5Z"/><path d="M8 11h8m-8 4h5"/></svg><span class="top-chat-label">Chat</span>${unreadBadge}</button>${incomingMarkup}${panelMarkup}</div>`;
     }
     function refreshChatWidget() {
       const widget = document.getElementById("top-date-chat");
@@ -6176,7 +6176,7 @@
         "data-resources": "Data Resource"
       };
       const pageLabel = pageLabels[currentPage] || "History Changes";
-      return `<div class="topline"><div class="topline-heading"><div class="language-options workspace-language-options" role="group" aria-label="Pilih bahasa"><button class="language-option" type="button" data-language-option="id" aria-label="Bahasa Indonesia" aria-pressed="false"><svg class="language-flag" aria-hidden="true" viewBox="0 0 30 20"><rect width="30" height="10" fill="#ce1126"/><rect y="10" width="30" height="10" fill="#fff"/></svg></button><button class="language-option" type="button" data-language-option="en" aria-label="English" aria-pressed="false"><svg class="language-flag" aria-hidden="true" viewBox="0 0 60 30"><rect width="60" height="30" fill="#012169"/><path d="M0 0 60 30M60 0 0 30" stroke="#fff" stroke-width="6"/><path d="M0 0 60 30M60 0 0 30" stroke="#c8102e" stroke-width="2"/><path d="M30 0v30M0 15h60" stroke="#fff" stroke-width="10"/><path d="M30 0v30M0 15h60" stroke="#c8102e" stroke-width="4"/></svg></button></div><div class="crumb"><span class="crumb-workspace" data-user-content>${escapeHtml(activeWorkspaceName())}</span> <span> / </span> <b data-user-content>${escapeHtml(pageLabel)}</b></div>${onlineMarkup}</div><div class="top-actions"><div class="top-action-controls">${renderChatMarkup()}<div class="top-theme-controls"><button class="accent-toggle" type="button" data-accent-toggle aria-label="Ganti tema warna ke burgundy"><span class="accent-swatch" aria-hidden="true"></span><span data-accent-label>Burgundy</span></button><button class="theme-toggle" type="button" data-theme-toggle aria-label="Aktifkan dark mode" aria-pressed="false"><span class="theme-toggle-icon" aria-hidden="true">☾</span><span class="theme-toggle-label">Dark</span></button></div></div>${picMarkup}</div></div>`;
+      return `<div class="topline"><div class="topline-heading"><div class="language-options workspace-language-options" role="group" aria-label="Pilih bahasa"><button class="language-option" type="button" data-language-option="id" aria-label="Bahasa Indonesia" aria-pressed="false"><svg class="language-flag" aria-hidden="true" viewBox="0 0 30 20"><rect width="30" height="10" fill="#ce1126"/><rect y="10" width="30" height="10" fill="#fff"/></svg></button><button class="language-option" type="button" data-language-option="en" aria-label="English" aria-pressed="false"><svg class="language-flag" aria-hidden="true" viewBox="0 0 60 30"><rect width="60" height="30" fill="#012169"/><path d="M0 0 60 30M60 0 0 30" stroke="#fff" stroke-width="6"/><path d="M0 0 60 30M60 0 0 30" stroke="#c8102e" stroke-width="2"/><path d="M30 0v30M0 15h60" stroke="#fff" stroke-width="10"/><path d="M30 0v30M0 15h60" stroke="#c8102e" stroke-width="4"/></svg></button></div><div class="crumb"><span class="crumb-workspace" data-user-content>${escapeHtml(activeWorkspaceName())}</span> <span> / </span> <b data-user-content>${escapeHtml(pageLabel)}</b></div>${onlineMarkup}</div><div class="top-actions"><span class="today">${formatDate(new Date(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span><div class="top-action-controls">${renderChatMarkup()}<div class="top-theme-controls"><button class="accent-toggle" type="button" data-accent-toggle aria-label="Ganti tema warna ke burgundy"><span class="accent-swatch" aria-hidden="true"></span><span data-accent-label>Burgundy</span></button><button class="theme-toggle" type="button" data-theme-toggle aria-label="Aktifkan dark mode" aria-pressed="false"><span class="theme-toggle-icon" aria-hidden="true">☾</span><span class="theme-toggle-label">Dark</span></button></div></div>${picMarkup}</div></div>`;
     };
     const renderProductIdentity = (product) => `<div class="product-cell"><div><div class="product-name">${escapeHtml(product.name)}</div><div class="product-sku">${escapeHtml(product.sku)}</div></div></div>`;
     const renderReconciliationTableHead = (includeNote = false) => `<tr><th>No</th><th>Item / item code</th><th>Brand</th><th class="quantity-cell">VEF</th><th class="quantity-cell">SCAN</th><th class="quantity-cell">MANUAL</th><th class="quantity-cell">Inbound/Retur</th><th class="quantity-cell">PJ</th><th class="quantity-cell">Selisih</th><th>Check</th>${includeNote ? "<th>Note</th>" : ""}</tr>`;
