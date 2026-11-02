@@ -57,10 +57,12 @@
     .app-shell.sidebar-collapsed.sidebar-expanded { grid-template-columns: 240px minmax(0, 1fr); }
     .sidebar { background: linear-gradient(180deg, #245b3d 0%, #194a32 100%); border-right: 1px solid #194a32; box-shadow: 5px 0 24px rgba(33, 61, 40, .12); color: #f4f8f2; display: flex; flex-direction: column; height: 100vh; overflow-y: auto; padding: 27px 17px 18px; position: sticky; top: 0; }
     .app-shell, .sidebar { transition: grid-template-columns .22s ease, padding .22s ease; }
-    .workspace-page-enter { animation: workspace-genie-enter .52s cubic-bezier(.16, 1, .3, 1) both; transform-origin: 50% 100%; }
-    @keyframes workspace-genie-enter {
-      from { clip-path: inset(44% 15% 0 round 20px); filter: blur(2px); opacity: 0; transform: perspective(1200px) translate3d(0, 24px, 0) scale3d(.94, .78, 1); }
-      to { clip-path: inset(0 round 0); filter: blur(0); opacity: 1; transform: perspective(1200px) translate3d(0, 0, 0) scale3d(1, 1, 1); }
+    .workspace-page-enter { animation: workspace-side-enter .64s cubic-bezier(.22, 1, .36, 1) both; }
+    .workspace-page-enter-from-right { --workspace-enter-offset: 34px; }
+    .workspace-page-enter-from-left { --workspace-enter-offset: -34px; }
+    @keyframes workspace-side-enter {
+      from { filter: blur(1.5px); opacity: 0; transform: translate3d(var(--workspace-enter-offset), 0, 0) scale(.992); }
+      to { filter: blur(0); opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
     }
     .brand { align-items: center; display: flex; gap: 11px; padding: 0 11px; }
     .brand-copy { min-width: 0; }
@@ -7700,14 +7702,21 @@
       const preserveLayoutScanner = cameraDialog?.open
         && cameraDialog.dataset.layoutRackScanner === "true"
         && document.documentElement.classList.contains("web-camera-scanner-active");
-      const pageChanged = lastRenderedPage !== currentPage;
+      const previousPage = lastRenderedPage;
+      const pageChanged = previousPage !== currentPage;
       lastRenderedPage = currentPage;
-      if (pageChanged) main.classList.remove("workspace-page-enter");
+      if (pageChanged) main.classList.remove("workspace-page-enter", "workspace-page-enter-from-left", "workspace-page-enter-from-right");
       if (preserveLayoutScanner) document.querySelector(".app-shell")?.before(cameraDialog);
       main.innerHTML = currentPage === "dashboard" ? renderDashboard() : currentPage === "recorded-archive" ? renderRecordedSessionPage() : currentPage === "opname" ? renderOpname() : currentPage === "layouts" ? renderLayouts() : currentPage === "workspaces" ? renderWorkspaceSchedule() : currentPage === "products" ? renderProducts() : currentPage === "recap" ? renderRecap() : currentPage === "about-info" ? renderAboutWorkspace() : currentPage === "about" ? renderAbout() : currentPage === "admin-users" ? renderAdminUsers() : currentPage === "data-resources" ? renderDataResources() : currentPage === "completed-session-detail" ? renderCompletedSessionView() : currentPage === "completed-sessions" ? renderCompletedSessions() : renderHistory();
       if (pageChanged) {
+        const navigationPages = [...document.querySelectorAll(".nav-item")].map((item) => item.dataset.page);
+        const previousPageIndex = navigationPages.indexOf(previousPage);
+        const currentPageIndex = navigationPages.indexOf(currentPage);
+        const enterFrom = previousPageIndex >= 0 && currentPageIndex >= 0 && currentPageIndex < previousPageIndex
+          ? "workspace-page-enter-from-left"
+          : "workspace-page-enter-from-right";
         void main.offsetWidth;
-        main.classList.add("workspace-page-enter");
+        main.classList.add("workspace-page-enter", enterFrom);
       }
       if (preserveLayoutScanner) {
         if (currentPage === "layouts") {
