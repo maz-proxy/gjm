@@ -2858,7 +2858,7 @@
       "Laptop saja": "Laptops only",
       "PIC belum diisi": "PIC not set",
       "Nama PIC belum tersedia": "No PIC names available",
-      "Cari dan pilih brand": "Search and select a brand",
+      "Cari dan pilih": "Search and select",
       "Nama Brand belum tersedia": "No brand names available",
       "Bulan stock opname untuk": "Stock opname month for",
       "Week stock opname untuk": "Stock opname week for",
@@ -3834,6 +3834,9 @@
     function renderWorkspaceBrandIcon(name) {
       const brand = String(name || "").trim();
       if (!brand) return "";
+      if (/-\s*PT$/i.test(brand)) {
+        return `<span class="workspace-brand-icon" role="img" aria-label="Logo gudang ${escapeHtml(brand)}"><img class="workspace-brand-logo" src="./assets/icon-gudang.png" alt="" loading="lazy" decoding="async"></span>`;
+      }
       const brandKey = brand.toLocaleUpperCase("id-ID");
       const slug = BRAND_LOGO_SLUGS[brandKey];
       const domain = BRAND_LOGO_DOMAINS[brandKey];
@@ -7457,7 +7460,7 @@
           <header class="schedule-card-head">
             <div class="schedule-card-title">
               <div class="schedule-brand-fields">
-                <div class="schedule-brand-field"><label for="workspace-brand-${escapeHtml(workspace.id)}">Nama Brand</label><div class="schedule-resource-picker"><input class="workspace-name-input schedule-picker" id="workspace-brand-${escapeHtml(workspace.id)}" data-workspace-name="${escapeHtml(workspace.id)}" data-workspace-resource="brands" data-workspace-id="${escapeHtml(workspace.id)}" aria-label="Nama Brand" placeholder="${state.resources.brands.length ? "Cari dan pilih brand" : "Nama Brand belum tersedia"}" value="${escapeHtml(workspace.name)}" autocomplete="off" aria-autocomplete="list" aria-expanded="false" ${canEdit && !hasStarted && !isCompleted ? "" : 'disabled title="Brand sesi berjalan atau selesai tidak dapat diubah"'}><div class="schedule-resource-options" role="listbox" aria-label="Pilihan Nama Brand"></div></div></div>
+                <div class="schedule-brand-field"><label for="workspace-brand-${escapeHtml(workspace.id)}">Nama Brand</label><div class="schedule-resource-picker"><input class="workspace-name-input schedule-picker" id="workspace-brand-${escapeHtml(workspace.id)}" data-workspace-name="${escapeHtml(workspace.id)}" data-workspace-resource="brands" data-workspace-id="${escapeHtml(workspace.id)}" aria-label="Nama Brand" placeholder="${state.resources.brands.length ? "Cari dan pilih" : "Nama Brand belum tersedia"}" value="${escapeHtml(workspace.name)}" autocomplete="off" aria-autocomplete="list" aria-expanded="false" ${canEdit && !hasStarted && !isCompleted ? "" : 'disabled title="Brand sesi berjalan atau selesai tidak dapat diubah"'}><div class="schedule-resource-options" role="listbox" aria-label="Pilihan Nama Brand"></div></div></div>
                 <div class="schedule-brand-field"><label for="workspace-month-trigger-${escapeHtml(workspace.id)}">Bulan</label>${renderScheduleDropdown(`workspace-month-trigger-${workspace.id}`, `Bulan stock opname untuk ${workspace.name || emptyBrandNameLabel()}`, "schedule-period-select", `id="workspace-month-${escapeHtml(workspace.id)}" data-workspace-schedule-field="month" data-workspace-id="${escapeHtml(workspace.id)}"`, WORKSPACE_MONTHS.map((option) => [option, option]), month, !canEdit || hasStarted || isCompleted)}</div>
                 <div class="schedule-brand-field"><label for="workspace-period-trigger-${escapeHtml(workspace.id)}">Week</label>${renderScheduleDropdown(`workspace-period-trigger-${workspace.id}`, `Week stock opname untuk ${workspace.name || emptyBrandNameLabel()}`, "schedule-period-select", `id="workspace-period-${escapeHtml(workspace.id)}" data-workspace-schedule-field="period" data-workspace-id="${escapeHtml(workspace.id)}"`, WORKSPACE_PERIODS.map((option) => [option, option]), period, !canEdit || hasStarted || isCompleted)}</div>
               </div>
