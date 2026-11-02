@@ -57,12 +57,14 @@
     .app-shell.sidebar-collapsed.sidebar-expanded { grid-template-columns: 240px minmax(0, 1fr); }
     .sidebar { background: linear-gradient(180deg, #245b3d 0%, #194a32 100%); border-right: 1px solid #194a32; box-shadow: 5px 0 24px rgba(33, 61, 40, .12); color: #f4f8f2; display: flex; flex-direction: column; height: 100vh; overflow-y: auto; padding: 27px 17px 18px; position: sticky; top: 0; }
     .app-shell, .sidebar { transition: grid-template-columns .22s ease, padding .22s ease; }
-    .workspace-page-enter { animation: workspace-side-enter .64s cubic-bezier(.22, 1, .36, 1) both; }
-    .workspace-page-enter-from-right { --workspace-enter-offset: 34px; }
-    .workspace-page-enter-from-left { --workspace-enter-offset: -34px; }
-    @keyframes workspace-side-enter {
-      from { filter: blur(1.5px); opacity: 0; transform: translate3d(var(--workspace-enter-offset), 0, 0) scale(.992); }
+    .workspace-page-enter { animation: workspace-page-enter .68s cubic-bezier(.22, 1, .36, 1) both; }
+    .workspace-page-exit { animation: workspace-page-exit .68s cubic-bezier(.22, 1, .36, 1) both; }
+    @keyframes workspace-page-enter {
+      from { filter: blur(1px); opacity: .78; transform: translate3d(-28px, 0, 0) scale(.994); }
       to { filter: blur(0); opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+    }
+    @keyframes workspace-page-exit {
+      to { opacity: .68; transform: translate3d(100%, 0, 0) scale(.99); }
     }
     .brand { align-items: center; display: flex; gap: 11px; padding: 0 11px; }
     .brand-copy { min-width: 0; }
@@ -1932,7 +1934,7 @@
     html.mobile-drawer-enabled .sidebar-toggle,
     html.mobile-drawer-enabled .app-shell > .sidebar .nav-item { touch-action: manipulation; }
     @media (prefers-reduced-motion: reduce) {
-      .workspace-page-enter { animation: none; }
+      .workspace-page-enter, .workspace-page-exit { animation: none; }
       html.mobile-drawer-enabled .app-shell > .sidebar,
       html.mobile-drawer-enabled .android-sidebar-handle,
       html.mobile-drawer-enabled .android-sidebar-backdrop { transition: none; }
@@ -7684,6 +7686,30 @@
       notify(`Kartu sesi ${workspace.name || "ini"} beserta data miliknya berhasil dihapus. Kartu sesi lainnya tetap aman.`);
     }
 
+    function captureWorkspacePage(main) {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return null;
+      const bounds = main.getBoundingClientRect();
+      if (bounds.width <= 0 || bounds.height <= 0) return null;
+      const snapshot = main.cloneNode(true);
+      snapshot.removeAttribute("id");
+      snapshot.querySelectorAll("[id]").forEach((element) => element.removeAttribute("id"));
+      snapshot.inert = true;
+      snapshot.setAttribute("aria-hidden", "true");
+      snapshot.classList.remove("workspace-page-enter", "workspace-page-enter-from-left", "workspace-page-enter-from-right");
+      Object.assign(snapshot.style, {
+        height: `${bounds.height}px`,
+        left: `${bounds.left}px`,
+        margin: "0",
+        overflow: "hidden",
+        pointerEvents: "none",
+        position: "fixed",
+        top: `${bounds.top}px`,
+        width: `${bounds.width}px`,
+        zIndex: "50"
+      });
+      return snapshot;
+    }
+
     function render() {
       if ((currentPage === "admin-users" && !isSuperAdmin())
         || (currentPage === "data-resources" && !canManageDataResources())) currentPage = "opname";
@@ -7705,18 +7731,22 @@
       const previousPage = lastRenderedPage;
       const pageChanged = previousPage !== currentPage;
       lastRenderedPage = currentPage;
-      if (pageChanged) main.classList.remove("workspace-page-enter", "workspace-page-enter-from-left", "workspace-page-enter-from-right");
+      if (pageChanged) main.classList.remove("workspace-page-enter");
+      if (pageChanged) document.querySelectorAll(".workspace-page-exit").forEach((snapshot) => snapshot.remove());
+      const previousPageSnapshot = pageChanged ? captureWorkspacePage(main) : null;
       if (preserveLayoutScanner) document.querySelector(".app-shell")?.before(cameraDialog);
       main.innerHTML = currentPage === "dashboard" ? renderDashboard() : currentPage === "recorded-archive" ? renderRecordedSessionPage() : currentPage === "opname" ? renderOpname() : currentPage === "layouts" ? renderLayouts() : currentPage === "workspaces" ? renderWorkspaceSchedule() : currentPage === "products" ? renderProducts() : currentPage === "recap" ? renderRecap() : currentPage === "about-info" ? renderAboutWorkspace() : currentPage === "about" ? renderAbout() : currentPage === "admin-users" ? renderAdminUsers() : currentPage === "data-resources" ? renderDataResources() : currentPage === "completed-session-detail" ? renderCompletedSessionView() : currentPage === "completed-sessions" ? renderCompletedSessions() : renderHistory();
       if (pageChanged) {
-        const navigationPages = [...document.querySelectorAll(".nav-item")].map((item) => item.dataset.page);
-        const previousPageIndex = navigationPages.indexOf(previousPage);
-        const currentPageIndex = navigationPages.indexOf(currentPage);
-        const enterFrom = previousPageIndex >= 0 && currentPageIndex >= 0 && currentPageIndex < previousPageIndex
-          ? "workspace-page-enter-from-left"
-          : "workspace-page-enter-from-right";
         void main.offsetWidth;
-        main.classList.add("workspace-page-enter", enterFrom);
+        main.classList.add("workspace-page-enter");
+        if (previousPageSnapshot) {
+          previousPageSnapshot.addEventListener("animationend", (event) => {
+            if (event.target === previousPageSnapshot && event.animationName === "workspace-page-exit") previousPageSnapshot.remove();
+          });
+          previousPageSnapshot.classList.add("workspace-page-exit");
+          document.body.append(previousPageSnapshot);
+          window.setTimeout(() => previousPageSnapshot.remove(), 760);
+        }
       }
       if (preserveLayoutScanner) {
         if (currentPage === "layouts") {
