@@ -212,6 +212,7 @@
     .schedule-summary-brand-icon { display: contents; }
     .workspace-period-label { color: #d5e9df; font-size: 10px; font-weight: 600; letter-spacing: .25px; }
     .top-actions { align-items: flex-end; display: flex; flex-direction: column; gap: 2px; }
+    .top-action-controls { align-items: center; display: flex; flex-wrap: wrap; gap: 9px; justify-content: flex-end; }
     .top-theme-controls { align-items: center; display: flex; flex-direction: row; gap: 4px; }
     .today { color: #656c61; font-size: 12px; }
     .top-date-chat { align-items: center; display: flex; gap: 9px; position: relative; }
@@ -6156,7 +6157,7 @@
         "data-resources": "Data Resource"
       };
       const pageLabel = pageLabels[currentPage] || "History Changes";
-      return `<div class="topline"><div class="topline-heading"><div class="language-options workspace-language-options" role="group" aria-label="Pilih bahasa"><button class="language-option" type="button" data-language-option="id" aria-label="Bahasa Indonesia" aria-pressed="false"><svg class="language-flag" aria-hidden="true" viewBox="0 0 30 20"><rect width="30" height="10" fill="#ce1126"/><rect y="10" width="30" height="10" fill="#fff"/></svg></button><button class="language-option" type="button" data-language-option="en" aria-label="English" aria-pressed="false"><svg class="language-flag" aria-hidden="true" viewBox="0 0 60 30"><rect width="60" height="30" fill="#012169"/><path d="M0 0 60 30M60 0 0 30" stroke="#fff" stroke-width="6"/><path d="M0 0 60 30M60 0 0 30" stroke="#c8102e" stroke-width="2"/><path d="M30 0v30M0 15h60" stroke="#fff" stroke-width="10"/><path d="M30 0v30M0 15h60" stroke="#c8102e" stroke-width="4"/></svg></button></div><div class="crumb"><span class="crumb-workspace" data-user-content>${escapeHtml(activeWorkspaceName())}</span> <span> / </span> <b data-user-content>${escapeHtml(pageLabel)}</b></div>${onlineMarkup}</div><div class="top-actions">${renderChatMarkup()}${picMarkup}<div class="top-theme-controls"><button class="accent-toggle" type="button" data-accent-toggle aria-label="Ganti tema warna ke burgundy"><span class="accent-swatch" aria-hidden="true"></span><span data-accent-label>Burgundy</span></button><button class="theme-toggle" type="button" data-theme-toggle aria-label="Aktifkan dark mode" aria-pressed="false"><span class="theme-toggle-icon" aria-hidden="true">☾</span><span class="theme-toggle-label">Dark</span></button></div></div></div>`;
+      return `<div class="topline"><div class="topline-heading"><div class="language-options workspace-language-options" role="group" aria-label="Pilih bahasa"><button class="language-option" type="button" data-language-option="id" aria-label="Bahasa Indonesia" aria-pressed="false"><svg class="language-flag" aria-hidden="true" viewBox="0 0 30 20"><rect width="30" height="10" fill="#ce1126"/><rect y="10" width="30" height="10" fill="#fff"/></svg></button><button class="language-option" type="button" data-language-option="en" aria-label="English" aria-pressed="false"><svg class="language-flag" aria-hidden="true" viewBox="0 0 60 30"><rect width="60" height="30" fill="#012169"/><path d="M0 0 60 30M60 0 0 30" stroke="#fff" stroke-width="6"/><path d="M0 0 60 30M60 0 0 30" stroke="#c8102e" stroke-width="2"/><path d="M30 0v30M0 15h60" stroke="#fff" stroke-width="10"/><path d="M30 0v30M0 15h60" stroke="#c8102e" stroke-width="4"/></svg></button></div><div class="crumb"><span class="crumb-workspace" data-user-content>${escapeHtml(activeWorkspaceName())}</span> <span> / </span> <b data-user-content>${escapeHtml(pageLabel)}</b></div>${onlineMarkup}</div><div class="top-actions"><div class="top-action-controls">${renderChatMarkup()}<div class="top-theme-controls"><button class="accent-toggle" type="button" data-accent-toggle aria-label="Ganti tema warna ke burgundy"><span class="accent-swatch" aria-hidden="true"></span><span data-accent-label>Burgundy</span></button><button class="theme-toggle" type="button" data-theme-toggle aria-label="Aktifkan dark mode" aria-pressed="false"><span class="theme-toggle-icon" aria-hidden="true">☾</span><span class="theme-toggle-label">Dark</span></button></div></div>${picMarkup}</div></div>`;
     };
     const renderProductIdentity = (product) => `<div class="product-cell"><div><div class="product-name">${escapeHtml(product.name)}</div><div class="product-sku">${escapeHtml(product.sku)}</div></div></div>`;
     const renderReconciliationTableHead = (includeNote = false) => `<tr><th>No</th><th>Item / item code</th><th>Brand</th><th class="quantity-cell">VEF</th><th class="quantity-cell">SCAN</th><th class="quantity-cell">MANUAL</th><th class="quantity-cell">Inbound/Retur</th><th class="quantity-cell">PJ</th><th class="quantity-cell">Selisih</th><th>Check</th>${includeNote ? "<th>Note</th>" : ""}</tr>`;
@@ -8531,6 +8532,32 @@
       return event;
     }
 
+    function vibrateForEntry() {
+      const duration = 35;
+      const browserVibration = () => {
+        if (typeof navigator.vibrate !== "function") return;
+        try {
+          navigator.vibrate(duration);
+        } catch (error) {
+          console.warn("Getaran browser tidak dapat dijalankan:", error);
+        }
+      };
+      const nativeScanner = window.Capacitor?.Plugins?.NativeBarcodeScanner;
+      if (typeof nativeScanner?.vibrate === "function") {
+        try {
+          Promise.resolve(nativeScanner.vibrate()).catch((error) => {
+            console.warn("Getaran native tidak dapat dijalankan; mencoba getaran browser:", error);
+            browserVibration();
+          });
+        } catch (error) {
+          console.warn("Getaran native tidak dapat dijalankan; mencoba getaran browser:", error);
+          browserVibration();
+        }
+        return;
+      }
+      browserVibration();
+    }
+
     function getScanAudioContext() {
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
       if (!AudioContextClass) return null;
@@ -8677,6 +8704,7 @@
       const productBefore = state.products.find((product) => product.id === state.serialMaster[normalizeSerial(serial)]?.productId);
       const soBefore = productBefore ? scannedFor(productBefore.id) : 0;
       const scan = addScanEvent(serial, state.scanEvents, layout);
+      vibrateForEntry();
       playScanBeep(scan.status);
       state.products.forEach((product) => { product.count = scannedFor(product.id); });
       const soAfter = productBefore ? scannedFor(productBefore.id) : soBefore;
@@ -8727,6 +8755,7 @@
       };
       state.manualEntries.push(entry);
       lastManualEntryId = entry.id;
+      vibrateForEntry();
       playScanBeep("match");
       syncManualBoxTotals();
       recordActivity("Input manual ditambahkan", `${product.sku} · ${product.name} sebanyak ${quantity} dicatat manual di ${rackLabel(layout)}.`);

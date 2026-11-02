@@ -7,6 +7,9 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
+import android.os.Build;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.util.Size;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -72,6 +75,25 @@ public class NativeBarcodeScannerPlugin extends Plugin {
     private long lastBarcodeEventAt;
     private long lastBarcodeMissEventAt;
     private String lastBarcodeValue = "";
+
+    @PluginMethod
+    public void vibrate(PluginCall call) {
+        Vibrator vibrator = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
+        if (vibrator == null || !vibrator.hasVibrator()) {
+            call.reject("Perangkat tidak mendukung getaran.");
+            return;
+        }
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator.vibrate(VibrationEffect.createOneShot(35, VibrationEffect.DEFAULT_AMPLITUDE));
+            } else {
+                vibrator.vibrate(35);
+            }
+            call.resolve();
+        } catch (RuntimeException error) {
+            call.reject("Getaran perangkat gagal dijalankan.", error);
+        }
+    }
 
     @PluginMethod
     public void startScanner(PluginCall call) {
