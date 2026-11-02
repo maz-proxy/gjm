@@ -3090,11 +3090,16 @@
     const exactLanguageTranslations = new Map(languageTranslationEntries.filter(([source]) =>
       !source.includes(" ") && !/[:/?!.]/.test(source)));
     const translateText = (text) => {
-      if (currentLanguage !== "en") return text;
+      if (currentLanguage !== "en") {
+        return text.replace(/\bNama Brand\b/g, "Nama Brand / Gudang").replace(/\bNama brand\b/g, "Nama brand / Gudang");
+      }
       let translated = text.replace(phraseTranslationPattern, (source) => phraseTranslationMap.get(source));
       const exact = exactLanguageTranslations.get(text.trim());
       if (exact) translated = translated.replace(text.trim(), exact);
-      return translated;
+      return translated.replace(/\b(Brand|brand)(?: name)?\b/g, (label) =>
+        label[0] === label[0].toUpperCase()
+          ? label.toLowerCase().includes("name") ? "Brand / Warehouse name" : "Brand / Warehouse"
+          : label.toLowerCase().includes("name") ? "brand / warehouse name" : "brand / warehouse");
     };
     function translateDocument(root = document.body) {
       const userDataSelector = ".product-name, .product-sku, .serial-token, .layout-scan-code, .manual-item-sku, .manual-product-option, .manual-product-option-code, .layout-name, .completed-rack-title, .layout-record-heading, .online-user, .profile-name, .schedule-owner, .brand-name, .recorded-pic-name, .activity-details, .workspace-page-title h1, .recorded-archive-heading h1, .schedule-summary-title, .workspace-name-input, [data-workspace-name], .recorded-period-brand .schedule-select-option, .schedule-resource-option:not(.schedule-select-option), [data-user-content], code";
