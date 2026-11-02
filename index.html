@@ -3895,6 +3895,22 @@
       notify("Unggah file VEF di halaman Master VEF sebelum menggunakan kartu Rack.");
       return false;
     }
+    function canScanRack(layout) {
+      return hasRackNumber(layout)
+        && Number.isSafeInteger(state.layoutQuantities[layout])
+        && state.layoutQuantities[layout] >= 0
+        && state.products.length > 0
+        && state.activeSession.status === "active"
+        && canEditActiveSession()
+        && workspaceHasActiveWorkbook(activeWorkspace());
+    }
+    function updateLayoutScanControls(layout) {
+      const form = document.querySelector(`[data-layout-form="${CSS.escape(layout)}"]`);
+      if (!form) return;
+      const canScan = canScanRack(layout);
+      form.querySelectorAll(".layout-input, button[type='submit'], [data-camera-scan]")
+        .forEach((control) => control.toggleAttribute("disabled", !canScan));
+    }
     function workspaceIsOwnedByCurrentUser(workspace) {
       const user = authSession?.user;
       if (!workspace || !user) return false;
@@ -5113,16 +5129,16 @@
     }
     async function claimDeviceSession(session) {
       const sessionId = getDeviceSessionId(session.user.id);
-      const { error } = await supabaseClient.rpc("claim_stock_opname_device_session", {
+      const { data: claimed, error } = await supabaseClient.rpc("claim_stock_opname_device_session", {
         p_session_id: sessionId
       });
       if (error) throw error;
-      const { error: signOutError } = await supabaseClient.auth.signOut({ scope: "others" });
-      if (signOutError) {
-        throw new Error(`Sesi login di perangkat lain gagal dicabut: ${signOutError.message}`);
-      }
+      if (claimed !== true) throw new Error("Sesi perangkat tidak berhasil diklaim.");
       activeDeviceSessionId = sessionId;
-      return sessionId;
+      const revokeOtherSessions = supabaseClient.auth.signOut({ scope: "others" }).then(({ error: signOutError }) => {
+        if (signOutError) throw new Error(`Sesi login di perangkat lain gagal dicabut: ${signOutError.message}`);
+      });
+      return { sessionId, revokeOtherSessions };
     }
     async function checkDeviceSession() {
       if (!authSession?.user || !activeDeviceSessionId || deviceSessionCheckInProgress || deviceSessionLogoutInProgress) return;
@@ -5244,10 +5260,13 @@
       setLoginBusy(true);
       showAuthMessage("");
       try {
-        await claimDeviceSession(session);
-        await checkDeviceSession();
+        const { revokeOtherSessions } = await claimDeviceSession(session);
+        const [{ data: row, error }] = await Promise.all([
+          readSharedState(),
+          revokeOtherSessions,
+          checkDeviceSession()
+        ]);
         if (deviceSessionLogoutInProgress || authSession?.user?.id !== session.user.id) return;
-        const { data: row, error } = await readSharedState();
         if (error) throw error;
         if (row) {
           state = normalizeSharedState(row.data);
@@ -6437,11 +6456,9 @@
       card?.classList.toggle("quantity-matched", scanCount > 0 && status.className === "match");
       card?.classList.toggle("quantity-over", status.className === "different");
       const form = document.querySelector(`[data-layout-form="${CSS.escape(layout)}"]`);
-      const hasTarget = Number.isSafeInteger(state.layoutQuantities[layout]) && state.layoutQuantities[layout] >= 0;
       const rackIsNamed = hasRackNumber(layout);
-      const canScan = hasTarget && rackIsNamed && state.products.length > 0 && state.activeSession.status === "active" && canEditActiveSession();
-      form?.querySelector(".layout-input")?.toggleAttribute("disabled", !canScan);
-      form?.querySelector('button[type="submit"]')?.toggleAttribute("disabled", !canScan);
+      const hasTarget = Number.isSafeInteger(state.layoutQuantities[layout]) && state.layoutQuantities[layout] >= 0;
+      updateLayoutScanControls(layout);
       const scanInput = form?.querySelector(".layout-input");
       if (scanInput) scanInput.placeholder = !rackIsNamed ? "Isi nama Rack dahulu" : hasTarget ? `Pindai SN di ${rackLabel(layout)}` : "Isi quantity target dahulu";
       persist();
@@ -6460,9 +6477,7 @@
       const form = document.querySelector(`[data-layout-form="${CSS.escape(layout)}"]`);
       const rackIsNamed = hasRackNumber(layout);
       const hasTarget = Number.isSafeInteger(state.layoutQuantities[layout]) && state.layoutQuantities[layout] >= 0;
-      const canScan = rackIsNamed && hasTarget && state.products.length > 0 && state.activeSession.status === "active" && canEditActiveSession();
-      form?.querySelector(".layout-input")?.toggleAttribute("disabled", !canScan);
-      form?.querySelector('button[type="submit"]')?.toggleAttribute("disabled", !canScan);
+      updateLayoutScanControls(layout);
       const scanInput = form?.querySelector(".layout-input");
       if (scanInput) scanInput.placeholder = !rackIsNamed ? "Isi nama Rack dahulu" : hasTarget ? `Pindai SN di ${name}` : "Isi quantity target dahulu";
       const rackInput = document.getElementById(`rack-number-${CSS.escape(layout)}`);
