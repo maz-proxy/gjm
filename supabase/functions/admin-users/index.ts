@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const appOrigin = "https://projectme-maz.github.io";
 const vercelOrigin = "https://m-maz.vercel.app";
+const customOrigins = new Set(["https://maz.is-local.org", "https://www.maz.is-local.org"]);
 const localOrigins = new Set([
   "http://127.0.0.1:8000",
   "http://localhost:8000",
@@ -32,7 +33,7 @@ function makeTemporaryPassword() {
 
 Deno.serve(async (request: Request) => {
   const origin = request.headers.get("origin") || "";
-  const allowedOrigin = origin === appOrigin || origin === vercelOrigin || localOrigins.has(origin);
+  const allowedOrigin = origin === appOrigin || origin === vercelOrigin || customOrigins.has(origin) || localOrigins.has(origin);
   if (request.method === "OPTIONS") {
     if (!allowedOrigin) return new Response(null, { status: 403 });
     return new Response("ok", {

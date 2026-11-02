@@ -45,13 +45,14 @@ The debug APK is for testing. A release APK intended for distribution must be si
 The browser app uses the Supabase project URL and publishable key in `index.html`. A publishable key is intended for browser use; never put a Supabase secret or `service_role` key in this repository.
 
 1. In Supabase **Authentication → Settings**, disable public sign-ups.
-2. In **Authentication → URL Configuration**, set **Site URL** to `https://m-maz.vercel.app/` and add it under **Redirect URLs**. Keep `https://projectme-maz.github.io/gjm/` there too if that address is still used.
+2. The current production URL is `https://maz.is-local.org/`. Set **Site URL** to that address and add both `https://maz.is-local.org/**` and `https://www.maz.is-local.org/**` under **Redirect URLs** so either custom-domain hostname works. Keep `https://m-maz.vercel.app/**` and `https://projectme-maz.github.io/gjm/**` there if those addresses are still used. These settings are also declared in `supabase/config.toml`.
 3. In **SQL Editor → New query**, paste the contents of [`supabase-setup.sql`](./supabase-setup.sql), and click **Run**. This creates the shared-state table, private username-to-auth-account mapping, and the server-checked active device session used to allow one device per account. Re-run the full script after application updates that change database functions, shared-state protections, or accepted workbook file types.
-4. Install the [Supabase CLI](https://supabase.com/docs/guides/cli), then open a terminal in this project folder and deploy the Edge Functions. The browser origins `https://m-maz.vercel.app` and `https://projectme-maz.github.io` are explicitly allowed; redeploy these functions after changing their origin allowlists:
+4. Install the [Supabase CLI](https://supabase.com/docs/guides/cli), then open a terminal in this project folder and deploy the Edge Functions. Both custom-domain browser origins, `https://maz.is-local.org` and `https://www.maz.is-local.org`, along with `https://m-maz.vercel.app` and `https://projectme-maz.github.io`, are explicitly allowed. Push the declared auth URL settings and redeploy these functions after changing their origin allowlists:
 
    ```powershell
    npx.cmd --yes supabase login
    npx.cmd --yes supabase link --project-ref gyrzbossqkuiawwuqkfo
+   npx.cmd --yes supabase config push --project-ref gyrzbossqkuiawwuqkfo
    npx.cmd --yes supabase functions deploy login-with-username --project-ref gyrzbossqkuiawwuqkfo
    npx.cmd --yes supabase functions deploy provision-stock-users --project-ref gyrzbossqkuiawwuqkfo
    npx.cmd --yes supabase functions deploy admin-users --project-ref gyrzbossqkuiawwuqkfo

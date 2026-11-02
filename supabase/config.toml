@@ -6,3 +6,16 @@ verify_jwt = false
 
 [functions.admin-users]
 verify_jwt = false
+
+[auth]
+site_url = "https://maz.is-local.org"
+additional_redirect_urls = [
+  "https://maz.is-local.org/**",
+  "https://www.maz.is-local.org/**",
+  "https://gjm-m-maz.vercel.app/",
+  "https://gjm-m-maz.vercel.app/**",
+  "https://gjm-*-m-maz.vercel.app",
+  "https://gjm-*-m-maz.vercel.app/**",
+  "https://m-maz.vercel.app/**",
+  "https://projectme-maz.github.io/gjm/**",
+]
