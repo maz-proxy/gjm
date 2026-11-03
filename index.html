@@ -370,6 +370,7 @@
     .note-input { background: #fff; border: 1px solid #dce1d8; border-radius: 4px; font-size: 11px; height: 30px; min-width: 150px; outline: 0; padding: 0 8px; width: 100%; }
     .note-input:focus { border-color: #739b7c; box-shadow: 0 0 0 2px rgba(40,93,69,.09); }
     .scan-log { color: #596056; font-size: 10px; font-variant-numeric: tabular-nums; }
+    .scan-log.duplicate { color: var(--red); font-weight: 700; }
     .scan-log-table { min-width: 520px; }
     .scan-log .row-status { margin-right: 4px; }
     .layout-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); }
@@ -496,7 +497,7 @@
     .layout-scan-watermark { color: var(--muted); font-size: 5px; font-weight: 400; line-height: 1.2; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .layout-scan-detail[open] .layout-scan-watermark { display: none; }
     .layout-scan-code, .layout-scan-serial { flex: 0 0 auto; }
-    .layout-scan-code.not-found { color: var(--red); }
+    .layout-scan-code.not-found, .layout-scan-code.duplicate { color: var(--red); }
     .layout-scan-name { flex: 1 1 160px; min-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .layout-scan-type { color: var(--muted); flex: 0 1 auto; }
     .layout-scan-info { min-width: 0; overflow-wrap: anywhere; }
@@ -6300,7 +6301,7 @@
         <section class="table-section"><div class="table-toolbar"><div class="table-title">Rekonsiliasi per item <span class="table-count">${filtered.length} dari ${state.products.length} item · ${stats.total} ${state.countMode === "all" ? "item" : "laptop"} dihitung · ${stats.nonLaptop} tidak dihitung · SCAN ${formatNumber(totals.scan)} + MANUAL ${formatNumber(totals.manual)} + PJ ${formatNumber(totals.pj)} = ${formatNumber(totals.total)} / VEF ${formatNumber(totals.expected)} + Inbound/Retur ${formatNumber(totals.inbound)} = ${formatNumber(totals.expectedWithInbound)}</span></div><div class="filters"><div class="search-wrap"><span class="search-icon">⌕</span><input class="search-input" id="search-input" placeholder="Cari item code atau nama" value="${escapeHtml(searchTerm)}" aria-label="Cari item"></div></div></div>
           <div class="table-scroll"><table><thead>${renderReconciliationTableHead()}</thead><tbody>${productRows(filtered, active, canEdit)}</tbody></table></div>
           <div class="table-footer"><span class="auto-save"><span class="save-dot"></span> Tersimpan otomatis</span><span>Menampilkan ${filtered.length} barang</span></div></section>
-        <section class="table-section" style="margin-top:15px"><div class="table-toolbar"><div class="table-title">Riwayat pemindaian <span class="table-count">${state.scanEvents.length} scan</span></div></div><div class="table-scroll"><table class="scan-log-table"><thead><tr><th>Waktu</th><th>Serial Number</th><th>Item code</th><th>Rack</th><th>Hasil scan</th></tr></thead><tbody>${latestScans.length ? latestScans.map((scan) => `<tr><td>${escapeHtml(formatDate(scan.scannedAt, { hour: "2-digit", minute: "2-digit", second: "2-digit" }))}</td><td class="scan-log">${escapeHtml(scan.serial)}</td><td>${escapeHtml(scan.sku || "-")}</td><td>${escapeHtml(rackLabel(scan.layout))}</td><td><span class="row-status ${scan.status === "match" ? "match" : scan.status === "non-laptop" ? "non-laptop" : "shortage"}">${scan.status === "match" ? "Cocok di VEF" : scan.status === "duplicate" ? "SN duplikat" : scan.status === "non-laptop" ? "Bukan laptop" : "Tidak ada di VEF"}</span></td></tr>`).join("") : `<tr><td class="empty-row" colspan="5">Belum ada Serial Number yang dipindai.</td></tr>`}</tbody></table></div></section>`;
+        <section class="table-section" style="margin-top:15px"><div class="table-toolbar"><div class="table-title">Riwayat pemindaian <span class="table-count">${state.scanEvents.length} scan</span></div></div><div class="table-scroll"><table class="scan-log-table"><thead><tr><th>Waktu</th><th>Serial Number</th><th>Item code</th><th>Rack</th><th>Hasil scan</th></tr></thead><tbody>${latestScans.length ? latestScans.map((scan) => `<tr><td>${escapeHtml(formatDate(scan.scannedAt, { hour: "2-digit", minute: "2-digit", second: "2-digit" }))}</td><td class="scan-log${scan.status === "duplicate" ? " duplicate" : ""}">${escapeHtml(scan.serial)}</td><td>${escapeHtml(scan.sku || "-")}</td><td>${escapeHtml(rackLabel(scan.layout))}</td><td><span class="row-status ${scan.status === "match" ? "match" : scan.status === "non-laptop" ? "non-laptop" : "shortage"}">${scan.status === "match" ? "Cocok di VEF" : scan.status === "duplicate" ? "SN duplikat" : scan.status === "non-laptop" ? "Bukan laptop" : "Tidak ada di VEF"}</span></td></tr>`).join("") : `<tr><td class="empty-row" colspan="5">Belum ada Serial Number yang dipindai.</td></tr>`}</tbody></table></div></section>`;
     }
 
     function renderProducts() {
@@ -6384,7 +6385,7 @@
       const scannedAt = scan.scannedAt
         ? formatDate(scan.scannedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" })
         : "-";
-      return `<details class="layout-scan-detail"${printMode ? " open" : ""}><summary class="layout-scan-summary layout-scan-summary-live"><span class="layout-scan-code${scan.status === "not-found" ? " not-found" : ""}">SN: ${escapeHtml(scan.serial || "-")}</span><span class="layout-scan-watermark">${escapeHtml(itemName)}</span></summary><div class="layout-scan-detail-body"><span>Item Code: ${escapeHtml(scan.sku || "-")}</span><span>Item Name: ${escapeHtml(itemName)}</span>${itemGroup ? `<span>Tipe: ${escapeHtml(itemGroup)}</span>` : ""}<span>Serial Number: ${escapeHtml(scan.serial || "-")}</span><span>Hasil scan: ${escapeHtml(status)}${warning}</span><span>Tanggal dan waktu: ${escapeHtml(scannedAt)}</span></div></details>`;
+      return `<details class="layout-scan-detail"${printMode ? " open" : ""}><summary class="layout-scan-summary layout-scan-summary-live"><span class="layout-scan-code${scan.status === "not-found" ? " not-found" : scan.status === "duplicate" ? " duplicate" : ""}">SN: ${escapeHtml(scan.serial || "-")}</span><span class="layout-scan-watermark">${escapeHtml(itemName)}</span></summary><div class="layout-scan-detail-body"><span>Item Code: ${escapeHtml(scan.sku || "-")}</span><span>Item Name: ${escapeHtml(itemName)}</span>${itemGroup ? `<span>Tipe: ${escapeHtml(itemGroup)}</span>` : ""}<span>Serial Number: ${escapeHtml(scan.serial || "-")}</span><span>Hasil scan: ${escapeHtml(status)}${warning}</span><span>Tanggal dan waktu: ${escapeHtml(scannedAt)}</span></div></details>`;
     }
 
     function renderManualEntryCards(entries, { products = [], canDelete = false, latestEntryId = "", printMode = false } = {}) {
