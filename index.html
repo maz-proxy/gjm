@@ -2876,7 +2876,7 @@
       "tersisa": "remaining",
       "unit tercatat": "units counted",
       "unit target": "target units",
-      "Progres per brand": "Progress by brand",
+      "Progres per Brand / Gudang": "Progress by Brand / Warehouse",
       "Sesi aktif saja · quantity opname dibanding target VEF + Inbound/Retur": "Active sessions only · stock opname quantity vs. VEF + Inbound/Return target",
       "Belum ada sesi berjalan. Unggah workbook pada sesi bernama brand di Master VEF untuk memulai.": "No active sessions. Upload a workbook to a named brand session in VEF Master to get started.",
       "Pantau progres scan, jumlah item dan unit per warehouse, quantity SCAN/MANUAL/PJ, serta sesi yang masih berjalan.": "Track scan progress, item and unit counts by warehouse, SCAN/MANUAL/PJ quantities, and active sessions.",
@@ -7428,7 +7428,7 @@
               <div class="dashboard-legend"><span class="dashboard-legend-item"><i class="dashboard-legend-dot"></i>${formatNumber(total.totalQty)} unit tercatat</span><span class="dashboard-legend-item"><i class="dashboard-legend-dot remaining"></i>${formatNumber(overallTargetQuantity)} unit target</span></div>
             </div>
           </article>
-          <article class="dashboard-panel"><header class="dashboard-panel-head"><div><div class="dashboard-panel-title">Progres per brand</div><div class="dashboard-panel-subtitle">Sesi aktif saja · quantity opname dibanding target VEF + Inbound/Retur</div></div><span class="dashboard-chart-tag">${workspaceStats.length} brand</span></header><div class="dashboard-chart-list">${chartRows}</div>${workspaceStats.length ? "" : '<div class="dashboard-empty">Belum ada sesi berjalan. Unggah workbook pada sesi bernama brand di Master VEF untuk memulai.</div>'}</article>
+          <article class="dashboard-panel"><header class="dashboard-panel-head"><div><div class="dashboard-panel-title">Progres per Brand / Gudang</div><div class="dashboard-panel-subtitle">Sesi aktif saja · quantity opname dibanding target VEF + Inbound/Retur</div></div><span class="dashboard-chart-tag">${workspaceStats.length} brand</span></header><div class="dashboard-chart-list">${chartRows}</div>${workspaceStats.length ? "" : '<div class="dashboard-empty">Belum ada sesi berjalan. Unggah workbook pada sesi bernama brand di Master VEF untuk memulai.</div>'}</article>
         </section>
       </div>`;
     }
