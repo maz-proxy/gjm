@@ -5528,11 +5528,11 @@
           remoteUpdatedAt = row.updated_at;
           remoteVersion = row.version;
           lastSyncedState = stableSerialize(remoteState);
-          if (stableSerialize(activeWorkspace()?.data || {}) !== previousActiveData) {
-            renderPreservingActiveInput();
-          } else if (stableSerialize({ chatMessages: state.chatMessages, chatArchiveMessages: state.chatArchiveMessages, chatReadAt: state.chatReadAt }) !== previousChatState || incomingMessages.length) {
+          const nonChatStateChanged = stableSerialize(activeWorkspace()?.data || {}) !== previousActiveData;
+          const chatStateChanged = serializeChatState(state) !== previousChatState;
+          if (nonChatStateChanged) renderPreservingActiveInput();
+          if (chatStateChanged) {
             refreshChatWidget();
-            if (chatPanelOpen) scrollChatToLatest();
           }
         }
         console.warn("Workspace sedang menerima banyak perubahan bersamaan; percobaan penyimpanan berikutnya dijadwalkan.");
@@ -5591,6 +5591,7 @@
         if (row.version !== remoteVersion && stableSerialize(remoteState) !== lastSyncedState) {
           const previousState = stableSerialize(state);
           const previousNonChatState = serializeStateWithoutChat(state);
+          const previousChatState = serializeChatState(state);
           const localState = normalizeSharedState(JSON.parse(stableSerialize(state)));
           const localMessageIds = new Set((localState.chatMessages || []).map((message) => message.id));
           const incomingMessages = (remoteState.chatMessages || []).filter((message) =>
@@ -5605,9 +5606,8 @@
           persistLocalState();
           if (stableSerialize(state) !== previousState) {
             if (serializeStateWithoutChat(state) !== previousNonChatState) renderPreservingActiveInput();
-            else refreshChatWidget();
+            if (serializeChatState(state) !== previousChatState) refreshChatWidget();
           }
-          if (incomingMessages.length && chatPanelOpen) scrollChatToLatest();
           if (archivedExpiredMessages || stableSerialize(serializeSharedState(state)) !== lastSyncedState) {
             clearTimeout(syncTimer);
             syncTimer = setTimeout(saveSharedState, 100);
@@ -6465,7 +6465,7 @@
         ? `<div class="chat-owner-actions"><button class="chat-owner-action" id="chat-owner-reset" type="button">Reset semua chat</button>${chatArchiveOpen ? `<button class="chat-owner-action" id="chat-owner-clear-archive" type="button">Hapus arsip</button>` : ""}</div>`
         : "";
       const panelMarkup = chatPanelOpen
-        ? `<section class="chat-panel${chatArchiveOpen ? " chat-panel-archive" : ""}" aria-label="Percakapan antar akun"><header class="chat-panel-head"><nav class="chat-panel-tabs" aria-label="Chat dan arsip"><button class="chat-panel-tab" id="chat-active-tab" type="button" aria-pressed="${!chatArchiveOpen}">Chat</button><button class="chat-panel-tab" id="chat-archive-tab" type="button" aria-pressed="${chatArchiveOpen}">${currentLanguage === "en" ? "Archive" : "Arsip"}<span class="chat-panel-tab-count">${formatNumber((state.chatArchiveMessages || []).length)}</span></button></nav>${ownerActionsMarkup}<button class="chat-close chat-panel-close" id="chat-close" type="button" aria-label="Tutup chat">×</button></header>${archiveFilterMarkup}<div class="chat-message-list" id="chat-message-list" role="log" aria-label="${chatArchiveOpen ? "Arsip chat" : "Chat tim"}" aria-live="polite" aria-relevant="additions text">${messageMarkup}</div>${chatArchiveOpen ? "" : `<form class="chat-compose" id="chat-compose">${replyDraftMarkup}<input id="chat-attachment-input" type="file" accept="*/*" multiple hidden><div class="chat-compose-files" id="chat-compose-files">${renderChatSelectedFilesMarkup()}</div><div class="chat-mention-menu" id="chat-mention-menu" role="listbox" aria-label="Pilih akun untuk di-mention" hidden></div><textarea id="chat-message-input" maxlength="1000" aria-label="${editMode ? "Edit pesan chat" : "Tulis pesan chat"}" aria-controls="chat-mention-menu" aria-autocomplete="list" aria-expanded="false" placeholder="${editMode ? "Ubah pesan..." : "Tulis pesan..."}">${editMode ? escapeHtml(editingMessage.text) : ""}</textarea><div class="chat-compose-actions">${editMode ? `<button class="chat-cancel-edit" id="chat-cancel-edit" type="button" aria-label="Batalkan edit">×</button>` : `<button class="chat-attach" id="chat-attach-button" type="button" aria-label="Lampirkan foto atau dokumen" title="Lampirkan foto atau dokumen" ${chatUploadInProgress ? "disabled" : ""}><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m21.4 11.6-8.5 8.5a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"/></svg></button>`}<button class="chat-send" type="submit" aria-label="${editMode ? "Simpan perubahan" : "Kirim pesan"}" title="${editMode ? "Simpan perubahan" : chatUploadInProgress ? "Mengunggah lampiran..." : "Kirim pesan"}" ${chatUploadInProgress ? "disabled" : ""}>${editMode ? "✓" : chatUploadInProgress ? "…" : '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4 20-7ZM22 2 11 13"/></svg>'}</button></div></form>`}</section>`
+        ? `<section class="chat-panel${chatArchiveOpen ? " chat-panel-archive" : ""}" data-chat-editing="${escapeHtml(chatEditingMessageId)}" data-chat-reply="${escapeHtml(chatReplyTo?.id || "")}" aria-label="Percakapan antar akun"><header class="chat-panel-head"><nav class="chat-panel-tabs" aria-label="Chat dan arsip"><button class="chat-panel-tab" id="chat-active-tab" type="button" aria-pressed="${!chatArchiveOpen}">Chat</button><button class="chat-panel-tab" id="chat-archive-tab" type="button" aria-pressed="${chatArchiveOpen}">${currentLanguage === "en" ? "Archive" : "Arsip"}<span class="chat-panel-tab-count">${formatNumber((state.chatArchiveMessages || []).length)}</span></button></nav>${ownerActionsMarkup}<button class="chat-close chat-panel-close" id="chat-close" type="button" aria-label="Tutup chat">×</button></header>${archiveFilterMarkup}<div class="chat-message-list" id="chat-message-list" role="log" aria-label="${chatArchiveOpen ? "Arsip chat" : "Chat tim"}" aria-live="polite" aria-relevant="additions text">${messageMarkup}</div>${chatArchiveOpen ? "" : `<form class="chat-compose" id="chat-compose">${replyDraftMarkup}<input id="chat-attachment-input" type="file" accept="*/*" multiple hidden><div class="chat-compose-files" id="chat-compose-files">${renderChatSelectedFilesMarkup()}</div><div class="chat-mention-menu" id="chat-mention-menu" role="listbox" aria-label="Pilih akun untuk di-mention" hidden></div><textarea id="chat-message-input" maxlength="1000" aria-label="${editMode ? "Edit pesan chat" : "Tulis pesan chat"}" aria-controls="chat-mention-menu" aria-autocomplete="list" aria-expanded="false" placeholder="${editMode ? "Ubah pesan..." : "Tulis pesan..."}">${editMode ? escapeHtml(editingMessage.text) : ""}</textarea><div class="chat-compose-actions">${editMode ? `<button class="chat-cancel-edit" id="chat-cancel-edit" type="button" aria-label="Batalkan edit">×</button>` : `<button class="chat-attach" id="chat-attach-button" type="button" aria-label="Lampirkan foto atau dokumen" title="Lampirkan foto atau dokumen" ${chatUploadInProgress ? "disabled" : ""}><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m21.4 11.6-8.5 8.5a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"/></svg></button>`}<button class="chat-send" type="submit" aria-label="${editMode ? "Simpan perubahan" : "Kirim pesan"}" title="${editMode ? "Simpan perubahan" : chatUploadInProgress ? "Mengunggah lampiran..." : "Kirim pesan"}" ${chatUploadInProgress ? "disabled" : ""}>${editMode ? "✓" : chatUploadInProgress ? "…" : '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4 20-7ZM22 2 11 13"/></svg>'}</button></div></form>`}</section>`
         : "";
       const incomingMarkup = chatIncomingPreview
         ? `<button class="chat-incoming-preview" id="chat-preview-open" type="button" aria-live="polite" aria-label="Buka pesan chat dari ${escapeHtml(chatIncomingPreview.senderName || "Pengguna")}"><strong data-user-content>${escapeHtml(chatIncomingPreview.senderName || "Pesan baru")}</strong><span data-user-content>${escapeHtml(chatIncomingPreview.text || (chatIncomingPreview.attachments?.length ? `📎 ${chatIncomingPreview.attachments.length} lampiran` : "Lampiran baru"))}</span></button>`
@@ -6475,12 +6475,78 @@
     function refreshChatWidget() {
       const widget = document.getElementById("top-date-chat");
       if (!widget) return;
-      widget.outerHTML = renderChatMarkup();
-      bindChatEvents();
+      const template = document.createElement("template");
+      template.innerHTML = renderChatMarkup().trim();
+      const nextWidget = template.content.firstElementChild;
+      if (!nextWidget) return;
+      const currentPanel = widget.querySelector(".chat-panel");
+      const nextPanel = nextWidget.querySelector(".chat-panel");
+      const samePanelView = Boolean(currentPanel && nextPanel
+        && currentPanel.classList.contains("chat-panel-archive") === nextPanel.classList.contains("chat-panel-archive")
+        && currentPanel.dataset.chatEditing === nextPanel.dataset.chatEditing
+        && currentPanel.dataset.chatReply === nextPanel.dataset.chatReply);
+      const currentToggle = widget.querySelector("#chat-toggle");
+      const nextToggle = nextWidget.querySelector("#chat-toggle");
+      if (currentToggle && nextToggle) {
+        currentToggle.setAttribute("aria-label", nextToggle.getAttribute("aria-label") || "");
+        currentToggle.setAttribute("aria-expanded", nextToggle.getAttribute("aria-expanded") || "false");
+      }
+      const currentBadge = widget.querySelector(".top-chat-unread");
+      const nextBadge = nextWidget.querySelector(".top-chat-unread");
+      if (currentBadge && nextBadge) currentBadge.replaceWith(nextBadge);
+      else if (currentBadge) currentBadge.remove();
+      else if (nextBadge) widget.querySelector("#chat-toggle")?.after(nextBadge);
+      const currentPreview = widget.querySelector("#chat-preview-open");
+      const nextPreview = nextWidget.querySelector("#chat-preview-open");
+      if (currentPreview && nextPreview) {
+        currentPreview.setAttribute("aria-label", nextPreview.getAttribute("aria-label") || "");
+        currentPreview.innerHTML = nextPreview.innerHTML;
+      }
+      else if (currentPreview) currentPreview.remove();
+      else if (nextPreview) {
+        widget.append(nextPreview);
+        bindChatPreviewEvent(nextPreview);
+      }
+      if (!currentPanel && !nextPanel) return;
+      if (samePanelView) {
+        const currentList = currentPanel.querySelector("#chat-message-list");
+        const nextList = nextPanel.querySelector("#chat-message-list");
+        if (currentList && nextList) {
+          const scrollTop = currentList.scrollTop;
+          currentList.innerHTML = nextList.innerHTML;
+          currentList.setAttribute("aria-label", nextList.getAttribute("aria-label") || "");
+          currentList.scrollTop = scrollTop;
+          bindChatMessageEvents(currentList);
+          void hydrateChatAttachments();
+        }
+        const currentArchiveCount = currentPanel.querySelector(".chat-panel-tab-count");
+        const nextArchiveCount = nextPanel.querySelector(".chat-panel-tab-count");
+        if (currentArchiveCount && nextArchiveCount) currentArchiveCount.textContent = nextArchiveCount.textContent;
+        const currentFilters = currentPanel.querySelector(".chat-archive-filters");
+        const nextFilters = nextPanel.querySelector(".chat-archive-filters");
+        if (currentFilters && nextFilters) {
+          currentFilters.replaceWith(nextFilters);
+          bindChatArchiveFilters();
+        } else if (currentFilters) currentFilters.remove();
+        else if (nextFilters) {
+          currentPanel.querySelector(".chat-panel-head")?.after(nextFilters);
+          bindChatArchiveFilters();
+        }
+      } else {
+        widget.outerHTML = renderChatMarkup();
+        bindChatEvents();
+      }
     }
     function serializeStateWithoutChat(source) {
       const { chatMessages, chatArchiveMessages, chatReadAt, ...rest } = source;
       return stableSerialize(rest);
+    }
+    function serializeChatState(source) {
+      return stableSerialize({
+        chatMessages: source.chatMessages,
+        chatArchiveMessages: source.chatArchiveMessages,
+        chatReadAt: source.chatReadAt
+      });
     }
     function focusChatInput(selectText = false) {
       const input = document.getElementById("chat-message-input");
@@ -7982,6 +8048,7 @@
       document.querySelectorAll(".nav-item").forEach((item) => item.classList.toggle("active", item.dataset.page === currentPage));
       const main = document.getElementById("main-content");
       const cameraDialog = document.getElementById("camera-scan-dialog");
+      const retainedChatWidget = document.getElementById("top-date-chat");
       const preserveLayoutScanner = cameraDialog?.open
         && cameraDialog.dataset.layoutRackScanner === "true"
         && document.documentElement.classList.contains("web-camera-scanner-active");
@@ -7994,7 +8061,9 @@
         }
         else cameraDialog.close();
       }
-      bindPageEvents();
+      const renderedChatWidget = main.querySelector("#top-date-chat");
+      if (retainedChatWidget && renderedChatWidget) renderedChatWidget.replaceWith(retainedChatWidget);
+      bindPageEvents(Boolean(retainedChatWidget && renderedChatWidget));
       translateDocument(document.body);
       if (window.matchMedia("(max-width: 650px)").matches && !document.documentElement.classList.contains("web-camera-scanner-active")) {
         document.querySelector(".nav-item.active")?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
@@ -8004,6 +8073,14 @@
     function renderPreservingActiveInput() {
       const activeElement = document.activeElement;
       const main = document.getElementById("main-content");
+      const activeElementIsPreservedChat = Boolean(activeElement?.closest("#top-date-chat") && main.contains(activeElement));
+      if (activeElementIsPreservedChat) {
+        const scrollY = window.scrollY;
+        render();
+        if (activeElement.isConnected) activeElement.focus({ preventScroll: true });
+        window.scrollTo(0, scrollY);
+        return;
+      }
       let selector = "";
       if (activeElement?.id) {
         selector = `#${CSS.escape(activeElement.id)}`;
@@ -8435,6 +8512,78 @@
       persist();
       refreshChatWidget();
     }
+    function bindChatMessageEvents(root = document) {
+      root.querySelectorAll("[data-chat-reply]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const message = (state.chatMessages || []).find((item) => item.id === button.dataset.chatReply);
+          if (!message) return;
+          chatEditingMessageId = "";
+          chatReplyTo = {
+            id: message.id,
+            senderName: message.senderName || "Pengguna",
+            text: (message.text || "").slice(0, 180) || (message.attachments?.length ? "Lampiran" : "")
+          };
+          refreshChatWidget();
+          focusChatInput();
+        });
+      });
+      root.querySelectorAll("[data-chat-jump-to]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const target = document.getElementById(`chat-message-${button.dataset.chatJumpTo}`);
+          if (!target) return;
+          target.scrollIntoView({ behavior: "smooth", block: "center" });
+          target.classList.add("chat-message-target");
+          setTimeout(() => target.classList.remove("chat-message-target"), 1500);
+        });
+      });
+      root.querySelectorAll("[data-chat-delete]").forEach((button) => {
+        button.addEventListener("click", () => {
+          void deleteChatMessage(button.dataset.chatDelete, button.dataset.chatDeleteArchived === "true");
+        });
+      });
+      root.querySelectorAll("[data-chat-edit]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const message = (state.chatMessages || []).find((item) => item.id === button.dataset.chatEdit);
+          if (!message || message.senderId !== authSession?.user?.id) return;
+          chatSelectedFiles = [];
+          chatReplyTo = null;
+          chatMentionDraftNames = [];
+          chatEditingMessageId = message.id;
+          refreshChatWidget();
+          focusChatInput(true);
+        });
+      });
+    }
+    function bindChatArchiveFilters() {
+      document.getElementById("chat-archive-year")?.addEventListener("change", (event) => {
+        chatArchiveYear = event.currentTarget.value;
+        chatArchiveMonth = "";
+        chatArchiveSelectedDate = "";
+        refreshChatWidget();
+      });
+      document.getElementById("chat-archive-month")?.addEventListener("change", (event) => {
+        chatArchiveMonth = event.currentTarget.value;
+        chatArchiveSelectedDate = "";
+        refreshChatWidget();
+      });
+      document.getElementById("chat-archive-date")?.addEventListener("change", (event) => {
+        chatArchiveSelectedDate = event.currentTarget.value;
+        refreshChatWidget();
+      });
+    }
+    function bindChatPreviewEvent(button) {
+      button.addEventListener("click", () => {
+        chatPanelOpen = true;
+        chatOpenedFromPreview = true;
+        chatArchiveOpen = false;
+        chatIncomingPreview = null;
+        clearTimeout(chatIncomingPreviewTimer);
+        chatIncomingPreviewTimer = null;
+        refreshChatWidget();
+        scrollChatToLatest();
+        focusChatInput();
+      });
+    }
     function bindChatEvents() {
       void hydrateChatAttachments();
       void loadChatMentionDirectory();
@@ -8485,55 +8634,10 @@
       });
       document.getElementById("chat-owner-reset")?.addEventListener("click", () => { void clearChatMessages(); });
       document.getElementById("chat-owner-clear-archive")?.addEventListener("click", () => { void clearChatMessages({ archiveOnly: true }); });
-      document.getElementById("chat-archive-year")?.addEventListener("change", (event) => {
-        chatArchiveYear = event.currentTarget.value;
-        chatArchiveMonth = "";
-        chatArchiveSelectedDate = "";
-        refreshChatWidget();
-      });
-      document.getElementById("chat-archive-month")?.addEventListener("change", (event) => {
-        chatArchiveMonth = event.currentTarget.value;
-        chatArchiveSelectedDate = "";
-        refreshChatWidget();
-      });
-      document.getElementById("chat-archive-date")?.addEventListener("change", (event) => {
-        chatArchiveSelectedDate = event.currentTarget.value;
-        refreshChatWidget();
-      });
-      document.getElementById("chat-preview-open")?.addEventListener("click", () => {
-        chatPanelOpen = true;
-        chatOpenedFromPreview = true;
-        chatArchiveOpen = false;
-        chatIncomingPreview = null;
-        clearTimeout(chatIncomingPreviewTimer);
-        chatIncomingPreviewTimer = null;
-        refreshChatWidget();
-        scrollChatToLatest();
-        focusChatInput();
-      });
-      document.querySelectorAll("[data-chat-reply]").forEach((button) => {
-        button.addEventListener("click", () => {
-          const message = (state.chatMessages || []).find((item) => item.id === button.dataset.chatReply);
-          if (!message) return;
-          chatEditingMessageId = "";
-          chatReplyTo = {
-            id: message.id,
-            senderName: message.senderName || "Pengguna",
-            text: (message.text || "").slice(0, 180) || (message.attachments?.length ? "Lampiran" : "")
-          };
-          refreshChatWidget();
-          focusChatInput();
-        });
-      });
-      document.querySelectorAll("[data-chat-jump-to]").forEach((button) => {
-        button.addEventListener("click", () => {
-          const target = document.getElementById(`chat-message-${button.dataset.chatJumpTo}`);
-          if (!target) return;
-          target.scrollIntoView({ behavior: "smooth", block: "center" });
-          target.classList.add("chat-message-target");
-          setTimeout(() => target.classList.remove("chat-message-target"), 1500);
-        });
-      });
+      bindChatArchiveFilters();
+      const previewButton = document.getElementById("chat-preview-open");
+      if (previewButton) bindChatPreviewEvent(previewButton);
+      bindChatMessageEvents(document);
       document.getElementById("chat-cancel-reply")?.addEventListener("click", () => {
         chatReplyTo = null;
         refreshChatWidget();
@@ -8546,23 +8650,6 @@
       document.getElementById("chat-message-input")?.addEventListener("input", (event) => {
         chatMentionActiveIndex = -1;
         updateChatMentionMenu(event.currentTarget);
-      });
-      document.querySelectorAll("[data-chat-delete]").forEach((button) => {
-        button.addEventListener("click", () => {
-          void deleteChatMessage(button.dataset.chatDelete, button.dataset.chatDeleteArchived === "true");
-        });
-      });
-      document.querySelectorAll("[data-chat-edit]").forEach((button) => {
-        button.addEventListener("click", () => {
-          const message = (state.chatMessages || []).find((item) => item.id === button.dataset.chatEdit);
-          if (!message || message.senderId !== authSession?.user?.id) return;
-          chatSelectedFiles = [];
-          chatReplyTo = null;
-          chatMentionDraftNames = [];
-          chatEditingMessageId = message.id;
-          refreshChatWidget();
-          focusChatInput(true);
-        });
       });
       document.getElementById("chat-attach-button")?.addEventListener("click", () => {
         document.getElementById("chat-attachment-input")?.click();
@@ -8748,9 +8835,9 @@
       });
     }
 
-    function bindPageEvents() {
+    function bindPageEvents(skipChatEvents = false) {
       attachCameraSearchButtons();
-      bindChatEvents();
+      if (!skipChatEvents) bindChatEvents();
       document.getElementById("add-workspace-button")?.addEventListener("click", addWorkspace);
       document.getElementById("admin-refresh-users")?.addEventListener("click", loadAdminUsers);
       document.getElementById("copy-reset-password")?.addEventListener("click", async () => {

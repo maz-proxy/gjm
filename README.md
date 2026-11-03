@@ -24,6 +24,8 @@ Rack cards are preserved even when they are empty, including newly added racks. 
 
 The team chat updates without re-rendering the rest of the page, follows the active light/dark and accent themes, and gives each account a consistent bubble colour. Type `@` to search and select any account for a mention; users can also reply to a message with a quoted link and edit their own messages. Users may delete their own messages for one hour after sending; the Owner can delete any message, reset all chat and archive content, or clear the archive. Messages older than 24 hours move automatically to Archive, where they can be filtered by year, month, and date. The Chat button stays fixed at the lower-right with 80% opacity and a theme-coloured outline in dark mode. Incoming messages show a five-second preview above the button, while the red badge keeps the exact unread count until Chat is clicked. Incoming messages also play a short notification sound after the first page interaction; browser audio/autoplay settings may prevent playback.
 
+Shared workspace refreshes preserve the existing Chat widget and its open composer, so inventory edits do not recreate or move the chat panel. Incoming messages preserve the current chat scroll position; only opening Chat or sending your own message scrolls to the latest message.
+
 ## Workspace Back navigation
 
 While signed in, the browser or device Back button moves through workspace pages in this order: Dashboard, Schedule, Master VEF, Scan & Manual, Stock Reconciliation, Recap, History Changes, Session SO, Guide, and About. Back stops at Dashboard.
