@@ -2548,14 +2548,22 @@
       "Ganti tema warna ke green": "Switch accent color to green",
       "Detail Inbound/Retur": "Inbound/Return details",
       "Detail PJ": "PJ details",
+      "Detail SCAN": "SCAN details",
+      "Detail MANUAL": "MANUAL details",
       "Nomor PREC/RETUR": "PREC/RETURN number",
       "Tanggal PREC/RETUR": "PREC/RETURN date",
       "Nomor invoice": "Invoice number",
       "Tanggal Invoice": "Invoice date",
       "Quantity": "Quantity",
+      "Kode item": "Item code",
+      "Jumlah": "Quantity",
       "unit": "units",
       "Belum ada detail transaksi": "No transaction details",
       "Belum ada data invoice atau PREC/RETUR untuk item ini.": "No invoice or PREC/RETURN data is available for this item.",
+      "Belum ada data scan untuk item ini.": "No scan records for this item.",
+      "Belum ada input manual untuk item ini.": "No manual entries for this item.",
+      "Lihat detail scan untuk": "View scan details for",
+      "Lihat detail input manual untuk": "View manual entry details for",
       "Lihat detail Inbound/Retur": "View Inbound/Return details",
       "Lihat detail PJ": "View PJ details",
       "Android Apps": "Android Apps",
@@ -6833,8 +6841,8 @@
         <td>${renderProductIdentity(product)}</td>
         <td><span class="category-chip" data-user-content>${escapeHtml(product.brand || "-")}</span></td>
         <td class="number-cell quantity-cell">${formatNumber(product.stock)}</td>
-        <td class="number-cell quantity-cell">${included ? formatNumber(product.count || 0) : "-"}</td>
-        <td class="number-cell quantity-cell">${formatNumber(product.box || 0)}</td>
+        <td class="number-cell quantity-cell">${included ? `<button class="recorded-quantity-trigger" type="button" data-recorded-entry="scan" data-product-id="${escapeHtml(product.id)}" aria-label="Lihat detail scan untuk ${escapeHtml(product.sku)}" aria-haspopup="dialog" aria-expanded="false">${formatNumber(product.count || 0)}</button>` : "-"}</td>
+        <td class="number-cell quantity-cell"><button class="recorded-quantity-trigger" type="button" data-recorded-entry="manual" data-product-id="${escapeHtml(product.id)}" aria-label="Lihat detail input manual untuk ${escapeHtml(product.sku)}" aria-haspopup="dialog" aria-expanded="false">${formatNumber(product.box || 0)}</button></td>
         <td class="quantity-cell">${included ? `<button class="pj-entry-button" type="button" data-inbound-product="${escapeHtml(product.id)}" title="${escapeHtml(inboundTooltip)}" aria-label="Inbound/Retur ${formatNumber(inboundQuantityFor(product.id))} untuk ${escapeHtml(product.sku)}. Klik untuk melihat atau mengedit data." ${!active || !canEdit ? "disabled" : ""}>${formatNumber(inboundQuantityFor(product.id))}</button>` : "-"}</td>
         <td class="quantity-cell">${included ? `<button class="pj-entry-button" type="button" data-pj-product="${escapeHtml(product.id)}" title="${escapeHtml(pjTooltip)}" aria-label="PJ ${formatNumber(product.pj || 0)} untuk ${escapeHtml(product.sku)}. Klik untuk melihat atau mengedit invoice." ${!active || !canEdit ? "disabled" : ""}>${formatNumber(product.pj || 0)}</button>` : "-"}</td>
         <td class="quantity-cell"><span class="variance ${variance === 0 ? "zero" : variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td>
@@ -7656,17 +7664,24 @@
         closeRecordedEntryDetails();
         return;
       }
-      const session = state.sessions.find((item) => item.id === selectedRecordedSessionId && item.snapshot);
-      const product = session?.snapshot?.products?.find((item) => item.id === productId);
-      if (!session || !product) {
+      const isActiveCountDetail = kind === "scan" || kind === "manual";
+      const session = isActiveCountDetail ? null : state.sessions.find((item) => item.id === selectedRecordedSessionId && item.snapshot);
+      const product = isActiveCountDetail
+        ? state.products.find((item) => item.id === productId)
+        : session?.snapshot?.products?.find((item) => item.id === productId);
+      if ((!isActiveCountDetail && !session) || !product) {
         console.error("Detail transaksi arsip tidak dapat dibuka: sesi atau item tidak ditemukan.");
         return;
       }
-      const config = kind === "pj"
-        ? { entries: session.snapshot.pjEntries || [], numberKey: "invoiceNumber", dateKey: "invoiceAt", numberLabel: "Nomor invoice", dateLabel: "Tanggal Invoice", title: "Detail PJ" }
-        : kind === "inbound"
-          ? { entries: session.snapshot.inboundEntries || [], numberKey: "referenceNumber", dateKey: "entryAt", numberLabel: "Nomor PREC/RETUR", dateLabel: "Tanggal PREC/RETUR", title: "Detail Inbound/Retur" }
-          : null;
+      const config = kind === "scan"
+        ? { entries: (state.scanEvents || []).filter((entry) => entry.status === "match"), dateKey: "scannedAt", title: "Detail SCAN" }
+        : kind === "manual"
+          ? { entries: state.manualEntries || [], dateKey: "createdAt", title: "Detail MANUAL" }
+          : kind === "pj"
+            ? { entries: session?.snapshot?.pjEntries || [], numberKey: "invoiceNumber", dateKey: "invoiceAt", numberLabel: "Nomor invoice", dateLabel: "Tanggal Invoice", title: "Detail PJ" }
+            : kind === "inbound"
+              ? { entries: session?.snapshot?.inboundEntries || [], numberKey: "referenceNumber", dateKey: "entryAt", numberLabel: "Nomor PREC/RETUR", dateLabel: "Tanggal PREC/RETUR", title: "Detail Inbound/Retur" }
+              : null;
       if (!config) {
         console.error("Jenis detail transaksi arsip tidak valid:", kind);
         return;
@@ -7679,7 +7694,12 @@
         .filter((entry) => entry.productId === product.id || (!entry.productId && entry.sku && entry.sku === product.sku))
         .slice()
         .sort((left, right) => timestampFor(right[config.dateKey]) - timestampFor(left[config.dateKey]));
-      const rows = entries.map((entry) => {
+      const rows = isActiveCountDetail
+        ? entries.map((entry) => {
+          const isScan = kind === "scan";
+          return `<article class="recorded-entry-card"><div class="recorded-entry-document"><span class="recorded-entry-label">${isScan ? "Serial Number" : "Kode item"}</span><strong data-user-content>${escapeHtml(isScan ? entry.serial || "-" : entry.sku || product.sku || "-")}</strong></div><div class="recorded-entry-meta"><div><span>${isScan ? "Kode item" : "Rack"}</span><strong data-user-content>${escapeHtml(isScan ? entry.sku || product.sku || "-" : rackLabel(entry.layout))}</strong></div><div><span>${isScan ? "Rack" : "Jumlah"}</span><strong>${isScan ? escapeHtml(rackLabel(entry.layout)) : `${formatNumber(Number(entry.quantity || 0))} Pcs`}</strong></div></div></article>`;
+        }).join("")
+        : entries.map((entry) => {
         const date = entry[config.dateKey] ? new Date(entry[config.dateKey]) : null;
         const formattedDate = date && Number.isFinite(date.getTime())
           ? formatDate(date, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })
@@ -7691,7 +7711,7 @@
       document.getElementById("recorded-entry-product").textContent = `${product.name || "-"} · ${product.sku || "-"}`;
       document.getElementById("recorded-entry-content").innerHTML = rows
         ? `<div class="recorded-entry-list">${rows}</div>`
-        : `<div class="recorded-entry-empty"><strong>Belum ada detail transaksi</strong><span>Belum ada data invoice atau PREC/RETUR untuk item ini.</span></div>`;
+        : `<div class="recorded-entry-empty"><strong>Belum ada detail transaksi</strong><span>${isActiveCountDetail ? kind === "scan" ? "Belum ada data scan untuk item ini." : "Belum ada input manual untuk item ini." : "Belum ada data invoice atau PREC/RETUR untuk item ini."}</span></div>`;
       translateDocument(dialog);
       recordedEntryTrigger?.setAttribute("aria-expanded", "false");
       recordedEntryTrigger = trigger;
