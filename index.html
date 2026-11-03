@@ -2900,7 +2900,7 @@
       "item masuk perhitungan": "items included in calculation",
       "SN master": "Master serial numbers",
       "Scan ·": "Scans ·",
-      "Progres serial number": "Serial number progress",
+      "Progres quantity": "Quantity progress",
       "Pemilik sesi ·": "Session owner ·",
       "Lengkapi Nama Brand, PIC 1, dan PIC 2 terlebih dahulu": "Complete the brand name, PIC 1, and PIC 2 first",
       "Lihat Stok Opname": "View Stock Opname",
@@ -7872,7 +7872,7 @@
               <div class="schedule-stat"><strong>${formatNumber(serials)}</strong><span>SN master</span></div>
               <div class="schedule-stat"><strong>${formatNumber(data.scanEvents.length)}</strong><span>Scan · ${data.layouts.length} layout</span></div>
             </div>
-            <div class="schedule-progress"><div class="schedule-progress-head"><span>Progres serial number</span><strong>${stats.progress}% · ${formatNumber(stats.scannedSerials)} / ${formatNumber(stats.targetSerials)}</strong></div><div class="dashboard-bar-track" role="progressbar" aria-label="Progres ${escapeHtml(workspace.name || emptyBrandNameLabel())}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${stats.progress}"><div class="dashboard-bar-fill" style="width:${stats.progress}%"></div></div></div>`
+            <div class="schedule-progress"><div class="schedule-progress-head"><span>Progres quantity</span><strong>${stats.quantityProgress}% · ${formatNumber(stats.totalQuantity)} / ${formatNumber(stats.targetQuantity)} Qty</strong></div><div class="dashboard-bar-track" role="progressbar" aria-label="Progres quantity ${escapeHtml(workspace.name || emptyBrandNameLabel())}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${stats.quantityProgress}"><div class="dashboard-bar-fill" style="width:${stats.quantityProgress}%"></div></div></div>`
           : "";
         const modeDisabled = !canEdit || isCompleted;
         const canDeleteWithoutUpload = canDeleteUnuploadedWorkspace(workspace);
