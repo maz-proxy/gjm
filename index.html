@@ -514,7 +514,8 @@
     .manual-item-summary::-webkit-details-marker { display: none; }
     .manual-item-heading { display: grid; gap: 1px; min-width: 0; }
     .manual-item-sku { color: var(--ink); font: inherit; overflow-wrap: anywhere; }
-    .manual-item-name { color: var(--muted); font-size: 9px; font-weight: 400; line-height: 1.3; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .manual-item-name { color: var(--muted); font-size: 7px; font-weight: 400; line-height: 1.3; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .manual-item-details[open] .manual-item-name { font-size: 10px; white-space: normal; }
     .manual-item-total { color: var(--ink); font-size: 10px; font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
     .manual-item-expanded { padding: 2px 0 7px 17px; }
     .manual-item-full-name { color: var(--ink); font-weight: 600; margin-bottom: 4px; overflow-wrap: anywhere; }
@@ -524,7 +525,7 @@
     .layout-scan-row .layout-scan-detail { flex: 1; min-width: 0; }
     .layout-scan-summary { align-items: center; display: flex; flex-wrap: wrap; gap: 4px 10px; }
     .layout-scan-summary-live { align-items: flex-start; display: grid; gap: 1px; }
-    .layout-scan-watermark { color: var(--muted); font-size: 5px; font-weight: 400; line-height: 1.2; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .layout-scan-watermark { color: var(--muted); font-size: 7px; font-weight: 400; line-height: 1.2; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .layout-scan-detail[open] .layout-scan-watermark { display: none; }
     .layout-scan-code, .layout-scan-serial { flex: 0 0 auto; }
     .layout-scan-code.not-found, .layout-scan-code.duplicate { color: var(--red); }
