@@ -5366,7 +5366,7 @@
           table: SHARED_STATE_TABLE,
           filter: `id=eq.${SHARED_STATE_ROW_ID}`
         }, (payload) => {
-          if (payload.new?.id === SHARED_STATE_ROW_ID) void refreshSharedState(payload.new);
+          if (payload.new?.id === SHARED_STATE_ROW_ID) void refreshSharedState();
         })
         .subscribe((status, error) => {
           if (status === "SUBSCRIBED") {
@@ -5558,7 +5558,7 @@
         }
       }
     }
-    async function refreshSharedState(rowHint = null) {
+    async function refreshSharedState() {
       if (!authSession || !sharedStateReady) return;
       if (refreshInProgress || saveInProgress || syncTimer) {
         refreshPending = true;
@@ -5567,12 +5567,9 @@
       refreshInProgress = true;
       const refreshingUserId = authSession.user.id;
       try {
-        let row = rowHint;
-        if (!row) {
-          const response = await readSharedState();
-          if (response.error) throw response.error;
-          row = response.data;
-        }
+        const response = await readSharedState();
+        if (response.error) throw response.error;
+        const row = response.data;
         if (authSession?.user?.id !== refreshingUserId || !sharedStateReady) return;
         if (!row) throw new Error("Data workspace bersama tidak ditemukan.");
         resetSharedSyncFailures("read");
