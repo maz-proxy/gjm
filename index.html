@@ -2875,7 +2875,7 @@
       "SN dipindai": "serial numbers scanned",
       "tersisa": "remaining",
       "Progres per brand": "Progress by brand",
-      "Sesi aktif saja · SN cocok dibanding target master": "Active sessions only · matching serial numbers vs. master target",
+      "Sesi aktif saja · quantity opname dibanding target VEF + Inbound/Retur": "Active sessions only · stock opname quantity vs. VEF + Inbound/Return target",
       "Belum ada sesi berjalan. Unggah workbook pada sesi bernama brand di Master VEF untuk memulai.": "No active sessions. Upload a workbook to a named brand session in VEF Master to get started.",
       "Pantau progres scan, jumlah item dan unit per warehouse, quantity SCAN/MANUAL/PJ, serta sesi yang masih berjalan.": "Track scan progress, item and unit counts by warehouse, SCAN/MANUAL/PJ quantities, and active sessions.",
       "Perencanaan stock opname": "Stock Opname Planning",
@@ -7295,6 +7295,9 @@
       const manualQuantity = countedProducts.reduce((sum, product) => sum + Number(product.box || 0), 0);
       const pjQuantity = countedProducts.reduce((sum, product) => sum + Number(product.pj || 0), 0);
       const inboundQuantity = countedProducts.reduce((sum, product) => sum + inboundQuantityFor(product.id, inboundEntries), 0);
+      const totalQuantity = scanQuantity + manualQuantity + pjQuantity;
+      const targetQuantity = expectedUnits + inboundQuantity;
+      const quantityProgress = targetQuantity ? Math.min(100, Math.round(totalQuantity / targetQuantity * 100)) : 0;
       const mismatchedProducts = countedProducts.filter((product) => Number(product.count || 0) + Number(product.box || 0) + Number(product.pj || 0) !== Number(product.stock || 0) + inboundQuantityFor(product.id, inboundEntries));
       return {
         products: products.length,
@@ -7312,7 +7315,9 @@
         manualQuantity,
         pjQuantity,
         inboundQuantity,
-        totalQuantity: scanQuantity + manualQuantity + pjQuantity,
+        totalQuantity,
+        targetQuantity,
+        quantityProgress,
         mismatchCount: mismatchedProducts.length,
         absoluteVariance: mismatchedProducts.reduce((sum, product) => sum + Math.abs(Number(product.count || 0) + Number(product.box || 0) + Number(product.pj || 0) - Number(product.stock || 0) - inboundQuantityFor(product.id, inboundEntries)), 0),
         scans: scanEvents.length,
@@ -7384,8 +7389,8 @@
         return `<div class="dashboard-chart-row${brandIcon ? " has-brand-logo" : ""}">
         ${brandIcon}
         <span class="dashboard-chart-name" data-user-content title="${escapeHtml(workspace.name)}">${escapeHtml(workspace.name || "Tanpa nama")}</span>
-        <div class="dashboard-bar-track" role="progressbar" aria-label="Progres SN ${escapeHtml(workspace.name)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${stats.progress}"><div class="dashboard-bar-fill" style="width:${stats.progress}%"></div></div>
-        <span class="dashboard-chart-count">${stats.progress}% · ${formatNumber(stats.scannedSerials)}/${formatNumber(stats.targetSerials)} SN</span>
+        <div class="dashboard-bar-track" role="progressbar" aria-label="Progres quantity ${escapeHtml(workspace.name)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${stats.quantityProgress}"><div class="dashboard-bar-fill" style="width:${stats.quantityProgress}%"></div></div>
+        <span class="dashboard-chart-count">${stats.quantityProgress}% · ${formatNumber(stats.totalQuantity)}/${formatNumber(stats.targetQuantity)} Qty</span>
       </div>`;
       }).join("");
       return `${navMarkup()}<div class="dashboard-page">
@@ -7420,7 +7425,7 @@
               <div class="dashboard-legend"><span class="dashboard-legend-item"><i class="dashboard-legend-dot"></i>${formatNumber(total.scanned)} SN dipindai</span><span class="dashboard-legend-item"><i class="dashboard-legend-dot remaining"></i>${formatNumber(Math.max(0, total.serials - total.scanned))} tersisa</span></div>
             </div>
           </article>
-          <article class="dashboard-panel"><header class="dashboard-panel-head"><div><div class="dashboard-panel-title">Progres per brand</div><div class="dashboard-panel-subtitle">Sesi aktif saja · SN cocok dibanding target master</div></div><span class="dashboard-chart-tag">${workspaceStats.length} brand</span></header><div class="dashboard-chart-list">${chartRows}</div>${workspaceStats.length ? "" : '<div class="dashboard-empty">Belum ada sesi berjalan. Unggah workbook pada sesi bernama brand di Master VEF untuk memulai.</div>'}</article>
+          <article class="dashboard-panel"><header class="dashboard-panel-head"><div><div class="dashboard-panel-title">Progres per brand</div><div class="dashboard-panel-subtitle">Sesi aktif saja · quantity opname dibanding target VEF + Inbound/Retur</div></div><span class="dashboard-chart-tag">${workspaceStats.length} brand</span></header><div class="dashboard-chart-list">${chartRows}</div>${workspaceStats.length ? "" : '<div class="dashboard-empty">Belum ada sesi berjalan. Unggah workbook pada sesi bernama brand di Master VEF untuk memulai.</div>'}</article>
         </section>
       </div>`;
     }
