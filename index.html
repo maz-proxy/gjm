@@ -4901,10 +4901,47 @@
       return error.message || "";
     }
     function normalizeSharedState(source) {
-      if (!source || typeof source !== "object" || !Array.isArray(source.products) || !source.activeSession) {
-        throw new Error("Format data workspace di database tidak valid.");
+      let candidate = source;
+      if (typeof candidate === "string") {
+        try {
+          candidate = JSON.parse(candidate);
+        } catch (error) {
+          throw new Error(`Data workspace di database bukan JSON yang valid: ${error.message}`);
+        }
       }
-      const normalized = { ...initialState(), ...source };
+      if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) {
+        throw new Error("Data workspace di database harus berupa objek JSON.");
+      }
+      if (!Array.isArray(candidate.products) || !candidate.activeSession) {
+        const wrappedState = candidate.state && typeof candidate.state === "object" && !Array.isArray(candidate.state)
+          ? candidate.state
+          : candidate.data && typeof candidate.data === "object" && !Array.isArray(candidate.data)
+            ? candidate.data
+            : null;
+        if (wrappedState && (Array.isArray(wrappedState.products) || wrappedState.workspaces)) {
+          candidate = { ...candidate, ...wrappedState };
+        }
+      }
+      if ((!Array.isArray(candidate.products) || !candidate.activeSession) && Array.isArray(candidate.workspaces)) {
+        const currentWorkspace = candidate.workspaces.find((workspace) =>
+          workspace?.id === candidate.currentWorkspaceId && workspace.data && typeof workspace.data === "object")
+          || candidate.workspaces.find((workspace) => workspace?.data && typeof workspace.data === "object");
+        if (currentWorkspace) {
+          candidate = {
+            ...candidate,
+            ...currentWorkspace.data,
+            currentWorkspaceId: currentWorkspace.id || candidate.currentWorkspaceId
+          };
+        }
+      }
+      if (!Array.isArray(candidate.products) || !candidate.activeSession || typeof candidate.activeSession !== "object") {
+        const missing = [
+          !Array.isArray(candidate.products) ? "products (array)" : "",
+          !candidate.activeSession || typeof candidate.activeSession !== "object" ? "activeSession (object)" : ""
+        ].filter(Boolean);
+        throw new Error(`Format data workspace di database tidak valid; bagian yang belum ditemukan: ${missing.join(", ")}.`);
+      }
+      const normalized = { ...initialState(), ...candidate };
       if (!Array.isArray(normalized.chatMessages)) normalized.chatMessages = [];
       const normalizeChatMessages = (messages) => messages
         .filter((message) =>
