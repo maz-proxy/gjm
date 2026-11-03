@@ -265,6 +265,151 @@ create trigger guard_stock_opname_workspace_membership
   before update on public.stock_opname_state
   for each row execute function public.guard_stock_opname_workspace_membership();
 
+create or replace function public.is_stock_opname_master_row_deletion(
+  old_workspace_data jsonb,
+  new_workspace_data jsonb,
+  p_workspace_id text
+)
+returns boolean
+language plpgsql
+immutable
+set search_path = ''
+as $$
+declare
+  old_products jsonb := coalesce(old_workspace_data -> 'products', '[]'::jsonb);
+  new_products jsonb := coalesce(new_workspace_data -> 'products', '[]'::jsonb);
+  expected_products jsonb;
+  old_product jsonb;
+  new_product jsonb;
+  removed_product jsonb;
+  removed_count integer := 0;
+  matching_sku_count integer;
+  product_id text;
+  normalized_sku text;
+  expected_serial_master jsonb;
+  expected_entries jsonb;
+  activity jsonb;
+  history_index integer;
+  entry_key text;
+begin
+  if (old_workspace_data - array[
+      'products', 'serialMaster', 'scanEvents', 'manualEntries',
+      'pjEntries', 'inboundEntries', 'historyEvents'
+    ]) is distinct from
+     (new_workspace_data - array[
+      'products', 'serialMaster', 'scanEvents', 'manualEntries',
+      'pjEntries', 'inboundEntries', 'historyEvents'
+    ])
+    or old_workspace_data -> 'activeSession' is distinct from new_workspace_data -> 'activeSession'
+    or coalesce(old_workspace_data -> 'activeSession' ->> 'status', 'active') <> 'active'
+    or not exists (
+      select 1
+        from jsonb_array_elements(coalesce(old_workspace_data -> 'workbookFiles', '[]'::jsonb)) as workbook(value)
+       where workbook.value ->> 'sessionId' = old_workspace_data -> 'activeSession' ->> 'id'
+    )
+    or jsonb_array_length(old_products) <> jsonb_array_length(new_products) + 1 then
+    return false;
+  end if;
+
+  for new_product in select value from jsonb_array_elements(new_products)
+  loop
+    if new_product ->> 'id' is null then
+      return false;
+    end if;
+    select value into old_product
+      from jsonb_array_elements(old_products)
+      where value ->> 'id' = new_product ->> 'id'
+      limit 1;
+    if old_product is null or old_product is distinct from new_product then
+      return false;
+    end if;
+  end loop;
+
+  for old_product in select value from jsonb_array_elements(old_products)
+  loop
+    if not exists (
+      select 1
+        from jsonb_array_elements(new_products) as product(value)
+       where product.value ->> 'id' = old_product ->> 'id'
+    ) then
+      removed_count := removed_count + 1;
+      removed_product := old_product;
+    end if;
+  end loop;
+  product_id := removed_product ->> 'id';
+  normalized_sku := regexp_replace(lower(btrim(coalesce(removed_product ->> 'sku', ''))), '[^a-z0-9]', '', 'g');
+  if removed_count <> 1 or product_id is null or normalized_sku = '' then
+    return false;
+  end if;
+
+  select coalesce(jsonb_agg(product.value order by product.ordinality), '[]'::jsonb)
+    into expected_products
+    from jsonb_array_elements(old_products) with ordinality as product(value, ordinality)
+   where product.value ->> 'id' is distinct from product_id;
+  if expected_products is distinct from new_products then
+    return false;
+  end if;
+
+  select count(*) into matching_sku_count
+    from jsonb_array_elements(old_products) as product(value)
+   where regexp_replace(lower(btrim(coalesce(product.value ->> 'sku', ''))), '[^a-z0-9]', '', 'g') = normalized_sku;
+
+  select coalesce(jsonb_object_agg(serial.key, serial.value), '{}'::jsonb)
+    into expected_serial_master
+    from jsonb_each(coalesce(old_workspace_data -> 'serialMaster', '{}'::jsonb)) as serial(key, value)
+   where serial.value ->> 'productId' is distinct from product_id
+     and not (
+       serial.value ->> 'productId' is null
+       and matching_sku_count = 1
+       and regexp_replace(lower(btrim(coalesce(serial.value ->> 'sku', ''))), '[^a-z0-9]', '', 'g') = normalized_sku
+     );
+  if expected_serial_master is distinct from coalesce(new_workspace_data -> 'serialMaster', '{}'::jsonb) then
+    return false;
+  end if;
+
+  foreach entry_key in array array['scanEvents', 'manualEntries', 'pjEntries', 'inboundEntries']
+  loop
+    select coalesce(jsonb_agg(entry.value order by entry.ordinality), '[]'::jsonb)
+      into expected_entries
+      from jsonb_array_elements(coalesce(old_workspace_data -> entry_key, '[]'::jsonb))
+        with ordinality as entry(value, ordinality)
+     where entry.value ->> 'productId' is distinct from product_id
+       and not (
+         entry.value ->> 'productId' is null
+         and matching_sku_count = 1
+         and regexp_replace(lower(btrim(coalesce(entry.value ->> 'sku', ''))), '[^a-z0-9]', '', 'g') = normalized_sku
+       );
+    if expected_entries is distinct from coalesce(new_workspace_data -> entry_key, '[]'::jsonb) then
+      return false;
+    end if;
+  end loop;
+
+  if jsonb_array_length(coalesce(new_workspace_data -> 'historyEvents', '[]'::jsonb))
+      <> jsonb_array_length(coalesce(old_workspace_data -> 'historyEvents', '[]'::jsonb)) + 1 then
+    return false;
+  end if;
+  for history_index in 0..jsonb_array_length(coalesce(old_workspace_data -> 'historyEvents', '[]'::jsonb)) - 1
+  loop
+    if (old_workspace_data -> 'historyEvents' -> history_index)
+        is distinct from (new_workspace_data -> 'historyEvents' -> history_index) then
+      return false;
+    end if;
+  end loop;
+  activity := new_workspace_data -> 'historyEvents'
+    -> jsonb_array_length(coalesce(old_workspace_data -> 'historyEvents', '[]'::jsonb));
+  if activity ->> 'type' is distinct from 'Master VEF item deleted'
+    or activity ->> 'workspaceId' is distinct from p_workspace_id
+    or activity ->> 'sessionId' is distinct from old_workspace_data -> 'activeSession' ->> 'id'
+    or coalesce(activity ->> 'id', '') = ''
+    or coalesce(activity ->> 'createdAt', '') = ''
+    or coalesce(activity ->> 'description', '') = ''
+    or (activity - array['id', 'type', 'description', 'workspaceId', 'sessionId', 'createdAt']) <> '{}'::jsonb then
+    return false;
+  end if;
+  return true;
+end;
+$$;
+
 create or replace function public.guard_stock_opname_session_ownership()
 returns trigger
 language plpgsql
@@ -280,6 +425,8 @@ declare
   is_workspace_super_admin boolean :=
     coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'super_admin'
     and coalesce(auth.jwt() -> 'app_metadata' ->> 'owner_username', '') = 'indra';
+  is_resource_admin boolean :=
+    coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'resource_admin';
   old_workspace jsonb;
   new_workspace jsonb;
   old_workspace_data jsonb;
@@ -298,8 +445,112 @@ declare
   previous_archive_workspace jsonb;
   workspace_id text;
   archive_id text;
+  changed_workspace_id text;
+  changed_workspace_data jsonb;
+  canonical_workspace_data jsonb;
+  snapshot_key text;
 begin
   if is_workspace_super_admin or current_user_id is null then
+    return new;
+  end if;
+
+  if is_resource_admin and exists (
+    select 1
+      from jsonb_array_elements(coalesce(new.data -> 'workspaces', '[]'::jsonb)) as new_item(value)
+      join jsonb_array_elements(coalesce(old.data -> 'workspaces', '[]'::jsonb)) as old_item(value)
+        on old_item.value ->> 'id' = new_item.value ->> 'id'
+     where old_item.value -> 'data' is distinct from new_item.value -> 'data'
+       and coalesce(old_item.value -> 'data' -> 'activeSession' ->> 'status', 'active') = 'active'
+       and old_item.value -> 'data' -> 'activeSession' ->> 'createdByUserId' is not null
+       and old_item.value -> 'data' -> 'activeSession' ->> 'createdByUserId' <> current_user_id
+       and not exists (
+         select 1
+           from jsonb_array_elements_text(coalesce(old_item.value -> 'picNames', '[]'::jsonb)) as pic(name)
+          where lower(btrim(pic.name)) = any(current_user_names)
+       )
+  ) then
+    if old.data ->> 'currentWorkspaceId' is distinct from new.data ->> 'currentWorkspaceId'
+      or (old.data - array[
+        'workspaces', 'products', 'serialMaster', 'scanEvents', 'manualEntries',
+        'pjEntries', 'inboundEntries', 'historyEvents', 'workbookFiles',
+        'activeSession', 'countMode', 'importFile', 'importMessage',
+        'importDownloadedAt', 'importUploadedAt', 'layouts', 'layoutQuantities',
+        'layoutNumbers'
+      ]) is distinct from
+      (new.data - array[
+        'workspaces', 'products', 'serialMaster', 'scanEvents', 'manualEntries',
+        'pjEntries', 'inboundEntries', 'historyEvents', 'workbookFiles',
+        'activeSession', 'countMode', 'importFile', 'importMessage',
+        'importDownloadedAt', 'importUploadedAt', 'layouts', 'layoutQuantities',
+        'layoutNumbers'
+      ])
+      or jsonb_array_length(coalesce(old.data -> 'workspaces', '[]'::jsonb))
+        <> jsonb_array_length(coalesce(new.data -> 'workspaces', '[]'::jsonb)) then
+      raise exception 'Resource admins may only delete one active Master VEF item.'
+        using errcode = '42501';
+    end if;
+
+    for new_workspace in
+      select value from jsonb_array_elements(coalesce(new.data -> 'workspaces', '[]'::jsonb))
+    loop
+      workspace_id := new_workspace ->> 'id';
+      select value into old_workspace
+        from jsonb_array_elements(coalesce(old.data -> 'workspaces', '[]'::jsonb))
+        where value ->> 'id' = workspace_id
+        limit 1;
+      if old_workspace is null or (old_workspace - 'data') is distinct from (new_workspace - 'data') then
+        raise exception 'Resource admins may only delete one active Master VEF item.'
+          using errcode = '42501';
+      end if;
+      if old_workspace -> 'data' is distinct from new_workspace -> 'data' then
+        if old_workspace -> 'data' -> 'activeSession' ->> 'createdByUserId' is null
+          or old_workspace -> 'data' -> 'activeSession' ->> 'createdByUserId' = current_user_id
+          or coalesce(old_workspace -> 'data' -> 'activeSession' ->> 'status', 'active') <> 'active'
+          or exists (
+            select 1
+              from jsonb_array_elements_text(coalesce(old_workspace -> 'picNames', '[]'::jsonb)) as pic(name)
+             where lower(btrim(pic.name)) = any(current_user_names)
+          ) then
+          raise exception 'Resource admins may only delete one active Master VEF item.'
+            using errcode = '42501';
+        end if;
+        if changed_workspace_id is not null
+          or not public.is_stock_opname_master_row_deletion(
+            coalesce(old_workspace -> 'data', '{}'::jsonb),
+            coalesce(new_workspace -> 'data', '{}'::jsonb),
+            workspace_id
+          ) then
+          raise exception 'Resource admins may only delete one active Master VEF item.'
+            using errcode = '42501';
+        end if;
+        changed_workspace_id := workspace_id;
+        changed_workspace_data := new_workspace -> 'data';
+        canonical_workspace_data := old_workspace -> 'data';
+      end if;
+    end loop;
+
+    if changed_workspace_id is null then
+      raise exception 'Resource admins may only delete one active Master VEF item.'
+        using errcode = '42501';
+    end if;
+    if old.data ->> 'currentWorkspaceId' = changed_workspace_id then
+      foreach snapshot_key in array array[
+        'products', 'serialMaster', 'scanEvents', 'manualEntries', 'pjEntries',
+        'inboundEntries', 'historyEvents', 'workbookFiles', 'activeSession',
+        'countMode', 'importFile', 'importMessage', 'importDownloadedAt',
+        'importUploadedAt', 'layouts', 'layoutQuantities', 'layoutNumbers'
+      ]
+      loop
+        if old.data -> snapshot_key is distinct from canonical_workspace_data -> snapshot_key
+          or new.data -> snapshot_key is distinct from changed_workspace_data -> snapshot_key then
+          raise exception 'Resource admins may only delete one active Master VEF item.'
+            using errcode = '42501';
+        end if;
+      end loop;
+    elsif (old.data - 'workspaces') is distinct from (new.data - 'workspaces') then
+      raise exception 'Resource admins may only delete one active Master VEF item.'
+        using errcode = '42501';
+    end if;
     return new;
   end if;
 

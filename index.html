@@ -5498,6 +5498,9 @@
     const formatDisplayName = (username) => String(username || "Pengguna").trim().toLocaleUpperCase("id-ID");
     function databaseSetupHint(error) {
       const message = `${error.message || ""} ${error.details || ""}`;
+      if (/resource admins may only delete one active master vef item/i.test(message)) {
+        return "Database belum mendukung penghapusan item oleh super adm. Minta Owner menjalankan ulang seluruh supabase-setup.sql di Supabase → SQL Editor, lalu muat ulang aplikasi.";
+      }
       if (/column .*version.*does not exist|version.*schema cache/i.test(message)) {
         return "Database belum mendukung penyimpanan bersama yang aman. Minta Owner menjalankan ulang seluruh supabase-setup.sql di Supabase → SQL Editor, lalu muat ulang aplikasi.";
       }
@@ -6884,6 +6887,9 @@
     function renderProducts() {
       const canEdit = canEditActiveSession();
       const hasUploadedMaster = state.products.length > 0 && (state.workbookFiles || []).some((workbook) => workbook.sessionId === state.activeSession.id);
+      const canDeleteMasterRows = (isSuperAdmin() || isResourceAdmin())
+        && state.activeSession.status === "active"
+        && hasUploadedMaster;
       const hasBrandName = Boolean(activeWorkspace()?.name.trim());
       const laptopProducts = state.products.filter(isLaptopProduct);
       const nonLaptopProducts = state.products.filter((product) => !isLaptopProduct(product));
@@ -6917,7 +6923,7 @@
           <div class="metric"><div class="metric-top">Qty keseluruhan <span class="metric-mark">Σ</span></div><div class="metric-value">${formatNumber(totalUnitCount)} <small>unit</small></div><div class="metric-note">Laptop + selain laptop</div></div>
         </section>
         <section class="master-warehouse-summary" aria-label="Quantity Master VEF per Warehouse"><span class="master-warehouse-title">Quantity per Warehouse</span><div class="master-warehouse-items">${warehouseSummary || '<span class="master-warehouse-empty">Belum ada data Warehouse.</span>'}</div>${hasUploadedMaster ? '<button class="button master-start-scan-button" type="button" data-page-link="layouts">⊞ Mulai Scan / Hitung</button>' : ""}</section>
-        <section class="table-section"><div class="table-toolbar"><div class="table-title">Master barang <span class="table-count">${filtered.length} item · ${filtered.filter(isLaptopProduct).length} laptop · ${filtered.filter((product) => !isLaptopProduct(product)).length} bukan laptop</span></div><div class="filters"><div class="search-wrap"><span class="search-icon">⌕</span><input class="search-input" id="search-input" placeholder="Cari item code atau SN" value="${escapeHtml(searchTerm)}" aria-label="Cari master"></div></div></div><div class="table-scroll"><table><thead><tr><th>No</th><th>Item code</th><th>Item name</th><th>Item Group</th><th>Brand</th><th>Warehouse</th><th>VEF</th><th>Serial Number</th></tr></thead><tbody>${filtered.length ? filtered.map((product, index) => { const serials = serialsByProduct.get(product.id) || []; const laptop = isLaptopProduct(product); const status = laptop ? null : statusFor(product); return `<tr class="${laptop ? "" : "non-laptop-row"}"><td class="number-cell">${index + 1}</td><td class="number-cell" data-user-content>${escapeHtml(product.sku)}</td><td><div class="product-name">${escapeHtml(product.name)}</div>${status ? `<span class="row-status ${status.className}">${status.label}</span>` : ""}</td><td data-user-content>${escapeHtml(product.itemGroup || "-")}</td><td data-user-content>${escapeHtml(product.brand || "-")}</td><td data-user-content>${escapeHtml(product.warehouse || "-")}</td><td>${formatNumber(product.stock)}</td><td>${serials.length ? `<details class="serial-details"><summary>${formatNumber(serials.length)} SN · tampilkan</summary><div class="serial-list">${serials.map((serial) => `<span class="serial-token">${escapeHtml(serial)}</span>`).join("")}</div></details>` : "-"}</td></tr>`; }).join("") : `<tr><td class="empty-row" colspan="8">Unggah workbook untuk memuat master VEF.</td></tr>`}</tbody></table></div><div class="table-footer"><span>${state.serialMaster ? Object.keys(state.serialMaster).length : 0} serial terdaftar</span><span data-user-content>${escapeHtml(state.importFile || "Belum ada workbook")}</span></div></section>`;
+        <section class="table-section"><div class="table-toolbar"><div class="table-title">Master barang <span class="table-count">${filtered.length} item · ${filtered.filter(isLaptopProduct).length} laptop · ${filtered.filter((product) => !isLaptopProduct(product)).length} bukan laptop</span></div><div class="filters"><div class="search-wrap"><span class="search-icon">⌕</span><input class="search-input" id="search-input" placeholder="Cari item code atau SN" value="${escapeHtml(searchTerm)}" aria-label="Cari master"></div></div></div><div class="table-scroll"><table><thead><tr><th>No</th><th>Item code</th><th>Item name</th><th>Item Group</th><th>Brand</th><th>Warehouse</th><th>VEF</th><th>Serial Number</th>${canDeleteMasterRows ? "<th>Aksi</th>" : ""}</tr></thead><tbody>${filtered.length ? filtered.map((product, index) => { const serials = serialsByProduct.get(product.id) || []; const laptop = isLaptopProduct(product); const status = laptop ? null : statusFor(product); return `<tr class="${laptop ? "" : "non-laptop-row"}"><td class="number-cell">${index + 1}</td><td class="number-cell" data-user-content>${escapeHtml(product.sku)}</td><td><div class="product-name">${escapeHtml(product.name)}</div>${status ? `<span class="row-status ${status.className}">${status.label}</span>` : ""}</td><td data-user-content>${escapeHtml(product.itemGroup || "-")}</td><td data-user-content>${escapeHtml(product.brand || "-")}</td><td data-user-content>${escapeHtml(product.warehouse || "-")}</td><td>${formatNumber(product.stock)}</td><td>${serials.length ? `<details class="serial-details"><summary>${formatNumber(serials.length)} SN · tampilkan</summary><div class="serial-list">${serials.map((serial) => `<span class="serial-token">${escapeHtml(serial)}</span>`).join("")}</div></details>` : "-"}</td>${canDeleteMasterRows ? `<td><button class="button button-danger" type="button" data-delete-master-row="${escapeHtml(product.id)}" aria-label="Hapus ${escapeHtml(product.sku)} dari Master VEF">Hapus</button></td>` : ""}</tr>`; }).join("") : `<tr><td class="empty-row" colspan="${canDeleteMasterRows ? 9 : 8}">Unggah workbook untuk memuat master VEF.</td></tr>`}</tbody></table></div><div class="table-footer"><span>${state.serialMaster ? Object.keys(state.serialMaster).length : 0} serial terdaftar</span><span data-user-content>${escapeHtml(state.importFile || "Belum ada workbook")}</span></div></section>`;
     }
 
     function renderManualProductOptions(input) {
@@ -10217,6 +10223,86 @@
       notify("Master VEF dan data sesi aktif dihapus. Riwayat selesai tetap tersimpan.");
     }
 
+    async function deleteMasterProduct(productId) {
+      const workspaceId = state.currentWorkspaceId;
+      const sessionId = state.activeSession.id;
+      const hasUploadedMaster = (state.workbookFiles || []).some((workbook) => workbook.sessionId === sessionId);
+      if (!(isSuperAdmin() || isResourceAdmin()) || state.activeSession.status !== "active") {
+        notify("Hanya Owner atau super adm yang dapat menghapus item dari Master VEF sesi aktif.");
+        return;
+      }
+      if (!hasUploadedMaster) {
+        notify("Item hanya dapat dihapus jika file Master VEF sudah diunggah untuk sesi aktif.");
+        return;
+      }
+      if (pendingWorkbookUploads.has(state.currentWorkspaceId)) {
+        notify("Tunggu unggahan file VEF selesai sebelum menghapus item.");
+        return;
+      }
+      const product = state.products.find((item) => item.id === productId);
+      if (!product) {
+        notify("Item Master VEF tidak ditemukan. Muat ulang data sebelum mencoba lagi.");
+        return;
+      }
+      const normalizedSku = normalizeField(product.sku);
+      const hasUniqueSku = state.products.filter((item) => normalizeField(item.sku) === normalizedSku).length === 1;
+      const isRelatedItem = (item) => item.productId === product.id
+        || (!item.productId && hasUniqueSku && normalizeField(item.sku) === normalizedSku);
+      const linkedScans = state.scanEvents.filter(isRelatedItem).length;
+      const linkedManualEntries = state.manualEntries.filter(isRelatedItem).length;
+      const linkedPjEntries = state.pjEntries.filter(isRelatedItem).length;
+      const linkedInboundEntries = state.inboundEntries.filter(isRelatedItem).length;
+      const linkedSerials = Object.values(state.serialMaster || {}).filter((item) => item.productId === product.id
+        || (!item.productId && hasUniqueSku && normalizeField(item.sku) === normalizedSku)).length;
+      const linkedRecords = linkedScans + linkedManualEntries + linkedPjEntries + linkedInboundEntries + linkedSerials;
+      const getDeletionSnapshot = () => stableSerialize({
+        product: state.products.find((item) => item.id === productId),
+        serials: Object.entries(state.serialMaster || {}).filter(([, item]) => item.productId === product.id
+          || (!item.productId && hasUniqueSku && normalizeField(item.sku) === normalizedSku)),
+        scans: state.scanEvents.filter(isRelatedItem),
+        manualEntries: state.manualEntries.filter(isRelatedItem),
+        pjEntries: state.pjEntries.filter(isRelatedItem),
+        inboundEntries: state.inboundEntries.filter(isRelatedItem)
+      });
+      const deletionSnapshot = getDeletionSnapshot();
+      const details = linkedRecords
+        ? ` ${formatNumber(linkedSerials)} serial, ${formatNumber(linkedScans)} scan, ${formatNumber(linkedManualEntries)} manual, ${formatNumber(linkedPjEntries)} PJ, dan ${formatNumber(linkedInboundEntries)} Inbound/Retur terkait juga akan dihapus.`
+        : "";
+      if (!await showConfirmDialog(
+        `Item ${product.sku} · ${product.name} akan dihapus dari Master VEF sesi aktif.${details} File workbook asli tetap tersimpan.`,
+        { title: "Hapus item Master VEF?", confirmLabel: "Hapus item", destructive: true }
+      )) return;
+      if (state.currentWorkspaceId !== workspaceId
+        || state.activeSession.id !== sessionId
+        || !(isSuperAdmin() || isResourceAdmin())
+        || state.activeSession.status !== "active"
+        || pendingWorkbookUploads.has(workspaceId)) {
+        notify("Sesi berubah sebelum item dapat dihapus. Muat ulang data dan coba lagi.");
+        return;
+      }
+      const currentProduct = state.products.find((item) => item.id === productId);
+      if (!currentProduct || currentProduct.sku !== product.sku || currentProduct.name !== product.name) {
+        notify("Item sudah tidak ada di Master VEF.");
+        return;
+      }
+      if (getDeletionSnapshot() !== deletionSnapshot) {
+        notify("Data item berubah saat konfirmasi dibuka. Periksa kembali lalu hapus ulang.");
+        return;
+      }
+      state.products = state.products.filter((item) => item.id !== productId);
+      state.serialMaster = Object.fromEntries(Object.entries(state.serialMaster || {}).filter(([, item]) =>
+        item.productId !== productId
+        && (item.productId || !hasUniqueSku || normalizeField(item.sku) !== normalizedSku)));
+      state.scanEvents = state.scanEvents.filter((item) => !isRelatedItem(item));
+      state.manualEntries = state.manualEntries.filter((item) => !isRelatedItem(item));
+      state.pjEntries = state.pjEntries.filter((item) => !isRelatedItem(item));
+      state.inboundEntries = state.inboundEntries.filter((item) => !isRelatedItem(item));
+      if (state.lastScan && isRelatedItem(state.lastScan)) state.lastScan = null;
+      recordActivity("Master VEF item deleted", `${product.sku} · ${product.name} dihapus dari Master VEF aktif.`);
+      render();
+      notify(`Item ${product.sku} berhasil dihapus dari Master VEF sesi aktif.`);
+    }
+
     function exportCsv() {
       const header = ["Item Code", "Item Name", "Item Group", "Brand", "Warehouse", "Jenis", "VEF", "SCAN", "MANUAL", "Inbound/Retur", "PJ", "Selisih", "Check"];
       const rows = state.products.map((product) => {
@@ -10427,6 +10513,11 @@
     });
     document.querySelectorAll("[data-logout]").forEach((button) => button.addEventListener("click", requestSignOut));
     document.addEventListener("click", (event) => {
+      const deleteMasterRowButton = event.target.closest("[data-delete-master-row]");
+      if (deleteMasterRowButton) {
+        void deleteMasterProduct(deleteMasterRowButton.dataset.deleteMasterRow);
+        return;
+      }
       const exportRecordedEntryButton = event.target.closest("[data-export-recorded-entry]");
       if (exportRecordedEntryButton) {
         exportRecordedCountDetails(exportRecordedEntryButton.dataset.exportRecordedEntry, exportRecordedEntryButton.dataset.productId);
