@@ -2421,7 +2421,7 @@
     <div class="workbook-preview-controls"><label class="auth-field"><span>File unggahan</span><select class="auth-input" id="uploaded-workbook-preview-file"></select></label><label class="auth-field"><span>Sheet</span><select class="auth-input" id="uploaded-workbook-preview-sheet" disabled></select></label></div>
     <p class="workbook-preview-status" id="uploaded-workbook-preview-status" role="status" aria-live="polite"></p>
     <div class="workbook-preview-table-wrap" id="uploaded-workbook-preview-table"></div>
-    <div class="dialog-actions"><button class="button button-secondary" type="button" data-close="uploaded-workbook-preview-dialog">Tutup</button></div>
+    <div class="dialog-actions"><button class="button button-primary" id="download-uploaded-workbook" type="button">Unduh file</button><button class="button button-secondary" type="button" data-close="uploaded-workbook-preview-dialog">Tutup</button></div>
   </dialog>
   <dialog id="workbook-upload-success-dialog" class="feature-dialog upload-success-dialog" aria-labelledby="workbook-upload-success-title" aria-describedby="workbook-upload-success-message">
     <div class="dialog-head"><div><div class="dialog-title" id="workbook-upload-success-title">File berhasil diunggah</div><div class="dialog-subtitle">Konfirmasi hasil unggah file Master VEF.</div></div></div>
@@ -2611,6 +2611,7 @@
       "Jadwal": "Schedule",
       "Master VEF": "VEF Master",
       "Lihat file unggahan": "View uploaded file",
+      "Unduh file": "Download file",
       "File Master VEF yang diunggah": "Uploaded VEF Master file",
       "File unggahan": "Uploaded file",
       "Sheet": "Sheet",
@@ -4235,6 +4236,22 @@
         window.location.assign(data.signedUrl);
       } catch (error) {
         notify(`File arsip gagal diunduh: ${error instanceof Error ? error.message : "kesalahan tidak diketahui"}`);
+      }
+    }
+    async function downloadActiveWorkbook(workbookId) {
+      const workbook = (state.workbookFiles || []).find((item) => item.id === workbookId && item.sessionId === state.activeSession.id);
+      if (!workbook) {
+        notify("File unggahan tidak ditemukan pada sesi ini.");
+        return;
+      }
+      try {
+        const { data, error } = await supabaseClient.storage.from(WORKBOOK_ARCHIVE_BUCKET)
+          .createSignedUrl(workbook.storagePath, 60, { download: workbook.name });
+        if (error) throw error;
+        window.location.assign(data.signedUrl);
+      } catch (error) {
+        console.error("File Master VEF gagal diunduh:", error);
+        notify(`File Master VEF gagal diunduh: ${error instanceof Error ? error.message : "kesalahan tidak diketahui"}`);
       }
     }
     let uploadedWorkbookPreviewRequestId = 0;
@@ -9096,6 +9113,10 @@
       document.querySelectorAll("[data-admin-role]").forEach((select) => select.addEventListener("change", () => administerUser("role", select.dataset.adminRole, select.value)));
       document.getElementById("import-button")?.addEventListener("click", () => document.getElementById("workbook-input").click());
       document.getElementById("view-uploaded-workbook")?.addEventListener("click", openUploadedWorkbookPreview);
+      document.getElementById("download-uploaded-workbook")?.addEventListener("click", () => {
+        const fileId = document.getElementById("uploaded-workbook-preview-file")?.value;
+        if (fileId) downloadActiveWorkbook(fileId);
+      });
       document.getElementById("delete-master-button")?.addEventListener("click", () => document.getElementById("delete-master-dialog").showModal());
       document.getElementById("add-rack-button")?.addEventListener("click", addRack);
       document.querySelectorAll("[data-delete-rack]").forEach((button) => button.addEventListener("click", () => deleteRack(button.dataset.deleteRack)));
