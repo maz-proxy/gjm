@@ -226,6 +226,7 @@
     .top-chat-label { font-size: 10px; font-weight: 700; }
     .top-chat-unread { align-items: center; background: #d83a4b; border: 2px solid var(--paper); border-radius: 999px; color: #fff; display: flex; font-size: 8px; font-weight: 800; height: 17px; justify-content: center; min-width: 17px; padding: 0 4px; position: absolute; right: -6px; top: -6px; }
     .chat-panel { animation: chat-panel-enter .2s cubic-bezier(.2,.7,.2,1); background: var(--paper); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 18px 48px rgba(20,40,35,.24); color: var(--ink); display: grid; grid-template-rows: auto minmax(0, 1fr) auto; height: min(440px, calc(100dvh - 100px)); max-height: 440px; overflow: hidden; position: absolute; right: 0; top: auto; bottom: calc(100% + 9px); width: min(360px, calc(100vw - 32px)); z-index: 60; }
+    .chat-panel-archive { grid-template-rows: auto auto minmax(0, 1fr); }
     .chat-panel-head { align-items: center; background: color-mix(in srgb, var(--green) 9%, var(--paper)); border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 9px; justify-content: space-between; padding: 10px 12px; }
     .chat-panel-tabs { align-items: center; display: flex; gap: 5px; }
     .chat-panel-tab { background: transparent; border: 1px solid transparent; border-radius: 7px; color: var(--muted); cursor: pointer; font: inherit; font-size: 10px; font-weight: 700; min-height: 30px; padding: 0 9px; }
@@ -246,6 +247,8 @@
     .chat-message-meta { align-items: center; color: var(--muted); display: flex; font-size: 8px; gap: 7px; justify-content: flex-end; margin-top: 4px; }
     .chat-message-edit { background: transparent; border: 0; border-radius: 5px; color: var(--green-dark); font-size: 8px; padding: 2px 4px; }
     .chat-message-edit:hover, .chat-message-edit:focus-visible { background: var(--green-soft); outline: 0; }
+    .chat-message-delete { background: transparent; border: 0; border-radius: 5px; color: #b42332; font-size: 8px; padding: 2px 4px; }
+    .chat-message-delete:hover, .chat-message-delete:focus-visible { background: color-mix(in srgb, #d83a4b 12%, var(--paper)); outline: 0; }
     .chat-message-reply { background: transparent; border: 0; border-radius: 5px; color: var(--green-dark); font-size: 8px; padding: 2px 4px; }
     .chat-message-reply:hover, .chat-message-reply:focus-visible { background: var(--green-soft); outline: 0; }
     .chat-message-reply-quote { background: color-mix(in srgb, var(--green) 8%, var(--paper)); border: 0; border-left: 2px solid var(--green); border-radius: 4px; color: var(--ink); display: grid; gap: 2px; margin-bottom: 5px; max-width: 100%; padding: 5px 7px; text-align: left; width: 100%; }
@@ -270,14 +273,17 @@
     .chat-mention-option { background: transparent; border: 0; border-radius: 6px; color: var(--ink); font-size: 10px; padding: 6px 8px; text-align: left; }
     .chat-mention-option:hover, .chat-mention-option:focus-visible { background: var(--green-soft); outline: 0; }
     .chat-mention-empty { color: var(--muted); font-size: 9px; padding: 7px 8px; }
+    .chat-owner-actions, .chat-archive-filters { align-items: center; display: flex; flex-wrap: wrap; gap: 5px; }
+    .chat-owner-action { background: transparent; border: 1px solid var(--line); border-radius: 6px; color: #b42332; cursor: pointer; font: inherit; font-size: 9px; font-weight: 700; min-height: 28px; padding: 0 7px; }
+    .chat-owner-action:hover, .chat-owner-action:focus-visible { background: color-mix(in srgb, #d83a4b 10%, var(--paper)); outline: 0; }
+    .chat-archive-filters { border-bottom: 1px solid var(--line); grid-column: 1 / -1; padding: 7px 10px; }
+    .chat-archive-filter { background: var(--paper); border: 1px solid var(--line); border-radius: 6px; color: var(--ink); font: inherit; font-size: 9px; min-height: 28px; padding: 0 5px; }
     .chat-selected-file { align-items: center; background: var(--green-soft); border: 1px solid var(--line); border-radius: 7px; color: var(--ink); display: inline-flex; font-size: 9px; gap: 5px; max-width: 100%; padding: 4px 6px; }
     .chat-selected-file span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .chat-selected-file button { background: transparent; border: 0; border-radius: 4px; color: var(--muted); line-height: 1; padding: 2px 4px; }
     .chat-compose-actions { align-items: center; display: flex; gap: 4px; grid-column: 2; }
-    .chat-attach, .chat-send, .chat-cancel-edit, .chat-mention { align-items: center; background: var(--green); border: 0; border-radius: 9px; color: #fff; cursor: pointer; display: inline-flex; flex: 0 0 34px; height: 38px; justify-content: center; }
+    .chat-attach, .chat-send, .chat-cancel-edit { align-items: center; background: var(--green); border: 0; border-radius: 9px; color: #fff; cursor: pointer; display: inline-flex; flex: 0 0 34px; height: 38px; justify-content: center; }
     .chat-attach { background: var(--green-soft); color: var(--green-dark); }
-    .chat-mention { background: var(--green-soft); color: var(--green-dark); font-size: 12px; font-weight: 800; }
-    .chat-mention:hover, .chat-mention[aria-expanded="true"] { background: color-mix(in srgb, var(--green) 18%, var(--paper)); }
     .chat-attach svg { fill: none; height: 18px; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; width: 18px; }
     .chat-cancel-edit { background: var(--green-soft); color: var(--green-dark); font-size: 10px; }
     .chat-send:disabled, .chat-attach:disabled { cursor: not-allowed; opacity: .48; }
@@ -3336,6 +3342,7 @@
     const CHAT_ATTACHMENT_MAX_SIZE = 50 * 1024 * 1024;
     const CHAT_ATTACHMENT_MAX_COUNT = 10;
     const CHAT_ARCHIVE_AGE_MS = 24 * 60 * 60 * 1000;
+    const CHAT_DELETE_AGE_MS = 60 * 60 * 1000;
     const CHAT_ARCHIVE_INTERVAL_MS = 60 * 1000;
     const ANDROID_APP_BUCKET = "stock-opname-app-downloads";
     const ANDROID_APP_OBJECT = "latest.apk";
@@ -3615,10 +3622,19 @@
     let chatOpenedFromPreview = false;
     let chatReplyTo = null;
     let chatMentionDraftNames = [];
+    let chatMentionActiveIndex = -1;
+    let chatAccountNames = [];
+    let chatMentionDirectoryUserId = "";
+    let chatMentionDirectoryLoadingFor = "";
+    let chatMentionDirectoryError = "";
+    let chatArchiveYear = "";
+    let chatArchiveMonth = "";
+    let chatArchiveSelectedDate = "";
     let chatAudioContext = null;
     let chatSelectedFiles = [];
     let chatUploadInProgress = false;
     const chatAttachmentUrlCache = new Map();
+    const pendingChatAttachmentCleanup = new Map();
     let cameraStream = null;
     let cameraScanTimer = null;
     let cameraFocusTimer = null;
@@ -5390,7 +5406,7 @@
           if (archiveExpiredChatMessages()) {
             persist();
             refreshChatWidget();
-          }
+          } else refreshChatDeleteControls();
         }, CHAT_ARCHIVE_INTERVAL_MS);
         refreshTimer = setInterval(refreshSharedState, 45000);
         workspaceCleanupTimer = setInterval(() => {
@@ -5418,7 +5434,10 @@
       try {
         persistLocalState();
         let pendingState = normalizeSharedState(JSON.parse(stableSerialize(serializeSharedState(state))));
-        if (stableSerialize(pendingState) === lastSyncedState) return;
+        if (stableSerialize(pendingState) === lastSyncedState) {
+          await cleanupConfirmedChatAttachments(pendingState, savingUserId);
+          return;
+        }
         for (let attempt = 0; attempt < 5; attempt++) {
           if (authSession?.user?.id !== savingUserId || !sharedStateReady) return;
           const serializedState = stableSerialize(pendingState);
@@ -5434,6 +5453,7 @@
             remoteUpdatedAt = saved.updated_at;
             remoteVersion = saved.version;
             lastSyncedState = serializedState;
+            await cleanupConfirmedChatAttachments(JSON.parse(serializedState), savingUserId);
             resetSharedSyncFailures("write");
             if (stableSerialize(serializeSharedState(state)) !== serializedState) {
               clearTimeout(syncTimer);
@@ -6042,6 +6062,13 @@
         message.senderId !== userId && Number.isFinite(Date.parse(message.createdAt))
         && Date.parse(message.createdAt) > (Number.isFinite(lastReadAt) ? lastReadAt : 0)).length;
     }
+    function refreshChatDeleteControls() {
+      if (!chatPanelOpen || chatArchiveOpen) return;
+      document.querySelectorAll("[data-chat-delete]").forEach((button) => {
+        const message = (state.chatMessages || []).find((item) => item.id === button.dataset.chatDelete);
+        if (!message || !canDeleteChatMessage(message)) button.remove();
+      });
+    }
     function archiveExpiredChatMessages() {
       const cutoff = Date.now() - CHAT_ARCHIVE_AGE_MS;
       const expired = (state.chatMessages || []).filter((message) => {
@@ -6131,12 +6158,108 @@
       return (hash >>> 0) % 360;
     }
     function getChatMentionNames() {
+      if (chatMentionDirectoryError) return [];
       const currentName = formatDisplayName(authSession?.user?.user_metadata?.username || authSession?.user?.email || "");
-      return [...new Set([
-        ...onlineUsersPresenceList,
-        ...(state.chatMessages || []).map((message) => message.senderName || "")
-      ])].map((name) => String(name).trim()).filter((name) => name && name !== currentName)
-        .sort((left, right) => left.localeCompare(right, "id-ID"));
+      const availableNames = chatAccountNames.length
+        ? chatAccountNames
+        : [...onlineUsersPresenceList, ...(state.chatMessages || []).map((message) => message.senderName || "")];
+      const uniqueNames = new Map();
+      for (const name of availableNames) {
+        const displayName = formatDisplayName(name);
+        if (displayName && displayName !== "PENGGUNA") uniqueNames.set(displayName.toLocaleLowerCase("id-ID"), displayName);
+      }
+      if (currentName && !uniqueNames.has(currentName.toLocaleLowerCase("id-ID"))) {
+        uniqueNames.set(currentName.toLocaleLowerCase("id-ID"), currentName);
+      }
+      return [...uniqueNames.values()].sort((left, right) => left.localeCompare(right, "id-ID"));
+    }
+    async function loadChatMentionDirectory() {
+      const userId = authSession?.user?.id;
+      if (!userId) return;
+      if (chatMentionDirectoryUserId && chatMentionDirectoryUserId !== userId) {
+        chatAccountNames = [];
+        chatMentionDirectoryUserId = "";
+        chatMentionDirectoryError = "";
+      }
+      if (chatMentionDirectoryUserId === userId || chatMentionDirectoryLoadingFor === userId) return;
+      chatMentionDirectoryLoadingFor = userId;
+      chatMentionDirectoryError = "";
+      try {
+        const { data, error } = await supabaseClient.rpc("list_stock_opname_chat_mentions");
+        if (error) throw error;
+        if (authSession?.user?.id !== userId) return;
+        if (!Array.isArray(data)) throw new Error("Respons daftar akun tidak valid.");
+        chatAccountNames = data
+          .map((item) => typeof item === "string" ? item : item?.username)
+          .filter((name) => typeof name === "string" && name.trim())
+          .map((name) => formatDisplayName(name));
+        chatMentionDirectoryUserId = userId;
+      } catch (error) {
+        if (authSession?.user?.id === userId) {
+          chatMentionDirectoryError = error instanceof Error ? error.message : "Kesalahan tidak diketahui.";
+          chatMentionDirectoryUserId = userId;
+          console.error("Daftar akun untuk mention gagal dimuat:", error);
+          if (chatPanelOpen) notify("Daftar akun mention gagal dimuat. Minta Owner menjalankan supabase-setup.sql terbaru.");
+        }
+      } finally {
+        if (chatMentionDirectoryLoadingFor === userId) chatMentionDirectoryLoadingFor = "";
+        if (authSession?.user?.id === userId) {
+          const input = document.getElementById("chat-message-input");
+          if (input && chatMentionTokenAt(input)) updateChatMentionMenu(input);
+        }
+      }
+    }
+    function chatMentionTokenAt(input) {
+      const caret = input.selectionStart ?? input.value.length;
+      const beforeCaret = input.value.slice(0, caret);
+      const match = /(^|[\s([{])@([^\s@]*)$/u.exec(beforeCaret);
+      if (!match) return null;
+      return { start: caret - match[2].length - 1, caret, query: match[2] };
+    }
+    function updateChatMentionMenu(input) {
+      const menu = document.getElementById("chat-mention-menu");
+      if (!menu) return;
+      const token = chatMentionTokenAt(input);
+      if (!token || chatEditingMessageId) {
+        menu.hidden = true;
+        input.setAttribute("aria-expanded", "false");
+        chatMentionActiveIndex = -1;
+        return;
+      }
+      const query = token.query.toLocaleLowerCase("id-ID");
+      const matches = getChatMentionNames().filter((name) => name.toLocaleLowerCase("id-ID").includes(query));
+      menu.innerHTML = matches.length
+        ? matches.map((name, index) => `<button class="chat-mention-option" type="button" role="option" aria-selected="${index === chatMentionActiveIndex}" data-chat-mention-name="${escapeHtml(name)}">@${escapeHtml(name)}</button>`).join("")
+        : `<span class="chat-mention-empty">${chatMentionDirectoryError ? "Daftar akun belum tersedia. Minta Owner memperbarui database." : "Tidak ada akun yang cocok."}</span>`;
+      menu.hidden = false;
+      input.setAttribute("aria-expanded", "true");
+      if (chatMentionActiveIndex >= matches.length) chatMentionActiveIndex = matches.length - 1;
+    }
+    function insertChatMention(name) {
+      const input = document.getElementById("chat-message-input");
+      if (!input) return;
+      const token = chatMentionTokenAt(input);
+      if (!token) return;
+      const mention = `@${name} `;
+      input.value = `${input.value.slice(0, token.start)}${mention}${input.value.slice(token.caret)}`;
+      if (!chatMentionDraftNames.includes(name)) chatMentionDraftNames.push(name);
+      const caret = token.start + mention.length;
+      input.setSelectionRange(caret, caret);
+      chatMentionActiveIndex = -1;
+      updateChatMentionMenu(input);
+      focusChatInput();
+    }
+    function canDeleteChatMessage(message, archived = false) {
+      if (isSuperAdmin()) return true;
+      if (archived || message.senderId !== authSession?.user?.id) return false;
+      const age = Date.now() - Date.parse(message.createdAt);
+      return Number.isFinite(age) && age >= 0 && age <= CHAT_DELETE_AGE_MS;
+    }
+    function chatArchiveDate(message) {
+      const createdAt = Date.parse(message.createdAt);
+      if (!Number.isFinite(createdAt)) return "";
+      const date = new Date(createdAt);
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
     }
     function renderChatMessageText(text, mentions = []) {
       const matches = [];
@@ -6237,10 +6360,25 @@
       const unreadBadge = unreadCount
         ? `<span class="top-chat-unread" aria-label="${unreadCount} pesan belum dibaca">${unreadCount}</span>`
         : "";
-      const messages = [...(chatArchiveOpen ? state.chatArchiveMessages || [] : state.chatMessages || [])].sort((left, right) =>
-        Date.parse(left.createdAt) - Date.parse(right.createdAt));
+      const archiveDates = [...new Set((state.chatArchiveMessages || []).map(chatArchiveDate).filter(Boolean))].sort().reverse();
+      const archiveYears = [...new Set(archiveDates.map((date) => date.slice(0, 4)))];
+      const archiveMonths = [...new Set(archiveDates
+        .filter((date) => !chatArchiveYear || date.startsWith(chatArchiveYear))
+        .map((date) => date.slice(0, 7)))].sort().reverse();
+      const archiveDayOptions = archiveDates.filter((date) =>
+        (!chatArchiveYear || date.startsWith(chatArchiveYear))
+        && (!chatArchiveMonth || date.startsWith(chatArchiveMonth)));
+      const archiveFilterMarkup = chatArchiveOpen
+        ? `<div class="chat-archive-filters" aria-label="Filter arsip chat"><select class="chat-archive-filter" id="chat-archive-year" aria-label="Pilih tahun"><option value="">Semua tahun</option>${archiveYears.map((year) => `<option value="${year}"${year === chatArchiveYear ? " selected" : ""}>${year}</option>`).join("")}</select><select class="chat-archive-filter" id="chat-archive-month" aria-label="Pilih bulan"><option value="">Semua bulan</option>${archiveMonths.map((month) => { const [year, monthNumber] = month.split("-").map(Number); return `<option value="${month}"${month === chatArchiveMonth ? " selected" : ""}>${formatDate(new Date(year, monthNumber - 1, 1), { month: "long", year: "numeric" })}</option>`; }).join("")}</select><select class="chat-archive-filter" id="chat-archive-date" aria-label="Pilih tanggal"><option value="">Semua tanggal</option>${archiveDayOptions.map((date) => { const [year, month, day] = date.split("-").map(Number); return `<option value="${date}"${date === chatArchiveSelectedDate ? " selected" : ""}>${formatDate(new Date(year, month - 1, day), { day: "numeric", month: "short", year: "numeric" })}</option>`; }).join("")}</select></div>`
+        : "";
+      const messages = [...(chatArchiveOpen ? state.chatArchiveMessages || [] : state.chatMessages || [])]
+        .filter((message) => !chatArchiveOpen || (
+          (!chatArchiveYear || chatArchiveDate(message).startsWith(chatArchiveYear))
+          && (!chatArchiveMonth || chatArchiveDate(message).startsWith(chatArchiveMonth))
+          && (!chatArchiveSelectedDate || chatArchiveDate(message) === chatArchiveSelectedDate)
+        ))
+        .sort((left, right) => Date.parse(left.createdAt) - Date.parse(right.createdAt));
       const userId = authSession?.user?.id;
-      const mentionNames = getChatMentionNames();
       const messageMarkup = messages.length
         ? messages.map((message) => {
           const ownMessage = message.senderId === userId;
@@ -6251,6 +6389,7 @@
           const editedLabel = currentLanguage === "en" ? "edited" : "diedit";
           const editLabel = currentLanguage === "en" ? "Edit" : "Ubah";
           const replyLabel = currentLanguage === "en" ? "Reply" : "Balas";
+          const deleteLabel = currentLanguage === "en" ? "Delete" : "Hapus";
           const attachments = (message.attachments || []).map((attachment) => isChatImageAttachment(attachment)
             ? `<a class="chat-image-link" data-chat-file-path="${escapeHtml(attachment.storagePath)}" data-chat-file-name="${escapeHtml(attachment.name)}" data-chat-image-path target="_blank" rel="noopener noreferrer" aria-label="Buka foto ${escapeHtml(attachment.name)}"><img class="chat-image" alt="${escapeHtml(attachment.name)}" loading="lazy"></a>`
             : `<a class="chat-file-link" data-chat-file-path="${escapeHtml(attachment.storagePath)}" data-chat-file-name="${escapeHtml(attachment.name)}" target="_blank" rel="noopener noreferrer"><span class="chat-file-icon" aria-hidden="true">📎</span><span class="chat-file-copy"><span class="chat-file-name">${escapeHtml(attachment.name)}</span><span class="chat-file-size">${formatNumber(attachment.size / 1024)} KB</span></span></a>`
@@ -6259,22 +6398,20 @@
           const replyMarkup = replyTo
             ? `<button class="chat-message-reply-quote" type="button" data-chat-jump-to="${escapeHtml(replyTo.id)}"><strong>${escapeHtml(replyTo.senderName || "Pengguna")}</strong><span>${escapeHtml(replyTo.text || "Lampiran")}</span></button>`
             : "";
-          const messageActions = !chatArchiveOpen
-            ? `${ownMessage ? `<button class="chat-message-edit" type="button" data-chat-edit="${escapeHtml(message.id)}" aria-label="${editLabel} pesan" ${chatUploadInProgress ? "disabled" : ""}>✎ ${editLabel}</button>` : ""}<button class="chat-message-reply" type="button" data-chat-reply="${escapeHtml(message.id)}" aria-label="${replyLabel} ke ${escapeHtml(senderName)}" ${chatUploadInProgress ? "disabled" : ""}>↩ ${replyLabel}</button>`
-            : "";
+          const messageActions = `${!chatArchiveOpen && ownMessage ? `<button class="chat-message-edit" type="button" data-chat-edit="${escapeHtml(message.id)}" aria-label="${editLabel} pesan" ${chatUploadInProgress ? "disabled" : ""}>✎ ${editLabel}</button>` : ""}${canDeleteChatMessage(message, chatArchiveOpen) ? `<button class="chat-message-delete" type="button" data-chat-delete="${escapeHtml(message.id)}" data-chat-delete-archived="${chatArchiveOpen}" aria-label="${deleteLabel} pesan" ${chatUploadInProgress ? "disabled" : ""}>⌫ ${deleteLabel}</button>` : ""}${!chatArchiveOpen ? `<button class="chat-message-reply" type="button" data-chat-reply="${escapeHtml(message.id)}" aria-label="${replyLabel} ke ${escapeHtml(senderName)}" ${chatUploadInProgress ? "disabled" : ""}>↩ ${replyLabel}</button>` : ""}`;
           return `<article class="chat-message${ownMessage ? " own" : ""}" id="chat-message-${escapeHtml(message.id)}" style="--chat-user-hue:${chatSenderHue(message.senderId)}"><span class="chat-message-sender" data-user-content>${escapeHtml(senderName)}</span>${replyMarkup}${message.text ? `<div class="chat-message-text" data-user-content>${renderChatMessageText(message.text, message.mentions || [])}</div>` : ""}${attachments ? `<div class="chat-message-attachments">${attachments}</div>` : ""}<div class="chat-message-meta">${message.editedAt ? `<span class="chat-message-edited">${editedLabel}</span>` : ""}<time>${escapeHtml(sentAt)}</time>${messageActions}</div></article>`;
         }).join("")
-        : `<div class="chat-empty">${chatArchiveOpen ? "Arsip chat masih kosong. Pesan akan masuk ke sini setelah berusia satu hari." : "Belum ada percakapan. Kirim pesan atau lampiran pertama untuk memulai chat tim."}</div>`;
+        : `<div class="chat-empty">${chatArchiveOpen ? (state.chatArchiveMessages?.length ? "Tidak ada pesan arsip pada periode ini." : "Arsip chat masih kosong. Pesan akan masuk ke sini setelah berusia satu hari.") : "Belum ada percakapan. Kirim pesan atau lampiran pertama untuk memulai chat tim."}</div>`;
       const editingMessage = messages.find((message) => message.id === chatEditingMessageId);
       const editMode = Boolean(!chatArchiveOpen && editingMessage && editingMessage.senderId === userId);
       const replyDraftMarkup = chatReplyTo && !editMode
         ? `<div class="chat-compose-reply" id="chat-compose-reply"><div class="chat-compose-reply-copy"><strong>Balas ke ${escapeHtml(chatReplyTo.senderName)}</strong><span>${escapeHtml(chatReplyTo.text || "Lampiran")}</span></div><button class="chat-compose-reply-cancel" id="chat-cancel-reply" type="button" aria-label="Batalkan balasan">×</button></div>`
         : "";
-      const mentionMenuMarkup = mentionNames.length
-        ? mentionNames.map((name) => `<button class="chat-mention-option" type="button" role="menuitem" data-chat-mention-name="${escapeHtml(name)}">@${escapeHtml(name)}</button>`).join("")
-        : `<span class="chat-mention-empty">Belum ada anggota lain untuk di-mention.</span>`;
+      const ownerActionsMarkup = isSuperAdmin()
+        ? `<div class="chat-owner-actions"><button class="chat-owner-action" id="chat-owner-reset" type="button">Reset semua chat</button>${chatArchiveOpen ? `<button class="chat-owner-action" id="chat-owner-clear-archive" type="button">Hapus arsip</button>` : ""}</div>`
+        : "";
       const panelMarkup = chatPanelOpen
-        ? `<section class="chat-panel" aria-label="Percakapan antar akun"><header class="chat-panel-head"><nav class="chat-panel-tabs" aria-label="Chat dan arsip"><button class="chat-panel-tab" id="chat-active-tab" type="button" aria-pressed="${!chatArchiveOpen}">Chat</button><button class="chat-panel-tab" id="chat-archive-tab" type="button" aria-pressed="${chatArchiveOpen}">${currentLanguage === "en" ? "Archive" : "Arsip"}<span class="chat-panel-tab-count">${formatNumber((state.chatArchiveMessages || []).length)}</span></button></nav><button class="chat-close chat-panel-close" id="chat-close" type="button" aria-label="Tutup chat">×</button></header><div class="chat-message-list" id="chat-message-list" role="log" aria-label="${chatArchiveOpen ? "Arsip chat" : "Chat tim"}" aria-live="polite" aria-relevant="additions text">${messageMarkup}</div>${chatArchiveOpen ? "" : `<form class="chat-compose" id="chat-compose">${replyDraftMarkup}<input id="chat-attachment-input" type="file" accept="*/*" multiple hidden><div class="chat-compose-files" id="chat-compose-files">${renderChatSelectedFilesMarkup()}</div><div class="chat-mention-menu" id="chat-mention-menu" role="menu" aria-label="Pilih anggota untuk di-mention" hidden>${mentionMenuMarkup}</div><textarea id="chat-message-input" maxlength="1000" aria-label="${editMode ? "Edit pesan chat" : "Tulis pesan chat"}" placeholder="${editMode ? "Ubah pesan..." : "Tulis pesan..."}">${editMode ? escapeHtml(editingMessage.text) : ""}</textarea><div class="chat-compose-actions">${editMode ? `<button class="chat-cancel-edit" id="chat-cancel-edit" type="button" aria-label="Batalkan edit">×</button>` : `<button class="chat-mention" id="chat-mention-button" type="button" aria-label="Mention anggota" aria-controls="chat-mention-menu" aria-expanded="false" title="Mention anggota" ${chatUploadInProgress ? "disabled" : ""}>@</button><button class="chat-attach" id="chat-attach-button" type="button" aria-label="Lampirkan foto atau dokumen" title="Lampirkan foto atau dokumen" ${chatUploadInProgress ? "disabled" : ""}><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m21.4 11.6-8.5 8.5a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"/></svg></button>`}<button class="chat-send" type="submit" aria-label="${editMode ? "Simpan perubahan" : "Kirim pesan"}" title="${editMode ? "Simpan perubahan" : chatUploadInProgress ? "Mengunggah lampiran..." : "Kirim pesan"}" ${chatUploadInProgress ? "disabled" : ""}>${editMode ? "✓" : chatUploadInProgress ? "…" : '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4 20-7ZM22 2 11 13"/></svg>'}</button></div></form>`}</section>`
+        ? `<section class="chat-panel${chatArchiveOpen ? " chat-panel-archive" : ""}" aria-label="Percakapan antar akun"><header class="chat-panel-head"><nav class="chat-panel-tabs" aria-label="Chat dan arsip"><button class="chat-panel-tab" id="chat-active-tab" type="button" aria-pressed="${!chatArchiveOpen}">Chat</button><button class="chat-panel-tab" id="chat-archive-tab" type="button" aria-pressed="${chatArchiveOpen}">${currentLanguage === "en" ? "Archive" : "Arsip"}<span class="chat-panel-tab-count">${formatNumber((state.chatArchiveMessages || []).length)}</span></button></nav>${ownerActionsMarkup}<button class="chat-close chat-panel-close" id="chat-close" type="button" aria-label="Tutup chat">×</button></header>${archiveFilterMarkup}<div class="chat-message-list" id="chat-message-list" role="log" aria-label="${chatArchiveOpen ? "Arsip chat" : "Chat tim"}" aria-live="polite" aria-relevant="additions text">${messageMarkup}</div>${chatArchiveOpen ? "" : `<form class="chat-compose" id="chat-compose">${replyDraftMarkup}<input id="chat-attachment-input" type="file" accept="*/*" multiple hidden><div class="chat-compose-files" id="chat-compose-files">${renderChatSelectedFilesMarkup()}</div><div class="chat-mention-menu" id="chat-mention-menu" role="listbox" aria-label="Pilih akun untuk di-mention" hidden></div><textarea id="chat-message-input" maxlength="1000" aria-label="${editMode ? "Edit pesan chat" : "Tulis pesan chat"}" aria-controls="chat-mention-menu" aria-autocomplete="list" aria-expanded="false" placeholder="${editMode ? "Ubah pesan..." : "Tulis pesan..."}">${editMode ? escapeHtml(editingMessage.text) : ""}</textarea><div class="chat-compose-actions">${editMode ? `<button class="chat-cancel-edit" id="chat-cancel-edit" type="button" aria-label="Batalkan edit">×</button>` : `<button class="chat-attach" id="chat-attach-button" type="button" aria-label="Lampirkan foto atau dokumen" title="Lampirkan foto atau dokumen" ${chatUploadInProgress ? "disabled" : ""}><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m21.4 11.6-8.5 8.5a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"/></svg></button>`}<button class="chat-send" type="submit" aria-label="${editMode ? "Simpan perubahan" : "Kirim pesan"}" title="${editMode ? "Simpan perubahan" : chatUploadInProgress ? "Mengunggah lampiran..." : "Kirim pesan"}" ${chatUploadInProgress ? "disabled" : ""}>${editMode ? "✓" : chatUploadInProgress ? "…" : '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4 20-7ZM22 2 11 13"/></svg>'}</button></div></form>`}</section>`
         : "";
       const incomingMarkup = chatIncomingPreview
         ? `<button class="chat-incoming-preview" id="chat-preview-open" type="button" aria-live="polite" aria-label="Buka pesan chat dari ${escapeHtml(chatIncomingPreview.senderName || "Pengguna")}"><strong data-user-content>${escapeHtml(chatIncomingPreview.senderName || "Pesan baru")}</strong><span data-user-content>${escapeHtml(chatIncomingPreview.text || (chatIncomingPreview.attachments?.length ? `📎 ${chatIncomingPreview.attachments.length} lampiran` : "Lampiran baru"))}</span></button>`
@@ -8161,8 +8298,92 @@
       if (action === "reset" && data.temporaryPassword) showResetPasswordDialog(username, data.temporaryPassword);
     }
 
+    async function removeChatAttachmentFiles(messages) {
+      const paths = [...new Set(messages.flatMap((message) =>
+        (message.attachments || []).map((attachment) => attachment.storagePath).filter(Boolean)))];
+      if (!paths.length) return;
+      try {
+        for (let index = 0; index < paths.length; index += 100) {
+          const { error } = await supabaseClient.storage.from(CHAT_ATTACHMENT_BUCKET).remove(paths.slice(index, index + 100));
+          if (error) throw error;
+        }
+      } catch (error) {
+        console.error("Lampiran chat yang dihapus tidak dapat dibersihkan:", error);
+        notify("Pesan chat sudah dihapus, tetapi sebagian lampirannya belum terhapus.");
+      }
+    }
+    function queueChatAttachmentCleanup(messages) {
+      const userId = authSession?.user?.id;
+      if (!userId) return;
+      for (const message of messages) {
+        if ((message.attachments || []).some((attachment) => attachment.storagePath)) {
+          pendingChatAttachmentCleanup.set(message.id, { message, userId });
+        }
+      }
+    }
+    async function cleanupConfirmedChatAttachments(savedState, userId) {
+      const retainedIds = new Set([
+        ...(savedState.chatMessages || []).map((message) => message.id),
+        ...(savedState.chatArchiveMessages || []).map((message) => message.id)
+      ]);
+      const confirmedDeletes = [];
+      for (const [messageId, entry] of pendingChatAttachmentCleanup) {
+        if (entry.userId !== userId) continue;
+        pendingChatAttachmentCleanup.delete(messageId);
+        if (!retainedIds.has(messageId)) confirmedDeletes.push(entry.message);
+      }
+      if (confirmedDeletes.length) await removeChatAttachmentFiles(confirmedDeletes);
+    }
+    async function deleteChatMessage(messageId, archived = false) {
+      const messages = archived ? state.chatArchiveMessages || [] : state.chatMessages || [];
+      const message = messages.find((item) => item.id === messageId);
+      if (!message || !canDeleteChatMessage(message, archived)) return;
+      if (!await showConfirmDialog("Pesan dan lampirannya akan dihapus permanen.", {
+        title: "Hapus pesan chat?",
+        subtitle: "Tindakan ini tidak dapat dibatalkan.",
+        confirmLabel: "Hapus",
+        destructive: true
+      })) return;
+      if (archived) state.chatArchiveMessages = messages.filter((item) => item.id !== messageId);
+      else state.chatMessages = messages.filter((item) => item.id !== messageId);
+      queueChatAttachmentCleanup([message]);
+      persist();
+      refreshChatWidget();
+    }
+    async function clearChatMessages({ archiveOnly = false } = {}) {
+      if (!isSuperAdmin()) return;
+      const messages = archiveOnly
+        ? [...(state.chatArchiveMessages || [])]
+        : [...(state.chatMessages || []), ...(state.chatArchiveMessages || [])];
+      if (!messages.length) {
+        notify(archiveOnly ? "Arsip chat sudah kosong." : "Chat dan arsip sudah kosong.");
+        return;
+      }
+      if (!await showConfirmDialog(
+        archiveOnly ? "Semua pesan dan lampiran dalam arsip chat akan dihapus permanen." : "Semua pesan aktif, arsip, dan lampirannya akan dihapus permanen.",
+        {
+          title: archiveOnly ? "Hapus seluruh arsip chat?" : "Reset semua chat?",
+          subtitle: "Tindakan Owner ini tidak dapat dibatalkan.",
+          confirmLabel: archiveOnly ? "Hapus arsip" : "Reset chat",
+          destructive: true
+        }
+      )) return;
+      if (archiveOnly) state.chatArchiveMessages = [];
+      else {
+        state.chatMessages = [];
+        state.chatArchiveMessages = [];
+        state.chatReadAt = {};
+        chatArchiveYear = "";
+        chatArchiveMonth = "";
+        chatArchiveSelectedDate = "";
+      }
+      queueChatAttachmentCleanup(messages);
+      persist();
+      refreshChatWidget();
+    }
     function bindChatEvents() {
       void hydrateChatAttachments();
+      void loadChatMentionDirectory();
       document.getElementById("chat-toggle")?.addEventListener("click", () => {
         unlockChatAudio();
         chatOpenedFromPreview = false;
@@ -8170,6 +8391,7 @@
         chatMentionDraftNames = [];
         chatPanelOpen = !chatPanelOpen;
         if (chatPanelOpen) {
+          if (chatMentionDirectoryError) chatMentionDirectoryUserId = "";
           chatArchiveOpen = false;
           if (archiveExpiredChatMessages()) persist();
           chatIncomingPreview = null;
@@ -8206,6 +8428,23 @@
         chatEditingMessageId = "";
         refreshChatWidget();
         document.getElementById("chat-message-list")?.scrollTo({ top: 0 });
+      });
+      document.getElementById("chat-owner-reset")?.addEventListener("click", () => { void clearChatMessages(); });
+      document.getElementById("chat-owner-clear-archive")?.addEventListener("click", () => { void clearChatMessages({ archiveOnly: true }); });
+      document.getElementById("chat-archive-year")?.addEventListener("change", (event) => {
+        chatArchiveYear = event.currentTarget.value;
+        chatArchiveMonth = "";
+        chatArchiveSelectedDate = "";
+        refreshChatWidget();
+      });
+      document.getElementById("chat-archive-month")?.addEventListener("change", (event) => {
+        chatArchiveMonth = event.currentTarget.value;
+        chatArchiveSelectedDate = "";
+        refreshChatWidget();
+      });
+      document.getElementById("chat-archive-date")?.addEventListener("change", (event) => {
+        chatArchiveSelectedDate = event.currentTarget.value;
+        refreshChatWidget();
       });
       document.getElementById("chat-preview-open")?.addEventListener("click", () => {
         chatPanelOpen = true;
@@ -8246,29 +8485,17 @@
         refreshChatWidget();
         focusChatInput();
       });
-      document.getElementById("chat-mention-button")?.addEventListener("click", (event) => {
-        const menu = document.getElementById("chat-mention-menu");
-        if (!menu) return;
-        menu.hidden = !menu.hidden;
-        event.currentTarget.setAttribute("aria-expanded", String(!menu.hidden));
+      document.getElementById("chat-mention-menu")?.addEventListener("click", (event) => {
+        const option = event.target.closest("[data-chat-mention-name]");
+        if (option) insertChatMention(option.dataset.chatMentionName);
       });
-      document.querySelectorAll("[data-chat-mention-name]").forEach((button) => {
+      document.getElementById("chat-message-input")?.addEventListener("input", (event) => {
+        chatMentionActiveIndex = -1;
+        updateChatMentionMenu(event.currentTarget);
+      });
+      document.querySelectorAll("[data-chat-delete]").forEach((button) => {
         button.addEventListener("click", () => {
-          const input = document.getElementById("chat-message-input");
-          const menu = document.getElementById("chat-mention-menu");
-          const mentionButton = document.getElementById("chat-mention-button");
-          if (!input) return;
-          const start = input.selectionStart ?? input.value.length;
-          const end = input.selectionEnd ?? start;
-          const prefix = start && !/\s$/u.test(input.value.slice(0, start)) ? " " : "";
-          const mention = `${prefix}@${button.dataset.chatMentionName} `;
-          input.value = `${input.value.slice(0, start)}${mention}${input.value.slice(end)}`;
-          if (!chatMentionDraftNames.includes(button.dataset.chatMentionName)) chatMentionDraftNames.push(button.dataset.chatMentionName);
-          const caret = start + mention.length;
-          input.setSelectionRange(caret, caret);
-          if (menu) menu.hidden = true;
-          mentionButton?.setAttribute("aria-expanded", "false");
-          focusChatInput();
+          void deleteChatMessage(button.dataset.chatDelete, button.dataset.chatDeleteArchived === "true");
         });
       });
       document.querySelectorAll("[data-chat-edit]").forEach((button) => {
@@ -8308,6 +8535,35 @@
         focusChatInput();
       });
       document.getElementById("chat-message-input")?.addEventListener("keydown", (event) => {
+        const menu = document.getElementById("chat-mention-menu");
+        const options = [...(menu?.querySelectorAll("[data-chat-mention-name]") || [])];
+        if (menu && !menu.hidden) {
+          if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+            if (options.length) {
+              event.preventDefault();
+              const direction = event.key === "ArrowDown" ? 1 : -1;
+              chatMentionActiveIndex = chatMentionActiveIndex < 0
+                ? (direction > 0 ? 0 : options.length - 1)
+                : (chatMentionActiveIndex + direction + options.length) % options.length;
+              options.forEach((option, index) => {
+                option.setAttribute("aria-selected", String(index === chatMentionActiveIndex));
+              });
+              options[chatMentionActiveIndex].scrollIntoView({ block: "nearest" });
+            }
+            return;
+          }
+          if (event.key === "Escape") {
+            menu.hidden = true;
+            event.currentTarget.setAttribute("aria-expanded", "false");
+            chatMentionActiveIndex = -1;
+            return;
+          }
+          if (event.key === "Enter" && !event.shiftKey && options.length) {
+            event.preventDefault();
+            insertChatMention(options[chatMentionActiveIndex >= 0 ? chatMentionActiveIndex : 0].dataset.chatMentionName);
+            return;
+          }
+        }
         if (event.key !== "Enter" || event.shiftKey || event.isComposing || event.keyCode === 229) return;
         event.preventDefault();
         document.getElementById("chat-compose")?.requestSubmit();
@@ -8350,18 +8606,17 @@
           const uploadedPaths = [];
           const submitButton = event.currentTarget.querySelector(".chat-send");
           const attachButton = document.getElementById("chat-attach-button");
-          const mentionButton = document.getElementById("chat-mention-button");
           const mentionMenu = document.getElementById("chat-mention-menu");
           const textarea = document.getElementById("chat-message-input");
           chatUploadInProgress = true;
           if (mentionMenu) mentionMenu.hidden = true;
+          if (textarea) textarea.setAttribute("aria-expanded", "false");
           if (submitButton) {
             submitButton.disabled = true;
             submitButton.textContent = "…";
             submitButton.title = "Mengunggah lampiran...";
           }
           if (attachButton) attachButton.disabled = true;
-          if (mentionButton) mentionButton.disabled = true;
           document.querySelectorAll("[data-chat-reply], [data-chat-edit]").forEach((button) => { button.disabled = true; });
           if (textarea) textarea.disabled = true;
           try {
@@ -8386,10 +8641,6 @@
               submitButton.title = "Kirim pesan";
             }
             if (attachButton) attachButton.disabled = false;
-            if (mentionButton) {
-              mentionButton.disabled = false;
-              mentionButton.setAttribute("aria-expanded", "false");
-            }
             document.querySelectorAll("[data-chat-reply], [data-chat-edit]").forEach((button) => { button.disabled = false; });
             if (textarea) textarea.disabled = false;
             console.error("Chat attachments could not be uploaded:", error);
@@ -8402,8 +8653,6 @@
           chatUploadInProgress = false;
         }
         if (authSession?.user?.id !== senderId) {
-          document.getElementById("chat-mention-button")?.removeAttribute("disabled");
-          document.getElementById("chat-mention-button")?.setAttribute("aria-expanded", "false");
           document.querySelectorAll(".chat-send, .chat-attach").forEach((button) => { button.disabled = false; });
           document.querySelectorAll("[data-chat-reply], [data-chat-edit]").forEach((button) => { button.disabled = false; });
           document.getElementById("chat-attachment-input")?.removeAttribute("disabled");

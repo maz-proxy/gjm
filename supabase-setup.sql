@@ -30,6 +30,23 @@ create table if not exists public.stock_opname_usernames (
   created_at timestamptz not null default now()
 );
 
+create or replace function public.list_stock_opname_chat_mentions()
+returns table (username text)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select account.username
+    from public.stock_opname_usernames as account
+   where auth.uid() is not null
+   order by account.username;
+$$;
+
+revoke all on function public.list_stock_opname_chat_mentions() from public;
+revoke all on function public.list_stock_opname_chat_mentions() from anon;
+grant execute on function public.list_stock_opname_chat_mentions() to authenticated;
+
 create table if not exists public.stock_opname_device_sessions (
   user_id uuid primary key references auth.users(id) on delete cascade,
   session_id uuid not null,
@@ -451,6 +468,144 @@ create trigger guard_stock_opname_session_ownership
   before update on public.stock_opname_state
   for each row execute function public.guard_stock_opname_session_ownership();
 
+create or replace function public.guard_stock_opname_chat_messages()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+declare
+  current_user_id text := auth.uid()::text;
+  is_workspace_super_admin boolean :=
+    coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'super_admin'
+    and coalesce(auth.jwt() -> 'app_metadata' ->> 'owner_username', '') = 'indra';
+  old_message jsonb;
+  new_message jsonb;
+  matching_archive jsonb;
+  old_archive jsonb;
+  message_id text;
+  message_created_at timestamptz;
+begin
+  if is_workspace_super_admin then
+    return new;
+  end if;
+
+  for old_message in
+    select item.value from jsonb_array_elements(coalesce(old.data -> 'chatMessages', '[]'::jsonb)) as item(value)
+  loop
+    message_id := old_message ->> 'id';
+    select item.value into new_message
+      from jsonb_array_elements(coalesce(new.data -> 'chatMessages', '[]'::jsonb)) as item(value)
+     where item.value ->> 'id' = message_id
+     limit 1;
+
+    if new_message is not null and new_message is not distinct from old_message then
+      continue;
+    end if;
+    if new_message is not null then
+      if old_message ->> 'senderId' = current_user_id
+        and new_message ->> 'senderId' = current_user_id
+        and new_message ->> 'createdAt' = old_message ->> 'createdAt' then
+        continue;
+      end if;
+      raise exception 'Only the message sender or workspace owner can edit a chat message.'
+        using errcode = '42501';
+    end if;
+
+    select item.value into matching_archive
+      from jsonb_array_elements(coalesce(new.data -> 'chatArchiveMessages', '[]'::jsonb)) as item(value)
+     where item.value ->> 'id' = message_id
+     limit 1;
+    if matching_archive is not null and matching_archive is not distinct from old_message
+      and (old_message ->> 'createdAt')::timestamptz <= pg_catalog.now() - interval '24 hours' then
+      continue;
+    end if;
+
+    message_created_at := (old_message ->> 'createdAt')::timestamptz;
+    if old_message ->> 'senderId' = current_user_id
+      and message_created_at <= pg_catalog.now()
+      and message_created_at >= pg_catalog.now() - interval '1 hour' then
+      continue;
+    end if;
+    raise exception 'A chat message can only be deleted by its sender within one hour, or by the workspace owner.'
+      using errcode = '42501';
+  end loop;
+
+  for new_message in
+    select item.value from jsonb_array_elements(coalesce(new.data -> 'chatMessages', '[]'::jsonb)) as item(value)
+  loop
+    message_id := new_message ->> 'id';
+    select item.value into old_message
+      from jsonb_array_elements(coalesce(old.data -> 'chatMessages', '[]'::jsonb)) as item(value)
+     where item.value ->> 'id' = message_id
+     limit 1;
+    if old_message is not null then
+      continue;
+    end if;
+    select item.value into old_archive
+      from jsonb_array_elements(coalesce(old.data -> 'chatArchiveMessages', '[]'::jsonb)) as item(value)
+     where item.value ->> 'id' = message_id
+     limit 1;
+    if old_archive is not null then
+      raise exception 'An archived chat message cannot be restored to the active chat by a team member.'
+        using errcode = '42501';
+    end if;
+
+    message_created_at := (new_message ->> 'createdAt')::timestamptz;
+    if new_message ->> 'senderId' <> current_user_id
+      or message_created_at > pg_catalog.now() + interval '5 minutes'
+      or message_created_at < pg_catalog.now() - interval '24 hours' then
+      raise exception 'A new chat message must belong to the authenticated sender and be less than one day old.'
+        using errcode = '42501';
+    end if;
+  end loop;
+
+  for old_archive in
+    select item.value from jsonb_array_elements(coalesce(old.data -> 'chatArchiveMessages', '[]'::jsonb)) as item(value)
+  loop
+    message_id := old_archive ->> 'id';
+    select item.value into new_message
+      from jsonb_array_elements(coalesce(new.data -> 'chatArchiveMessages', '[]'::jsonb)) as item(value)
+     where item.value ->> 'id' = message_id
+     limit 1;
+    if new_message is distinct from old_archive then
+      raise exception 'Only the workspace owner can edit or delete archived chat messages.'
+        using errcode = '42501';
+    end if;
+  end loop;
+
+  for new_message in
+    select item.value from jsonb_array_elements(coalesce(new.data -> 'chatArchiveMessages', '[]'::jsonb)) as item(value)
+  loop
+    message_id := new_message ->> 'id';
+    select item.value into old_archive
+      from jsonb_array_elements(coalesce(old.data -> 'chatArchiveMessages', '[]'::jsonb)) as item(value)
+     where item.value ->> 'id' = message_id
+     limit 1;
+    if old_archive is not null then
+      continue;
+    end if;
+
+    select item.value into old_message
+      from jsonb_array_elements(coalesce(old.data -> 'chatMessages', '[]'::jsonb)) as item(value)
+     where item.value ->> 'id' = message_id
+     limit 1;
+    if old_message is null
+      or new_message is distinct from old_message
+      or (old_message ->> 'createdAt')::timestamptz > pg_catalog.now() - interval '24 hours' then
+      raise exception 'A chat archive entry must be an unchanged message older than one day.'
+        using errcode = '42501';
+    end if;
+  end loop;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists guard_stock_opname_chat_messages on public.stock_opname_state;
+create trigger guard_stock_opname_chat_messages
+  before update on public.stock_opname_state
+  for each row execute function public.guard_stock_opname_chat_messages();
+
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
   'stock-opname-workbooks',
@@ -541,7 +696,13 @@ create policy "Team members can delete their own chat attachments"
   on storage.objects for delete to authenticated
   using (
     bucket_id = 'stock-opname-chat-attachments'
-    and split_part(name, '/', 1) = auth.uid()::text
+    and (
+      split_part(name, '/', 1) = auth.uid()::text
+      or (
+        coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'super_admin'
+        and coalesce(auth.jwt() -> 'app_metadata' ->> 'owner_username', '') = 'indra'
+      )
+    )
   );
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
