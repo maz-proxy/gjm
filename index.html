@@ -2869,11 +2869,13 @@
       "item selisih dari": "items with variance out of",
       "item diperiksa": "items checked",
       "Progres keseluruhan": "Overall progress",
-      "Serial Number cocok pada sesi berjalan": "Matching serial numbers in the active session",
+      "Quantity opname dibanding target VEF + Inbound/Retur": "Stock opname quantity vs. VEF + Inbound/Return target",
       "Menunggu sesi": "Waiting for session",
       "terpindai": "scanned",
       "SN dipindai": "serial numbers scanned",
       "tersisa": "remaining",
+      "unit tercatat": "units counted",
+      "unit target": "target units",
       "Progres per brand": "Progress by brand",
       "Sesi aktif saja · quantity opname dibanding target VEF + Inbound/Retur": "Active sessions only · stock opname quantity vs. VEF + Inbound/Return target",
       "Belum ada sesi berjalan. Unggah workbook pada sesi bernama brand di Master VEF untuk memulai.": "No active sessions. Upload a workbook to a named brand session in VEF Master to get started.",
@@ -7349,7 +7351,8 @@
         mismatched: sum.mismatched + item.stats.mismatchCount,
         absoluteVariance: sum.absoluteVariance + item.stats.absoluteVariance
       }), { active: 0, products: 0, countedSkus: 0, serials: 0, scanned: 0, issues: 0, expected: 0, scan: 0, manual: 0, pj: 0, inbound: 0, totalQty: 0, mismatched: 0, absoluteVariance: 0 });
-      const overallProgress = total.serials ? Math.min(100, Math.round(total.scanned / total.serials * 100)) : 0;
+      const overallTargetQuantity = total.expected + total.inbound;
+      const overallProgress = overallTargetQuantity ? Math.min(100, Math.round(total.totalQty / overallTargetQuantity * 100)) : 0;
       const mismatchPercent = total.countedSkus ? Math.round(total.mismatched / total.countedSkus * 100) : 0;
       const circumference = 2 * Math.PI * 38;
       const progressLength = (circumference * overallProgress / 100).toFixed(2);
@@ -7420,9 +7423,9 @@
           </article>
         </section>
         <section class="dashboard-charts" aria-label="Grafik progres stock opname">
-          <article class="dashboard-panel"><header class="dashboard-panel-head"><div><div class="dashboard-panel-title">Progres keseluruhan</div><div class="dashboard-panel-subtitle">Serial Number cocok pada sesi berjalan</div></div><span class="dashboard-chart-tag">${total.active ? "Live" : "Menunggu sesi"}</span></header>
-            <div class="dashboard-donut-wrap"><div class="dashboard-donut"><svg viewBox="0 0 100 100" role="img" aria-label="Progres scan keseluruhan ${overallProgress} persen"><circle class="dashboard-donut-track" cx="50" cy="50" r="38"></circle><circle class="dashboard-donut-progress" cx="50" cy="50" r="38" stroke-dasharray="${progressLength} ${circumference.toFixed(2)}"></circle></svg><div class="dashboard-donut-center"><div><strong>${overallProgress}%</strong><span>terpindai</span></div></div></div>
-              <div class="dashboard-legend"><span class="dashboard-legend-item"><i class="dashboard-legend-dot"></i>${formatNumber(total.scanned)} SN dipindai</span><span class="dashboard-legend-item"><i class="dashboard-legend-dot remaining"></i>${formatNumber(Math.max(0, total.serials - total.scanned))} tersisa</span></div>
+          <article class="dashboard-panel"><header class="dashboard-panel-head"><div><div class="dashboard-panel-title">Progres keseluruhan</div><div class="dashboard-panel-subtitle">Quantity opname dibanding target VEF + Inbound/Retur</div></div><span class="dashboard-chart-tag">${total.active ? "Live" : "Menunggu sesi"}</span></header>
+            <div class="dashboard-donut-wrap"><div class="dashboard-donut"><svg viewBox="0 0 100 100" role="img" aria-label="Progres quantity opname keseluruhan ${overallProgress} persen"><circle class="dashboard-donut-track" cx="50" cy="50" r="38"></circle><circle class="dashboard-donut-progress" cx="50" cy="50" r="38" stroke-dasharray="${progressLength} ${circumference.toFixed(2)}"></circle></svg><div class="dashboard-donut-center"><div><strong>${overallProgress}%</strong><span>unit tercatat</span></div></div></div>
+              <div class="dashboard-legend"><span class="dashboard-legend-item"><i class="dashboard-legend-dot"></i>${formatNumber(total.totalQty)} unit tercatat</span><span class="dashboard-legend-item"><i class="dashboard-legend-dot remaining"></i>${formatNumber(overallTargetQuantity)} unit target</span></div>
             </div>
           </article>
           <article class="dashboard-panel"><header class="dashboard-panel-head"><div><div class="dashboard-panel-title">Progres per brand</div><div class="dashboard-panel-subtitle">Sesi aktif saja · quantity opname dibanding target VEF + Inbound/Retur</div></div><span class="dashboard-chart-tag">${workspaceStats.length} brand</span></header><div class="dashboard-chart-list">${chartRows}</div>${workspaceStats.length ? "" : '<div class="dashboard-empty">Belum ada sesi berjalan. Unggah workbook pada sesi bernama brand di Master VEF untuk memulai.</div>'}</article>
