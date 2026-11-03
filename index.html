@@ -510,10 +510,12 @@
     .layout-record-heading { color: var(--ink); font-size: 10px; font-weight: 800; margin-bottom: 4px; }
     .layout-record-empty { color: var(--muted); padding: 3px 0; }
     .manual-item-details { border-bottom: 1px solid #f0f1ed; }
-    .manual-item-summary { align-items: center; cursor: pointer; display: grid; font-size: 11px; font-weight: 700; grid-template-columns: minmax(0, 1fr); min-height: 30px; list-style-position: inside; }
+    .manual-item-summary { align-items: center; cursor: pointer; display: grid; font-size: 11px; font-weight: 700; gap: 8px; grid-template-columns: minmax(0, 1fr) auto; min-height: 38px; list-style: none; }
+    .manual-item-summary::-webkit-details-marker { display: none; }
+    .manual-item-heading { display: grid; gap: 1px; min-width: 0; }
     .manual-item-sku { color: var(--ink); font: inherit; overflow-wrap: anywhere; }
-    .manual-item-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .manual-item-total { color: var(--ink); white-space: nowrap; }
+    .manual-item-name { color: var(--muted); font-size: 9px; font-weight: 400; line-height: 1.3; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .manual-item-total { color: var(--ink); font-size: 10px; font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
     .manual-item-expanded { padding: 2px 0 7px 17px; }
     .manual-item-full-name { color: var(--ink); font-weight: 600; margin-bottom: 4px; overflow-wrap: anywhere; }
     .manual-item-entry { align-items: center; color: var(--muted); display: flex; font-size: 10px; justify-content: space-between; min-height: 24px; }
@@ -6821,7 +6823,7 @@
         const name = product?.name || firstEntry.name || "-";
         const total = group.reduce((sum, entry) => sum + Number(entry.quantity || 0), 0);
         const entryRows = group.slice().reverse().map((entry) => `<div class="manual-item-entry ${entry.id === latestEntryId ? "is-latest" : ""}" data-manual-entry="${escapeHtml(entry.id)}"><span>Qty ${formatNumber(entry.quantity)}${entry.createdAt ? ` · ${escapeHtml(formatDate(entry.createdAt, { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }))}` : ""}</span>${canDelete ? `<button class="layout-delete" type="button" data-delete-manual="${escapeHtml(entry.id)}" aria-label="Hapus input manual ${escapeHtml(sku)} sebanyak ${formatNumber(entry.quantity)}" title="Hapus input manual">×</button>` : ""}</div>`).join("");
-        return `<details class="manual-item-details"${printMode ? " open" : ""} data-manual-product-entry="${escapeHtml(firstEntry.productId || firstEntry.sku)}"><summary class="manual-item-summary"><span class="manual-item-sku">Item Code: ${escapeHtml(sku)}</span></summary><div class="manual-item-expanded"><div class="layout-scan-detail-body"><span>Item Name: ${escapeHtml(name)}</span><span>Total Qty: ${formatNumber(total)}</span></div>${entryRows}</div></details>`;
+        return `<details class="manual-item-details"${printMode ? " open" : ""} data-manual-product-entry="${escapeHtml(firstEntry.productId || firstEntry.sku)}"><summary class="manual-item-summary"><span class="manual-item-heading"><span class="manual-item-sku">${escapeHtml(sku)}</span><span class="manual-item-name">${escapeHtml(name)}</span></span><span class="manual-item-total">Qty ${formatNumber(total)}</span></summary><div class="manual-item-expanded">${entryRows}</div></details>`;
       }).join("");
     }
 
