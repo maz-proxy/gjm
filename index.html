@@ -610,6 +610,7 @@
     .recorded-entry-dialog .dialog-subtitle { max-width: 260px; overflow-wrap: anywhere; }
     .recorded-entry-content { max-height: calc(65vh - 52px); overflow: auto; padding: 7px; }
     .recorded-entry-list { display: grid; gap: 6px; }
+    .recorded-entry-export { min-height: 30px; margin-top: 7px; width: 100%; }
     .recorded-entry-card { background: color-mix(in srgb, var(--green) 4%, var(--paper)); border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; }
     .recorded-entry-document { display: grid; gap: 2px; min-width: 0; }
     .recorded-entry-label, .recorded-entry-meta span { color: var(--muted); font-size: 8px; font-weight: 700; letter-spacing: .3px; text-transform: uppercase; }
@@ -2550,13 +2551,13 @@
       "Detail PJ": "PJ details",
       "Detail SCAN": "SCAN details",
       "Detail MANUAL": "MANUAL details",
+      "Ekspor Excel": "Export Excel",
       "Nomor PREC/RETUR": "PREC/RETURN number",
       "Tanggal PREC/RETUR": "PREC/RETURN date",
       "Nomor invoice": "Invoice number",
       "Tanggal Invoice": "Invoice date",
       "Quantity": "Quantity",
       "Kode item": "Item code",
-      "Jumlah": "Quantity",
       "unit": "units",
       "Belum ada detail transaksi": "No transaction details",
       "Belum ada data invoice atau PREC/RETUR untuk item ini.": "No invoice or PREC/RETURN data is available for this item.",
@@ -7664,8 +7665,8 @@
         closeRecordedEntryDetails();
         return;
       }
+      const session = state.sessions.find((item) => item.id === selectedRecordedSessionId && item.snapshot);
       const isActiveCountDetail = kind === "scan" || kind === "manual";
-      const session = isActiveCountDetail ? null : state.sessions.find((item) => item.id === selectedRecordedSessionId && item.snapshot);
       const product = isActiveCountDetail
         ? state.products.find((item) => item.id === productId)
         : session?.snapshot?.products?.find((item) => item.id === productId);
@@ -7697,27 +7698,83 @@
       const rows = isActiveCountDetail
         ? entries.map((entry) => {
           const isScan = kind === "scan";
-          return `<article class="recorded-entry-card"><div class="recorded-entry-document"><span class="recorded-entry-label">${isScan ? "Serial Number" : "Kode item"}</span><strong data-user-content>${escapeHtml(isScan ? entry.serial || "-" : entry.sku || product.sku || "-")}</strong></div><div class="recorded-entry-meta"><div><span>${isScan ? "Kode item" : "Rack"}</span><strong data-user-content>${escapeHtml(isScan ? entry.sku || product.sku || "-" : rackLabel(entry.layout))}</strong></div><div><span>${isScan ? "Rack" : "Jumlah"}</span><strong>${isScan ? escapeHtml(rackLabel(entry.layout)) : `${formatNumber(Number(entry.quantity || 0))} Pcs`}</strong></div></div></article>`;
+          const date = entry[config.dateKey] ? new Date(entry[config.dateKey]) : null;
+          const formattedDate = date && Number.isFinite(date.getTime())
+            ? formatDate(date, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
+            : "-";
+          return `<article class="recorded-entry-card"><div class="recorded-entry-document"><span class="recorded-entry-label">${isScan ? "Serial Number" : "Kode item"}</span><strong data-user-content>${escapeHtml(isScan ? entry.serial || "-" : entry.sku || product.sku || "-")}</strong></div><div class="recorded-entry-meta"><div><span>${isScan ? "Kode item" : "Rack"}</span><strong data-user-content>${escapeHtml(isScan ? entry.sku || product.sku || "-" : rackLabel(entry.layout))}</strong></div><div><span>${isScan ? "Rack" : "Jumlah"}</span><strong>${isScan ? escapeHtml(rackLabel(entry.layout)) : `${formatNumber(Number(entry.quantity || 0))} Pcs`}</strong></div></div><div class="recorded-entry-meta"><div><span>Waktu</span><strong>${escapeHtml(formattedDate)}</strong></div></div></article>`;
         }).join("")
         : entries.map((entry) => {
-        const date = entry[config.dateKey] ? new Date(entry[config.dateKey]) : null;
-        const formattedDate = date && Number.isFinite(date.getTime())
-          ? formatDate(date, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })
-          : "-";
-        return `<article class="recorded-entry-card"><div class="recorded-entry-document"><span class="recorded-entry-label">${config.numberLabel}</span><strong data-user-content>${escapeHtml(entry[config.numberKey] || "-")}</strong></div><div class="recorded-entry-meta"><div><span>${config.dateLabel}</span><strong>${escapeHtml(formattedDate)}</strong></div><div><span>Quantity</span><strong>${formatNumber(Number(entry.quantity || 0))} <small>unit</small></strong></div></div></article>`;
-      }).join("");
+          const date = entry[config.dateKey] ? new Date(entry[config.dateKey]) : null;
+          const formattedDate = date && Number.isFinite(date.getTime())
+            ? formatDate(date, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })
+            : "-";
+          return `<article class="recorded-entry-card"><div class="recorded-entry-document"><span class="recorded-entry-label">${config.numberLabel}</span><strong data-user-content>${escapeHtml(entry[config.numberKey] || "-")}</strong></div><div class="recorded-entry-meta"><div><span>${config.dateLabel}</span><strong>${escapeHtml(formattedDate)}</strong></div><div><span>Quantity</span><strong>${formatNumber(Number(entry.quantity || 0))} <small>unit</small></strong></div></div></article>`;
+        }).join("");
       const dialog = document.getElementById("recorded-entry-dialog");
       document.getElementById("recorded-entry-title").textContent = translateText(config.title);
       document.getElementById("recorded-entry-product").textContent = `${product.name || "-"} · ${product.sku || "-"}`;
       document.getElementById("recorded-entry-content").innerHTML = rows
-        ? `<div class="recorded-entry-list">${rows}</div>`
-        : `<div class="recorded-entry-empty"><strong>Belum ada detail transaksi</strong><span>${isActiveCountDetail ? kind === "scan" ? "Belum ada data scan untuk item ini." : "Belum ada input manual untuk item ini." : "Belum ada data invoice atau PREC/RETUR untuk item ini."}</span></div>`;
+        ? `<div class="recorded-entry-list">${rows}</div>${isActiveCountDetail ? `<button class="button button-secondary recorded-entry-export" type="button" data-export-recorded-entry="${kind}" data-product-id="${escapeHtml(product.id)}">Ekspor Excel</button>` : ""}`
+        : `<div class="recorded-entry-empty"><strong>Belum ada detail transaksi</strong><span>${isActiveCountDetail ? kind === "scan" ? "Belum ada data scan untuk item ini." : "Belum ada input manual untuk item ini." : "Belum ada data invoice atau PREC/Retur untuk item ini."}</span></div>`;
       translateDocument(dialog);
       recordedEntryTrigger?.setAttribute("aria-expanded", "false");
       recordedEntryTrigger = trigger;
       trigger.setAttribute("aria-expanded", "true");
       if (!dialog.open) dialog.show();
       positionRecordedEntryDialog();
+    }
+    function exportRecordedCountDetails(kind, productId) {
+      if (kind !== "scan" && kind !== "manual") {
+        console.error("Jenis ekspor detail stock opname tidak valid:", kind);
+        notify("Jenis detail tidak dapat diekspor.");
+        return;
+      }
+      const product = state.products.find((item) => item.id === productId);
+      if (!product) {
+        console.error("Item ekspor detail stock opname tidak ditemukan:", productId);
+        notify("Item tidak ditemukan untuk diekspor.");
+        return;
+      }
+      const isScan = kind === "scan";
+      const dateKey = isScan ? "scannedAt" : "createdAt";
+      const entries = (isScan ? state.scanEvents || [] : state.manualEntries || [])
+        .filter((entry) => (!isScan || entry.status === "match")
+          && (entry.productId === product.id || (!entry.productId && entry.sku && entry.sku === product.sku)))
+        .slice()
+        .sort((left, right) => Date.parse(left[dateKey] || "") - Date.parse(right[dateKey] || ""));
+      if (!entries.length) {
+        notify("Tidak ada detail untuk diekspor.");
+        return;
+      }
+      const rows = isScan
+        ? [["No", "Serial Number", "Item Code", "Item Name", "Rack", "Waktu Scan"], ...entries.map((entry, index) => [
+          index + 1,
+          entry.serial || "",
+          entry.sku || product.sku || "",
+          entry.name || product.name || "",
+          rackLabel(entry.layout),
+          entry[dateKey] || ""
+        ])]
+        : [["No", "Item Code", "Item Name", "Rack", "Jumlah (Pcs)", "Waktu Input"], ...entries.map((entry, index) => [
+          index + 1,
+          entry.sku || product.sku || "",
+          entry.name || product.name || "",
+          rackLabel(entry.layout),
+          Number(entry.quantity || 0),
+          entry[dateKey] || ""
+        ])];
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(rows), isScan ? "Detail SCAN" : "Detail MANUAL");
+      const safeSku = String(product.sku || "item").replace(/[<>:"/\\|?*\u0000-\u001f]/g, "-").trim() || "item";
+      const date = new Date().toISOString().slice(0, 10);
+      try {
+        XLSX.writeFile(workbook, `stock-opname-${kind}-${safeSku}-${date}.xlsx`);
+        notify(`Detail ${isScan ? "SCAN" : "MANUAL"} berhasil diekspor ke Excel.`);
+      } catch (error) {
+        console.error("Ekspor detail stock opname gagal:", error);
+        notify("Detail gagal diekspor ke Excel. Coba lagi.");
+      }
     }
     function renderRecordedSheet(session, sheet, printMode = false) {
       const snapshot = session.snapshot || {};
@@ -10370,6 +10427,11 @@
     });
     document.querySelectorAll("[data-logout]").forEach((button) => button.addEventListener("click", requestSignOut));
     document.addEventListener("click", (event) => {
+      const exportRecordedEntryButton = event.target.closest("[data-export-recorded-entry]");
+      if (exportRecordedEntryButton) {
+        exportRecordedCountDetails(exportRecordedEntryButton.dataset.exportRecordedEntry, exportRecordedEntryButton.dataset.productId);
+        return;
+      }
       const recordedEntryButton = event.target.closest("[data-recorded-entry]");
       if (recordedEntryButton) {
         showRecordedEntryDetails(recordedEntryButton.dataset.recordedEntry, recordedEntryButton.dataset.productId, recordedEntryButton);
