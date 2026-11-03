@@ -3352,6 +3352,15 @@
     const ONLINE_USERS_CHANNEL_NAME = "online-users:stock-opname-team";
     const AUTH_SESSION_STORAGE_KEY = "stock-opname-auth-session";
     const AUTH_SESSION_MIGRATION_KEY = "stock-opname-auth-session-migrated";
+    const OFFLINE_CACHE_TAB_ID_KEY = "stock-opname-offline-cache-tab-id";
+    let offlineCacheTabId;
+    try {
+      offlineCacheTabId = sessionStorage.getItem(OFFLINE_CACHE_TAB_ID_KEY) || crypto.randomUUID();
+      sessionStorage.setItem(OFFLINE_CACHE_TAB_ID_KEY, offlineCacheTabId);
+    } catch (error) {
+      console.error("ID cache offline per tab tidak dapat disimpan:", error);
+      offlineCacheTabId = crypto.randomUUID();
+    }
     const LEGACY_AUTH_STORAGE_KEY = `sb-${new URL(SUPABASE_URL).hostname.split(".")[0]}-auth-token`;
     try {
       if (!sessionStorage.getItem(AUTH_SESSION_STORAGE_KEY)
@@ -3465,6 +3474,7 @@
       } : {})
     });
     const DEFAULT_LAYOUTS = ["Rack 1"];
+    const OFFLINE_CACHE_KEY_PREFIX = "stock-opname-offline-cache:";
     const UNUPLOADED_WORKSPACE_TIMEOUT_MS = 5 * 60 * 1000;
     const WORKSPACE_CLEANUP_INTERVAL_MS = 15 * 1000;
     const initialState = () => ({ products: [], serialMaster: {}, scanEvents: [], manualEntries: [], pjEntries: [], inboundEntries: [], historyEvents: [], sessions: [], workbookFiles: [], chatMessages: [], chatArchiveMessages: [], chatReadAt: {}, resources: { brands: [], picNames: [], androidApp: null }, activeSession: makeSession(), countMode: "all", importFile: "", importMessage: "", importDownloadedAt: "", importUploadedAt: "", layouts: [...DEFAULT_LAYOUTS], layoutQuantities: {}, layoutNumbers: {} });
@@ -3472,14 +3482,7 @@
     const snapshotWorkspaceData = (source) => {
       const products = source.products || [];
       const sourceLayouts = Array.isArray(source.layouts) && source.layouts.length ? source.layouts : [...DEFAULT_LAYOUTS];
-      const isLegacyDefaultLayoutSet = sourceLayouts.length >= 3 && sourceLayouts.every((layout, index) => layout === `Rack ${index + 1}`);
-      const layouts = isLegacyDefaultLayoutSet
-        ? sourceLayouts.filter((layout, index) => index < DEFAULT_LAYOUTS.length
-          || (source.scanEvents || []).some((scan) => scan.layout === layout)
-          || (source.manualEntries || []).some((entry) => entry.layout === layout)
-          || Object.prototype.hasOwnProperty.call(source.layoutQuantities || {}, layout)
-          || Object.prototype.hasOwnProperty.call(source.layoutNumbers || {}, layout))
-        : sourceLayouts;
+      const layouts = [...new Set(sourceLayouts)];
       const manualEntries = Array.isArray(source.manualEntries) ? source.manualEntries : products
         .filter((product) => Number(product.box) > 0)
         .map((product) => ({ id: crypto.randomUUID(), productId: product.id, sku: product.sku, name: product.name, layout: layouts[0], quantity: Number(product.box), createdAt: new Date().toISOString() }));
@@ -3711,6 +3714,7 @@
     const pendingWorkbookUploads = new Set();
     let refreshInProgress = false;
     let saveInProgress = false;
+    let savePending = false;
     const syncFailureCounts = { read: 0, write: 0 };
     const syncErrorKeys = { read: "", write: "" };
 
@@ -4208,12 +4212,65 @@
         if (previous !== undefined && previous !== current) recordActivity(type, describeChange(previous, current));
       });
     }
+    function offlineCacheKey(userId) {
+      return `${OFFLINE_CACHE_KEY_PREFIX}${userId}:${offlineCacheTabId}`;
+    }
+    function loadOfflineSyncCache(userId) {
+      let serialized;
+      try {
+        serialized = localStorage.getItem(offlineCacheKey(userId));
+      } catch (error) {
+        console.error("Cache sinkronisasi lokal tidak dapat dibaca:", error);
+        return null;
+      }
+      if (!serialized) return null;
+      try {
+        const cache = JSON.parse(serialized);
+        if (cache?.version !== 1 || !cache.state || typeof cache.state !== "object" || Array.isArray(cache.state)) {
+          throw new Error("Format cache sinkronisasi lokal tidak valid.");
+        }
+        const cachedState = normalizeSharedState(cache.state);
+        const baseState = normalizeSharedState(cache.baseState || cache.state);
+        return {
+          state: cachedState,
+          baseState,
+          baseVersion: cache.baseVersion === null || cache.baseVersion === undefined
+            ? null
+            : Number.isFinite(Number(cache.baseVersion)) ? Number(cache.baseVersion) : null
+        };
+      } catch (error) {
+        console.error("Cache sinkronisasi lokal tidak dapat dipulihkan:", error);
+        notify("Cache lokal rusak dan tidak dipakai. Data server tetap akan dimuat jika koneksi tersedia.");
+        return null;
+      }
+    }
+    function persistOfflineSyncCache() {
+      if (!authSession?.user?.id || !sharedStateReady || !lastSyncedState) return;
+      try {
+        const currentState = serializeSharedState();
+        const currentSerialized = stableSerialize(currentState);
+        localStorage.setItem(offlineCacheKey(authSession.user.id), JSON.stringify({
+          version: 1,
+          baseVersion: remoteVersion,
+          baseState: currentSerialized === lastSyncedState ? null : JSON.parse(lastSyncedState),
+          state: currentState,
+          updatedAt: new Date().toISOString()
+        }));
+      } catch (error) {
+        console.error("Cache sinkronisasi lokal gagal disimpan:", error);
+        notify("Data sementara gagal disimpan di browser. Ekspor data jika memungkinkan.");
+      }
+    }
     function persistLocalState() {
       const workspace = activeWorkspace();
       if (workspace) workspace.data = snapshotWorkspaceData(state);
       storeLocalWorkspaceId(state.currentWorkspaceId);
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-      catch { notify("Penyimpanan browser penuh. Ekspor hasil agar data tetap aman."); }
+      catch (error) {
+        console.error("Data workspace gagal disimpan di browser:", error);
+        notify("Penyimpanan browser penuh. Ekspor hasil agar data tetap aman.");
+      }
+      persistOfflineSyncCache();
     }
     const persist = () => {
       persistLocalState();
@@ -5329,15 +5386,27 @@
       setLoginBusy(true);
       showAuthMessage("");
       try {
+        const offlineCache = loadOfflineSyncCache(session.user.id);
         const { data: row, error } = await readSharedState();
         if (authSession?.user?.id !== session.user.id) return;
-        if (error) throw error;
-        if (row) {
-          state = normalizeSharedState(row.data);
+        if (error && (!offlineCache || !isTransientSyncError(error))) throw error;
+        if (error) {
+          state = offlineCache.state;
+          lastSyncedState = stableSerialize(offlineCache.baseState);
+          remoteVersion = offlineCache.baseVersion;
+          remoteUpdatedAt = "";
+          console.warn("Koneksi data bersama tidak tersedia; sesi dilanjutkan dari cache lokal.", error);
+          notify("Anda sedang bekerja dari cache lokal. Perubahan akan dikirim otomatis saat koneksi pulih.");
+        } else if (row) {
+          const remoteState = normalizeSharedState(row.data);
+          state = offlineCache
+            ? mergeSharedState(offlineCache.baseState, offlineCache.state, remoteState)
+            : remoteState;
           remoteUpdatedAt = row.updated_at;
           remoteVersion = row.version;
+          lastSyncedState = stableSerialize(remoteState);
         } else {
-          state = normalizeSharedState(state);
+          state = offlineCache ? offlineCache.state : normalizeSharedState(state);
           persistLocalState();
           const { data: created, error: createError } = await supabaseClient.from(SHARED_STATE_TABLE)
             .insert({ id: SHARED_STATE_ROW_ID, data: state, updated_by: session.user.id })
@@ -5356,14 +5425,15 @@
             remoteUpdatedAt = created.updated_at;
             remoteVersion = created.version;
           }
+          lastSyncedState = stableSerialize(state);
         }
-        lastSyncedState = stableSerialize(state);
         applyLocalWorkspacePreference(state, session.user.id);
         const removedExpiredUnuploadedWorkspaces = removeExpiredUnuploadedWorkspaces();
         normalizeWorkspaceClassifications();
         persistLocalState();
         sharedStateReady = true;
-        if (archiveExpiredChatMessages()) persist();
+        persistLocalState();
+        if (archiveExpiredChatMessages() || stableSerialize(serializeSharedState()) !== lastSyncedState) persist();
         resetSharedSyncFailures("read");
         resetSharedSyncFailures("write");
         currentPage = freshLogin ? "dashboard" : restoreLastPage(session);
@@ -5388,7 +5458,9 @@
         if (removedExpiredUnuploadedWorkspaces) persist();
       } catch (error) {
         document.body.classList.remove("auth-checking");
-        showAuthMessage(databaseSetupHint(error));
+        showAuthMessage(isTransientSyncError(error) && navigator.onLine === false
+          ? "Tidak ada koneksi dan belum tersedia cache lokal untuk sesi akun ini di tab ini. Hubungkan internet lalu coba lagi."
+          : databaseSetupHint(error));
         document.body.classList.add("auth-locked");
       } finally {
         setLoginBusy(false);
@@ -5397,7 +5469,11 @@
     async function saveSharedState() {
       syncTimer = null;
       if (!authSession || !sharedStateReady) return;
-      if (saveInProgress) return;
+      if (saveInProgress) {
+        savePending = true;
+        return;
+      }
+      if (navigator.onLine === false) return;
       saveInProgress = true;
       const savingUserId = authSession.user.id;
       try {
@@ -5422,6 +5498,7 @@
             remoteUpdatedAt = saved.updated_at;
             remoteVersion = saved.version;
             lastSyncedState = serializedState;
+            persistLocalState();
             await cleanupConfirmedChatAttachments(JSON.parse(serializedState), savingUserId);
             resetSharedSyncFailures("write");
             if (stableSerialize(serializeSharedState(state)) !== serializedState) {
@@ -5484,6 +5561,11 @@
         if (isTransientSyncError(error)) scheduleSharedSyncRetry("write");
       } finally {
         saveInProgress = false;
+        if (savePending && authSession && sharedStateReady) {
+          savePending = false;
+          clearTimeout(syncTimer);
+          syncTimer = setTimeout(saveSharedState, 100);
+        }
         if (refreshPending && authSession && sharedStateReady) {
           refreshPending = false;
           void refreshSharedState();
@@ -5491,7 +5573,7 @@
       }
     }
     async function refreshSharedState() {
-      if (!authSession || !sharedStateReady) return;
+      if (!authSession || !sharedStateReady || navigator.onLine === false) return;
       if (refreshInProgress || saveInProgress || syncTimer) {
         refreshPending = true;
         return;
@@ -5546,12 +5628,21 @@
         }
       }
     }
-    function resumeSharedStateSync() {
+    function resumeSharedStateSync(immediate = false) {
       if (!authSession || !sharedStateReady) return;
-      if (stableSerialize(serializeSharedState()) !== lastSyncedState) persist();
+      if (stableSerialize(serializeSharedState()) !== lastSyncedState) {
+        if (immediate) {
+          clearTimeout(syncTimer);
+          syncTimer = null;
+          void saveSharedState();
+        } else persist();
+      }
       else void refreshSharedState();
     }
-    window.addEventListener("online", resumeSharedStateSync);
+    window.addEventListener("offline", () => {
+      if (authSession && sharedStateReady) notify("Koneksi terputus. Perubahan disimpan di browser ini dan akan dikirim otomatis saat koneksi pulih.");
+    });
+    window.addEventListener("online", () => resumeSharedStateSync(true));
     window.addEventListener("pageshow", resumeSharedStateSync);
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible") {
