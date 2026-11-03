@@ -3474,7 +3474,11 @@
       } : {})
     });
     const DEFAULT_LAYOUTS = ["Rack 1"];
-    const OFFLINE_CACHE_KEY_PREFIX = "stock-opname-offline-cache:";
+    const OFFLINE_CACHE_LEGACY_KEY_PREFIX = "stock-opname-offline-cache:";
+    const OFFLINE_CACHE_DATABASE_NAME = "stock-opname-offline-cache";
+    const OFFLINE_CACHE_DATABASE_VERSION = 1;
+    const OFFLINE_CACHE_STORE_NAME = "workspace-states";
+    const OFFLINE_CACHE_WRITE_DELAY_MS = 250;
     const UNUPLOADED_WORKSPACE_TIMEOUT_MS = 5 * 60 * 1000;
     const WORKSPACE_CLEANUP_INTERVAL_MS = 15 * 1000;
     const initialState = () => ({ products: [], serialMaster: {}, scanEvents: [], manualEntries: [], pjEntries: [], inboundEntries: [], historyEvents: [], sessions: [], workbookFiles: [], chatMessages: [], chatArchiveMessages: [], chatReadAt: {}, resources: { brands: [], picNames: [], androidApp: null }, activeSession: makeSession(), countMode: "all", importFile: "", importMessage: "", importDownloadedAt: "", importUploadedAt: "", layouts: [...DEFAULT_LAYOUTS], layoutQuantities: {}, layoutNumbers: {} });
@@ -3715,6 +3719,9 @@
     let refreshInProgress = false;
     let saveInProgress = false;
     let savePending = false;
+    let offlineCacheDatabasePromise = null;
+    let offlineCacheWriteTimer = null;
+    let offlineCacheWriteFailureReported = false;
     const syncFailureCounts = { read: 0, write: 0 };
     const syncErrorKeys = { read: "", write: "" };
 
@@ -4212,21 +4219,75 @@
         if (previous !== undefined && previous !== current) recordActivity(type, describeChange(previous, current));
       });
     }
-    function offlineCacheKey(userId) {
-      return `${OFFLINE_CACHE_KEY_PREFIX}${userId}:${offlineCacheTabId}`;
+    function openOfflineCacheDatabase() {
+      if (!("indexedDB" in window)) return Promise.reject(new Error("Browser ini tidak menyediakan IndexedDB."));
+      if (offlineCacheDatabasePromise) return offlineCacheDatabasePromise;
+      offlineCacheDatabasePromise = new Promise((resolve, reject) => {
+        const request = window.indexedDB.open(OFFLINE_CACHE_DATABASE_NAME, OFFLINE_CACHE_DATABASE_VERSION);
+        request.onupgradeneeded = () => {
+          const database = request.result;
+          if (!database.objectStoreNames.contains(OFFLINE_CACHE_STORE_NAME)) {
+            database.createObjectStore(OFFLINE_CACHE_STORE_NAME);
+          }
+        };
+        request.onsuccess = () => {
+          const database = request.result;
+          database.onversionchange = () => database.close();
+          resolve(database);
+        };
+        request.onerror = () => reject(request.error || new Error("Database cache offline gagal dibuka."));
+        request.onblocked = () => reject(new Error("Database cache offline diblokir oleh tab lain."));
+      }).catch((error) => {
+        offlineCacheDatabasePromise = null;
+        throw error;
+      });
+      return offlineCacheDatabasePromise;
     }
-    function loadOfflineSyncCache(userId) {
-      let serialized;
+    async function readOfflineCacheRecord(userId) {
+      const database = await openOfflineCacheDatabase();
+      const cachedRecord = await new Promise((resolve, reject) => {
+        const transaction = database.transaction(OFFLINE_CACHE_STORE_NAME, "readonly");
+        const request = transaction.objectStore(OFFLINE_CACHE_STORE_NAME).get(`${userId}:${offlineCacheTabId}`);
+        request.onsuccess = () => resolve(request.result || null);
+        request.onerror = () => reject(request.error || new Error("Cache lokal gagal dibaca."));
+        transaction.onabort = () => reject(transaction.error || new Error("Pembacaan cache lokal dibatalkan."));
+      });
+      if (cachedRecord) return cachedRecord;
+      const legacyKey = `${OFFLINE_CACHE_LEGACY_KEY_PREFIX}${userId}:${offlineCacheTabId}`;
+      const legacyValue = localStorage.getItem(legacyKey);
+      if (!legacyValue) return null;
       try {
-        serialized = localStorage.getItem(offlineCacheKey(userId));
+        const legacyRecord = JSON.parse(legacyValue);
+        await writeOfflineCacheRecord(userId, legacyRecord);
+        localStorage.removeItem(legacyKey);
+        return legacyRecord;
+      } catch (error) {
+        console.error("Cache lokal versi sebelumnya gagal dipindahkan ke IndexedDB:", error);
+        return JSON.parse(legacyValue);
+      }
+    }
+    async function writeOfflineCacheRecord(userId, record) {
+      const database = await openOfflineCacheDatabase();
+      return new Promise((resolve, reject) => {
+        const transaction = database.transaction(OFFLINE_CACHE_STORE_NAME, "readwrite");
+        transaction.objectStore(OFFLINE_CACHE_STORE_NAME).put(record, `${userId}:${offlineCacheTabId}`);
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error || new Error("Cache lokal gagal disimpan."));
+        transaction.onabort = () => reject(transaction.error || new Error("Penyimpanan cache lokal dibatalkan."));
+      });
+    }
+    async function loadOfflineSyncCache(userId) {
+      let cache;
+      try {
+        cache = await readOfflineCacheRecord(userId);
       } catch (error) {
         console.error("Cache sinkronisasi lokal tidak dapat dibaca:", error);
+        if (navigator.onLine === false) notify("Cache offline tidak dapat dibaca. Hubungkan internet sebelum melanjutkan.");
         return null;
       }
-      if (!serialized) return null;
+      if (!cache) return null;
       try {
-        const cache = JSON.parse(serialized);
-        if (cache?.version !== 1 || !cache.state || typeof cache.state !== "object" || Array.isArray(cache.state)) {
+        if (cache.version !== 1 || !cache.state || typeof cache.state !== "object" || Array.isArray(cache.state)) {
           throw new Error("Format cache sinkronisasi lokal tidak valid.");
         }
         const cachedState = normalizeSharedState(cache.state);
@@ -4244,22 +4305,35 @@
         return null;
       }
     }
-    function persistOfflineSyncCache() {
-      if (!authSession?.user?.id || !sharedStateReady || !lastSyncedState) return;
+    async function writeCurrentOfflineSyncCache(userId) {
+      if (authSession?.user?.id !== userId || !sharedStateReady || !lastSyncedState) return;
       try {
         const currentState = serializeSharedState();
         const currentSerialized = stableSerialize(currentState);
-        localStorage.setItem(offlineCacheKey(authSession.user.id), JSON.stringify({
+        await writeOfflineCacheRecord(userId, {
           version: 1,
           baseVersion: remoteVersion,
           baseState: currentSerialized === lastSyncedState ? null : JSON.parse(lastSyncedState),
           state: currentState,
           updatedAt: new Date().toISOString()
-        }));
+        });
+        offlineCacheWriteFailureReported = false;
       } catch (error) {
         console.error("Cache sinkronisasi lokal gagal disimpan:", error);
-        notify("Data sementara gagal disimpan di browser. Ekspor data jika memungkinkan.");
+        if (!offlineCacheWriteFailureReported) {
+          offlineCacheWriteFailureReported = true;
+          notify("Cache offline gagal disimpan. Periksa ruang penyimpanan browser dan ekspor data jika memungkinkan.");
+        }
       }
+    }
+    function persistOfflineSyncCache() {
+      if (!authSession?.user?.id || !sharedStateReady || !lastSyncedState) return;
+      const userId = authSession.user.id;
+      clearTimeout(offlineCacheWriteTimer);
+      offlineCacheWriteTimer = setTimeout(() => {
+        offlineCacheWriteTimer = null;
+        void writeCurrentOfflineSyncCache(userId);
+      }, OFFLINE_CACHE_WRITE_DELAY_MS);
     }
     function persistLocalState() {
       const workspace = activeWorkspace();
@@ -5386,7 +5460,7 @@
       setLoginBusy(true);
       showAuthMessage("");
       try {
-        const offlineCache = loadOfflineSyncCache(session.user.id);
+        const offlineCache = await loadOfflineSyncCache(session.user.id);
         const { data: row, error } = await readSharedState();
         if (authSession?.user?.id !== session.user.id) return;
         if (error && (!offlineCache || !isTransientSyncError(error))) throw error;
