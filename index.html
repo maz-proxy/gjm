@@ -608,7 +608,14 @@
     .recorded-entry-dialog.has-count-detail { display: flex; flex-direction: column; height: min(65vh, 400px); }
     .recorded-entry-dialog .dialog-head { background: linear-gradient(115deg, color-mix(in srgb, var(--green) 10%, var(--paper)), var(--paper) 78%); border-bottom-color: var(--line); border-radius: 10px 10px 0 0; border-top: 3px solid var(--green); padding: 9px 11px 8px; position: relative; }
     .recorded-entry-dialog .dialog-title { font-size: 12px; }
+    .recorded-entry-heading { align-items: flex-start; display: flex; gap: 14px; justify-content: space-between; min-width: 0; }
     .recorded-entry-dialog .dialog-subtitle { max-width: 260px; overflow-wrap: anywhere; }
+    .recorded-entry-dialog .recorded-entry-product-name { flex: 1 1 auto; min-width: 0; }
+    .recorded-entry-rack-summary { display: grid; flex: 0 0 auto; gap: 3px; grid-template-columns: repeat(auto-fit, minmax(75px, auto)); max-width: 58%; }
+    .recorded-entry-rack-summary[hidden] { display: none; }
+    .recorded-entry-rack-item { align-items: baseline; color: var(--muted); display: flex; font-size: 9px; gap: 7px; justify-content: space-between; white-space: nowrap; }
+    .recorded-entry-rack-item strong { color: var(--ink); font-size: 10px; font-variant-numeric: tabular-nums; }
+    @media (max-width: 520px) { .recorded-entry-heading { gap: 8px; } .recorded-entry-rack-summary { gap: 2px 6px; grid-template-columns: repeat(2, minmax(0, auto)); max-width: 48%; } .recorded-entry-rack-item { font-size: 8px; gap: 4px; } .recorded-entry-rack-item strong { font-size: 9px; } }
     .recorded-entry-content { max-height: calc(65vh - 52px); overflow: auto; padding: 7px; }
     .recorded-entry-dialog.has-count-detail .recorded-entry-content { display: flex; flex: 1; flex-direction: column; max-height: none; min-height: 0; overflow: hidden; padding: 0; }
     .recorded-entry-list { display: grid; gap: 6px; }
@@ -2465,7 +2472,7 @@
     <form id="inbound-entry-form" class="feature-dialog-form"><label class="auth-field" id="inbound-entry-existing-wrap" hidden><span>Pilih data untuk diedit</span><select class="auth-input" id="inbound-entry-existing"></select></label><label class="auth-field"><span>Tanggal dan waktu PREC/RETUR</span><input class="auth-input" name="entryDate" type="datetime-local" required></label><label class="auth-field"><span>Nomor PREC/RETUR</span><input class="auth-input" name="referenceNumber" type="text" maxlength="100" required placeholder="Masukkan nomor PREC/RETUR"></label><label class="auth-field"><span>Quantity Inbound/Retur</span><input class="auth-input" name="quantity" type="number" min="1" step="1" required placeholder="Masukkan quantity"></label><div class="dialog-actions"><button class="button button-danger" id="inbound-entry-delete" type="button" hidden>Hapus data</button><button class="button button-secondary" id="inbound-entry-new" type="button">Data baru</button><button class="button button-secondary" type="button" data-close="inbound-entry-dialog">Batal</button><button class="button button-primary" id="inbound-entry-save" type="submit">Simpan</button></div></form>
   </dialog>
   <dialog id="recorded-entry-dialog" class="recorded-entry-dialog" aria-labelledby="recorded-entry-title" aria-describedby="recorded-entry-product">
-    <div class="dialog-head"><div><div class="dialog-title" id="recorded-entry-title"></div><div class="dialog-subtitle" id="recorded-entry-product" data-user-content></div></div><button class="dialog-close" type="button" data-recorded-entry-close aria-label="Tutup">×</button></div>
+    <div class="dialog-head"><div class="recorded-entry-heading"><div class="recorded-entry-product-name"><div class="dialog-title" id="recorded-entry-title"></div><div class="dialog-subtitle" id="recorded-entry-product" data-user-content></div></div><div class="recorded-entry-rack-summary" id="recorded-entry-rack-summary" aria-label="Quantity per Rack" hidden></div></div><button class="dialog-close" type="button" data-recorded-entry-close aria-label="Tutup">×</button></div>
     <div class="recorded-entry-content" id="recorded-entry-content"></div>
   </dialog>
   <dialog id="inbound-delete-confirm-dialog" class="pj-delete-confirm-dialog" aria-labelledby="inbound-delete-confirm-title" aria-describedby="inbound-delete-confirm-copy">
@@ -7714,6 +7721,22 @@
         .filter((entry) => entry.productId === product.id || (!entry.productId && entry.sku && entry.sku === product.sku))
         .slice()
         .sort((left, right) => timestampFor(right[config.dateKey]) - timestampFor(left[config.dateKey]));
+      const rackSummary = document.getElementById("recorded-entry-rack-summary");
+      if (isActiveCountDetail) {
+        const rackQuantities = new Map();
+        for (const entry of entries) {
+          const rack = rackLabel(entry.layout);
+          rackQuantities.set(rack, (rackQuantities.get(rack) || 0) + (kind === "scan" ? 1 : Number(entry.quantity || 0)));
+        }
+        rackSummary.innerHTML = [...rackQuantities.entries()]
+          .sort(([left], [right]) => left.localeCompare(right, "id-ID", { numeric: true }))
+          .map(([rack, quantity]) => `<div class="recorded-entry-rack-item"><span>${escapeHtml(rack)}</span><strong>${formatNumber(quantity)}</strong></div>`)
+          .join("");
+        rackSummary.hidden = rackQuantities.size === 0;
+      } else {
+        rackSummary.replaceChildren();
+        rackSummary.hidden = true;
+      }
       const rows = isActiveCountDetail
         ? entries.length ? `<div class="recorded-detail-table-wrap"><div class="recorded-detail-table"><div class="recorded-detail-row recorded-detail-header"><span>${kind === "scan" ? "Serial Number" : "Item Code"}</span><span>${kind === "scan" ? "Item Code" : "Qty"}</span><span>Rack</span><span>Waktu</span></div>${entries.map((entry) => {
           const isScan = kind === "scan";
