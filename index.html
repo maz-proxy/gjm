@@ -2406,9 +2406,9 @@
       body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table th:nth-child(1),
       body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table td:nth-child(1) { width: 3%; }
       body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table th:nth-child(2),
-      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table td:nth-child(2) { overflow-wrap: anywhere; width: 35%; }
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table td:nth-child(2) { min-width: 0; overflow-wrap: anywhere; width: 59%; }
       body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table th:nth-child(3),
-      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table td:nth-child(3) { overflow-wrap: anywhere; width: 8%; }
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table td:nth-child(3) { overflow-wrap: anywhere; width: 4%; }
       body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table th:nth-child(n+4):nth-child(-n+9),
       body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table td:nth-child(n+4):nth-child(-n+9) { font-variant-numeric: tabular-nums; padding-left: 2px; padding-right: 2px; text-align: center; white-space: nowrap; }
       body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table th:nth-child(4),
@@ -2418,19 +2418,19 @@
       body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table th:nth-child(6),
       body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table td:nth-child(6),
       body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table th:nth-child(8),
-      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table td:nth-child(8) { width: 5%; }
-      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table th:nth-child(7),
-      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table td:nth-child(7) { width: 7%; }
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table td:nth-child(8),
       body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table th:nth-child(9),
-      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table td:nth-child(9) { width: 7%; }
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table td:nth-child(9) { width: 4%; }
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table th:nth-child(7),
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table td:nth-child(7) { width: 5%; }
       body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table th:nth-child(10),
-      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table td:nth-child(10) { text-align: center; width: 20%; }
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table td:nth-child(10) { text-align: center; width: 9%; }
       body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-notes th:nth-child(2),
-      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-notes td:nth-child(2) { width: 30%; }
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-notes td:nth-child(2) { width: 47%; }
       body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-notes th:nth-child(3),
-      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-notes td:nth-child(3) { width: 8%; }
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-notes td:nth-child(3) { width: 4%; }
       body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-notes th:nth-child(10),
-      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-notes td:nth-child(10) { width: 12%; }
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-notes td:nth-child(10) { width: 8%; }
       body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-notes th:nth-child(11),
       body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-notes td:nth-child(11) { overflow-wrap: anywhere; width: 13%; }
       body:not(.printing-session):not(.auth-locked) thead { display: table-header-group; }
@@ -8290,24 +8290,38 @@
         #print-session-root .completed-rack { padding: 5px; }
         #print-session-root .print-reconciliation-table { table-layout: fixed; width: 100%; }
         #print-session-root .print-reconciliation-table th:nth-child(1), #print-session-root .print-reconciliation-table td:nth-child(1) { width: 3%; }
-        #print-session-root .print-reconciliation-table th:nth-child(2), #print-session-root .print-reconciliation-table td:nth-child(2) { overflow-wrap: anywhere; width: 14%; }
-        #print-session-root .print-reconciliation-table th:nth-child(3), #print-session-root .print-reconciliation-table td:nth-child(3) { overflow-wrap: anywhere; width: 26%; }
-        #print-session-root .print-reconciliation-table th:nth-child(4), #print-session-root .print-reconciliation-table td:nth-child(4) { width: 5%; }
-        #print-session-root .print-reconciliation-table th:nth-child(5), #print-session-root .print-reconciliation-table td:nth-child(5) { width: 5%; }
-        #print-session-root .print-reconciliation-table th:nth-child(6), #print-session-root .print-reconciliation-table td:nth-child(6) { width: 5%; }
-        #print-session-root .print-reconciliation-table th:nth-child(7), #print-session-root .print-reconciliation-table td:nth-child(7) { width: 7%; }
-        #print-session-root .print-reconciliation-table th:nth-child(8), #print-session-root .print-reconciliation-table td:nth-child(8) { width: 5%; }
-        #print-session-root .print-reconciliation-table th:nth-child(9), #print-session-root .print-reconciliation-table td:nth-child(9) { width: 6%; }
+        #print-session-root .print-reconciliation-table th:nth-child(2), #print-session-root .print-reconciliation-table td:nth-child(2) { min-width: 0; overflow-wrap: anywhere; width: 10%; }
+        #print-session-root .print-reconciliation-table th:nth-child(3), #print-session-root .print-reconciliation-table td:nth-child(3) { min-width: 0; overflow-wrap: anywhere; width: 43%; }
+        #print-session-root .print-reconciliation-table th:nth-child(4), #print-session-root .print-reconciliation-table td:nth-child(4) { width: 4%; }
+        #print-session-root .print-reconciliation-table th:nth-child(5), #print-session-root .print-reconciliation-table td:nth-child(5) { width: 4%; }
+        #print-session-root .print-reconciliation-table th:nth-child(6), #print-session-root .print-reconciliation-table td:nth-child(6) { width: 4%; }
+        #print-session-root .print-reconciliation-table th:nth-child(7), #print-session-root .print-reconciliation-table td:nth-child(7) { width: 5%; }
+        #print-session-root .print-reconciliation-table th:nth-child(8), #print-session-root .print-reconciliation-table td:nth-child(8) { width: 4%; }
+        #print-session-root .print-reconciliation-table th:nth-child(9), #print-session-root .print-reconciliation-table td:nth-child(9) { width: 4%; }
         #print-session-root .print-reconciliation-table th:nth-child(10), #print-session-root .print-reconciliation-table td:nth-child(10) { width: 8%; }
-        #print-session-root .print-reconciliation-table th:nth-child(11), #print-session-root .print-reconciliation-table td:nth-child(11) { overflow-wrap: anywhere; width: 16%; }
+        #print-session-root .print-reconciliation-table th:nth-child(11), #print-session-root .print-reconciliation-table td:nth-child(11) { overflow-wrap: anywhere; width: 11%; }
         #print-session-root .print-reconciliation-table th:nth-child(n+4):nth-child(-n+9),
         #print-session-root .print-reconciliation-table td:nth-child(n+4):nth-child(-n+9) { font-variant-numeric: tabular-nums; padding-left: 2px; padding-right: 2px; white-space: nowrap; }
         #print-session-root .print-reconciliation-table th:nth-child(7) { font-size: 6px; }
         #print-session-root .print-reconciliation-table th:nth-child(n+4), #print-session-root .print-reconciliation-table td:nth-child(n+4) { text-align: center; vertical-align: middle; }
         #print-session-root .print-reconciliation-archive-table th:nth-child(2),
-        #print-session-root .print-reconciliation-archive-table td:nth-child(2) { overflow-wrap: anywhere; width: 35%; }
+        #print-session-root .print-reconciliation-archive-table td:nth-child(2) { width: 47%; }
         #print-session-root .print-reconciliation-archive-table th:nth-child(3),
-        #print-session-root .print-reconciliation-archive-table td:nth-child(3) { overflow-wrap: anywhere; width: 8%; }
+        #print-session-root .print-reconciliation-archive-table td:nth-child(3) { width: 4%; }
+        #print-session-root .print-reconciliation-archive-table th:nth-child(4),
+        #print-session-root .print-reconciliation-archive-table td:nth-child(4),
+        #print-session-root .print-reconciliation-archive-table th:nth-child(5),
+        #print-session-root .print-reconciliation-archive-table td:nth-child(5),
+        #print-session-root .print-reconciliation-archive-table th:nth-child(6),
+        #print-session-root .print-reconciliation-archive-table td:nth-child(6),
+        #print-session-root .print-reconciliation-archive-table th:nth-child(8),
+        #print-session-root .print-reconciliation-archive-table td:nth-child(8),
+        #print-session-root .print-reconciliation-archive-table th:nth-child(9),
+        #print-session-root .print-reconciliation-archive-table td:nth-child(9) { width: 4%; }
+        #print-session-root .print-reconciliation-archive-table th:nth-child(7),
+        #print-session-root .print-reconciliation-archive-table td:nth-child(7) { width: 5%; }
+        #print-session-root .print-reconciliation-archive-table th:nth-child(10),
+        #print-session-root .print-reconciliation-archive-table td:nth-child(10) { width: 8%; }
         #print-session-root .print-reconciliation-archive-table th:nth-child(11),
         #print-session-root .print-reconciliation-archive-table td:nth-child(11) { width: 13%; }
         #print-session-root .print-reconciliation-archive-table .product-cell { gap: 0; min-width: 0; }
