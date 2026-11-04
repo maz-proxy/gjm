@@ -7864,6 +7864,25 @@
         remainingPercent: quantityPercent(remaining, total)
       };
     }
+    function renderArchivePrintSummary(session) {
+      const snapshot = session.snapshot || {};
+      const countMode = snapshot.countMode === "laptops" ? "laptops" : "all";
+      const products = (snapshot.products || []).filter((product) => isCountedProduct(product, countMode));
+      const sumQuantity = (key) => products.reduce((sum, product) => {
+        const quantity = Number(product[key]);
+        return sum + (Number.isFinite(quantity) ? Math.max(0, quantity) : 0);
+      }, 0);
+      const scanQuantity = sumQuantity("count");
+      const manualQuantity = sumQuantity("box");
+      const progress = recordedSoProgress(session);
+      const quantitySummary = currentLanguage === "en" ? "units" : "unit";
+      return `<aside class="print-session-summary" aria-label="${currentLanguage === "en" ? "Session quantity summary" : "Ringkasan quantity sesi"}">
+        <div class="print-session-summary-metric"><span>Total Qty Scan</span><strong>${formatNumber(scanQuantity)} <small>${quantitySummary}</small></strong></div>
+        <div class="print-session-summary-metric"><span>Total Qty Manual</span><strong>${formatNumber(manualQuantity)} <small>${quantitySummary}</small></strong></div>
+        <div class="print-session-summary-metric print-session-summary-comparison"><span>${currentLanguage === "en" ? "Stock opname / Master VEF" : "Stock opname / Master VEF"}</span><strong>${formatNumber(progress.completed)} <small>/ ${formatNumber(progress.total)} ${quantitySummary}</small></strong></div>
+        <div class="print-session-summary-progress"><span>% SO</span><strong>${formatNumber(progress.completedPercent)}%</strong></div>
+      </aside>`;
+    }
     function closeRecordedEntryDetails({ restoreFocus = true } = {}) {
       const dialog = document.getElementById("recorded-entry-dialog");
       if (!dialog?.open) return;
@@ -8214,7 +8233,7 @@
         <div id="recorded-sheet-content" class="recorded-sheet-content">${renderRecordedSheet(session, selectedRecordedSheet)}</div>
       </div>`;
     }
-    function openArchivePrintWindow(title, subtitle, content, brandName = "", picNames = []) {
+    function openArchivePrintWindow(title, subtitle, content, brandName = "", picNames = [], session = null) {
       const printWindow = window.open("", "_blank");
       if (!printWindow) {
         notify("Jendela cetak diblokir browser. Izinkan pop-up untuk mencetak atau menyimpan PDF.");
@@ -8268,10 +8287,21 @@
         #print-session-root, #print-session-root *, #print-session-root *::before, #print-session-root *::after { box-shadow: none !important; text-shadow: none !important; }
         #print-session-root * { background-color: #fff !important; background-image: none !important; border-color: #cbd5d1 !important; color: #17211d !important; }
         #print-session-root th { background-color: #e8eeeb !important; }
-        #print-session-root .print-session-heading { align-items: center; display: flex; gap: 10px; margin: 0 0 4px; }
+        #print-session-root .print-session-header { align-items: flex-start; display: flex; gap: 16px; justify-content: space-between; margin: 0 0 5px; }
+        #print-session-root .print-session-heading { align-items: center; display: flex; flex: 1 1 auto; gap: 10px; margin: 0 0 4px; min-width: 0; }
         #print-session-root .print-session-heading .workspace-brand-icon { flex: 0 0 50px; height: 50px; width: 50px; }
         #print-session-root .print-session-heading .workspace-brand-icon img { height: 48px; width: 48px; }
         #print-session-root h1 { color: var(--print-accent-dark); font-size: 21px; margin: 0; }
+        #print-session-root .print-session-summary { align-items: stretch; border: 1px solid #cbd5d1; border-radius: 6px; display: grid; flex: 0 0 400px; gap: 0; grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 48%; }
+        #print-session-root .print-session-summary-metric { display: grid; gap: 2px; min-width: 0; padding: 5px 8px; }
+        #print-session-root .print-session-summary-metric:nth-child(odd) { border-right: 1px solid #dfe5e2; }
+        #print-session-root .print-session-summary-metric:nth-child(-n+2) { border-bottom: 1px solid #dfe5e2; }
+        #print-session-root .print-session-summary-metric > span,
+        #print-session-root .print-session-summary-progress > span { color: #64746f !important; font-size: 7px; font-weight: 700; letter-spacing: .3px; text-transform: uppercase; }
+        #print-session-root .print-session-summary-metric strong { font-size: 10px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        #print-session-root .print-session-summary-metric strong small { font-size: 7px; font-weight: 500; }
+        #print-session-root .print-session-summary-progress { align-items: center; background: #e8eeeb !important; display: flex; grid-column: 1 / -1; justify-content: space-between; padding: 4px 8px; }
+        #print-session-root .print-session-summary-progress strong { color: var(--print-accent-dark) !important; font-size: 20px; font-variant-numeric: tabular-nums; font-weight: 900; line-height: 1; }
         #print-session-root > .print-session-subtitle { color: #64746f; font-size: 10px; margin: 0 0 14px; }
         #print-session-root th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         #print-session-root .table-section, #print-session-root .layout-card, #print-session-root .completed-rack { border-color: var(--print-accent-line); }
@@ -8334,7 +8364,7 @@
         #print-session-root [data-export-session], #print-session-root [data-print-session] { display: none !important; }
         #print-session-root details:not([open]) > :not(summary) { display: block !important; }
         @media print { @page { size: landscape; margin: 8mm; } body.printing-session { padding: 0; } #print-session-root { width: 100%; } }
-      </style></head><body class="printing-session"><main id="print-session-root"><div class="print-session-heading">${renderWorkspaceBrandIcon(brandName)}<h1 data-user-content>${escapeHtml(title)}</h1></div><p class="print-session-subtitle" data-user-content>${escapeHtml(subtitle)}</p>${content}<section class="print-signatures" aria-label="${currentLanguage === "en" ? "PIC signatures" : "Paraf PIC"}"><div class="print-signature"><div class="print-signature-line"></div><div class="print-signature-name">${currentLanguage === "en" ? "PIC 1 name:" : "Nama PIC 1:"} <strong>${escapeHtml(picNames[0] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</strong></div></div><div class="print-signature"><div class="print-signature-line"></div><div class="print-signature-name">${currentLanguage === "en" ? "PIC 2 name:" : "Nama PIC 2:"} <strong>${escapeHtml(picNames[1] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</strong></div></div></section></main></body></html>`);
+      </style></head><body class="printing-session"><main id="print-session-root"><div class="print-session-header"><div class="print-session-heading">${renderWorkspaceBrandIcon(brandName)}<h1 data-user-content>${escapeHtml(title)}</h1></div>${session ? renderArchivePrintSummary(session) : ""}</div><p class="print-session-subtitle" data-user-content>${escapeHtml(subtitle)}</p>${content}<section class="print-signatures" aria-label="${currentLanguage === "en" ? "PIC signatures" : "Paraf PIC"}"><div class="print-signature"><div class="print-signature-line"></div><div class="print-signature-name">${currentLanguage === "en" ? "PIC 1 name:" : "Nama PIC 1:"} <strong>${escapeHtml(picNames[0] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</strong></div></div><div class="print-signature"><div class="print-signature-line"></div><div class="print-signature-name">${currentLanguage === "en" ? "PIC 2 name:" : "Nama PIC 2:"} <strong>${escapeHtml(picNames[1] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</strong></div></div></section></main></body></html>`);
       printWindow.document.close();
       translateDocument(printWindow.document.body);
       return printWindow;
@@ -8348,7 +8378,7 @@
       const pics = session.picNames || [];
       const unset = currentLanguage === "en" ? "Not set" : "Belum diisi";
       const subtitle = `${archivedSessionMonth(session)} · ${archivedSessionWeek(session)} · ${currentLanguage === "en" ? "Owner" : "Pemilik"}: ${sessionOwnerName(session)} · PIC 1: ${pics[0] || unset} · PIC 2: ${pics[1] || unset} · ${currentLanguage === "en" ? "Completed" : "Selesai"} ${formatDate(session.finishedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}`;
-      openArchivePrintWindow(`${session.workspaceName || (currentLanguage === "en" ? "Stock opname session" : "Sesi opname")} · ${currentLanguage === "en" ? "Stock Reconciliation" : "Stock Opname"}`, subtitle, renderCompletedSessionDetails(session, true), session.workspaceName, pics);
+      openArchivePrintWindow(`${session.workspaceName || (currentLanguage === "en" ? "Stock opname session" : "Sesi opname")} · ${currentLanguage === "en" ? "Stock Reconciliation" : "Stock Opname"}`, subtitle, renderCompletedSessionDetails(session, true), session.workspaceName, pics, session);
     }
     function printRecordedSheet() {
       const session = state.sessions.find((item) => item.id === selectedRecordedSessionId);
@@ -8360,7 +8390,7 @@
       const pics = session.picNames || [];
       const unset = currentLanguage === "en" ? "Not set" : "Belum diisi";
       const subtitle = `${archivedSessionMonth(session)} · ${archivedSessionWeek(session)} · PIC 1: ${pics[0] || unset} · PIC 2: ${pics[1] || unset} · ${currentLanguage === "en" ? "Completed" : "Selesai"} ${session.finishedAt ? formatDate(session.finishedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }) : (currentLanguage === "en" ? "Unavailable" : "Tidak tersedia")} · ${currentLanguage === "en" ? "Read-only view" : "Tampilan hanya-baca"}`;
-      openArchivePrintWindow(`${session.workspaceName || (currentLanguage === "en" ? "Stock opname session" : "Sesi opname")} · ${translateText(sheetName)}`, subtitle, renderRecordedSheet(session, selectedRecordedSheet, true), session.workspaceName, pics);
+      openArchivePrintWindow(`${session.workspaceName || (currentLanguage === "en" ? "Stock opname session" : "Sesi opname")} · ${translateText(sheetName)}`, subtitle, renderRecordedSheet(session, selectedRecordedSheet, true), session.workspaceName, pics, session);
     }
 
     function renderWorkspaceSchedule() {
