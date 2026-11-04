@@ -8070,7 +8070,7 @@
       }).join("");
       const title = sheet === "recap" ? "Item belum sesuai" : "Rekonsiliasi per item";
       const emptyMessage = query ? `Tidak ada hasil untuk “${escapeHtml(recordedArchiveSearchTerm.trim())}”.` : sheet === "recap" ? "Belum ada item bermasalah. Semua item sesuai dengan VEF." : "Data Result SO tidak tersedia.";
-      return `<section class="table-section"><div class="table-toolbar"><div class="table-title">${title} <span class="table-count">${visibleProducts.length} item · hanya-baca${query ? " · hasil pencarian" : ""}</span></div></div><div class="table-scroll"><table class="print-reconciliation-table"><thead>${renderReconciliationTableHead(true)}</thead><tbody>${rows || `<tr><td class="empty-row" colspan="11">${emptyMessage}</td></tr>`}</tbody></table></div></section>`;
+      return `<section class="table-section"><div class="table-toolbar"><div class="table-title">${title} <span class="table-count">${visibleProducts.length} item · hanya-baca${query ? " · hasil pencarian" : ""}</span></div></div><div class="table-scroll"><table class="print-reconciliation-table print-reconciliation-archive-table"><thead>${renderReconciliationTableHead(true)}</thead><tbody>${rows || `<tr><td class="empty-row" colspan="11">${emptyMessage}</td></tr>`}</tbody></table></div></section>`;
     }
     function handleRecordedBrandChange() {
       const brand = document.getElementById("recorded-brand-select")?.value;
@@ -8273,6 +8273,15 @@
         #print-session-root .print-reconciliation-table td:nth-child(n+4):nth-child(-n+9) { font-variant-numeric: tabular-nums; padding-left: 2px; padding-right: 2px; white-space: nowrap; }
         #print-session-root .print-reconciliation-table th:nth-child(7) { font-size: 6px; }
         #print-session-root .print-reconciliation-table th:nth-child(n+4), #print-session-root .print-reconciliation-table td:nth-child(n+4) { text-align: center; vertical-align: middle; }
+        #print-session-root .print-reconciliation-archive-table th:nth-child(2),
+        #print-session-root .print-reconciliation-archive-table td:nth-child(2) { overflow-wrap: break-word; width: 33%; }
+        #print-session-root .print-reconciliation-archive-table th:nth-child(3),
+        #print-session-root .print-reconciliation-archive-table td:nth-child(3) { overflow-wrap: anywhere; width: 10%; }
+        #print-session-root .print-reconciliation-archive-table th:nth-child(11),
+        #print-session-root .print-reconciliation-archive-table td:nth-child(11) { width: 13%; }
+        #print-session-root .print-reconciliation-archive-table .product-cell { gap: 0; min-width: 0; }
+        #print-session-root .print-reconciliation-archive-table .product-name { font-size: 7.5px; line-height: 1.15; }
+        #print-session-root .print-reconciliation-archive-table .product-sku { font-size: 6.5px; line-height: 1.1; margin-top: 1px; }
         #print-session-root .print-signatures { break-inside: avoid; display: grid; gap: 36px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 48px; }
         #print-session-root .print-signature { min-width: 0; text-align: center; }
         #print-session-root .print-signature-line { border-bottom: 1px solid #17211d !important; height: 34px; margin: 0 auto; width: 48%; }
