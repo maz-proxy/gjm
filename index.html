@@ -607,6 +607,8 @@
     .recorded-entry-dialog[data-placement="above"]::before { border: 0; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); bottom: -6px; top: auto; }
     .recorded-entry-dialog.has-count-detail { display: flex; flex-direction: column; height: min(65vh, 400px); }
     .recorded-entry-dialog .dialog-head { background: linear-gradient(115deg, color-mix(in srgb, var(--green) 10%, var(--paper)), var(--paper) 78%); border-bottom-color: var(--line); border-radius: 10px 10px 0 0; border-top: 3px solid var(--green); padding: 9px 11px 8px; position: relative; }
+    .recorded-entry-dialog .dialog-head > .dialog-close { align-items: center; background: var(--paper); border: 1px solid var(--line); border-radius: 7px; display: inline-flex; height: 32px; justify-content: center; padding: 0; position: absolute; right: 8px; top: 8px; width: 32px; z-index: 3; }
+    .recorded-entry-dialog .dialog-head > .dialog-close:hover { background: color-mix(in srgb, var(--green) 8%, var(--paper)); color: var(--ink); }
     .recorded-entry-dialog .dialog-title { font-size: 12px; }
     .recorded-entry-title-row { align-items: center; display: flex; flex-wrap: wrap; gap: 5px 12px; }
     .recorded-entry-total { align-items: baseline; color: var(--muted); display: inline-flex; font-size: 9px; gap: 5px; }
@@ -10569,10 +10571,6 @@
         showRecordedEntryDetails(recordedEntryButton.dataset.recordedEntry, recordedEntryButton.dataset.productId, recordedEntryButton);
         return;
       }
-      if (event.target.closest("[data-recorded-entry-close]")) {
-        closeRecordedEntryDetails();
-        return;
-      }
       const toggle = event.target.closest("[data-theme-toggle]");
       if (toggle) applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark", true);
       const accentToggle = event.target.closest("[data-accent-toggle]");
@@ -10583,6 +10581,8 @@
         event.preventDefault();
       }
     });
+    document.querySelector("#recorded-entry-dialog [data-recorded-entry-close]")
+      .addEventListener("click", closeRecordedEntryDetails);
     document.getElementById("recorded-entry-dialog").addEventListener("cancel", (event) => event.preventDefault());
     window.addEventListener("resize", positionRecordedEntryDialog);
     window.addEventListener("scroll", positionRecordedEntryDialog, true);
