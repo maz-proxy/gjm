@@ -7874,12 +7874,19 @@
       }, 0);
       const scanQuantity = sumQuantity("count");
       const manualQuantity = sumQuantity("box");
+      const pjQuantity = sumQuantity("pj");
+      const inboundEntries = snapshot.inboundEntries || [];
+      const inboundQuantity = products.reduce((sum, product) => sum + inboundQuantityFor(product.id, inboundEntries), 0);
       const progress = recordedSoProgress(session);
+      const variance = scanQuantity + manualQuantity + pjQuantity - progress.total - inboundQuantity;
       const quantitySummary = currentLanguage === "en" ? "units" : "unit";
       return `<aside class="print-session-summary" aria-label="${currentLanguage === "en" ? "Session quantity summary" : "Ringkasan quantity sesi"}">
         <div class="print-session-summary-metric"><span>Total Qty Scan</span><strong>${formatNumber(scanQuantity)} <small>${quantitySummary}</small></strong></div>
         <div class="print-session-summary-metric"><span>Total Qty Manual</span><strong>${formatNumber(manualQuantity)} <small>${quantitySummary}</small></strong></div>
+        <div class="print-session-summary-metric"><span>Total Qty Inbound/Retur</span><strong>${formatNumber(inboundQuantity)} <small>${quantitySummary}</small></strong></div>
+        <div class="print-session-summary-metric"><span>Total Qty PJ</span><strong>${formatNumber(pjQuantity)} <small>${quantitySummary}</small></strong></div>
         <div class="print-session-summary-metric print-session-summary-comparison"><span>${currentLanguage === "en" ? "Stock opname / Master VEF" : "Stock opname / Master VEF"}</span><strong>${formatNumber(progress.completed)} <small>/ ${formatNumber(progress.total)} ${quantitySummary}</small></strong></div>
+        <div class="print-session-summary-metric"><span>Selisih Qty</span><strong>${variance > 0 ? "+" : ""}${formatNumber(variance)} <small>${quantitySummary}</small></strong></div>
         <div class="print-session-summary-progress"><span>% SO</span><strong>${formatNumber(progress.completedPercent)}%</strong></div>
       </aside>`;
     }
@@ -8292,8 +8299,8 @@
         #print-session-root .print-session-heading .workspace-brand-icon { flex: 0 0 50px; height: 50px; width: 50px; }
         #print-session-root .print-session-heading .workspace-brand-icon img { height: 48px; width: 48px; }
         #print-session-root h1 { color: var(--print-accent-dark); font-size: 21px; margin: 0; }
-        #print-session-root .print-session-summary { align-items: stretch; border: 1px solid #cbd5d1; border-radius: 8px; display: grid; flex: 1 1 640px; grid-template-columns: repeat(4, minmax(0, 1fr)); max-width: 68%; overflow: hidden; }
-        #print-session-root .print-session-summary-metric { align-content: center; display: grid; gap: 4px; min-width: 0; padding: 6px 10px; }
+        #print-session-root .print-session-summary { align-items: stretch; border: 1px solid #cbd5d1; border-radius: 8px; display: grid; flex: 1 1 800px; grid-template-columns: repeat(7, minmax(0, 1fr)); max-width: 82%; overflow: hidden; }
+        #print-session-root .print-session-summary-metric { align-content: center; display: grid; gap: 4px; min-width: 0; padding: 5px 7px; }
         #print-session-root .print-session-summary-metric + .print-session-summary-metric,
         #print-session-root .print-session-summary-progress { border-left: 1px solid #dfe5e2 !important; }
         #print-session-root .print-session-summary-metric > span,
