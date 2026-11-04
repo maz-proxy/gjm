@@ -608,6 +608,10 @@
     .recorded-entry-dialog.has-count-detail { display: flex; flex-direction: column; height: min(65vh, 400px); }
     .recorded-entry-dialog .dialog-head { background: linear-gradient(115deg, color-mix(in srgb, var(--green) 10%, var(--paper)), var(--paper) 78%); border-bottom-color: var(--line); border-radius: 10px 10px 0 0; border-top: 3px solid var(--green); padding: 9px 11px 8px; position: relative; }
     .recorded-entry-dialog .dialog-title { font-size: 12px; }
+    .recorded-entry-title-row { align-items: center; display: flex; flex-wrap: wrap; gap: 5px 12px; }
+    .recorded-entry-total { align-items: baseline; color: var(--muted); display: inline-flex; font-size: 9px; gap: 5px; }
+    .recorded-entry-total[hidden] { display: none; }
+    .recorded-entry-total strong { color: var(--ink); font-size: 12px; font-variant-numeric: tabular-nums; font-weight: 800; }
     .recorded-entry-heading { display: grid; gap: 8px; min-width: 0; padding-right: 22px; }
     .recorded-entry-dialog .dialog-subtitle { max-width: none; overflow-wrap: anywhere; }
     .recorded-entry-dialog .recorded-entry-product-name { min-width: 0; }
@@ -2472,7 +2476,7 @@
     <form id="inbound-entry-form" class="feature-dialog-form"><label class="auth-field" id="inbound-entry-existing-wrap" hidden><span>Pilih data untuk diedit</span><select class="auth-input" id="inbound-entry-existing"></select></label><label class="auth-field"><span>Tanggal dan waktu PREC/RETUR</span><input class="auth-input" name="entryDate" type="datetime-local" required></label><label class="auth-field"><span>Nomor PREC/RETUR</span><input class="auth-input" name="referenceNumber" type="text" maxlength="100" required placeholder="Masukkan nomor PREC/RETUR"></label><label class="auth-field"><span>Quantity Inbound/Retur</span><input class="auth-input" name="quantity" type="number" min="1" step="1" required placeholder="Masukkan quantity"></label><div class="dialog-actions"><button class="button button-danger" id="inbound-entry-delete" type="button" hidden>Hapus data</button><button class="button button-secondary" id="inbound-entry-new" type="button">Data baru</button><button class="button button-secondary" type="button" data-close="inbound-entry-dialog">Batal</button><button class="button button-primary" id="inbound-entry-save" type="submit">Simpan</button></div></form>
   </dialog>
   <dialog id="recorded-entry-dialog" class="recorded-entry-dialog" aria-labelledby="recorded-entry-title" aria-describedby="recorded-entry-product">
-    <div class="dialog-head"><div class="recorded-entry-heading"><div class="recorded-entry-product-name"><div class="dialog-title" id="recorded-entry-title"></div><div class="dialog-subtitle" id="recorded-entry-product" data-user-content></div></div><div class="recorded-entry-rack-summary" id="recorded-entry-rack-summary" aria-label="Quantity per Rack" hidden></div></div><button class="dialog-close" type="button" data-recorded-entry-close aria-label="Tutup">×</button></div>
+    <div class="dialog-head"><div class="recorded-entry-heading"><div class="recorded-entry-product-name"><div class="recorded-entry-title-row"><div class="dialog-title" id="recorded-entry-title"></div><div class="recorded-entry-total" id="recorded-entry-total" hidden></div></div><div class="dialog-subtitle" id="recorded-entry-product" data-user-content></div></div><div class="recorded-entry-rack-summary" id="recorded-entry-rack-summary" aria-label="Quantity per Rack" hidden></div></div><button class="dialog-close" type="button" data-recorded-entry-close aria-label="Tutup">×</button></div>
     <div class="recorded-entry-content" id="recorded-entry-content"></div>
   </dialog>
   <dialog id="inbound-delete-confirm-dialog" class="pj-delete-confirm-dialog" aria-labelledby="inbound-delete-confirm-title" aria-describedby="inbound-delete-confirm-copy">
@@ -7752,6 +7756,9 @@
       const dialog = document.getElementById("recorded-entry-dialog");
       dialog.classList.toggle("has-count-detail", isActiveCountDetail);
       document.getElementById("recorded-entry-title").textContent = translateText(config.title);
+      const totalElement = document.getElementById("recorded-entry-total");
+      totalElement.innerHTML = `<span>Total Qty</span><strong>${formatNumber(entries.length)}</strong>`;
+      totalElement.hidden = kind !== "scan";
       document.getElementById("recorded-entry-product").textContent = `${product.name || "-"} · ${product.sku || "-"}`;
       document.getElementById("recorded-entry-content").innerHTML = rows
         ? isActiveCountDetail
