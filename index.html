@@ -3699,7 +3699,6 @@
     normalizeWorkspaceScheduleCards(state.workspaces, state.sessions);
     Object.assign(state, snapshotWorkspaceData(state));
     let currentPage = "opname";
-    let lastRenderedPage = "";
     const BACK_NAVIGATION_PAGES = ["dashboard", "workspaces", "products", "layouts", "opname", "recap", "history", "completed-sessions", "about", "about-info"];
     let appBackNavigationInitialized = false;
     let selectedCompletedSessionId = "";
@@ -8441,12 +8440,7 @@
         && cameraDialog.dataset.layoutRackScanner === "true"
         && document.documentElement.classList.contains("web-camera-scanner-active");
       if (preserveLayoutScanner) document.querySelector(".app-shell")?.before(cameraDialog);
-      if (lastRenderedPage === "layouts" && currentPage !== "layouts") {
-        main.querySelectorAll(".layout-scan-detail[open], .manual-item-details[open]").forEach((detail) => {
-          detail.open = false;
-        });
-      }
-      lastRenderedPage = currentPage;
+      if (currentPage !== "layouts") closeLayoutDetails();
       main.innerHTML = currentPage === "dashboard" ? renderDashboard() : currentPage === "recorded-archive" ? renderRecordedSessionPage() : currentPage === "opname" ? renderOpname() : currentPage === "layouts" ? renderLayouts() : currentPage === "workspaces" ? renderWorkspaceSchedule() : currentPage === "products" ? renderProducts() : currentPage === "recap" ? renderRecap() : currentPage === "about-info" ? renderAboutWorkspace() : currentPage === "about" ? renderAbout() : currentPage === "admin-users" ? renderAdminUsers() : currentPage === "data-resources" ? renderDataResources() : currentPage === "completed-session-detail" ? renderCompletedSessionView() : currentPage === "completed-sessions" ? renderCompletedSessions() : renderHistory();
       if (preserveLayoutScanner) {
         if (currentPage === "layouts") {
@@ -8462,6 +8456,12 @@
       if (window.matchMedia("(max-width: 650px)").matches && !document.documentElement.classList.contains("web-camera-scanner-active")) {
         document.querySelector(".nav-item.active")?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
       }
+    }
+
+    function closeLayoutDetails() {
+      document.querySelectorAll("#main-content .layout-scan-detail[open], #main-content .manual-item-details[open]").forEach((detail) => {
+        detail.open = false;
+      });
     }
 
     function renderPreservingActiveInput() {
@@ -9562,6 +9562,7 @@
         notify("Tunggu unggahan file VEF selesai sebelum berpindah sesi.");
         return;
       }
+      if (currentPage === "layouts") closeLayoutDetails();
       persist();
       state.currentWorkspaceId = workspace.id;
       Object.assign(state, snapshotWorkspaceData(workspace.data));
@@ -10573,6 +10574,12 @@
     sidebar.addEventListener("pointerleave", () => {
       appShell.classList.remove("sidebar-expanded");
     });
+    document.addEventListener("click", (event) => {
+      if (currentPage !== "layouts" || !(event.target instanceof Element)) return;
+      if (event.target.closest(".nav-item[data-page], [data-page-link], [data-open-workspace], [data-start-workspace], [data-open-completed-session], [data-recorded-return], #back-to-completed-sessions")) {
+        closeLayoutDetails();
+      }
+    }, true);
     document.querySelectorAll(".nav-item").forEach((item) => {
       const label = item.querySelector("span:last-child").textContent.trim();
       item.setAttribute("aria-label", label);
