@@ -608,14 +608,14 @@
     .recorded-entry-dialog.has-count-detail { display: flex; flex-direction: column; height: min(65vh, 400px); }
     .recorded-entry-dialog .dialog-head { background: linear-gradient(115deg, color-mix(in srgb, var(--green) 10%, var(--paper)), var(--paper) 78%); border-bottom-color: var(--line); border-radius: 10px 10px 0 0; border-top: 3px solid var(--green); padding: 9px 11px 8px; position: relative; }
     .recorded-entry-dialog .dialog-title { font-size: 12px; }
-    .recorded-entry-heading { align-items: flex-start; display: flex; gap: 14px; justify-content: space-between; min-width: 0; }
-    .recorded-entry-dialog .dialog-subtitle { max-width: 260px; overflow-wrap: anywhere; }
-    .recorded-entry-dialog .recorded-entry-product-name { flex: 1 1 auto; min-width: 0; }
-    .recorded-entry-rack-summary { display: grid; flex: 0 0 auto; gap: 3px; grid-template-columns: repeat(auto-fit, minmax(75px, auto)); max-width: 58%; }
+    .recorded-entry-heading { display: grid; gap: 8px; min-width: 0; padding-right: 22px; }
+    .recorded-entry-dialog .dialog-subtitle { max-width: none; overflow-wrap: anywhere; }
+    .recorded-entry-dialog .recorded-entry-product-name { min-width: 0; }
+    .recorded-entry-rack-summary { display: flex; flex-wrap: wrap; gap: 5px; max-width: 100%; }
     .recorded-entry-rack-summary[hidden] { display: none; }
-    .recorded-entry-rack-item { align-items: baseline; color: var(--muted); display: flex; font-size: 9px; gap: 7px; justify-content: space-between; white-space: nowrap; }
+    .recorded-entry-rack-item { align-items: center; background: color-mix(in srgb, var(--green) 7%, var(--paper)); border: 1px solid color-mix(in srgb, var(--green) 15%, var(--line)); border-radius: 6px; color: var(--muted); display: flex; font-size: 9px; gap: 8px; justify-content: space-between; min-width: 76px; padding: 4px 7px; }
     .recorded-entry-rack-item strong { color: var(--ink); font-size: 10px; font-variant-numeric: tabular-nums; }
-    @media (max-width: 520px) { .recorded-entry-heading { gap: 8px; } .recorded-entry-rack-summary { gap: 2px 6px; grid-template-columns: repeat(2, minmax(0, auto)); max-width: 48%; } .recorded-entry-rack-item { font-size: 8px; gap: 4px; } .recorded-entry-rack-item strong { font-size: 9px; } }
+    @media (max-width: 520px) { .recorded-entry-heading { gap: 7px; padding-right: 20px; } .recorded-entry-rack-summary { gap: 4px; } .recorded-entry-rack-item { font-size: 8px; min-width: 68px; padding: 3px 6px; } .recorded-entry-rack-item strong { font-size: 9px; } }
     .recorded-entry-content { max-height: calc(65vh - 52px); overflow: auto; padding: 7px; }
     .recorded-entry-dialog.has-count-detail .recorded-entry-content { display: flex; flex: 1; flex-direction: column; max-height: none; min-height: 0; overflow: hidden; padding: 0; }
     .recorded-entry-list { display: grid; gap: 6px; }
@@ -7659,10 +7659,7 @@
     }
     function positionRecordedEntryDialog() {
       const dialog = document.getElementById("recorded-entry-dialog");
-      if (!dialog?.open || !recordedEntryTrigger?.isConnected) {
-        closeRecordedEntryDetails();
-        return;
-      }
+      if (!dialog?.open || !recordedEntryTrigger?.isConnected) return;
       const triggerRect = recordedEntryTrigger.getBoundingClientRect();
       const dialogRect = dialog.getBoundingClientRect();
       const viewportWidth = document.documentElement.clientWidth;
@@ -7688,7 +7685,6 @@
     function showRecordedEntryDetails(kind, productId, trigger) {
       if (!trigger) return;
       if (document.getElementById("recorded-entry-dialog").open && recordedEntryTrigger === trigger) {
-        closeRecordedEntryDetails();
         return;
       }
       const session = state.sessions.find((item) => item.id === selectedRecordedSessionId && item.snapshot);
@@ -8390,7 +8386,6 @@
     function render() {
       if ((currentPage === "admin-users" && !isSuperAdmin())
         || (currentPage === "data-resources" && !canManageDataResources())) currentPage = "opname";
-      if (document.getElementById("recorded-entry-dialog")?.open) closeRecordedEntryDetails();
       if (authSession) {
         const savedPage = currentPage === "completed-session-detail" ? "completed-sessions" : currentPage === "recorded-archive" ? "dashboard" : currentPage;
         try {
@@ -10571,8 +10566,6 @@
         closeRecordedEntryDetails();
         return;
       }
-      const recordedEntryDialog = document.getElementById("recorded-entry-dialog");
-      if (recordedEntryDialog.open && !recordedEntryDialog.contains(event.target)) closeRecordedEntryDetails();
       const toggle = event.target.closest("[data-theme-toggle]");
       if (toggle) applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark", true);
       const accentToggle = event.target.closest("[data-accent-toggle]");
@@ -10581,13 +10574,11 @@
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape" && document.getElementById("recorded-entry-dialog").open) {
         event.preventDefault();
-        closeRecordedEntryDetails();
       }
     });
+    document.getElementById("recorded-entry-dialog").addEventListener("cancel", (event) => event.preventDefault());
     window.addEventListener("resize", positionRecordedEntryDialog);
-    window.addEventListener("scroll", (event) => {
-      if (!document.getElementById("recorded-entry-dialog").contains(event.target)) closeRecordedEntryDetails();
-    }, true);
+    window.addEventListener("scroll", positionRecordedEntryDialog, true);
     document.addEventListener("change", (event) => {
       if (event.target.id === "recorded-period-month" || event.target.id === "recorded-period-week") {
         updateRecordedPeriodAvailability();
