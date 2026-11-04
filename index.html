@@ -2363,7 +2363,15 @@
       html:not(.capacitor-android) .camera-scan-dialog::backdrop { background: #090d0c; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
     }
     @media print {
-      @page { size: landscape; margin: 10mm; }
+      @page {
+        size: landscape;
+        margin: 10mm;
+        @bottom-left {
+          color: #64746f;
+          content: "Halaman " counter(page) " dari " counter(pages);
+          font: 8px/1.2 "DM Sans", "Segoe UI", sans-serif;
+        }
+      }
       body:not(.printing-session):not(.auth-locked) {
         background: #fff !important;
         color: #172b2b !important;
@@ -8371,7 +8379,19 @@
         #print-session-root .print-signature-name { font-size: 10px; margin: 5px auto 0; text-align: center; width: 72%; }
         #print-session-root [data-export-session], #print-session-root [data-print-session] { display: none !important; }
         #print-session-root details:not([open]) > :not(summary) { display: block !important; }
-        @media print { @page { size: landscape; margin: 8mm; } body.printing-session { padding: 0; } #print-session-root { width: 100%; } }
+        @media print {
+          @page {
+            size: landscape;
+            margin: 8mm;
+            @bottom-left {
+              color: #64746f;
+              content: "Halaman " counter(page) " dari " counter(pages);
+              font: 8px/1.2 "DM Sans", "Segoe UI", sans-serif;
+            }
+          }
+          body.printing-session { padding: 0; }
+          #print-session-root { width: 100%; }
+        }
       </style></head><body class="printing-session"><main id="print-session-root"><div class="print-session-header"><div class="print-session-heading">${renderWorkspaceBrandIcon(brandName)}<h1 data-user-content>${escapeHtml(title)}</h1></div>${session ? renderArchivePrintSummary(session) : ""}</div><p class="print-session-subtitle" data-user-content>${escapeHtml(subtitle)}</p>${content}<section class="print-signatures" aria-label="${currentLanguage === "en" ? "PIC signatures" : "Paraf PIC"}"><div class="print-signature"><div class="print-signature-line"></div><div class="print-signature-name">${currentLanguage === "en" ? "PIC 1 name:" : "Nama PIC 1:"} <strong>${escapeHtml(picNames[0] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</strong></div></div><div class="print-signature"><div class="print-signature-line"></div><div class="print-signature-name">${currentLanguage === "en" ? "PIC 2 name:" : "Nama PIC 2:"} <strong>${escapeHtml(picNames[1] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</strong></div></div></section></main></body></html>`);
       printWindow.document.close();
       translateDocument(printWindow.document.body);
