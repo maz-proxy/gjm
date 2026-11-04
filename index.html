@@ -2759,6 +2759,11 @@
       "SN bermasalah": "Problematic serial numbers",
       "Data": "Data",
       "Buka sesi": "Open session",
+      "Pulihkan dan lanjutkan": "Restore and continue",
+      "Pulihkan sesi": "Restore session",
+      "Pulihkan sesi stock opname?": "Restore stock opname session?",
+      "Sesi ini akan dikembalikan ke status berjalan dengan seluruh data saat selesai. Arsip sesi ini tidak lagi tampil sebagai sesi selesai.": "This session and all its saved data will be restored as active. It will no longer appear as a completed session.",
+      "Seluruh data yang tersimpan akan dikembalikan agar stock opname dapat dilanjutkan.": "All saved data will be restored so stock opname can continue.",
       "Hapus": "Delete",
       "Data detail tidak tersedia": "Detailed data unavailable",
       "Belum ada sesi opname yang selesai.": "No completed stock opname sessions yet.",
@@ -4184,6 +4189,9 @@
     }
     function canDeleteCompletedSession() {
       return isSuperAdmin();
+    }
+    function canRestoreCompletedSession() {
+      return isSuperAdmin() || isResourceAdmin();
     }
     function sessionOwnerName(session) {
       return session?.createdByUsername || (session?.createdByUserId ? "Staf" : "Belum ditetapkan");
@@ -7245,7 +7253,71 @@
       const finishedAt = formatDate(session.finishedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
       const pics = session.picNames || state.workspaces.find((workspace) => workspace.id === session.workspaceId)?.picNames || [];
       const sessionName = session.workspaceName || "Sesi opname";
-      return `${navMarkup()}<section class="page-head"><div><div class="completed-session-title">${renderWorkspaceBrandIcon(sessionName)}<h1 data-user-content>${escapeHtml(sessionName)}</h1></div><p class="subtitle">${escapeHtml(archivedSessionMonth(session))} · ${escapeHtml(archivedSessionWeek(session))} · Pemilik: <span data-user-content>${escapeHtml(sessionOwnerName(session))}</span> · PIC 1: <span data-user-content>${escapeHtml(pics[0] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</span> · PIC 2: <span data-user-content>${escapeHtml(pics[1] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</span> · Selesai ${escapeHtml(finishedAt)}.</p></div><div class="head-buttons"><button class="button button-secondary" id="back-to-completed-sessions">← Kembali ke daftar sesi</button>${canDeleteCompletedSession() ? `<button class="button button-danger" type="button" data-delete-completed-session="${escapeHtml(session.id)}">Hapus sesi</button>` : ""}</div></section><section class="completed-session-view">${renderCompletedSessionDetails(session)}</section>`;
+      return `${navMarkup()}<section class="page-head"><div><div class="completed-session-title">${renderWorkspaceBrandIcon(sessionName)}<h1 data-user-content>${escapeHtml(sessionName)}</h1></div><p class="subtitle">${escapeHtml(archivedSessionMonth(session))} · ${escapeHtml(archivedSessionWeek(session))} · Pemilik: <span data-user-content>${escapeHtml(sessionOwnerName(session))}</span> · PIC 1: <span data-user-content>${escapeHtml(pics[0] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</span> · PIC 2: <span data-user-content>${escapeHtml(pics[1] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</span> · Selesai ${escapeHtml(finishedAt)}.</p></div><div class="head-buttons"><button class="button button-secondary" id="back-to-completed-sessions">← Kembali ke daftar sesi</button>${canRestoreCompletedSession() ? `<button class="button button-primary" type="button" data-restore-completed-session="${escapeHtml(session.id)}">Pulihkan dan lanjutkan</button>` : ""}${canDeleteCompletedSession() ? `<button class="button button-danger" type="button" data-delete-completed-session="${escapeHtml(session.id)}">Hapus sesi</button>` : ""}</div></section><section class="completed-session-view">${renderCompletedSessionDetails(session)}</section>`;
+    }
+
+    async function restoreCompletedSession(sessionId) {
+      if (!canRestoreCompletedSession()) {
+        notify("Pemulihan sesi hanya dapat dilakukan oleh Owner atau Super Admin.");
+        return;
+      }
+      const session = state.sessions.find((item) => item.id === sessionId && item.status === "completed" && item.snapshot);
+      if (!session) {
+        notify("Arsip sesi atau data pemulihannya tidak ditemukan.");
+        return;
+      }
+      const confirmed = await showConfirmDialog(
+        `${session.workspaceName || "Sesi opname"}\n\n${translateText("Sesi ini akan dikembalikan ke status berjalan dengan seluruh data saat selesai. Arsip sesi ini tidak lagi tampil sebagai sesi selesai.")}`,
+        { title: translateText("Pulihkan sesi stock opname?"), subtitle: translateText("Seluruh data yang tersimpan akan dikembalikan agar stock opname dapat dilanjutkan."), confirmLabel: translateText("Pulihkan sesi") }
+      );
+      if (!confirmed) return;
+
+      const archivedSession = state.sessions.find((item) => item.id === sessionId && item.status === "completed" && item.snapshot);
+      if (!canRestoreCompletedSession() || !archivedSession) {
+        notify("Sesi tidak dapat dipulihkan karena data atau hak akses sudah berubah.");
+        return;
+      }
+      const now = new Date().toISOString();
+      const restoredData = snapshotWorkspaceData(JSON.parse(JSON.stringify(archivedSession.snapshot)));
+      const restoredStartedAt = archivedSession.startedAt || restoredData.activeSession.startedAt || now;
+      restoredData.activeSession = { ...restoredData.activeSession, status: "active", finishedAt: "" };
+
+      let workspace = state.workspaces.find((item) => item.id === archivedSession.workspaceId);
+      if (workspace?.data.activeSession?.status === "active" && workspaceHasStarted(workspace)) {
+        workspace = undefined;
+      }
+      if (!workspace) {
+        workspace = createWorkspace(archivedSession.workspaceName || "Sesi opname", restoredData);
+        state.workspaces.push(workspace);
+      }
+      if (workspace.id !== archivedSession.workspaceId) {
+        restoredData.historyEvents = restoredData.historyEvents.map((event) => (
+          event.workspaceId ? { ...event, workspaceId: workspace.id } : event
+        ));
+      }
+      workspace.name = archivedSession.workspaceName || "Sesi opname";
+      workspace.month = normalizeWorkspaceMonth(archivedSession.month || workspace.month);
+      workspace.period = normalizeWorkspacePeriod(archivedSession.period || workspace.period);
+      workspace.picNames = [...(archivedSession.picNames || workspace.picNames || ["", ""])];
+      workspace.startedAt = restoredStartedAt;
+      workspace.scheduleCreatedAt = workspace.scheduleCreatedAt || restoredStartedAt;
+      workspace.scheduleOwnerUserId = archivedSession.createdByUserId || workspace.scheduleOwnerUserId || "";
+      workspace.scheduleOwnerUsername = archivedSession.createdByUsername || workspace.scheduleOwnerUsername || "";
+      workspace.schedulePlaceholder = false;
+      workspace.data = restoredData;
+
+      state.sessions = state.sessions.filter((item) => item.id !== sessionId);
+      state.currentWorkspaceId = workspace.id;
+      Object.assign(state, restoredData);
+      state.lastScan = null;
+      currentPage = "layouts";
+      searchTerm = "";
+      layoutSearchTerm = "";
+      normalizeWorkspaceScheduleCards(state.workspaces, state.sessions);
+      recordActivity("Sesi dipulihkan", `Sesi ${workspace.name} dikembalikan dari arsip agar stock opname dapat dilanjutkan.`);
+      persist();
+      render();
+      notify(`Sesi ${workspace.name} berhasil dipulihkan. Stock opname dapat dilanjutkan.`);
     }
 
     function requestDeleteCompletedSession(sessionId) {
@@ -9333,6 +9405,9 @@
         selectedCompletedSessionId = button.dataset.openCompletedSession;
         currentPage = "completed-session-detail";
         render();
+      }));
+      document.querySelectorAll("[data-restore-completed-session]").forEach((button) => button.addEventListener("click", () => {
+        void restoreCompletedSession(button.dataset.restoreCompletedSession);
       }));
       document.querySelectorAll("[data-delete-completed-session]").forEach((button) => button.addEventListener("click", () => requestDeleteCompletedSession(button.dataset.deleteCompletedSession)));
       document.getElementById("back-to-completed-sessions")?.addEventListener("click", () => {
