@@ -8296,7 +8296,7 @@
         html[data-accent="burgundy"] { --print-accent: #842b4b; --print-accent-dark: #5d1c35; --print-accent-soft: #f5e7ec; --print-accent-line: #ead1d9; }
         html:not([data-accent="burgundy"]) { --print-accent: #176b5b; --print-accent-dark: #124a41; --print-accent-soft: #e5f2ee; --print-accent-line: #c9dfd0; }
         html, body.printing-session, #print-session-root { background: #fff !important; color: #17211d !important; color-scheme: light; }
-        body.printing-session { display: block; margin: 0; min-height: 0; padding: 12mm; }
+        body.printing-session { display: block; font-family: Arial, Calibri, sans-serif; font-size: 9pt; margin: 0; min-height: 0; padding: 12mm; }
         #print-session-root { display: block; margin: 0 auto; max-width: none; padding: 0; }
         #print-session-root, #print-session-root *, #print-session-root *::before, #print-session-root *::after { box-shadow: none !important; text-shadow: none !important; }
         #print-session-root * { background-color: #fff !important; background-image: none !important; border-color: #cbd5d1 !important; color: #17211d !important; }
@@ -8311,22 +8311,22 @@
         #print-session-root .print-session-summary-metric + .print-session-summary-metric,
         #print-session-root .print-session-summary-progress { border-left: 1px solid #dfe5e2 !important; }
         #print-session-root .print-session-summary-metric > span,
-        #print-session-root .print-session-summary-progress > span { color: #64746f !important; font-size: 7px; font-weight: 700; letter-spacing: .3px; text-transform: uppercase; }
-        #print-session-root .print-session-summary-metric strong { font-size: 10px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-        #print-session-root .print-session-summary-metric strong small { font-size: 7px; font-weight: 500; }
+        #print-session-root .print-session-summary-progress > span { color: #64746f !important; font-size: 7pt; font-weight: 700; letter-spacing: .3px; text-transform: uppercase; }
+        #print-session-root .print-session-summary-metric strong { font-size: 9pt; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        #print-session-root .print-session-summary-metric strong small { font-size: 7pt; font-weight: 500; }
         #print-session-root .print-session-summary-progress { align-content: center; background: transparent !important; display: grid; gap: 4px; grid-template-columns: 1fr auto; min-width: 0; padding: 5px 10px; }
         #print-session-root .print-session-summary-progress > span { align-self: center; }
         #print-session-root .print-session-summary-progress strong { background: transparent !important; color: var(--print-accent-dark) !important; font-size: 19px; font-variant-numeric: tabular-nums; font-weight: 900; line-height: 1; white-space: nowrap; }
-        #print-session-root > .print-session-subtitle { color: #64746f; font-size: 10px; margin: 0 0 14px; }
+        #print-session-root > .print-session-subtitle { color: #64746f; font-size: 9pt; margin: 0 0 14px; }
         #print-session-root th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         #print-session-root .table-section, #print-session-root .layout-card, #print-session-root .completed-rack { border-color: var(--print-accent-line); }
         #print-session-root .layout-card-head { background: color-mix(in srgb, var(--print-accent) 9%, #fff); border-color: var(--print-accent-line); }
         #print-session-root .layout-name, #print-session-root .layout-record-heading, #print-session-root .completed-detail-panel h3, #print-session-root .completed-rack-title { color: var(--print-accent-dark); }
         #print-session-root .table-scroll, #print-session-root .completed-detail-panel, #print-session-root .recorded-sheet-content { max-height: none; min-width: 0; overflow: visible; }
-        #print-session-root table { font-size: 7.5px; min-width: 0; table-layout: auto; width: 100%; }
+        #print-session-root table { font-size: 8.5pt; min-width: 0; table-layout: auto; width: 100%; }
         #print-session-root thead { display: table-header-group; }
-        #print-session-root th { font-size: 7px; line-height: 1.1; padding: 3px 4px; white-space: normal; }
-        #print-session-root td { font-size: 7.5px; line-height: 1.15; padding: 2px 4px; }
+        #print-session-root th { font-size: 8pt; line-height: 1.1; padding: 3px 4px; white-space: normal; }
+        #print-session-root td { font-size: 8.5pt; line-height: 1.15; padding: 2px 4px; }
         #print-session-root .quantity-cell { font-variant-numeric: tabular-nums; white-space: nowrap; }
         #print-session-root .table-section { margin: 7px 0 !important; }
         #print-session-root .table-toolbar { min-height: 0; padding: 5px 8px; }
@@ -8347,7 +8347,7 @@
         #print-session-root .print-reconciliation-table th:nth-child(11), #print-session-root .print-reconciliation-table td:nth-child(11) { overflow-wrap: anywhere; width: 11%; }
         #print-session-root .print-reconciliation-table th:nth-child(n+4):nth-child(-n+9),
         #print-session-root .print-reconciliation-table td:nth-child(n+4):nth-child(-n+9) { font-variant-numeric: tabular-nums; padding-left: 2px; padding-right: 2px; white-space: nowrap; }
-        #print-session-root .print-reconciliation-table th:nth-child(7) { font-size: 6px; }
+        #print-session-root .print-reconciliation-table th:nth-child(7) { font-size: 7pt; }
         #print-session-root .print-reconciliation-table th:nth-child(n+4), #print-session-root .print-reconciliation-table td:nth-child(n+4) { text-align: center; vertical-align: middle; }
         #print-session-root .print-reconciliation-archive-table th:nth-child(2),
         #print-session-root .print-reconciliation-archive-table td:nth-child(2) { width: 47%; }
@@ -8370,8 +8370,8 @@
         #print-session-root .print-reconciliation-archive-table th:nth-child(11),
         #print-session-root .print-reconciliation-archive-table td:nth-child(11) { width: 13%; }
         #print-session-root .print-reconciliation-archive-table .product-cell { gap: 0; min-width: 0; }
-        #print-session-root .print-reconciliation-archive-table .product-name { font-size: 7.5px; line-height: 1.15; min-width: 0; overflow-wrap: anywhere; }
-        #print-session-root .print-reconciliation-archive-table .product-sku { font-size: 6.5px; line-height: 1.1; margin-top: 1px; }
+        #print-session-root .print-reconciliation-archive-table .product-name { font-size: 8.5pt; line-height: 1.15; min-width: 0; overflow-wrap: anywhere; }
+        #print-session-root .print-reconciliation-archive-table .product-sku { font-size: 7pt; line-height: 1.1; margin-top: 1px; }
         #print-session-root .print-signatures { break-inside: avoid; display: grid; gap: 36px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 48px; }
         #print-session-root .print-signature { min-width: 0; text-align: center; }
         #print-session-root .print-signature-line { border-bottom: 1px solid #17211d !important; height: 34px; margin: 0 auto; width: 48%; }
