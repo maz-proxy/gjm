@@ -407,10 +407,11 @@
     .layout-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); }
     .layout-upload-required { background: var(--green-soft); border: 1px solid var(--line); border-radius: 10px; color: var(--green-dark); font-size: 12px; line-height: 1.6; margin: 0 0 14px; padding: 12px 15px; }
     .layout-upload-required strong { color: var(--green); }
-    .layout-search-panel { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 3px 12px rgba(35,59,38,.04); margin: 0 0 14px; padding: 10px 12px; }
-    .layout-search-panel .search-wrap { max-width: 440px; width: 100%; }
-    .layout-search-panel .search-input { height: 38px; width: 100%; }
-    .layout-search-count { color: var(--muted); font-size: 10px; margin-top: 5px; }
+    .layout-overview { display: grid; flex: 1; gap: 9px; min-width: 0; position: relative; z-index: 1; }
+    .layout-banner-search { min-width: 0; width: 100%; }
+    .layout-banner-search .search-input { height: 38px; width: 100%; }
+    .layout-banner-search .search-icon { top: 10px; }
+    .layout-search-count { color: #d5e9df; font-size: 10px; margin-top: 4px; }
     .layout-card { background: linear-gradient(145deg, #fff, #fcfdfb); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 5px 16px rgba(35, 59, 38, .045); min-width: 0; overflow: hidden; position: relative; transition: background .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease; }
     .layout-card:hover { border-color: #cbd9ca; box-shadow: 0 10px 24px rgba(35, 59, 38, .085); transform: translateY(-2px); }
     .layout-card.quantity-matched { background: linear-gradient(145deg, #f1f8f2, #e7f3e9); border-color: #b8d2bc; }
@@ -531,8 +532,10 @@
     .layout-scan-row { align-items: center; border-bottom: 1px solid #e9efeb; display: flex; gap: 8px; justify-content: space-between; min-height: 34px; padding: 3px 0; }
     .layout-scan-row .layout-scan-detail { flex: 1; min-width: 0; }
     .layout-scan-summary { align-items: center; display: flex; flex-wrap: wrap; gap: 4px 10px; }
-    .layout-scan-summary-live { align-items: flex-start; display: grid; gap: 1px; }
+    .layout-scan-summary-live { align-items: start; display: grid; gap: 1px 8px; grid-template-columns: minmax(0, 1fr) auto; }
     .layout-scan-watermark { color: var(--muted); font-size: 7px; font-weight: 400; line-height: 1.2; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .layout-scan-item-code { color: var(--muted); font-size: 9px; font-weight: 600; grid-column: 2; grid-row: 1; max-width: 42vw; overflow: hidden; text-align: right; text-overflow: ellipsis; white-space: nowrap; }
+    .layout-scan-summary-live .layout-scan-watermark { grid-column: 1 / -1; grid-row: 2; }
     .layout-scan-detail[open] .layout-scan-watermark { display: none; }
     .layout-scan-code, .layout-scan-serial { flex: 0 0 auto; }
     .layout-scan-code.not-found, .layout-scan-code.duplicate { color: var(--red); }
@@ -986,7 +989,7 @@
       .top-account-email { max-width: 145px; }
       .page-head { align-items: flex-start; flex-direction: column; gap: 15px; margin-bottom: 17px; }
       .layout-page-head { align-items: stretch; flex-direction: column; gap: 12px; min-height: 0; padding: 16px; }
-      .layout-page-heading, .layout-overview-metrics { width: 100%; }
+      .layout-page-heading, .layout-overview, .layout-overview-metrics { width: 100%; }
       .layout-overview-metrics { flex: none; gap: 7px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .layout-overview-metric { border-radius: 8px; padding: 7px 9px; }
       .layout-overview-metric:last-child { grid-column: 1 / -1; }
@@ -7001,7 +7004,7 @@
       const scannedAt = scan.scannedAt
         ? formatDate(scan.scannedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" })
         : "-";
-      return `<details class="layout-scan-detail"${printMode ? " open" : ""}><summary class="layout-scan-summary layout-scan-summary-live"><span class="layout-scan-code${scan.status === "not-found" ? " not-found" : scan.status === "duplicate" ? " duplicate" : ""}">SN: ${escapeHtml(scan.serial || "-")}</span><span class="layout-scan-watermark">${escapeHtml(itemName)}</span></summary><div class="layout-scan-detail-body"><span>Item Code: ${escapeHtml(scan.sku || "-")}</span><span>Item Name: ${escapeHtml(itemName)}</span>${itemGroup ? `<span>Tipe: ${escapeHtml(itemGroup)}</span>` : ""}<span>Serial Number: ${escapeHtml(scan.serial || "-")}</span><span>Hasil scan: ${escapeHtml(status)}${warning}</span><span>Tanggal dan waktu: ${escapeHtml(scannedAt)}</span></div></details>`;
+      return `<details class="layout-scan-detail"${printMode ? " open" : ""}><summary class="layout-scan-summary layout-scan-summary-live"><span class="layout-scan-code${scan.status === "not-found" ? " not-found" : scan.status === "duplicate" ? " duplicate" : ""}">${escapeHtml(scan.serial || "-")}</span><span class="layout-scan-item-code">${escapeHtml(scan.sku || "-")}</span><span class="layout-scan-watermark">${escapeHtml(itemName)}</span></summary><div class="layout-scan-detail-body"><span>Item Code: ${escapeHtml(scan.sku || "-")}</span><span>Item Name: ${escapeHtml(itemName)}</span>${itemGroup ? `<span>Tipe: ${escapeHtml(itemGroup)}</span>` : ""}<span>Serial Number: ${escapeHtml(scan.serial || "-")}</span><span>Hasil scan: ${escapeHtml(status)}${warning}</span><span>Tanggal dan waktu: ${escapeHtml(scannedAt)}</span></div></details>`;
     }
 
     function renderManualEntryCards(entries, { products = [], canDelete = false, latestEntryId = "", printMode = false } = {}) {
@@ -7092,7 +7095,7 @@
       const visibleRackCount = cardMarkup.filter(Boolean).length;
       const cards = cardMarkup.join("");
       const uploadNotice = hasUploadedVef ? "" : '<div class="layout-upload-required" role="status">Unggah file VEF terlebih dahulu di halaman <strong>Master VEF</strong> untuk mengaktifkan kartu Rack, scan, input manual, dan tombol Tambah Rack.</div>';
-      return `${navMarkup()}<section class="page-head layout-page-head"><div class="layout-page-heading"><div class="layout-page-eyebrow">Pemindaian inventaris</div>${workspacePageTitle()}<p class="subtitle">Isi nomor Rack dan quantity target sebelum mulai scan.</p></div><div class="layout-overview-metrics" aria-label="Ringkasan quantity Scan Layout"><div class="layout-overview-metric"><span>Total Rack</span><strong>${state.layouts.length}</strong></div><div class="layout-overview-metric"><span>Total Scan</span><strong>${formatNumber(rackTotals.scan)}</strong><em>SN cocok</em></div><div class="layout-overview-metric"><span>Total Manual</span><strong>${formatNumber(rackTotals.manual)}</strong><em>unit</em></div><div class="layout-overview-metric"><span>Total Qty</span><strong>${formatNumber(rackTotals.scan + rackTotals.manual)}</strong><em>Scan + Manual</em></div><div class="layout-overview-metric"><span>Qty Master VEF</span><strong>${formatNumber(expected)}</strong><em>sesuai mode hitung</em></div></div></section><section class="layout-search-panel" aria-label="Pencarian Scan & Manual"><div class="search-wrap"><span class="search-icon" aria-hidden="true">⌕</span><input class="search-input" id="layout-search-input" type="search" placeholder="Cari Item Code, nama, Serial Number, atau Rack" value="${escapeHtml(layoutSearchTerm)}" aria-label="Cari Item Code, nama, Serial Number, atau Rack"></div>${searchQuery ? `<div class="layout-search-count">${visibleRackCount} Rack ditemukan</div>` : ""}</section>${renderSessionAccessNotice()}${uploadNotice}<section class="layout-grid">${cards || `<div class="schedule-empty">${searchQuery ? "Tidak ada hasil untuk pencarian ini." : "Belum ada Rack. Klik Tambah Rack untuk membuat Rack pertama."}</div>`}</section><div class="schedule-add-row"><button class="button button-primary" id="add-rack-button" type="button" title="${hasUploadedVef ? "Tambah Rack" : "Unggah file VEF terlebih dahulu"}" ${!canUseRack ? "disabled" : ""}>＋ Tambah Rack</button></div>`;
+      return `${navMarkup()}<section class="page-head layout-page-head"><div class="layout-page-heading"><div class="layout-page-eyebrow">Pemindaian inventaris</div>${workspacePageTitle()}<p class="subtitle">Isi nomor Rack dan quantity target sebelum mulai scan.</p></div><div class="layout-overview"><div class="layout-overview-metrics" aria-label="Ringkasan quantity Scan Layout"><div class="layout-overview-metric"><span>Total Rack</span><strong>${state.layouts.length}</strong></div><div class="layout-overview-metric"><span>Total Scan</span><strong>${formatNumber(rackTotals.scan)}</strong><em>SN cocok</em></div><div class="layout-overview-metric"><span>Total Manual</span><strong>${formatNumber(rackTotals.manual)}</strong><em>unit</em></div><div class="layout-overview-metric"><span>Total Qty</span><strong>${formatNumber(rackTotals.scan + rackTotals.manual)}</strong><em>Scan + Manual</em></div><div class="layout-overview-metric"><span>Qty Master VEF</span><strong>${formatNumber(expected)}</strong><em>sesuai mode hitung</em></div></div><div class="layout-banner-search" aria-label="Pencarian Scan & Manual"><div class="search-wrap"><span class="search-icon" aria-hidden="true">⌕</span><input class="search-input" id="layout-search-input" type="search" placeholder="Cari Item Code, nama, Serial Number, atau Rack" value="${escapeHtml(layoutSearchTerm)}" aria-label="Cari Item Code, nama, Serial Number, atau Rack"></div>${searchQuery ? `<div class="layout-search-count">${visibleRackCount} Rack ditemukan</div>` : ""}</div></div></section>${renderSessionAccessNotice()}${uploadNotice}<section class="layout-grid">${cards || `<div class="schedule-empty">${searchQuery ? "Tidak ada hasil untuk pencarian ini." : "Belum ada Rack. Klik Tambah Rack untuk membuat Rack pertama."}</div>`}</section><div class="schedule-add-row"><button class="button button-primary" id="add-rack-button" type="button" title="${hasUploadedVef ? "Tambah Rack" : "Unggah file VEF terlebih dahulu"}" ${!canUseRack ? "disabled" : ""}>＋ Tambah Rack</button></div>`;
     }
     function addRack() {
       if (!requireActiveSessionEdit()) return;
