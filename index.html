@@ -7887,7 +7887,7 @@
         <div class="print-session-summary-metric"><span>Total Qty PJ</span><strong>${formatNumber(pjQuantity)} <small>${quantitySummary}</small></strong></div>
         <div class="print-session-summary-metric print-session-summary-comparison"><span>${currentLanguage === "en" ? "Stock opname / Master VEF" : "Stock opname / Master VEF"}</span><strong>${formatNumber(progress.completed)} <small>/ ${formatNumber(progress.total)} ${quantitySummary}</small></strong></div>
         <div class="print-session-summary-metric"><span>Selisih Qty</span><strong>${variance > 0 ? "+" : ""}${formatNumber(variance)} <small>${quantitySummary}</small></strong></div>
-        <div class="print-session-summary-progress"><span>% SO</span><strong>${formatNumber(progress.completedPercent)}%</strong></div>
+        <div class="print-session-summary-progress"><span>Progress</span><strong>${formatNumber(progress.completedPercent)}%</strong></div>
       </aside>`;
     }
     function closeRecordedEntryDetails({ restoreFocus = true } = {}) {
@@ -8307,7 +8307,7 @@
         #print-session-root .print-session-summary-progress > span { color: #64746f !important; font-size: 7px; font-weight: 700; letter-spacing: .3px; text-transform: uppercase; }
         #print-session-root .print-session-summary-metric strong { font-size: 10px; font-variant-numeric: tabular-nums; white-space: nowrap; }
         #print-session-root .print-session-summary-metric strong small { font-size: 7px; font-weight: 500; }
-        #print-session-root .print-session-summary-progress { align-content: center; background: var(--print-accent-soft) !important; display: grid; gap: 4px; grid-template-columns: 1fr auto; min-width: 0; padding: 5px 10px; }
+        #print-session-root .print-session-summary-progress { align-content: center; background: transparent !important; display: grid; gap: 4px; grid-template-columns: 1fr auto; min-width: 0; padding: 5px 10px; }
         #print-session-root .print-session-summary-progress > span { align-self: center; }
         #print-session-root .print-session-summary-progress strong { background: transparent !important; color: var(--print-accent-dark) !important; font-size: 19px; font-variant-numeric: tabular-nums; font-weight: 900; line-height: 1; white-space: nowrap; }
         #print-session-root > .print-session-subtitle { color: #64746f; font-size: 10px; margin: 0 0 14px; }
