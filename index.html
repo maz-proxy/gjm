@@ -7683,14 +7683,14 @@
         remainingPercent: quantityPercent(remaining, total)
       };
     }
-    function closeRecordedEntryDetails() {
+    function closeRecordedEntryDetails({ restoreFocus = true } = {}) {
       const dialog = document.getElementById("recorded-entry-dialog");
       if (!dialog?.open) return;
       const trigger = recordedEntryTrigger;
       recordedEntryTrigger = null;
       trigger?.setAttribute("aria-expanded", "false");
       dialog.close();
-      if (trigger?.isConnected) trigger.focus({ preventScroll: true });
+      if (restoreFocus && trigger?.isConnected) trigger.focus({ preventScroll: true });
     }
     function positionRecordedEntryDialog() {
       const dialog = document.getElementById("recorded-entry-dialog");
@@ -9563,6 +9563,7 @@
         return;
       }
       if (currentPage === "layouts") closeLayoutDetails();
+      closeRecordedEntryDetails({ restoreFocus: false });
       persist();
       state.currentWorkspaceId = workspace.id;
       Object.assign(state, snapshotWorkspaceData(workspace.data));
