@@ -605,21 +605,25 @@
     .recorded-entry-dialog { background: var(--paper); border: 1px solid var(--line); border-radius: 11px; box-shadow: 0 10px 24px rgba(17, 43, 36, .18); inset: auto; max-height: min(65vh, 400px); max-width: calc(100vw - 24px); margin: 0; overflow: visible; padding: 0; position: fixed; width: min(560px, calc(100vw - 24px)); z-index: 30; }
     .recorded-entry-dialog::before { background: var(--paper); border-left: 1px solid var(--line); border-top: 1px solid var(--line); content: ""; height: 10px; left: var(--bubble-arrow-left, 50%); position: absolute; top: -6px; transform: translateX(-50%) rotate(45deg); width: 10px; }
     .recorded-entry-dialog[data-placement="above"]::before { border: 0; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); bottom: -6px; top: auto; }
+    .recorded-entry-dialog.has-count-detail { display: flex; flex-direction: column; height: min(65vh, 400px); }
     .recorded-entry-dialog .dialog-head { background: linear-gradient(115deg, color-mix(in srgb, var(--green) 10%, var(--paper)), var(--paper) 78%); border-bottom-color: var(--line); border-radius: 10px 10px 0 0; border-top: 3px solid var(--green); padding: 9px 11px 8px; position: relative; }
     .recorded-entry-dialog .dialog-title { font-size: 12px; }
     .recorded-entry-dialog .dialog-subtitle { max-width: 260px; overflow-wrap: anywhere; }
     .recorded-entry-content { max-height: calc(65vh - 52px); overflow: auto; padding: 7px; }
+    .recorded-entry-dialog.has-count-detail .recorded-entry-content { display: flex; flex: 1; flex-direction: column; max-height: none; min-height: 0; overflow: hidden; padding: 0; }
     .recorded-entry-list { display: grid; gap: 6px; }
-    .recorded-detail-table-wrap { max-width: 100%; overflow-x: auto; }
-    .recorded-detail-table { min-width: 500px; }
-    .recorded-detail-row { align-items: center; border-bottom: 1px solid var(--line); display: grid; gap: 10px; grid-template-columns: minmax(150px, 1.45fr) minmax(105px, 1fr) minmax(78px, .7fr) minmax(120px, 1.1fr); min-height: 37px; padding: 5px 8px; }
+    .recorded-entry-dialog.has-count-detail .recorded-entry-list { flex: 1 1 0; min-height: 0; overflow: auto; padding: 7px; }
+    .recorded-detail-table-wrap { max-width: 100%; min-width: 0; width: 100%; }
+    .recorded-detail-table { min-width: 500px; width: 100%; }
+    .recorded-detail-row { align-items: center; border-bottom: 1px solid var(--line); box-sizing: border-box; display: grid; gap: 10px; grid-template-columns: minmax(150px, 1.45fr) minmax(105px, 1fr) minmax(78px, .7fr) minmax(120px, 1.1fr); min-height: 37px; padding: 5px 8px; width: 100%; }
     .recorded-detail-row:last-child { border-bottom: 0; }
-    .recorded-detail-header { background: color-mix(in srgb, var(--green) 8%, var(--paper)); border-bottom: 1px solid var(--line); border-radius: 6px 6px 0 0; color: var(--muted); font-size: 8px; font-weight: 800; letter-spacing: .35px; text-transform: uppercase; }
+    .recorded-detail-header { background: var(--paper); border-bottom: 1px solid var(--line); border-radius: 6px 6px 0 0; color: var(--muted); font-size: 8px; font-weight: 800; letter-spacing: .35px; position: sticky; text-transform: uppercase; top: 0; z-index: 1; }
     .recorded-detail-row:not(.recorded-detail-header):nth-child(even) { background: color-mix(in srgb, var(--green) 3%, var(--paper)); }
     .recorded-detail-cell { color: var(--ink); font-size: 10px; min-width: 0; overflow-wrap: anywhere; }
     .recorded-detail-cell:first-child { font-weight: 700; }
     .recorded-detail-cell:last-child { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
-    .recorded-entry-export { min-height: 30px; margin-top: 7px; width: 100%; }
+    .recorded-entry-export { background: var(--paper); flex: 0 0 auto; min-height: 30px; margin: 0; width: 100%; }
+    .recorded-entry-dialog.has-count-detail .recorded-entry-export { border-radius: 0 0 10px 10px; padding: 7px; }
     .recorded-entry-card { background: color-mix(in srgb, var(--green) 4%, var(--paper)); border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; }
     .recorded-entry-document { display: grid; gap: 2px; min-width: 0; }
     .recorded-entry-label, .recorded-entry-meta span { color: var(--muted); font-size: 8px; font-weight: 700; letter-spacing: .3px; text-transform: uppercase; }
@@ -7727,10 +7731,13 @@
           return `<article class="recorded-entry-card"><div class="recorded-entry-document"><span class="recorded-entry-label">${config.numberLabel}</span><strong data-user-content>${escapeHtml(entry[config.numberKey] || "-")}</strong></div><div class="recorded-entry-meta"><div><span>${config.dateLabel}</span><strong>${escapeHtml(formattedDate)}</strong></div><div><span>Quantity</span><strong>${formatNumber(Number(entry.quantity || 0))} <small>unit</small></strong></div></div></article>`;
         }).join("");
       const dialog = document.getElementById("recorded-entry-dialog");
+      dialog.classList.toggle("has-count-detail", isActiveCountDetail);
       document.getElementById("recorded-entry-title").textContent = translateText(config.title);
       document.getElementById("recorded-entry-product").textContent = `${product.name || "-"} · ${product.sku || "-"}`;
       document.getElementById("recorded-entry-content").innerHTML = rows
-        ? `<div class="recorded-entry-list">${rows}</div>${isActiveCountDetail ? `<button class="button button-secondary recorded-entry-export" type="button" data-export-recorded-entry="${kind}" data-product-id="${escapeHtml(product.id)}">Ekspor Excel</button>` : ""}`
+        ? isActiveCountDetail
+          ? `<div class="recorded-entry-list">${rows}</div><button class="button button-secondary recorded-entry-export" type="button" data-export-recorded-entry="${kind}" data-product-id="${escapeHtml(product.id)}">Ekspor Excel</button>`
+          : `<div class="recorded-entry-list">${rows}</div>`
         : `<div class="recorded-entry-empty"><strong>Belum ada detail transaksi</strong><span>${isActiveCountDetail ? kind === "scan" ? "Belum ada data scan untuk item ini." : "Belum ada input manual untuk item ini." : "Belum ada data invoice atau PREC/Retur untuk item ini."}</span></div>`;
       translateDocument(dialog);
       recordedEntryTrigger?.setAttribute("aria-expanded", "false");
