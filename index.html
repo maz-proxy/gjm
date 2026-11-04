@@ -849,6 +849,7 @@
     .dashboard-legend-dot { background: #3b8054; border-radius: 50%; height: 7px; width: 7px; }
     .dashboard-legend-dot.remaining { background: #dfe8dd; }
     .dashboard-chart-list { display: grid; gap: 16px; padding: 18px 19px; }
+    .dashboard-brand-progress { margin-bottom: 14px; }
     .dashboard-chart-row { display: grid; gap: 9px; grid-template-columns: minmax(72px, .62fr) minmax(80px, 1.6fr) auto; }
     .dashboard-chart-row.has-brand-logo { align-items: center; grid-template-columns: 38px minmax(72px, .62fr) minmax(80px, 1.6fr) auto; }
     .dashboard-chart-row .workspace-brand-icon { color: var(--green); flex-basis: 36px; height: 36px; width: 36px; }
@@ -7698,6 +7699,7 @@
             <button class="button button-primary recorded-period-view" id="view-recorded-session" type="button" disabled>View</button>
           </div></div></section>
         </div>
+        <article class="dashboard-panel dashboard-brand-progress"><header class="dashboard-panel-head"><div><div class="dashboard-panel-title">Progres per Brand / Gudang</div><div class="dashboard-panel-subtitle">Sesi aktif saja · quantity opname dibanding target VEF + Inbound/Retur</div></div><span class="dashboard-chart-tag">${workspaceStats.length} brand</span></header><div class="dashboard-chart-list">${chartRows}</div>${workspaceStats.length ? "" : '<div class="dashboard-empty">Belum ada sesi berjalan. Unggah workbook pada sesi bernama brand di Master VEF untuk memulai.</div>'}</article>
         <section class="dashboard-summary-charts" aria-label="Grafik quantity dan ringkasan stock opname">
           <article class="dashboard-panel"><header class="dashboard-panel-head"><div><div class="dashboard-panel-title">Komposisi Quantity</div><div class="dashboard-panel-subtitle">Hasil SO dibandingkan dengan VEF + Inbound/Retur</div></div><span class="dashboard-chart-tag">Unit</span></header>
             <div class="dashboard-quantity-content">
@@ -7719,7 +7721,6 @@
               <div class="dashboard-legend"><span class="dashboard-legend-item"><i class="dashboard-legend-dot"></i>${formatNumber(total.totalQty)} unit tercatat</span><span class="dashboard-legend-item"><i class="dashboard-legend-dot remaining"></i>${formatNumber(overallTargetQuantity)} unit target</span></div>
             </div>
           </article>
-          <article class="dashboard-panel"><header class="dashboard-panel-head"><div><div class="dashboard-panel-title">Progres per Brand / Gudang</div><div class="dashboard-panel-subtitle">Sesi aktif saja · quantity opname dibanding target VEF + Inbound/Retur</div></div><span class="dashboard-chart-tag">${workspaceStats.length} brand</span></header><div class="dashboard-chart-list">${chartRows}</div>${workspaceStats.length ? "" : '<div class="dashboard-empty">Belum ada sesi berjalan. Unggah workbook pada sesi bernama brand di Master VEF untuk memulai.</div>'}</article>
         </section>
       </div>`;
     }
