@@ -407,6 +407,10 @@
     .layout-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); }
     .layout-upload-required { background: var(--green-soft); border: 1px solid var(--line); border-radius: 10px; color: var(--green-dark); font-size: 12px; line-height: 1.6; margin: 0 0 14px; padding: 12px 15px; }
     .layout-upload-required strong { color: var(--green); }
+    .layout-search-panel { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 3px 12px rgba(35,59,38,.04); margin: 0 0 14px; padding: 10px 12px; }
+    .layout-search-panel .search-wrap { max-width: 440px; width: 100%; }
+    .layout-search-panel .search-input { height: 38px; width: 100%; }
+    .layout-search-count { color: var(--muted); font-size: 10px; margin-top: 5px; }
     .layout-card { background: linear-gradient(145deg, #fff, #fcfdfb); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 5px 16px rgba(35, 59, 38, .045); min-width: 0; overflow: hidden; position: relative; transition: background .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease; }
     .layout-card:hover { border-color: #cbd9ca; box-shadow: 0 10px 24px rgba(35, 59, 38, .085); transform: translateY(-2px); }
     .layout-card.quantity-matched { background: linear-gradient(145deg, #f1f8f2, #e7f3e9); border-color: #b8d2bc; }
@@ -3708,6 +3712,7 @@
     let pendingWorkspaceDeletionId = "";
     let lastManualEntryId = "";
     let searchTerm = "";
+    let layoutSearchTerm = "";
     let toastTimer;
     let authSession = null;
     let chatPanelOpen = false;
@@ -3756,6 +3761,7 @@
       if (currentPageIndex > 0) {
         currentPage = BACK_NAVIGATION_PAGES[currentPageIndex - 1];
         searchTerm = "";
+        layoutSearchTerm = "";
         render();
       }
       history.pushState({ stockOpnameBackNavigation: true }, "", location.href);
@@ -7031,11 +7037,26 @@
         return totals;
       }, { scan: 0, manual: 0 });
       const expected = getStats().expected;
-      const cards = state.layouts.map((layout) => {
+      const searchQuery = normalizeField(layoutSearchTerm);
+      const productMatchesSearch = (product, fallback) => normalizeField([
+        product?.sku || fallback.sku,
+        product?.name || fallback.name
+      ].join(" ")).includes(searchQuery);
+      const findEntryProduct = (entry) => state.products.find((product) => product.id === entry.productId)
+        || state.products.find((product) => product.sku === entry.sku);
+      const cardMarkup = state.layouts.map((layout) => {
         const rackName = rackLabel(layout);
         const rackNumber = state.layoutNumbers[layout] || "";
         const scans = state.scanEvents.filter((event) => event.layout === layout);
         const manualEntries = state.manualEntries.filter((entry) => entry.layout === layout);
+        const rackMatchesSearch = !searchQuery
+          || normalizeField(`${layout} ${rackName} ${rackNumber}`).includes(searchQuery);
+        const visibleScans = rackMatchesSearch ? scans : scans.filter((scan) =>
+          normalizeField(scan.serial).includes(searchQuery)
+          || productMatchesSearch(findEntryProduct(scan), scan));
+        const visibleManualEntries = rackMatchesSearch ? manualEntries : manualEntries.filter((entry) =>
+          productMatchesSearch(findEntryProduct(entry), entry));
+        if (searchQuery && !rackMatchesSearch && !visibleScans.length && !visibleManualEntries.length) return "";
         const quantities = getRackQuantities(layout);
         const hasRackData = scans.length > 0 || manualEntries.length > 0;
         const target = state.layoutQuantities[layout];
@@ -7050,8 +7071,10 @@
           quantityStatus.className === "different" ? "quantity-over" : "",
           scans.some((scan) => scan.status === "duplicate" || scan.status === "not-found") ? "duplicate-warning" : ""
         ].filter(Boolean).join(" ");
-        const scanRows = scans.length ? scans.slice().reverse().map((scan) => `<div class="layout-scan-row">${renderScanDetail(scan)}${canUseRack ? `<button class="layout-delete" type="button" data-delete-scan="${escapeHtml(scan.id)}" aria-label="Hapus scan ${escapeHtml(scan.serial)}" title="Hapus scan">×</button>` : ""}</div>`).join("") : `<div class="layout-record-empty">Belum ada scan.</div>`;
-        const manualRows = renderManualEntryCards(manualEntries, { products: state.products, canDelete: canUseRack, latestEntryId: lastManualEntryId });
+        const scanRows = visibleScans.length ? visibleScans.slice().reverse().map((scan) => `<div class="layout-scan-row">${renderScanDetail(scan)}${canUseRack ? `<button class="layout-delete" type="button" data-delete-scan="${escapeHtml(scan.id)}" aria-label="Hapus scan ${escapeHtml(scan.serial)}" title="Hapus scan">×</button>` : ""}</div>`).join("") : `<div class="layout-record-empty">${searchQuery ? "Tidak ada scan yang cocok dengan pencarian." : "Belum ada scan."}</div>`;
+        const manualRows = visibleManualEntries.length
+          ? renderManualEntryCards(visibleManualEntries, { products: state.products, canDelete: canUseRack, latestEntryId: lastManualEntryId })
+          : `<div class="layout-record-empty">${searchQuery ? "Tidak ada input manual yang cocok dengan pencarian." : "Belum ada input manual."}</div>`;
         const scanDisabled = !state.products.length || !canUseRack || !hasTarget || !rackHasNumber;
         const manualDisabled = !state.products.length || !canUseRack || !rackHasNumber;
         return `<section class="layout-card ${cardClasses}">
@@ -7065,9 +7088,11 @@
           <form class="layout-manual-form" data-manual-form="${escapeHtml(layout)}"><div class="manual-product-picker"><input class="scan-input" type="search" data-manual-product placeholder="${rackHasNumber ? "Cari item code atau nama barang" : "Isi nama Rack dahulu"}" aria-label="Cari item dari VEF Master untuk ${escapeHtml(rackName)}" autocomplete="off" aria-autocomplete="list" aria-expanded="false" ${manualDisabled ? "disabled" : ""}><div class="manual-product-options" role="listbox" aria-label="Hasil pencarian VEF Master"></div></div><input class="scan-input" type="number" min="1" step="1" inputmode="numeric" data-manual-quantity placeholder="Qty" aria-label="Quantity manual untuk ${escapeHtml(rackName)}" ${manualDisabled ? "disabled" : ""}><button class="button button-primary" type="submit" ${manualDisabled ? "disabled" : ""}>Catat Manual</button></form>
           <div class="layout-card-foot"><div class="layout-record-group"><div class="layout-record-heading">Scan</div><div class="layout-scan-list">${scanRows}</div></div><div class="layout-record-group"><div class="layout-record-heading">Manual</div><div class="layout-scan-list">${manualRows}</div></div></div>
         </section>`;
-      }).join("");
+      });
+      const visibleRackCount = cardMarkup.filter(Boolean).length;
+      const cards = cardMarkup.join("");
       const uploadNotice = hasUploadedVef ? "" : '<div class="layout-upload-required" role="status">Unggah file VEF terlebih dahulu di halaman <strong>Master VEF</strong> untuk mengaktifkan kartu Rack, scan, input manual, dan tombol Tambah Rack.</div>';
-      return `${navMarkup()}<section class="page-head layout-page-head"><div class="layout-page-heading"><div class="layout-page-eyebrow">Pemindaian inventaris</div>${workspacePageTitle()}<p class="subtitle">Isi nomor Rack dan quantity target sebelum mulai scan.</p></div><div class="layout-overview-metrics" aria-label="Ringkasan quantity Scan Layout"><div class="layout-overview-metric"><span>Total Rack</span><strong>${state.layouts.length}</strong></div><div class="layout-overview-metric"><span>Total Scan</span><strong>${formatNumber(rackTotals.scan)}</strong><em>SN cocok</em></div><div class="layout-overview-metric"><span>Total Manual</span><strong>${formatNumber(rackTotals.manual)}</strong><em>unit</em></div><div class="layout-overview-metric"><span>Total Qty</span><strong>${formatNumber(rackTotals.scan + rackTotals.manual)}</strong><em>Scan + Manual</em></div><div class="layout-overview-metric"><span>Qty Master VEF</span><strong>${formatNumber(expected)}</strong><em>sesuai mode hitung</em></div></div></section>${renderSessionAccessNotice()}${uploadNotice}<section class="layout-grid">${cards || '<div class="schedule-empty">Belum ada Rack. Klik Tambah Rack untuk membuat Rack pertama.</div>'}</section><div class="schedule-add-row"><button class="button button-primary" id="add-rack-button" type="button" title="${hasUploadedVef ? "Tambah Rack" : "Unggah file VEF terlebih dahulu"}" ${!canUseRack ? "disabled" : ""}>＋ Tambah Rack</button></div>`;
+      return `${navMarkup()}<section class="page-head layout-page-head"><div class="layout-page-heading"><div class="layout-page-eyebrow">Pemindaian inventaris</div>${workspacePageTitle()}<p class="subtitle">Isi nomor Rack dan quantity target sebelum mulai scan.</p></div><div class="layout-overview-metrics" aria-label="Ringkasan quantity Scan Layout"><div class="layout-overview-metric"><span>Total Rack</span><strong>${state.layouts.length}</strong></div><div class="layout-overview-metric"><span>Total Scan</span><strong>${formatNumber(rackTotals.scan)}</strong><em>SN cocok</em></div><div class="layout-overview-metric"><span>Total Manual</span><strong>${formatNumber(rackTotals.manual)}</strong><em>unit</em></div><div class="layout-overview-metric"><span>Total Qty</span><strong>${formatNumber(rackTotals.scan + rackTotals.manual)}</strong><em>Scan + Manual</em></div><div class="layout-overview-metric"><span>Qty Master VEF</span><strong>${formatNumber(expected)}</strong><em>sesuai mode hitung</em></div></div></section><section class="layout-search-panel" aria-label="Pencarian Scan & Manual"><div class="search-wrap"><span class="search-icon" aria-hidden="true">⌕</span><input class="search-input" id="layout-search-input" type="search" placeholder="Cari Item Code, nama, Serial Number, atau Rack" value="${escapeHtml(layoutSearchTerm)}" aria-label="Cari Item Code, nama, Serial Number, atau Rack"></div>${searchQuery ? `<div class="layout-search-count">${visibleRackCount} Rack ditemukan</div>` : ""}</section>${renderSessionAccessNotice()}${uploadNotice}<section class="layout-grid">${cards || `<div class="schedule-empty">${searchQuery ? "Tidak ada hasil untuk pencarian ini." : "Belum ada Rack. Klik Tambah Rack untuk membuat Rack pertama."}</div>`}</section><div class="schedule-add-row"><button class="button button-primary" id="add-rack-button" type="button" title="${hasUploadedVef ? "Tambah Rack" : "Unggah file VEF terlebih dahulu"}" ${!canUseRack ? "disabled" : ""}>＋ Tambah Rack</button></div>`;
     }
     function addRack() {
       if (!requireActiveSessionEdit()) return;
@@ -9509,6 +9534,15 @@
         next?.focus();
         next?.setSelectionRange(cursor, cursor);
       });
+      const layoutSearch = document.getElementById("layout-search-input");
+      layoutSearch?.addEventListener("input", () => {
+        const cursor = layoutSearch.selectionStart;
+        layoutSearchTerm = layoutSearch.value;
+        render();
+        const next = document.getElementById("layout-search-input");
+        next?.focus();
+        next?.setSelectionRange(cursor, cursor);
+      });
     }
 
     function switchWorkspace(id, destinationPage = "opname") {
@@ -9523,6 +9557,7 @@
       Object.assign(state, snapshotWorkspaceData(workspace.data));
       currentPage = destinationPage;
       searchTerm = "";
+      layoutSearchTerm = "";
       persist();
       render();
       notify(`${workspace.name} dibuka.`);
@@ -10535,6 +10570,7 @@
       item.addEventListener("click", () => {
         currentPage = item.dataset.page;
         searchTerm = "";
+        layoutSearchTerm = "";
         render();
         if (isMobileDrawerEnabled()) setAndroidNavigationOpen(false);
         if (currentPage === "admin-users") loadAdminUsers();
