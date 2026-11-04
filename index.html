@@ -3699,6 +3699,8 @@
     normalizeWorkspaceScheduleCards(state.workspaces, state.sessions);
     Object.assign(state, snapshotWorkspaceData(state));
     let currentPage = "opname";
+    let lastRenderedPage = "";
+    let lastRenderedWorkspaceId = "";
     const BACK_NAVIGATION_PAGES = ["dashboard", "workspaces", "products", "layouts", "opname", "recap", "history", "completed-sessions", "about", "about-info"];
     let appBackNavigationInitialized = false;
     let selectedCompletedSessionId = "";
@@ -8440,7 +8442,13 @@
         && cameraDialog.dataset.layoutRackScanner === "true"
         && document.documentElement.classList.contains("web-camera-scanner-active");
       if (preserveLayoutScanner) document.querySelector(".app-shell")?.before(cameraDialog);
+      const workspaceChanged = Boolean(lastRenderedWorkspaceId && lastRenderedWorkspaceId !== state.currentWorkspaceId);
+      if ((lastRenderedPage && lastRenderedPage !== currentPage) || workspaceChanged) {
+        closeRecordedEntryDetails({ restoreFocus: false });
+      }
       if (currentPage !== "layouts") closeLayoutDetails();
+      lastRenderedPage = currentPage;
+      lastRenderedWorkspaceId = state.currentWorkspaceId;
       main.innerHTML = currentPage === "dashboard" ? renderDashboard() : currentPage === "recorded-archive" ? renderRecordedSessionPage() : currentPage === "opname" ? renderOpname() : currentPage === "layouts" ? renderLayouts() : currentPage === "workspaces" ? renderWorkspaceSchedule() : currentPage === "products" ? renderProducts() : currentPage === "recap" ? renderRecap() : currentPage === "about-info" ? renderAboutWorkspace() : currentPage === "about" ? renderAbout() : currentPage === "admin-users" ? renderAdminUsers() : currentPage === "data-resources" ? renderDataResources() : currentPage === "completed-session-detail" ? renderCompletedSessionView() : currentPage === "completed-sessions" ? renderCompletedSessions() : renderHistory();
       if (preserveLayoutScanner) {
         if (currentPage === "layouts") {
