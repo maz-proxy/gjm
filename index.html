@@ -602,7 +602,7 @@
     .completed-detail summary::-webkit-details-marker { display: none; }
     .completed-detail-panel { background: #f8fbf7; border: 1px solid var(--line); border-radius: 10px; margin-top: 10px; max-height: 70vh; min-width: min(850px, 75vw); overflow: auto; padding: 16px; }
     .completed-session-view .completed-detail-panel { max-height: none; min-width: 0; }
-    .recorded-entry-dialog { background: var(--paper); border: 1px solid var(--line); border-radius: 11px; box-shadow: 0 10px 24px rgba(17, 43, 36, .18); inset: auto; max-height: min(65vh, 400px); max-width: calc(100vw - 24px); margin: 0; overflow: visible; padding: 0; position: fixed; width: min(290px, calc(100vw - 24px)); z-index: 30; }
+    .recorded-entry-dialog { background: var(--paper); border: 1px solid var(--line); border-radius: 11px; box-shadow: 0 10px 24px rgba(17, 43, 36, .18); inset: auto; max-height: min(65vh, 400px); max-width: calc(100vw - 24px); margin: 0; overflow: visible; padding: 0; position: fixed; width: min(560px, calc(100vw - 24px)); z-index: 30; }
     .recorded-entry-dialog::before { background: var(--paper); border-left: 1px solid var(--line); border-top: 1px solid var(--line); content: ""; height: 10px; left: var(--bubble-arrow-left, 50%); position: absolute; top: -6px; transform: translateX(-50%) rotate(45deg); width: 10px; }
     .recorded-entry-dialog[data-placement="above"]::before { border: 0; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); bottom: -6px; top: auto; }
     .recorded-entry-dialog .dialog-head { background: linear-gradient(115deg, color-mix(in srgb, var(--green) 10%, var(--paper)), var(--paper) 78%); border-bottom-color: var(--line); border-radius: 10px 10px 0 0; border-top: 3px solid var(--green); padding: 9px 11px 8px; position: relative; }
@@ -610,6 +610,15 @@
     .recorded-entry-dialog .dialog-subtitle { max-width: 260px; overflow-wrap: anywhere; }
     .recorded-entry-content { max-height: calc(65vh - 52px); overflow: auto; padding: 7px; }
     .recorded-entry-list { display: grid; gap: 6px; }
+    .recorded-detail-table-wrap { max-width: 100%; overflow-x: auto; }
+    .recorded-detail-table { min-width: 500px; }
+    .recorded-detail-row { align-items: center; border-bottom: 1px solid var(--line); display: grid; gap: 10px; grid-template-columns: minmax(150px, 1.45fr) minmax(105px, 1fr) minmax(78px, .7fr) minmax(120px, 1.1fr); min-height: 37px; padding: 5px 8px; }
+    .recorded-detail-row:last-child { border-bottom: 0; }
+    .recorded-detail-header { background: color-mix(in srgb, var(--green) 8%, var(--paper)); border-bottom: 1px solid var(--line); border-radius: 6px 6px 0 0; color: var(--muted); font-size: 8px; font-weight: 800; letter-spacing: .35px; text-transform: uppercase; }
+    .recorded-detail-row:not(.recorded-detail-header):nth-child(even) { background: color-mix(in srgb, var(--green) 3%, var(--paper)); }
+    .recorded-detail-cell { color: var(--ink); font-size: 10px; min-width: 0; overflow-wrap: anywhere; }
+    .recorded-detail-cell:first-child { font-weight: 700; }
+    .recorded-detail-cell:last-child { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
     .recorded-entry-export { min-height: 30px; margin-top: 7px; width: 100%; }
     .recorded-entry-card { background: color-mix(in srgb, var(--green) 4%, var(--paper)); border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; }
     .recorded-entry-document { display: grid; gap: 2px; min-width: 0; }
@@ -7702,14 +7711,14 @@
         .slice()
         .sort((left, right) => timestampFor(right[config.dateKey]) - timestampFor(left[config.dateKey]));
       const rows = isActiveCountDetail
-        ? entries.map((entry) => {
+        ? entries.length ? `<div class="recorded-detail-table-wrap"><div class="recorded-detail-table"><div class="recorded-detail-row recorded-detail-header"><span>${kind === "scan" ? "Serial Number" : "Item Code"}</span><span>${kind === "scan" ? "Item Code" : "Qty"}</span><span>Rack</span><span>Waktu</span></div>${entries.map((entry) => {
           const isScan = kind === "scan";
           const date = entry[config.dateKey] ? new Date(entry[config.dateKey]) : null;
           const formattedDate = date && Number.isFinite(date.getTime())
             ? formatDate(date, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
             : "-";
-          return `<article class="recorded-entry-card"><div class="recorded-entry-document"><span class="recorded-entry-label">${isScan ? "Serial Number" : "Kode item"}</span><strong data-user-content>${escapeHtml(isScan ? entry.serial || "-" : entry.sku || product.sku || "-")}</strong></div><div class="recorded-entry-meta"><div><span>${isScan ? "Kode item" : "Rack"}</span><strong data-user-content>${escapeHtml(isScan ? entry.sku || product.sku || "-" : rackLabel(entry.layout))}</strong></div><div><span>${isScan ? "Rack" : "Jumlah"}</span><strong>${isScan ? escapeHtml(rackLabel(entry.layout)) : `${formatNumber(Number(entry.quantity || 0))} Pcs`}</strong></div></div><div class="recorded-entry-meta"><div><span>Waktu</span><strong>${escapeHtml(formattedDate)}</strong></div></div></article>`;
-        }).join("")
+          return `<div class="recorded-detail-row"><span class="recorded-detail-cell" data-user-content>${escapeHtml(isScan ? entry.serial || "-" : entry.sku || product.sku || "-")}</span><span class="recorded-detail-cell" data-user-content>${isScan ? escapeHtml(entry.sku || product.sku || "-") : `${formatNumber(Number(entry.quantity || 0))} Pcs`}</span><span class="recorded-detail-cell">${escapeHtml(rackLabel(entry.layout))}</span><span class="recorded-detail-cell">${escapeHtml(formattedDate)}</span></div>`;
+        }).join("")}</div></div>` : ""
         : entries.map((entry) => {
           const date = entry[config.dateKey] ? new Date(entry[config.dateKey]) : null;
           const formattedDate = date && Number.isFinite(date.getTime())
