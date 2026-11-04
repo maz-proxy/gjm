@@ -2402,6 +2402,37 @@
       body:not(.printing-session):not(.auth-locked) .recorded-sheet-content,
       body:not(.printing-session):not(.auth-locked) .workspace-main-viewport { max-height: none !important; overflow: visible !important; }
       body:not(.printing-session):not(.auth-locked) table { font-size: 8px; min-width: 0 !important; table-layout: auto; width: 100%; }
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table { table-layout: fixed; }
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table th:nth-child(1),
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table td:nth-child(1) { width: 3%; }
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table th:nth-child(2),
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table td:nth-child(2) { overflow-wrap: anywhere; width: 27%; }
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table th:nth-child(3),
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table td:nth-child(3) { overflow-wrap: anywhere; width: 16%; }
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table th:nth-child(n+4):nth-child(-n+9),
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table td:nth-child(n+4):nth-child(-n+9) { font-variant-numeric: tabular-nums; padding-left: 2px; padding-right: 2px; text-align: center; white-space: nowrap; }
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table th:nth-child(4),
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table td:nth-child(4),
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table th:nth-child(5),
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table td:nth-child(5),
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table th:nth-child(6),
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table td:nth-child(6),
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table th:nth-child(8),
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table td:nth-child(8) { width: 5%; }
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table th:nth-child(7),
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table td:nth-child(7) { width: 7%; }
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table th:nth-child(9),
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table td:nth-child(9) { width: 7%; }
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table th:nth-child(10),
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-table td:nth-child(10) { text-align: center; width: 20%; }
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-notes th:nth-child(2),
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-notes td:nth-child(2) { width: 22%; }
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-notes th:nth-child(3),
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-notes td:nth-child(3) { width: 16%; }
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-notes th:nth-child(10),
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-notes td:nth-child(10) { width: 12%; }
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-notes th:nth-child(11),
+      body:not(.printing-session):not(.auth-locked) .print-reconciliation-live-notes td:nth-child(11) { overflow-wrap: anywhere; width: 13%; }
       body:not(.printing-session):not(.auth-locked) thead { display: table-header-group; }
       body:not(.printing-session):not(.auth-locked) th,
       body:not(.printing-session):not(.auth-locked) td { font-size: 7.5px; line-height: 1.2; overflow-wrap: anywhere; padding: 2px 4px; white-space: normal; }
@@ -2409,7 +2440,7 @@
       body:not(.printing-session):not(.auth-locked) .quantity-cell,
       body:not(.printing-session):not(.auth-locked) .number-cell { font-variant-numeric: tabular-nums; white-space: nowrap; }
       body:not(.printing-session):not(.auth-locked) .product-cell { gap: 0; min-width: 0; }
-      body:not(.printing-session):not(.auth-locked) .product-name { font-size: 7.5px; line-height: 1.15; }
+      body:not(.printing-session):not(.auth-locked) .product-name { font-size: 7.5px; line-height: 1.15; min-width: 0; overflow-wrap: anywhere; }
       body:not(.printing-session):not(.auth-locked) .product-sku { font-size: 6.5px; line-height: 1.1; margin-top: 1px; }
       body:not(.printing-session):not(.auth-locked) tr,
       body:not(.printing-session):not(.auth-locked) .metric,
@@ -7001,7 +7032,7 @@
           <div class="metric"><div class="metric-top">Selisih Quantity <span class="metric-mark issue-count">!</span></div><div class="metric-value" id="metric-variance-qty">${totals.variance > 0 ? "+" : ""}${formatNumber(totals.variance)} <small>unit</small></div><div class="metric-note" id="metric-mismatch-note">${totals.mismatched} item tidak sesuai · ${totals.mismatchPercent}%</div></div>
         </section>
         <section class="table-section"><div class="table-toolbar"><div class="table-title">Rekonsiliasi per item <span class="table-count">${filtered.length} dari ${state.products.length} item · ${stats.total} ${state.countMode === "all" ? "item" : "laptop"} dihitung · ${stats.nonLaptop} tidak dihitung · SCAN ${formatNumber(totals.scan)} + MANUAL ${formatNumber(totals.manual)} + PJ ${formatNumber(totals.pj)} = ${formatNumber(totals.total)} / VEF ${formatNumber(totals.expected)} + Inbound/Retur ${formatNumber(totals.inbound)} = ${formatNumber(totals.expectedWithInbound)}</span></div><div class="filters"><div class="search-wrap"><span class="search-icon">⌕</span><input class="search-input" id="search-input" placeholder="Cari item code atau nama" value="${escapeHtml(searchTerm)}" aria-label="Cari item"></div></div></div>
-          <div class="table-scroll"><table><thead>${renderReconciliationTableHead()}</thead><tbody>${productRows(filtered, active, canEdit)}</tbody></table></div>
+          <div class="table-scroll"><table class="print-reconciliation-live-table"><thead>${renderReconciliationTableHead()}</thead><tbody>${productRows(filtered, active, canEdit)}</tbody></table></div>
           <div class="table-footer"><span class="auto-save"><span class="save-dot"></span> Tersimpan otomatis</span><span>Menampilkan ${filtered.length} barang</span></div></section>
         <section class="table-section" style="margin-top:15px"><div class="table-toolbar"><div class="table-title">Riwayat pemindaian <span class="table-count">${state.scanEvents.length} scan</span></div></div><div class="table-scroll"><table class="scan-log-table"><thead><tr><th>Waktu</th><th>Serial Number</th><th>Item code</th><th>Rack</th><th>Hasil scan</th></tr></thead><tbody>${latestScans.length ? latestScans.map((scan) => `<tr><td>${escapeHtml(formatDate(scan.scannedAt, { hour: "2-digit", minute: "2-digit", second: "2-digit" }))}</td><td class="scan-log${scan.status === "duplicate" ? " duplicate" : ""}">${escapeHtml(scan.serial)}</td><td>${escapeHtml(scan.sku || "-")}</td><td>${escapeHtml(rackLabel(scan.layout))}</td><td><span class="row-status ${scan.status === "match" ? "match" : scan.status === "non-laptop" ? "non-laptop" : "shortage"}">${scan.status === "match" ? "Cocok di VEF" : scan.status === "duplicate" ? "SN duplikat" : scan.status === "non-laptop" ? "Bukan laptop" : "Tidak ada di VEF"}</span></td></tr>`).join("") : `<tr><td class="empty-row" colspan="5">Belum ada Serial Number yang dipindai.</td></tr>`}</tbody></table></div></section>`;
     }
@@ -7306,7 +7337,7 @@
           <div class="metric"><div class="metric-top">Total kuantitas selisih <span class="metric-mark">Δ</span></div><div class="metric-value">${formatNumber(totals.absoluteVariance)} <small>unit</small></div></div>
           <div class="metric"><div class="metric-top">Selisih terhadap VEF <span class="metric-mark">#</span></div><div class="metric-value">${formatNumber(totals.quantityMismatchPercent)}<small>%</small></div></div>
         </section>
-        <section class="table-section"><div class="table-toolbar"><div class="table-title">Item belum sesuai <span class="table-count">${exceptions.length} dari ${totals.count} item · Total SO ${formatNumber(totals.total)} / VEF + Inbound/Retur ${formatNumber(totals.expectedWithInbound)}</span></div></div><div class="table-scroll"><table><thead>${renderReconciliationTableHead(true)}</thead><tbody>${rows || `<tr><td class="empty-row" colspan="11">Belum ada item bermasalah. Semua item sesuai dengan VEF.</td></tr>`}</tbody></table></div><div class="table-footer"><span class="auto-save"><span class="save-dot"></span> Catatan tersimpan otomatis</span><span>${exceptions.length} item bermasalah dari ${totals.count} item dihitung</span></div></section>`;
+        <section class="table-section"><div class="table-toolbar"><div class="table-title">Item belum sesuai <span class="table-count">${exceptions.length} dari ${totals.count} item · Total SO ${formatNumber(totals.total)} / VEF + Inbound/Retur ${formatNumber(totals.expectedWithInbound)}</span></div></div><div class="table-scroll"><table class="print-reconciliation-live-table print-reconciliation-live-notes"><thead>${renderReconciliationTableHead(true)}</thead><tbody>${rows || `<tr><td class="empty-row" colspan="11">Belum ada item bermasalah. Semua item sesuai dengan VEF.</td></tr>`}</tbody></table></div><div class="table-footer"><span class="auto-save"><span class="save-dot"></span> Catatan tersimpan otomatis</span><span>${exceptions.length} item bermasalah dari ${totals.count} item dihitung</span></div></section>`;
     }
 
     function renderHistory() {
@@ -8259,8 +8290,8 @@
         #print-session-root .completed-rack { padding: 5px; }
         #print-session-root .print-reconciliation-table { table-layout: fixed; width: 100%; }
         #print-session-root .print-reconciliation-table th:nth-child(1), #print-session-root .print-reconciliation-table td:nth-child(1) { width: 3%; }
-        #print-session-root .print-reconciliation-table th:nth-child(2), #print-session-root .print-reconciliation-table td:nth-child(2) { overflow-wrap: anywhere; width: 11%; }
-        #print-session-root .print-reconciliation-table th:nth-child(3), #print-session-root .print-reconciliation-table td:nth-child(3) { overflow-wrap: break-word; width: 31%; }
+        #print-session-root .print-reconciliation-table th:nth-child(2), #print-session-root .print-reconciliation-table td:nth-child(2) { overflow-wrap: anywhere; width: 14%; }
+        #print-session-root .print-reconciliation-table th:nth-child(3), #print-session-root .print-reconciliation-table td:nth-child(3) { overflow-wrap: anywhere; width: 26%; }
         #print-session-root .print-reconciliation-table th:nth-child(4), #print-session-root .print-reconciliation-table td:nth-child(4) { width: 5%; }
         #print-session-root .print-reconciliation-table th:nth-child(5), #print-session-root .print-reconciliation-table td:nth-child(5) { width: 5%; }
         #print-session-root .print-reconciliation-table th:nth-child(6), #print-session-root .print-reconciliation-table td:nth-child(6) { width: 5%; }
@@ -8268,19 +8299,19 @@
         #print-session-root .print-reconciliation-table th:nth-child(8), #print-session-root .print-reconciliation-table td:nth-child(8) { width: 5%; }
         #print-session-root .print-reconciliation-table th:nth-child(9), #print-session-root .print-reconciliation-table td:nth-child(9) { width: 6%; }
         #print-session-root .print-reconciliation-table th:nth-child(10), #print-session-root .print-reconciliation-table td:nth-child(10) { width: 8%; }
-        #print-session-root .print-reconciliation-table th:nth-child(11), #print-session-root .print-reconciliation-table td:nth-child(11) { overflow-wrap: anywhere; width: 14%; }
+        #print-session-root .print-reconciliation-table th:nth-child(11), #print-session-root .print-reconciliation-table td:nth-child(11) { overflow-wrap: anywhere; width: 16%; }
         #print-session-root .print-reconciliation-table th:nth-child(n+4):nth-child(-n+9),
         #print-session-root .print-reconciliation-table td:nth-child(n+4):nth-child(-n+9) { font-variant-numeric: tabular-nums; padding-left: 2px; padding-right: 2px; white-space: nowrap; }
         #print-session-root .print-reconciliation-table th:nth-child(7) { font-size: 6px; }
         #print-session-root .print-reconciliation-table th:nth-child(n+4), #print-session-root .print-reconciliation-table td:nth-child(n+4) { text-align: center; vertical-align: middle; }
         #print-session-root .print-reconciliation-archive-table th:nth-child(2),
-        #print-session-root .print-reconciliation-archive-table td:nth-child(2) { overflow-wrap: break-word; width: 33%; }
+        #print-session-root .print-reconciliation-archive-table td:nth-child(2) { overflow-wrap: anywhere; width: 27%; }
         #print-session-root .print-reconciliation-archive-table th:nth-child(3),
-        #print-session-root .print-reconciliation-archive-table td:nth-child(3) { overflow-wrap: anywhere; width: 10%; }
+        #print-session-root .print-reconciliation-archive-table td:nth-child(3) { overflow-wrap: anywhere; width: 16%; }
         #print-session-root .print-reconciliation-archive-table th:nth-child(11),
         #print-session-root .print-reconciliation-archive-table td:nth-child(11) { width: 13%; }
         #print-session-root .print-reconciliation-archive-table .product-cell { gap: 0; min-width: 0; }
-        #print-session-root .print-reconciliation-archive-table .product-name { font-size: 7.5px; line-height: 1.15; }
+        #print-session-root .print-reconciliation-archive-table .product-name { font-size: 7.5px; line-height: 1.15; min-width: 0; overflow-wrap: anywhere; }
         #print-session-root .print-reconciliation-archive-table .product-sku { font-size: 6.5px; line-height: 1.1; margin-top: 1px; }
         #print-session-root .print-signatures { break-inside: avoid; display: grid; gap: 36px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 48px; }
         #print-session-root .print-signature { min-width: 0; text-align: center; }
