@@ -10425,7 +10425,9 @@
         const archivedWorkbook = await uploadWorkbookArchive(file, newSession.id, (progress) => {
           setWorkbookUploadProgress(35 + progress * 64);
         });
-        state.products = [...productsByCode.values()].sort((a, b) => a.sku.localeCompare(b.sku, "id-ID"));
+        state.products = [...productsByCode.values()].sort((a, b) =>
+          a.name.localeCompare(b.name, "id-ID", { sensitivity: "base" })
+          || a.sku.localeCompare(b.sku, "id-ID", { sensitivity: "base" }));
         state.serialMaster = serialMaster;
         state.scanEvents = [];
         state.manualEntries = [];
