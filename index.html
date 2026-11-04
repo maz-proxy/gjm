@@ -580,7 +580,7 @@
     .variance.negative { color: var(--red); }
     .row-status { border-radius: 4px; display: inline-block; font-size: 9px; font-weight: 700; padding: 4px 7px; white-space: nowrap; }
     .row-status.pending { background: #f1f2ef; color: #73796f; }
-    .row-status.match { background: var(--green-soft); color: var(--green); }
+    .row-status.match { background: #e2f4e7; color: #176b36; }
     .row-status.different { background: var(--amber-soft); color: var(--amber); }
     .row-status.shortage { background: var(--red-soft); color: var(--red); }
     .row-status.non-laptop { background: #fff0b8; color: #715719; }
@@ -2199,8 +2199,9 @@
     html[data-accent="burgundy"][data-theme="dark"] .theme-toggle:hover,
     html[data-accent="burgundy"][data-theme="dark"] .accent-toggle:hover { background: #3b2830; border-color: #634452; }
     html[data-accent="burgundy"][data-theme="dark"] .reset-password-success-icon { background: #392630; border-color: #634452; color: #d786a0; }
-    html[data-accent="burgundy"][data-theme="dark"] .reset-password-value code,
-    html[data-accent="burgundy"][data-theme="dark"] .check-success-icon { color: #f0b6c7; }
+    html[data-accent="burgundy"][data-theme="dark"] .reset-password-value code { color: #f0b6c7; }
+    html[data-theme="dark"] .row-status.match { background: #234b31; color: #a9e3b4; }
+    html[data-theme="dark"] .row-status.match .check-success-icon { color: inherit; }
     html[data-accent="burgundy"][data-theme="dark"].mobile-drawer-enabled .android-sidebar-handle { background: linear-gradient(145deg, #94405b, #67273d); }
     html[data-accent="burgundy"][data-theme="dark"] .master-warehouse-summary { background: linear-gradient(100deg, #302127, #392630); border-color: #523a43; }
     html[data-accent="burgundy"][data-theme="dark"] .master-warehouse-item { background: #392630; border-color: #634452; }
