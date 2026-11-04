@@ -8292,16 +8292,17 @@
         #print-session-root .print-session-heading .workspace-brand-icon { flex: 0 0 50px; height: 50px; width: 50px; }
         #print-session-root .print-session-heading .workspace-brand-icon img { height: 48px; width: 48px; }
         #print-session-root h1 { color: var(--print-accent-dark); font-size: 21px; margin: 0; }
-        #print-session-root .print-session-summary { align-items: stretch; border: 1px solid #cbd5d1; border-radius: 6px; display: grid; flex: 0 0 400px; gap: 0; grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 48%; }
-        #print-session-root .print-session-summary-metric { display: grid; gap: 2px; min-width: 0; padding: 5px 8px; }
-        #print-session-root .print-session-summary-metric:nth-child(odd) { border-right: 1px solid #dfe5e2; }
-        #print-session-root .print-session-summary-metric:nth-child(-n+2) { border-bottom: 1px solid #dfe5e2; }
+        #print-session-root .print-session-summary { align-items: stretch; border: 1px solid #cbd5d1; border-radius: 8px; display: grid; flex: 1 1 640px; grid-template-columns: repeat(4, minmax(0, 1fr)); max-width: 68%; overflow: hidden; }
+        #print-session-root .print-session-summary-metric { align-content: center; display: grid; gap: 4px; min-width: 0; padding: 6px 10px; }
+        #print-session-root .print-session-summary-metric + .print-session-summary-metric,
+        #print-session-root .print-session-summary-progress { border-left: 1px solid #dfe5e2 !important; }
         #print-session-root .print-session-summary-metric > span,
         #print-session-root .print-session-summary-progress > span { color: #64746f !important; font-size: 7px; font-weight: 700; letter-spacing: .3px; text-transform: uppercase; }
         #print-session-root .print-session-summary-metric strong { font-size: 10px; font-variant-numeric: tabular-nums; white-space: nowrap; }
         #print-session-root .print-session-summary-metric strong small { font-size: 7px; font-weight: 500; }
-        #print-session-root .print-session-summary-progress { align-items: center; background: #e8eeeb !important; display: flex; grid-column: 1 / -1; justify-content: space-between; padding: 4px 8px; }
-        #print-session-root .print-session-summary-progress strong { color: var(--print-accent-dark) !important; font-size: 20px; font-variant-numeric: tabular-nums; font-weight: 900; line-height: 1; }
+        #print-session-root .print-session-summary-progress { align-content: center; background: var(--print-accent-soft) !important; display: grid; gap: 4px; grid-template-columns: 1fr auto; min-width: 0; padding: 5px 10px; }
+        #print-session-root .print-session-summary-progress > span { align-self: center; }
+        #print-session-root .print-session-summary-progress strong { color: var(--print-accent-dark) !important; font-size: 19px; font-variant-numeric: tabular-nums; font-weight: 900; line-height: 1; white-space: nowrap; }
         #print-session-root > .print-session-subtitle { color: #64746f; font-size: 10px; margin: 0 0 14px; }
         #print-session-root th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         #print-session-root .table-section, #print-session-root .layout-card, #print-session-root .completed-rack { border-color: var(--print-accent-line); }
