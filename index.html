@@ -2362,6 +2362,80 @@
       html:not(.capacitor-android) .camera-scan-dialog .dialog-actions .button { min-width: 112px; }
       html:not(.capacitor-android) .camera-scan-dialog::backdrop { background: #090d0c; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
     }
+    @media print {
+      @page { size: landscape; margin: 10mm; }
+      body:not(.printing-session):not(.auth-locked) {
+        background: #fff !important;
+        color: #172b2b !important;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+      }
+      body:not(.printing-session):not(.auth-locked) .app-shell { display: block !important; min-height: 0; }
+      body:not(.printing-session):not(.auth-locked) .app-shell > .sidebar,
+      body:not(.printing-session):not(.auth-locked) .android-sidebar-handle,
+      body:not(.printing-session):not(.auth-locked) .android-sidebar-backdrop,
+      body:not(.printing-session):not(.auth-locked) .toast,
+      body:not(.printing-session):not(.auth-locked) .top-date-chat,
+      body:not(.printing-session):not(.auth-locked) dialog,
+      body:not(.printing-session):not(.auth-locked) .upload-input,
+      body:not(.printing-session):not(.auth-locked) button:not(.recorded-quantity-trigger):not(.pj-entry-button),
+      body:not(.printing-session):not(.auth-locked) .language-options,
+      body:not(.printing-session):not(.auth-locked) .online-accounts,
+      body:not(.printing-session):not(.auth-locked) .top-action-controls,
+      body:not(.printing-session):not(.auth-locked) .filters,
+      body:not(.printing-session):not(.auth-locked) .search-wrap,
+      body:not(.printing-session):not(.auth-locked) .layout-form,
+      body:not(.printing-session):not(.auth-locked) .layout-manual-form,
+      body:not(.printing-session):not(.auth-locked) .session-actions,
+      body:not(.printing-session):not(.auth-locked) .table-toolbar .head-buttons,
+      body:not(.printing-session):not(.auth-locked) .completed-export-actions,
+      body:not(.printing-session):not(.auth-locked) [data-export-session],
+      body:not(.printing-session):not(.auth-locked) [data-print-session],
+      body:not(.printing-session):not(.auth-locked) [data-download-workbook] { display: none !important; }
+      body:not(.printing-session):not(.auth-locked) .workspace-main-viewport,
+      body:not(.printing-session):not(.auth-locked) #main-content { display: block !important; min-width: 0; overflow: visible !important; width: 100%; }
+      body:not(.printing-session):not(.auth-locked) #main-content { padding: 0 !important; }
+      body:not(.printing-session):not(.auth-locked) .topline { align-items: flex-start; border-bottom: 1px solid #cbd5d1; margin: 0 0 12px; padding: 0 0 8px; }
+      body:not(.printing-session):not(.auth-locked) .top-actions { align-items: flex-end; }
+      body:not(.printing-session):not(.auth-locked) .table-scroll,
+      body:not(.printing-session):not(.auth-locked) .completed-detail-panel,
+      body:not(.printing-session):not(.auth-locked) .recorded-sheet-content,
+      body:not(.printing-session):not(.auth-locked) .workspace-main-viewport { max-height: none !important; overflow: visible !important; }
+      body:not(.printing-session):not(.auth-locked) table { font-size: 8px; min-width: 0 !important; table-layout: auto; width: 100%; }
+      body:not(.printing-session):not(.auth-locked) thead { display: table-header-group; }
+      body:not(.printing-session):not(.auth-locked) th,
+      body:not(.printing-session):not(.auth-locked) td { font-size: 7.5px; line-height: 1.2; overflow-wrap: anywhere; padding: 2px 4px; white-space: normal; }
+      body:not(.printing-session):not(.auth-locked) th { font-size: 7px; line-height: 1.1; overflow-wrap: anywhere; padding: 3px 4px; white-space: normal; }
+      body:not(.printing-session):not(.auth-locked) .quantity-cell,
+      body:not(.printing-session):not(.auth-locked) .number-cell { font-variant-numeric: tabular-nums; white-space: nowrap; }
+      body:not(.printing-session):not(.auth-locked) .product-cell { gap: 0; min-width: 0; }
+      body:not(.printing-session):not(.auth-locked) .product-name { font-size: 7.5px; line-height: 1.15; }
+      body:not(.printing-session):not(.auth-locked) .product-sku { font-size: 6.5px; line-height: 1.1; margin-top: 1px; }
+      body:not(.printing-session):not(.auth-locked) tr,
+      body:not(.printing-session):not(.auth-locked) .metric,
+      body:not(.printing-session):not(.auth-locked) .dashboard-panel,
+      body:not(.printing-session):not(.auth-locked) .table-section,
+      body:not(.printing-session):not(.auth-locked) .layout-card,
+      body:not(.printing-session):not(.auth-locked) .completed-rack,
+      body:not(.printing-session):not(.auth-locked) .schedule-card,
+      body:not(.printing-session):not(.auth-locked) .about-guide-card { break-inside: avoid; }
+      body:not(.printing-session):not(.auth-locked) details:not([open]) > :not(summary) { display: block !important; }
+      body:not(.printing-session):not(.auth-locked) .recorded-quantity-trigger,
+      body:not(.printing-session):not(.auth-locked) .pj-entry-button { background: transparent !important; border: 0 !important; box-shadow: none !important; color: #172b2b !important; display: inline !important; padding: 0 !important; }
+      body:not(.printing-session):not(.auth-locked) input,
+      body:not(.printing-session):not(.auth-locked) select,
+      body:not(.printing-session):not(.auth-locked) textarea { background: transparent !important; border-color: transparent !important; box-shadow: none !important; color: #172b2b !important; }
+      body:not(.printing-session):not(.auth-locked) .table-section,
+      body:not(.printing-session):not(.auth-locked) .metric,
+      body:not(.printing-session):not(.auth-locked) .dashboard-panel,
+      body:not(.printing-session):not(.auth-locked) .layout-card,
+      body:not(.printing-session):not(.auth-locked) .completed-detail-panel,
+      body:not(.printing-session):not(.auth-locked) .schedule-card,
+      body:not(.printing-session):not(.auth-locked) .about-guide-card { box-shadow: none !important; }
+      body:not(.printing-session):not(.auth-locked) *,
+      body:not(.printing-session):not(.auth-locked) *::before,
+      body:not(.printing-session):not(.auth-locked) *::after { animation: none !important; text-shadow: none !important; }
+    }
   </style>
 </head>
 <body class="auth-checking auth-locked">
@@ -6871,7 +6945,8 @@
         "data-resources": "Data Resource"
       };
       const pageLabel = pageLabels[currentPage] || "History Changes";
-      return `<div class="topline"><div class="topline-heading"><div class="language-options workspace-language-options" role="group" aria-label="Pilih bahasa"><button class="language-option" type="button" data-language-option="id" aria-label="Bahasa Indonesia" aria-pressed="false"><svg class="language-flag" aria-hidden="true" viewBox="0 0 30 20"><rect width="30" height="10" fill="#ce1126"/><rect y="10" width="30" height="10" fill="#fff"/></svg></button><button class="language-option" type="button" data-language-option="en" aria-label="English" aria-pressed="false"><svg class="language-flag" aria-hidden="true" viewBox="0 0 60 30"><rect width="60" height="30" fill="#012169"/><path d="M0 0 60 30M60 0 0 30" stroke="#fff" stroke-width="6"/><path d="M0 0 60 30M60 0 0 30" stroke="#c8102e" stroke-width="2"/><path d="M30 0v30M0 15h60" stroke="#fff" stroke-width="10"/><path d="M30 0v30M0 15h60" stroke="#c8102e" stroke-width="4"/></svg></button></div><div class="crumb"><span class="crumb-workspace" data-user-content>${escapeHtml(activeWorkspaceName())}</span> <span> / </span> <b data-user-content>${escapeHtml(pageLabel)}</b></div>${onlineMarkup}</div><div class="top-actions"><span class="today">${formatDate(new Date(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span><div class="top-action-controls">${renderChatMarkup()}<div class="top-theme-controls"><button class="accent-toggle" type="button" data-accent-toggle aria-label="Ganti tema warna ke burgundy"><span class="accent-swatch" aria-hidden="true"></span><span data-accent-label>Burgundy</span></button><button class="theme-toggle" type="button" data-theme-toggle aria-label="Aktifkan dark mode" aria-pressed="false"><span class="theme-toggle-icon" aria-hidden="true">☾</span><span class="theme-toggle-label">Dark</span></button></div></div>${picMarkup}</div></div>`;
+      const printButton = ["recorded-archive", "completed-session-detail"].includes(currentPage) ? "" : '<button class="button button-secondary page-print-button" type="button" data-print-page>Print / Save PDF</button>';
+      return `<div class="topline"><div class="topline-heading"><div class="language-options workspace-language-options" role="group" aria-label="Pilih bahasa"><button class="language-option" type="button" data-language-option="id" aria-label="Bahasa Indonesia" aria-pressed="false"><svg class="language-flag" aria-hidden="true" viewBox="0 0 30 20"><rect width="30" height="10" fill="#ce1126"/><rect y="10" width="30" height="10" fill="#fff"/></svg></button><button class="language-option" type="button" data-language-option="en" aria-label="English" aria-pressed="false"><svg class="language-flag" aria-hidden="true" viewBox="0 0 60 30"><rect width="60" height="30" fill="#012169"/><path d="M0 0 60 30M60 0 0 30" stroke="#fff" stroke-width="6"/><path d="M0 0 60 30M60 0 0 30" stroke="#c8102e" stroke-width="2"/><path d="M30 0v30M0 15h60" stroke="#fff" stroke-width="10"/><path d="M30 0v30M0 15h60" stroke="#c8102e" stroke-width="4"/></svg></button></div><div class="crumb"><span class="crumb-workspace" data-user-content>${escapeHtml(activeWorkspaceName())}</span> <span> / </span> <b data-user-content>${escapeHtml(pageLabel)}</b></div>${onlineMarkup}</div><div class="top-actions"><span class="today">${formatDate(new Date(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span>${printButton}<div class="top-action-controls">${renderChatMarkup()}<div class="top-theme-controls"><button class="accent-toggle" type="button" data-accent-toggle aria-label="Ganti tema warna ke burgundy"><span class="accent-swatch" aria-hidden="true"></span><span data-accent-label>Burgundy</span></button><button class="theme-toggle" type="button" data-theme-toggle aria-label="Aktifkan dark mode" aria-pressed="false"><span class="theme-toggle-icon" aria-hidden="true">☾</span><span class="theme-toggle-label">Dark</span></button></div></div>${picMarkup}</div></div>`;
     };
     const renderProductIdentity = (product) => `<div class="product-cell"><div><div class="product-name">${escapeHtml(product.name)}</div><div class="product-sku">${escapeHtml(product.sku)}</div></div></div>`;
     const renderReconciliationTableHead = (includeNote = false) => `<tr><th>No</th><th>Item / item code</th><th>Brand</th><th class="quantity-cell">VEF</th><th class="quantity-cell">SCAN</th><th class="quantity-cell">MANUAL</th><th class="quantity-cell">Inbound/Retur</th><th class="quantity-cell">PJ</th><th class="quantity-cell">Selisih</th><th>Check</th>${includeNote ? "<th>Note</th>" : ""}</tr>`;
@@ -8172,19 +8247,31 @@
         #print-session-root .layout-card-head { background: color-mix(in srgb, var(--print-accent) 9%, #fff); border-color: var(--print-accent-line); }
         #print-session-root .layout-name, #print-session-root .layout-record-heading, #print-session-root .completed-detail-panel h3, #print-session-root .completed-rack-title { color: var(--print-accent-dark); }
         #print-session-root .table-scroll, #print-session-root .completed-detail-panel, #print-session-root .recorded-sheet-content { max-height: none; min-width: 0; overflow: visible; }
-        #print-session-root table { min-width: 0; }
+        #print-session-root table { font-size: 7.5px; min-width: 0; table-layout: auto; width: 100%; }
+        #print-session-root thead { display: table-header-group; }
+        #print-session-root th { font-size: 7px; line-height: 1.1; padding: 3px 4px; white-space: normal; }
+        #print-session-root td { font-size: 7.5px; line-height: 1.15; padding: 2px 4px; }
+        #print-session-root .quantity-cell { font-variant-numeric: tabular-nums; white-space: nowrap; }
+        #print-session-root .table-section { margin: 7px 0 !important; }
+        #print-session-root .table-toolbar { min-height: 0; padding: 5px 8px; }
+        #print-session-root h3 { font-size: 9px; margin: 7px 0 3px; }
+        #print-session-root .completed-racks { gap: 5px; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 8px; }
+        #print-session-root .completed-rack { padding: 5px; }
         #print-session-root .print-reconciliation-table { table-layout: fixed; width: 100%; }
         #print-session-root .print-reconciliation-table th:nth-child(1), #print-session-root .print-reconciliation-table td:nth-child(1) { width: 3%; }
-        #print-session-root .print-reconciliation-table th:nth-child(2), #print-session-root .print-reconciliation-table td:nth-child(2) { width: 8%; }
-        #print-session-root .print-reconciliation-table th:nth-child(3), #print-session-root .print-reconciliation-table td:nth-child(3) { width: 25%; }
-        #print-session-root .print-reconciliation-table th:nth-child(4), #print-session-root .print-reconciliation-table td:nth-child(4) { width: 6%; }
-        #print-session-root .print-reconciliation-table th:nth-child(5), #print-session-root .print-reconciliation-table td:nth-child(5) { width: 6%; }
-        #print-session-root .print-reconciliation-table th:nth-child(6), #print-session-root .print-reconciliation-table td:nth-child(6) { width: 6%; }
-        #print-session-root .print-reconciliation-table th:nth-child(7), #print-session-root .print-reconciliation-table td:nth-child(7) { width: 9%; }
+        #print-session-root .print-reconciliation-table th:nth-child(2), #print-session-root .print-reconciliation-table td:nth-child(2) { overflow-wrap: anywhere; width: 11%; }
+        #print-session-root .print-reconciliation-table th:nth-child(3), #print-session-root .print-reconciliation-table td:nth-child(3) { overflow-wrap: break-word; width: 31%; }
+        #print-session-root .print-reconciliation-table th:nth-child(4), #print-session-root .print-reconciliation-table td:nth-child(4) { width: 5%; }
+        #print-session-root .print-reconciliation-table th:nth-child(5), #print-session-root .print-reconciliation-table td:nth-child(5) { width: 5%; }
+        #print-session-root .print-reconciliation-table th:nth-child(6), #print-session-root .print-reconciliation-table td:nth-child(6) { width: 5%; }
+        #print-session-root .print-reconciliation-table th:nth-child(7), #print-session-root .print-reconciliation-table td:nth-child(7) { width: 7%; }
         #print-session-root .print-reconciliation-table th:nth-child(8), #print-session-root .print-reconciliation-table td:nth-child(8) { width: 5%; }
         #print-session-root .print-reconciliation-table th:nth-child(9), #print-session-root .print-reconciliation-table td:nth-child(9) { width: 6%; }
-        #print-session-root .print-reconciliation-table th:nth-child(10), #print-session-root .print-reconciliation-table td:nth-child(10) { width: 7%; }
-        #print-session-root .print-reconciliation-table th:nth-child(11), #print-session-root .print-reconciliation-table td:nth-child(11) { overflow-wrap: anywhere; width: 19%; }
+        #print-session-root .print-reconciliation-table th:nth-child(10), #print-session-root .print-reconciliation-table td:nth-child(10) { width: 8%; }
+        #print-session-root .print-reconciliation-table th:nth-child(11), #print-session-root .print-reconciliation-table td:nth-child(11) { overflow-wrap: anywhere; width: 14%; }
+        #print-session-root .print-reconciliation-table th:nth-child(n+4):nth-child(-n+9),
+        #print-session-root .print-reconciliation-table td:nth-child(n+4):nth-child(-n+9) { font-variant-numeric: tabular-nums; padding-left: 2px; padding-right: 2px; white-space: nowrap; }
+        #print-session-root .print-reconciliation-table th:nth-child(7) { font-size: 6px; }
         #print-session-root .print-reconciliation-table th:nth-child(n+4), #print-session-root .print-reconciliation-table td:nth-child(n+4) { text-align: center; vertical-align: middle; }
         #print-session-root .print-signatures { break-inside: avoid; display: grid; gap: 36px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 48px; }
         #print-session-root .print-signature { min-width: 0; text-align: center; }
@@ -8192,7 +8279,7 @@
         #print-session-root .print-signature-name { font-size: 10px; margin: 5px auto 0; text-align: center; width: 72%; }
         #print-session-root [data-export-session], #print-session-root [data-print-session] { display: none !important; }
         #print-session-root details:not([open]) > :not(summary) { display: block !important; }
-        @media print { @page { size: landscape; margin: 12mm; } body.printing-session { padding: 0; } #print-session-root { width: 100%; } }
+        @media print { @page { size: landscape; margin: 8mm; } body.printing-session { padding: 0; } #print-session-root { width: 100%; } }
       </style></head><body class="printing-session"><main id="print-session-root"><div class="print-session-heading">${renderWorkspaceBrandIcon(brandName)}<h1 data-user-content>${escapeHtml(title)}</h1></div><p class="print-session-subtitle" data-user-content>${escapeHtml(subtitle)}</p>${content}<section class="print-signatures" aria-label="${currentLanguage === "en" ? "PIC signatures" : "Paraf PIC"}"><div class="print-signature"><div class="print-signature-line"></div><div class="print-signature-name">${currentLanguage === "en" ? "PIC 1 name:" : "Nama PIC 1:"} <strong>${escapeHtml(picNames[0] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</strong></div></div><div class="print-signature"><div class="print-signature-line"></div><div class="print-signature-name">${currentLanguage === "en" ? "PIC 2 name:" : "Nama PIC 2:"} <strong>${escapeHtml(picNames[1] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</strong></div></div></section></main></body></html>`);
       printWindow.document.close();
       translateDocument(printWindow.document.body);
@@ -10695,6 +10782,10 @@
     });
     document.querySelectorAll("[data-logout]").forEach((button) => button.addEventListener("click", requestSignOut));
     document.addEventListener("click", (event) => {
+      if (event.target.closest("[data-print-page]")) {
+        window.print();
+        return;
+      }
       const deleteMasterRowButton = event.target.closest("[data-delete-master-row]");
       if (deleteMasterRowButton) {
         void deleteMasterProduct(deleteMasterRowButton.dataset.deleteMasterRow);
