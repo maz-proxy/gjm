@@ -8166,7 +8166,9 @@
         return `<div class="recorded-search-summary">${query ? `${matchingRackCount} rack berisi hasil · pencarian berdasarkan item code, nama, atau Serial Number` : `${layouts.length} rack · tampilan arsip`}</div><div class="completed-racks">${rackMarkup || `<div class="completed-rack-meta">${emptyMessage}</div>`}</div>`;
       }
       const visibleProducts = products.filter((product) => {
-        const includedInSheet = sheet === "recap" ? isCountedProduct(product, countMode) && varianceFor(product, inboundEntries) !== 0 : true;
+        const includedInSheet = sheet === "result" || sheet === "recap"
+          ? isCountedProduct(product, countMode) && (sheet !== "recap" || varianceFor(product, inboundEntries) !== 0)
+          : true;
         return includedInSheet && recordMatches(product, product);
       });
       const rows = visibleProducts.map((product, index) => {
