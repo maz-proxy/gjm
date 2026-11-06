@@ -1667,8 +1667,6 @@
     .schedule-resource-options { animation: dropdown-enter .14s ease-out; background: var(--paper); border: 1px solid var(--line); border-radius: 11px; box-shadow: 0 14px 32px rgba(25,55,50,.2), 0 3px 8px rgba(25,55,50,.08); display: none; left: 0; max-height: 240px; min-width: 100%; overflow-y: auto; padding: 5px; position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; }
     .schedule-resource-options.open { display: grid; gap: 3px; }
     .schedule-resource-options-heading { border-bottom: 1px solid var(--line); color: var(--muted); font-size: 9px; font-weight: 800; letter-spacing: .7px; margin: 0 4px 2px; padding: 6px 6px 8px; text-transform: uppercase; }
-    .schedule-select-search { background: var(--paper); border: 1px solid var(--line); border-radius: 7px; color: var(--ink); font: inherit; margin: 3px 2px 5px; min-height: 36px; padding: 7px 9px; }
-    .schedule-select-search:focus { border-color: var(--green); outline: 2px solid color-mix(in srgb, var(--green) 18%, transparent); }
     .schedule-select-options-list { display: grid; gap: 3px; }
     .schedule-resource-option { align-items: center; background: transparent; border: 0; border-radius: 7px; color: var(--ink); cursor: pointer; display: flex; font-size: 12px; font-weight: 600; min-height: 38px; overflow: hidden; padding: 8px 10px; text-align: left; text-overflow: ellipsis; white-space: nowrap; }
     .schedule-resource-option::before { background: var(--green-soft); border-radius: 6px; color: var(--green); content: "✓"; flex: 0 0 23px; font-size: 10px; font-weight: 800; height: 23px; line-height: 23px; margin-right: 9px; text-align: center; }
@@ -1677,6 +1675,8 @@
     .schedule-select-picker { min-width: 0; position: relative; width: 100%; }
     .schedule-native-select { display: none; }
     .schedule-select-trigger { align-items: center; background: var(--paper); border: 1px solid #cedbd5; border-radius: 9px; color: var(--ink); cursor: pointer; display: flex; font: 600 11px/1.3 "DM Sans", "Segoe UI", sans-serif; gap: 8px; justify-content: space-between; min-height: 40px; padding: 0 11px; text-align: left; transition: border-color .15s ease, box-shadow .15s ease, background .15s ease; width: 100%; }
+    .schedule-select-trigger-input { cursor: text; display: block; font-size: 11px; padding: 0 32px 0 11px; }
+    .schedule-select-picker.brand-logo-picker::after { color: var(--muted); content: "⌄"; font-size: 13px; pointer-events: none; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); }
     .schedule-select-trigger:hover:not(:disabled) { border-color: #9db9ab; }
     .schedule-select-trigger:focus-visible, .schedule-select-picker.open .schedule-select-trigger { border-color: var(--green); box-shadow: 0 0 0 3px rgba(40,93,69,.1); outline: 0; }
     .schedule-select-trigger:disabled { cursor: not-allowed; opacity: .58; }
@@ -4270,11 +4270,14 @@
         ? `${renderWorkspaceBrandIcon(selectedValue)}<span>${escapeHtml(selectedText)}</span>`
         : escapeHtml(selectedText);
       const searchableOptions = withBrandLogos
-        ? `<input class="schedule-select-search" type="search" data-schedule-select-search placeholder="Ketik untuk mencari brand/gudang" aria-label="Ketik untuk mencari brand atau gudang"><div class="schedule-select-options-list" id="${escapeHtml(triggerId)}-list" role="listbox" aria-label="${escapeHtml(label)}">${optionMarkup}<div class="schedule-resource-options-empty" data-schedule-select-empty hidden>Tidak ada nama yang cocok.</div></div>`
+        ? `<div class="schedule-select-options-list" id="${escapeHtml(triggerId)}-list" role="listbox" aria-label="${escapeHtml(label)}">${optionMarkup}<div class="schedule-resource-options-empty" data-schedule-select-empty hidden>Tidak ada nama yang cocok.</div></div>`
         : optionMarkup;
       const optionsId = `${triggerId}-options`;
       const listId = withBrandLogos ? `${triggerId}-list` : optionsId;
-      return `<div class="schedule-select-picker${withBrandLogos ? " brand-logo-picker" : ""}"><select class="${selectClass} schedule-native-select" ${attributes} aria-hidden="true" tabindex="-1" ${disabled ? "disabled" : ""}>${options.map(([value, text]) => `<option value="${escapeHtml(value)}" ${value === selectedValue ? "selected" : ""}>${escapeHtml(text)}</option>`).join("")}</select><button class="schedule-select-trigger" id="${escapeHtml(triggerId)}" type="button" aria-label="${escapeHtml(label)}" aria-haspopup="listbox" aria-expanded="false" aria-controls="${escapeHtml(listId)}" ${disabled ? "disabled" : ""}><span data-schedule-select-label${withBrandLogos ? ` class="brand-logo-label"` : ""}>${selectedLabel}</span><span class="schedule-select-chevron" aria-hidden="true">⌄</span></button><div class="schedule-resource-options schedule-select-options" id="${escapeHtml(optionsId)}" role="${withBrandLogos ? "group" : "listbox"}" aria-label="${escapeHtml(label)}"><div class="schedule-resource-options-heading">${escapeHtml(label)}</div>${searchableOptions}</div></div>`;
+      const triggerMarkup = withBrandLogos
+        ? `<input class="schedule-select-trigger schedule-select-trigger-input" id="${escapeHtml(triggerId)}" type="search" role="combobox" aria-label="${escapeHtml(label)}" aria-autocomplete="list" aria-expanded="false" aria-controls="${escapeHtml(listId)}" placeholder="${escapeHtml(options[0]?.[1] || label)}" value="${escapeHtml(selectedText)}" ${disabled ? "disabled" : ""}>`
+        : `<button class="schedule-select-trigger" id="${escapeHtml(triggerId)}" type="button" aria-label="${escapeHtml(label)}" aria-haspopup="listbox" aria-expanded="false" aria-controls="${escapeHtml(listId)}" ${disabled ? "disabled" : ""}><span data-schedule-select-label>${selectedLabel}</span><span class="schedule-select-chevron" aria-hidden="true">⌄</span></button>`;
+      return `<div class="schedule-select-picker${withBrandLogos ? " brand-logo-picker" : ""}"><select class="${selectClass} schedule-native-select" ${attributes} aria-hidden="true" tabindex="-1" ${disabled ? "disabled" : ""}>${options.map(([value, text]) => `<option value="${escapeHtml(value)}" ${value === selectedValue ? "selected" : ""}>${escapeHtml(text)}</option>`).join("")}</select>${triggerMarkup}<div class="schedule-resource-options schedule-select-options" id="${escapeHtml(optionsId)}" role="${withBrandLogos ? "group" : "listbox"}" aria-label="${escapeHtml(label)}"><div class="schedule-resource-options-heading">${escapeHtml(label)}</div>${searchableOptions}</div></div>`;
     }
     function closeScheduleDropdown(picker) {
       picker?.classList.remove("open");
@@ -10017,10 +10020,12 @@
         const trigger = picker.querySelector(".schedule-select-trigger");
         const options = picker.querySelector(".schedule-select-options");
         if (!select || !trigger || !options) return;
-        const searchInput = options.querySelector("[data-schedule-select-search]");
+        const searchInput = picker.classList.contains("brand-logo-picker") ? trigger : null;
         const filterOptions = () => {
           if (!searchInput) return;
-          const query = normalizeField(searchInput.value);
+          const query = searchInput.selectionStart === 0 && searchInput.selectionEnd === searchInput.value.length
+            ? ""
+            : normalizeField(searchInput.value);
           const choices = [...options.querySelectorAll("[data-schedule-select-option]")];
           let visibleCount = 0;
           for (const choice of choices) {
@@ -10032,11 +10037,7 @@
           if (emptyMessage) emptyMessage.hidden = visibleCount > 0;
         };
         const close = () => closeScheduleDropdown(picker);
-        trigger.addEventListener("click", () => {
-          if (picker.classList.contains("open")) {
-            close();
-            return;
-          }
+        const open = () => {
           document.querySelectorAll(".schedule-select-picker.open").forEach((openPicker) => closeScheduleDropdown(openPicker));
           picker.classList.add("open");
           options.classList.add("open");
@@ -10044,15 +10045,63 @@
           picker.closest(".recorded-card")?.classList.add("recorded-brand-select-open");
           trigger.setAttribute("aria-expanded", "true");
           if (searchInput) {
-            searchInput.value = "";
             filterOptions();
-            searchInput.focus({ preventScroll: true });
           }
-        });
+        };
+        if (searchInput) {
+          searchInput.addEventListener("focus", () => {
+            if (select.value) searchInput.select();
+            open();
+          });
+          searchInput.addEventListener("input", () => {
+            open();
+            filterOptions();
+          });
+          searchInput.addEventListener("keydown", (event) => {
+            if (event.key === "Escape") {
+              event.preventDefault();
+              searchInput.value = select.selectedOptions[0]?.value ? select.selectedOptions[0].textContent : "";
+              close();
+              return;
+            }
+            if (event.key === "Enter") {
+              const firstChoice = options.querySelector("[data-schedule-select-option]:not([hidden])");
+              if (firstChoice) {
+                event.preventDefault();
+                firstChoice.click();
+              }
+              return;
+            }
+            if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+              event.preventDefault();
+              if (!picker.classList.contains("open")) open();
+              const choices = [...options.querySelectorAll("[data-schedule-select-option]:not([hidden])")];
+              choices[event.key === "ArrowDown" ? 0 : choices.length - 1]?.focus();
+            }
+          });
+          searchInput.addEventListener("blur", () => setTimeout(() => {
+            if (!picker.contains(document.activeElement)) {
+              searchInput.value = select.selectedOptions[0]?.value ? select.selectedOptions[0].textContent : "";
+              close();
+            }
+          }, 0));
+          options.addEventListener("mousedown", (event) => {
+            if (event.target.closest("[data-schedule-select-option]")) event.preventDefault();
+          });
+        } else {
+          trigger.addEventListener("click", () => {
+            if (picker.classList.contains("open")) {
+              close();
+              return;
+            }
+            open();
+          });
+        }
         trigger.addEventListener("keydown", (event) => {
+          if (searchInput) return;
           if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
           event.preventDefault();
-          if (!picker.classList.contains("open")) trigger.click();
+          if (!picker.classList.contains("open")) open();
           const choices = [...options.querySelectorAll("[data-schedule-select-option]")];
           const selectedIndex = choices.findIndex((option) => option.getAttribute("aria-selected") === "true");
           const direction = event.key === "ArrowDown" ? 1 : -1;
@@ -10062,6 +10111,7 @@
           const option = event.target.closest("[data-schedule-select-option]");
           if (!option) return;
           select.value = option.dataset.scheduleSelectOption;
+          if (searchInput) searchInput.value = select.selectedOptions[0]?.value ? select.selectedOptions[0].textContent : "";
           close();
           select.dispatchEvent(new Event("change", { bubbles: true }));
           trigger.focus({ preventScroll: true });
@@ -10073,14 +10123,6 @@
             trigger.focus({ preventScroll: true });
             return;
           }
-          if (event.key === "Enter" && searchInput && event.target === searchInput) {
-            const firstChoice = options.querySelector("[data-schedule-select-option]:not([hidden])");
-            if (firstChoice) {
-              event.preventDefault();
-              firstChoice.click();
-            }
-            return;
-          }
           if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
           event.preventDefault();
           const choices = [...options.querySelectorAll("[data-schedule-select-option]:not([hidden])")];
@@ -10088,11 +10130,14 @@
           const direction = event.key === "ArrowDown" ? 1 : -1;
           choices[Math.max(0, Math.min(choices.length - 1, currentIndex + direction))]?.focus();
         });
-        searchInput?.addEventListener("input", filterOptions);
         picker.addEventListener("focusout", () => setTimeout(() => {
           if (!picker.contains(document.activeElement)) close();
         }, 0));
         select.addEventListener("change", () => {
+          if (searchInput) {
+            searchInput.value = select.selectedOptions[0]?.value ? select.selectedOptions[0].textContent : "";
+            return;
+          }
           const label = picker.querySelector("[data-schedule-select-label]");
           if (label && picker.classList.contains("brand-logo-picker")) {
             const brand = select.value;
