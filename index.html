@@ -4213,7 +4213,7 @@
       return hasRackNumber(layout)
         && Number.isSafeInteger(state.layoutQuantities[layout])
         && state.layoutQuantities[layout] >= 0
-        && state.products.some(isCountedProduct)
+        && state.products.some((product) => isCountedProduct(product))
         && state.activeSession.status === "active"
         && canEditActiveSession()
         && workspaceHasActiveWorkbook(activeWorkspace());
@@ -7022,7 +7022,7 @@
       const totals = getReconciliationTotals();
       const active = state.activeSession.status === "active";
       const canEdit = canEditActiveSession();
-      const reconciliationProducts = state.products.filter(isCountedProduct);
+      const reconciliationProducts = state.products.filter((product) => isCountedProduct(product));
       const filtered = reconciliationProducts.filter((product) => {
         const query = searchTerm.toLocaleLowerCase("id-ID");
         return !query || `${product.name} ${product.sku} ${product.brand} ${product.warehouse} ${product.itemGroup || ""}`.toLocaleLowerCase("id-ID").includes(query);
@@ -7168,7 +7168,7 @@
       const canEdit = canEditActiveSession();
       const hasUploadedVef = workspaceHasActiveWorkbook(activeWorkspace());
       const canUseRack = hasUploadedVef && active && canEdit;
-      const hasCountedProducts = state.products.some(isCountedProduct);
+      const hasCountedProducts = state.products.some((product) => isCountedProduct(product));
       const rackTotals = state.layouts.reduce((totals, layout) => {
         const quantity = getRackQuantities(layout);
         totals.scan += quantity.scan;
@@ -7335,7 +7335,7 @@
       const form = document.querySelector(`[data-manual-form="${CSS.escape(layout)}"]`);
       if (!form) return;
       const rackIsNamed = hasRackNumber(layout);
-      const canEnter = rackIsNamed && state.products.some(isCountedProduct) && state.activeSession.status === "active" && canEditActiveSession() && workspaceHasActiveWorkbook(activeWorkspace());
+      const canEnter = rackIsNamed && state.products.some((product) => isCountedProduct(product)) && state.activeSession.status === "active" && canEditActiveSession() && workspaceHasActiveWorkbook(activeWorkspace());
       form.querySelectorAll("[data-manual-product], [data-manual-quantity], button[type='submit']")
         .forEach((control) => control.toggleAttribute("disabled", !canEnter));
       const productInput = form.querySelector("[data-manual-product]");
@@ -10072,7 +10072,7 @@
       const serial = input.value.trim();
       if (!serial) return;
       const layout = form.dataset.layoutForm;
-      if (!state.products.some(isCountedProduct) || state.activeSession.status !== "active") {
+      if (!state.products.some((product) => isCountedProduct(product)) || state.activeSession.status !== "active") {
         notify("Muat Master VEF dengan item yang sesuai mode perhitungan dan gunakan sesi yang masih berjalan sebelum mencatat scan.");
         return;
       }
@@ -10106,8 +10106,8 @@
       const quantityInput = form.querySelector("[data-manual-quantity]");
       const layout = form.dataset.manualForm;
       const rackIsNamed = hasRackNumber(layout);
-      if (!state.products.some(isCountedProduct) || state.activeSession.status !== "active" || !rackIsNamed) {
-        notify(!state.products.some(isCountedProduct) ? "Tidak ada item yang sesuai mode perhitungan di Master VEF." : !rackIsNamed ? "Isi nama Rack sebelum mencatat manual." : "Input manual hanya tersedia pada sesi yang berjalan.");
+      if (!state.products.some((product) => isCountedProduct(product)) || state.activeSession.status !== "active" || !rackIsNamed) {
+        notify(!state.products.some((product) => isCountedProduct(product)) ? "Tidak ada item yang sesuai mode perhitungan di Master VEF." : !rackIsNamed ? "Isi nama Rack sebelum mencatat manual." : "Input manual hanya tersedia pada sesi yang berjalan.");
         return;
       }
       const product = state.products.find((item) => item.id === productInput.dataset.selectedProductId);
