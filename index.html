@@ -10027,14 +10027,24 @@
             ? ""
             : normalizeField(searchInput.value);
           const choices = [...options.querySelectorAll("[data-schedule-select-option]")];
-          let visibleCount = 0;
+          const visibleChoices = [];
           for (const choice of choices) {
-            const matches = !query || normalizeField(`${choice.dataset.scheduleSelectOption} ${choice.textContent}`).includes(query);
+            const name = choice.dataset.scheduleSelectOption || choice.textContent.trim();
+            const normalizedName = normalizeField(name);
+            const matches = !query
+              ? true
+              : Boolean(choice.dataset.scheduleSelectOption) && normalizedName.includes(query);
             choice.hidden = !matches;
-            if (matches) visibleCount++;
+            if (matches) visibleChoices.push({ choice, name, startsWithQuery: query ? normalizedName.startsWith(query) : false });
           }
+          visibleChoices.sort((left, right) =>
+            Number(!right.choice.dataset.scheduleSelectOption) - Number(!left.choice.dataset.scheduleSelectOption)
+            || Number(right.startsWithQuery) - Number(left.startsWithQuery)
+            || left.name.localeCompare(right.name, "id-ID", { numeric: true, sensitivity: "base" }));
+          const list = options.querySelector('[role="listbox"]');
+          visibleChoices.forEach(({ choice }) => list?.append(choice));
           const emptyMessage = options.querySelector("[data-schedule-select-empty]");
-          if (emptyMessage) emptyMessage.hidden = visibleCount > 0;
+          if (emptyMessage) emptyMessage.hidden = visibleChoices.length > 0;
         };
         const close = () => closeScheduleDropdown(picker);
         const open = () => {
