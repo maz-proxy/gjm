@@ -90,29 +90,33 @@
     .admin-create-form { align-items: end; display: grid; gap: 10px; grid-template-columns: minmax(180px, 1fr) auto; }
     .admin-role-select { max-width: 220px; min-width: 175px; }
     .admin-user-status { color: var(--muted); font-size: 11px; }
-    .admin-storage-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 270px), 1fr)); margin: 14px 0; }
-    .admin-storage-card { background: linear-gradient(145deg, var(--paper), var(--canvas)); border: 1px solid var(--line); border-radius: 12px; min-width: 0; padding: 16px; }
-    .admin-storage-card-head { align-items: flex-start; display: flex; justify-content: space-between; gap: 12px; }
-    .admin-storage-label { color: var(--ink); font-size: 12px; font-weight: 800; }
-    .admin-storage-value { color: var(--ink); font-size: 19px; font-weight: 800; margin-top: 6px; overflow-wrap: anywhere; }
-    .admin-storage-detail, .admin-storage-note { color: var(--muted); font-size: 10px; line-height: 1.5; margin-top: 8px; }
-    .admin-storage-breakdown { display: grid; gap: 7px; grid-template-columns: 1fr 1fr; margin-top: 14px; }
-    .admin-storage-breakdown > div { background: color-mix(in srgb, var(--canvas) 82%, transparent); border: 1px solid var(--line); border-radius: 8px; min-width: 0; padding: 9px 10px; }
-    .admin-storage-breakdown span { color: var(--muted); display: block; font-size: 9px; font-weight: 700; }
-    .admin-storage-breakdown strong { color: var(--ink); display: block; font-size: 12px; margin-top: 3px; overflow-wrap: anywhere; }
-    .admin-storage-gauge { align-items: center; background: conic-gradient(var(--green) var(--storage-used-percent), color-mix(in srgb, var(--green) 12%, var(--canvas)) 0); border-radius: 50%; display: flex; flex: 0 0 64px; height: 64px; justify-content: center; width: 64px; }
-    .admin-storage-gauge-inner { align-items: center; background: var(--paper); border-radius: 50%; color: var(--green-dark); display: flex; flex-direction: column; height: 48px; justify-content: center; width: 48px; }
-    .admin-storage-gauge-inner strong { font-size: 12px; line-height: 1; }
-    .admin-storage-gauge-inner span { color: var(--muted); font-size: 8px; margin-top: 3px; }
-    .admin-storage-capacity-unknown { align-items: center; background: color-mix(in srgb, var(--muted) 10%, var(--canvas)); border: 1px dashed var(--line); border-radius: 10px; color: var(--muted); display: flex; flex: 0 0 64px; font-size: 10px; font-weight: 700; height: 64px; justify-content: center; text-align: center; width: 64px; }
-    .admin-storage-meter { background: color-mix(in srgb, var(--green) 12%, var(--canvas)); border-radius: 99px; height: 8px; margin-top: 12px; overflow: hidden; }
+    .admin-storage-summary-card { background: linear-gradient(145deg, var(--paper), var(--canvas)); border: 1px solid var(--line); border-radius: 10px; min-width: 0; padding: 10px 12px; }
+    .admin-storage-grid { display: grid; gap: 10px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .admin-storage-card-head { align-items: center; display: flex; justify-content: space-between; gap: 8px; }
+    .admin-storage-metric { min-width: 0; }
+    .admin-storage-label { color: var(--muted); font-size: 9px; font-weight: 700; }
+    .admin-storage-value { color: var(--ink); font-size: 15px; font-weight: 800; margin-top: 3px; overflow-wrap: anywhere; }
+    .admin-storage-detail, .admin-storage-note { color: var(--muted); font-size: 9px; line-height: 1.4; margin-top: 5px; }
+    .admin-storage-breakdown { display: flex; flex-wrap: wrap; gap: 3px 12px; margin-top: 4px; }
+    .admin-storage-breakdown > div { min-width: 0; }
+    .admin-storage-breakdown span { color: var(--muted); font-size: 8px; font-weight: 700; }
+    .admin-storage-breakdown strong { color: var(--ink); font-size: 9px; margin-left: 3px; overflow-wrap: anywhere; }
+    .admin-storage-gauge { align-items: center; background: conic-gradient(var(--green) var(--storage-used-percent), color-mix(in srgb, var(--green) 12%, var(--canvas)) 0); border-radius: 50%; display: flex; flex: 0 0 38px; height: 38px; justify-content: center; width: 38px; }
+    .admin-storage-gauge-inner { align-items: center; background: var(--paper); border-radius: 50%; color: var(--green-dark); display: flex; flex-direction: column; height: 30px; justify-content: center; width: 30px; }
+    .admin-storage-gauge-inner strong { font-size: 8px; line-height: 1; }
+    .admin-storage-gauge-inner span { color: var(--muted); font-size: 6px; margin-top: 2px; }
+    .admin-storage-capacity-unknown { align-items: center; background: color-mix(in srgb, var(--muted) 10%, var(--canvas)); border: 1px dashed var(--line); border-radius: 50%; color: var(--muted); display: flex; flex: 0 0 30px; font-size: 10px; font-weight: 700; height: 30px; justify-content: center; width: 30px; }
+    .admin-storage-meter { background: color-mix(in srgb, var(--green) 12%, var(--canvas)); border-radius: 99px; height: 4px; margin-top: 7px; overflow: hidden; }
     .admin-storage-meter-fill { background: linear-gradient(90deg, var(--green), color-mix(in srgb, var(--green) 60%, #b8d978)); border-radius: inherit; height: 100%; }
-    .admin-storage-provider { align-items: center; display: flex; gap: 12px; min-height: 94px; }
-    .admin-storage-provider-icon { align-items: center; background: color-mix(in srgb, var(--green) 12%, var(--canvas)); border-radius: 10px; color: var(--green-dark); display: inline-flex; flex: 0 0 38px; font-size: 16px; font-weight: 800; height: 38px; justify-content: center; }
-    .admin-storage-provider-copy { min-width: 0; }
-    .admin-storage-provider-copy a { color: var(--green-dark); font-size: 11px; font-weight: 800; }
-    .admin-storage-links { display: flex; flex-wrap: wrap; gap: 8px 16px; }
-    .admin-storage-links a { color: var(--green-dark); font-size: 11px; font-weight: 700; }
+    .admin-storage-detail-list { border-top: 1px solid var(--line); margin-top: 8px; padding-top: 6px; }
+    .admin-storage-detail-list summary { color: var(--green-dark); cursor: pointer; font-size: 9px; font-weight: 700; }
+    .admin-storage-detail-list .table-scroll { margin-top: 6px; }
+    .admin-storage-detail-list table { font-size: 9px; }
+    .admin-storage-detail-list th, .admin-storage-detail-list td { padding: 5px 8px; }
+    .admin-storage-footer { align-items: center; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 5px 12px; justify-content: space-between; margin-top: 8px; padding-top: 7px; }
+    .admin-storage-footer a { color: var(--green-dark); font-size: 9px; font-weight: 700; }
+    .admin-storage-unknown-note { color: var(--muted); font-size: 8px; }
+    @media (max-width: 560px) { .admin-storage-grid { grid-template-columns: 1fr; gap: 7px; } .admin-storage-metric { border-bottom: 1px solid var(--line); padding-bottom: 6px; } .admin-storage-metric:last-child { border-bottom: 0; padding-bottom: 0; } }
     .admin-storage-error { color: var(--red); font-size: 11px; margin: 10px 0; }
     .logout-button { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.17); border-radius: 7px; color: #f4f8f2; font-size: 10px; margin-left: auto; padding: 6px 8px; }
     .logout-button:hover { background: rgba(255,255,255,.18); }
@@ -9137,7 +9141,7 @@
       const capacityDetails = hasQuota
         ? `<div class="admin-storage-breakdown"><div><span>Terpakai</span><strong>${formatStorageBytes(usage)}</strong></div><div><span>Sisa</span><strong>${formatStorageBytes(remaining)}</strong></div><div><span>Total kapasitas</span><strong>${formatStorageBytes(quota)}</strong></div><div><span>Persentase terpakai</span><strong>${formattedUsedPercent}%</strong></div></div><div class="admin-storage-meter" role="img" aria-label="${escapeHtml(label)}: ${formatStorageBytes(usage)} terpakai, ${formatStorageBytes(remaining)} tersisa"><div class="admin-storage-meter-fill" style="width:${usedPercent}%"></div></div>`
         : `<div class="admin-storage-breakdown"><div><span>Terpakai</span><strong>${hasUsage ? formatStorageBytes(usage) : "—"}</strong></div><div><span>Sisa</span><strong>${escapeHtml(unknownLabel)}</strong></div></div>`;
-      return `<article class="admin-storage-card"><div class="admin-storage-card-head"><div><div class="admin-storage-label">${escapeHtml(label)}</div><div class="admin-storage-value">${hasUsage ? formatStorageBytes(usage) : "—"}</div></div>${indicator}</div>${capacityDetails}<div class="admin-storage-detail">${escapeHtml(detail)}</div></article>`;
+      return `<div class="admin-storage-metric"><div class="admin-storage-card-head"><div><div class="admin-storage-label">${escapeHtml(label)}</div><div class="admin-storage-value">${hasUsage ? formatStorageBytes(usage) : "—"}</div></div>${indicator}</div>${capacityDetails}<div class="admin-storage-detail">${escapeHtml(detail)}</div></div>`;
     }
 
     function renderAdminStorageContent() {
@@ -9158,21 +9162,15 @@
         ? formatDate(usage.measuredAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
         : "";
       return `${adminStorageError ? `<div class="admin-storage-error">${escapeHtml(adminStorageError)} Menampilkan hasil pengukuran terakhir.</div>` : ""}
-        <div class="admin-storage-grid">
+        <article class="admin-storage-summary-card"><div class="admin-storage-grid">
           ${renderStorageUsageCard({ label: "Database Supabase", usageBytes: usage?.databaseBytes, detail: "Ukuran seluruh database project, termasuk tabel dan indeks." })}
           ${renderStorageUsageCard({ label: "File Supabase Storage", usageBytes: bucketBytes, detail: `${formatNumber(buckets.reduce((total, bucket) => total + Number(bucket.objects || 0), 0))} file di ${buckets.length} bucket.` })}
           ${renderStorageUsageCard({ label: "Browser ini", usageBytes: browser?.usage, quotaBytes: browser?.quota, detail: browser?.error || "Estimasi penggunaan storage lokal browser pada perangkat ini." })}
-          <article class="admin-storage-card admin-storage-provider"><span class="admin-storage-provider-icon" aria-hidden="true">GH</span><div class="admin-storage-provider-copy"><div class="admin-storage-label">GitHub</div><div class="admin-storage-detail">Pemakaian GitHub tidak tersedia tanpa koneksi API berizin.</div><a href="https://github.com/maz-proxy/gjm" target="_blank" rel="noopener noreferrer">Lihat dashboard ↗</a></div></article>
-          <article class="admin-storage-card admin-storage-provider"><span class="admin-storage-provider-icon" aria-hidden="true">V</span><div class="admin-storage-provider-copy"><div class="admin-storage-label">Vercel</div><div class="admin-storage-detail">Pemakaian Vercel tidak tersedia tanpa koneksi API berizin.</div><a href="https://vercel.com/dashboard" target="_blank" rel="noopener noreferrer">Lihat dashboard ↗</a></div></article>
-        </div>
-        <div class="table-scroll"><table><thead><tr><th>Bucket Supabase</th><th>Pemakaian file</th><th>Jumlah file</th></tr></thead><tbody>${bucketRows}</tbody></table></div>
-        <div class="table-scroll" style="margin-top:12px"><table><thead><tr><th>Tabel database</th><th>Ukuran tabel + indeks</th></tr></thead><tbody>${tableRows}</tbody></table></div>
-        ${measuredAt ? `<div class="admin-storage-note">Pengukuran Supabase: ${escapeHtml(measuredAt)}.</div>` : ""}
-        <div class="admin-storage-note">Kuota paket Supabase, GitHub, dan Vercel tidak tersedia melalui koneksi aplikasi. Lihat dashboard penyedia untuk sisa kuota cloud; tidak ada batas kuota yang diasumsikan di sini. Browser hanya mengukur perangkat ini.</div>`;
+        </div><details class="admin-storage-detail-list"><summary>Rincian bucket, tabel, dan layanan cloud</summary><div class="table-scroll"><table><thead><tr><th>Bucket Supabase</th><th>Pemakaian file</th><th>Jumlah file</th></tr></thead><tbody>${bucketRows}</tbody></table></div><div class="table-scroll"><table><thead><tr><th>Tabel database</th><th>Ukuran tabel + indeks</th></tr></thead><tbody>${tableRows}</tbody></table></div><div class="admin-storage-unknown-note">Kuota cloud tidak tersedia melalui koneksi aplikasi, jadi sisa kuota tidak diasumsikan. Browser hanya mengukur perangkat ini.</div>${measuredAt ? `<div class="admin-storage-note">Pengukuran Supabase: ${escapeHtml(measuredAt)}.</div>` : ""}<div class="admin-storage-footer"><a href="https://supabase.com/dashboard/project/gyrzbossqkuiawwuqkfo/usage" target="_blank" rel="noopener noreferrer">Dashboard Supabase ↗</a><a href="https://github.com/maz-proxy/gjm" target="_blank" rel="noopener noreferrer">GitHub ↗</a><a href="https://vercel.com/dashboard" target="_blank" rel="noopener noreferrer">Vercel ↗</a></div></details></article>`;
     }
 
     function renderAdminStoragePanel() {
-      return `<section class="table-section" id="admin-storage-panel"><div class="table-toolbar"><div><div class="table-title">Pemakaian Storage</div><div class="admin-storage-note">Ukuran data yang saat ini dapat diukur dari aplikasi.</div></div><button class="button button-secondary" id="admin-refresh-storage" type="button" ${adminStorageLoading ? "disabled" : ""}>${adminStorageLoading ? "Memuat..." : "Muat ulang"}</button></div><div id="admin-storage-content">${renderAdminStorageContent()}</div><div class="table-footer"><span class="admin-storage-links"><a href="https://supabase.com/dashboard/project/gyrzbossqkuiawwuqkfo/usage" target="_blank" rel="noopener noreferrer">Dashboard Supabase</a><a href="https://github.com/maz-proxy/gjm" target="_blank" rel="noopener noreferrer">Repository GitHub</a><a href="https://vercel.com/dashboard" target="_blank" rel="noopener noreferrer">Dashboard Vercel</a></span></div></section>`;
+      return `<section class="table-section" id="admin-storage-panel"><div class="table-toolbar"><div><div class="table-title">Pemakaian Storage</div><div class="admin-storage-note">Ringkasan singkat penggunaan storage.</div></div><button class="button button-secondary" id="admin-refresh-storage" type="button" ${adminStorageLoading ? "disabled" : ""}>${adminStorageLoading ? "Memuat..." : "Muat ulang"}</button></div><div id="admin-storage-content">${renderAdminStorageContent()}</div></section>`;
     }
 
     function renderAdminUsers() {
