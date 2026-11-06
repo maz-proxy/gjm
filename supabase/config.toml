@@ -7,6 +7,9 @@ verify_jwt = false
 [functions.admin-users]
 verify_jwt = false
 
+[functions.admin-storage]
+verify_jwt = false
+
 [auth]
 site_url = "https://maz.is-local.org"
 additional_redirect_urls = [

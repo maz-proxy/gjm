@@ -40,7 +40,7 @@ The Android app uses Capacitor to package the existing web workspace in a native
 
 1. To build locally, install Node.js 22 or newer, Java 21, Android Studio, and the Android SDK components requested by the Gradle project.
 2. In PowerShell, run `npm.cmd ci`, then `npm.cmd run android:apk`. The debug APK is created at `android\app\build\outputs\apk\debug\app-debug.apk`; install it on a test device before distributing it.
-3. Deploy the updated `login-with-username` and `admin-users` Supabase Edge Functions so their CORS allowlist accepts the Android WebView origin `https://localhost`.
+3. Deploy the updated `login-with-username`, `admin-users`, and `admin-storage` Supabase Edge Functions so their CORS allowlist accepts the Android WebView origin `https://localhost`.
 
 Run the full [`supabase-setup.sql`](./supabase-setup.sql) in Supabase → SQL Editor to create the public APK download bucket and its Owner-only upload, replace, and delete policies. Only the fixed `latest.apk` object is public; APK management metadata remains in the authenticated shared workspace data.
 
@@ -62,11 +62,14 @@ The browser app uses the Supabase project URL and publishable key in `index.html
    npx.cmd --yes supabase functions deploy login-with-username --project-ref gyrzbossqkuiawwuqkfo
    npx.cmd --yes supabase functions deploy provision-stock-users --project-ref gyrzbossqkuiawwuqkfo
    npx.cmd --yes supabase functions deploy admin-users --project-ref gyrzbossqkuiawwuqkfo
+   npx.cmd --yes supabase functions deploy admin-storage --project-ref gyrzbossqkuiawwuqkfo
    ```
 
    On PowerShell, use `npx.cmd` rather than `npx` if script execution is blocked. The functions use Supabase's built-in server-side credentials. Never put a secret or `service_role` key in browser code or commit one to GitHub.
 
 Only the Owner can change account roles. Accounts assigned **Super Adm** can manage shared brand names, PIC names, and the Android APK, but cannot manage accounts or other Owner-only workspace controls. After deploying `admin-users`, run the full `supabase-setup.sql` again to install the database and storage policies that restrict this role to Data Resource changes. Then the Owner can assign that role to `dewi` and `ronald` from **Kelola Akun Staf → Peran**. The selected users must log out and back in for the new permissions to take effect.
+
+The Owner's **Account Manager → Pemakaian Storage** reports the Supabase database size, file sizes by Supabase Storage bucket, and this browser's local storage estimate. Re-run the full `supabase-setup.sql` and deploy the `admin-storage` Edge Function to enable the report. Supabase plan quotas, GitHub usage, and Vercel usage are not exposed to the app because no provider management credentials are configured; use the linked provider dashboards for those figures. Browser storage is device- and browser-specific, not cloud usage.
 
 5. Publish the updated `index.html` to GitHub Pages before creating the staff accounts. The updated app is required to securely verify the temporary password and force each person to replace it on first login.
 6. Run the following in the same PowerShell window to create the 19 staff accounts. It creates a random one-time provisioning key, saves it only as a Supabase Edge Function secret, and calls the protected function. The function generates one random temporary password for newly created accounts; it is shown in the result only once.

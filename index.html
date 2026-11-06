@@ -90,6 +90,15 @@
     .admin-create-form { align-items: end; display: grid; gap: 10px; grid-template-columns: minmax(180px, 1fr) auto; }
     .admin-role-select { max-width: 220px; min-width: 175px; }
     .admin-user-status { color: var(--muted); font-size: 11px; }
+    .admin-storage-grid { display: grid; gap: 12px; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 14px 0; }
+    .admin-storage-card { background: var(--canvas); border: 1px solid var(--line); border-radius: 10px; min-width: 0; padding: 14px; }
+    .admin-storage-label { color: var(--muted); font-size: 10px; font-weight: 700; }
+    .admin-storage-value { color: var(--ink); font-size: 18px; font-weight: 800; margin-top: 6px; overflow-wrap: anywhere; }
+    .admin-storage-detail, .admin-storage-note { color: var(--muted); font-size: 10px; line-height: 1.5; margin-top: 5px; }
+    .admin-storage-links { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+    .admin-storage-links a { color: var(--green-dark); font-size: 11px; font-weight: 700; }
+    .admin-storage-error { color: var(--red); font-size: 11px; margin: 10px 0; }
+    @media (max-width: 650px) { .admin-storage-grid { grid-template-columns: 1fr; } }
     .logout-button { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.17); border-radius: 7px; color: #f4f8f2; font-size: 10px; margin-left: auto; padding: 6px 8px; }
     .logout-button:hover { background: rgba(255,255,255,.18); }
     .logout-confirm-dialog { background: var(--paper); border: 1px solid var(--line); border-radius: 15px; max-width: min(390px, calc(100vw - 32px)); overflow: hidden; padding: 0; width: 100%; }
@@ -2779,6 +2788,29 @@
       "Rekap Selisih": "Recap",
       "Sesi Stock Opname": "Session SO",
       "Kelola Akun": "Account Manager",
+      "Pemakaian Storage": "Storage usage",
+      "Database Supabase": "Supabase database",
+      "File Supabase Storage": "Supabase Storage files",
+      "Browser ini": "This browser",
+      "Ukuran data yang saat ini dapat diukur dari aplikasi.": "Data usage currently measurable by the app.",
+      "Ukuran seluruh database project, termasuk tabel dan indeks. Ukuran penggunaan tidak mewakili kuota paket.": "The size of the entire project database, including tables and indexes. Usage size does not represent the plan quota.",
+      "Belum ada file tersimpan di Supabase Storage.": "No files are stored in Supabase Storage.",
+      "Ukuran tabel belum tersedia.": "Table sizes are unavailable.",
+      "Memuat informasi pemakaian...": "Loading usage information...",
+      "Kuota tidak tersedia": "Quota unavailable",
+      "Kuota browser": "Browser quota",
+      "Kuota paket Supabase tidak dapat dibaca dari aplikasi ini.": "The Supabase plan quota cannot be read from this app.",
+      "Dashboard layanan": "Service dashboards",
+      "Lihat dashboard": "View dashboard",
+      "GitHub dan Vercel belum dihubungkan dengan API token.": "GitHub and Vercel are not connected with API tokens.",
+      "Pemakaian dan kuota GitHub tidak tersedia di aplikasi tanpa koneksi API berizin.": "GitHub usage and quota are unavailable in the app without an authorized API connection.",
+      "Pemakaian dan kuota Vercel tidak tersedia di aplikasi tanpa koneksi API berizin.": "Vercel usage and quota are unavailable in the app without an authorized API connection.",
+      "Ukuran penggunaan tidak mewakili kuota paket.": "Usage size does not represent plan quota.",
+      "Bucket Supabase": "Supabase bucket",
+      "Pemakaian file": "File usage",
+      "Jumlah file": "File count",
+      "Tabel database": "Database table",
+      "Ukuran tabel + indeks": "Table + index size",
       "Pemindaian inventaris": "Inventory scanning",
       "Isi nomor Rack dan quantity target sebelum mulai scan.": "Enter a rack number and quantity target before scanning.",
       "Total Rack": "Total Racks",
@@ -3907,6 +3939,9 @@
     let adminUsers = [];
     let adminNotice = "";
     let adminNoticeType = "success";
+    let adminStorageUsage = null;
+    let adminStorageError = "";
+    let adminStorageLoading = false;
     let sharedStateReady = false;
     let sharedStateChannel = null;
     let refreshPending = false;
@@ -9043,8 +9078,107 @@
       notify("Data Resource berhasil dihapus.");
     }
 
+    function formatStorageBytes(value) {
+      const bytes = Number(value);
+      if (!Number.isFinite(bytes) || bytes < 0) return "—";
+      const units = ["B", "KiB", "MiB", "GiB", "TiB"];
+      let displayValue = bytes;
+      let unitIndex = 0;
+      while (displayValue >= 1024 && unitIndex < units.length - 1) {
+        displayValue /= 1024;
+        unitIndex += 1;
+      }
+      return unitIndex === 0
+        ? `${formatNumber(bytes)} B`
+        : `${formatNumber(bytes)} B (${formatNumber(displayValue)} ${units[unitIndex]})`;
+    }
+
+    function renderAdminStorageContent() {
+      if (adminStorageLoading && !adminStorageUsage) return '<div class="admin-storage-note">Memuat informasi pemakaian...</div>';
+      if (adminStorageError && !adminStorageUsage) return `<div class="admin-storage-error">${escapeHtml(adminStorageError)}</div>`;
+      const usage = adminStorageUsage?.usage;
+      const buckets = Array.isArray(usage?.buckets) ? usage.buckets : [];
+      const tables = Array.isArray(usage?.tables) ? usage.tables : [];
+      const bucketBytes = buckets.reduce((total, bucket) => total + Number(bucket.bytes || 0), 0);
+      const browser = adminStorageUsage?.browser;
+      const browserUsage = browser?.usage === null || browser?.usage === undefined ? "—" : formatStorageBytes(browser.usage);
+      const browserQuota = browser?.quota === null || browser?.quota === undefined ? "Kuota tidak tersedia" : `Kuota browser: ${formatStorageBytes(browser.quota)}`;
+      const browserDetail = browser?.error || (browser ? `${browserQuota} · Hanya browser/perangkat ini, bukan data cloud.` : "Informasi browser tidak tersedia.");
+      const bucketRows = buckets.length
+        ? buckets.map((bucket) => `<tr><td>${escapeHtml(bucket.bucketId || "")}</td><td>${formatStorageBytes(bucket.bytes)}</td><td>${formatNumber(Number(bucket.objects || 0))}</td></tr>`).join("")
+        : '<tr><td colspan="3">Belum ada file tersimpan di Supabase Storage.</td></tr>';
+      const tableRows = tables.length
+        ? tables.map((table) => `<tr><td>${escapeHtml(`${table.schema || "public"}.${table.table || ""}`)}</td><td>${formatStorageBytes(table.bytes)}</td></tr>`).join("")
+        : '<tr><td colspan="2">Ukuran tabel belum tersedia.</td></tr>';
+      const measuredAt = usage?.measuredAt
+        ? formatDate(usage.measuredAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
+        : "";
+      return `${adminStorageError ? `<div class="admin-storage-error">${escapeHtml(adminStorageError)} Menampilkan hasil pengukuran terakhir.</div>` : ""}
+        <div class="admin-storage-grid">
+          <article class="admin-storage-card"><div class="admin-storage-label">Database Supabase</div><div class="admin-storage-value">${formatStorageBytes(usage?.databaseBytes)}</div><div class="admin-storage-detail">Ukuran seluruh database project, termasuk tabel dan indeks. Ukuran penggunaan tidak mewakili kuota paket.</div></article>
+          <article class="admin-storage-card"><div class="admin-storage-label">File Supabase Storage</div><div class="admin-storage-value">${formatStorageBytes(bucketBytes)}</div><div class="admin-storage-detail">${formatNumber(buckets.reduce((total, bucket) => total + Number(bucket.objects || 0), 0))} file di ${buckets.length} bucket.</div></article>
+          <article class="admin-storage-card"><div class="admin-storage-label">Browser ini</div><div class="admin-storage-value">${browserUsage}</div><div class="admin-storage-detail">${escapeHtml(browserDetail)}</div></article>
+          <article class="admin-storage-card"><div class="admin-storage-label">GitHub</div><div class="admin-storage-value">Lihat dashboard</div><div class="admin-storage-detail">Pemakaian dan kuota GitHub tidak tersedia di aplikasi tanpa koneksi API berizin.</div></article>
+          <article class="admin-storage-card"><div class="admin-storage-label">Vercel</div><div class="admin-storage-value">Lihat dashboard</div><div class="admin-storage-detail">Pemakaian dan kuota Vercel tidak tersedia di aplikasi tanpa koneksi API berizin.</div></article>
+        </div>
+        <div class="table-scroll"><table><thead><tr><th>Bucket Supabase</th><th>Pemakaian file</th><th>Jumlah file</th></tr></thead><tbody>${bucketRows}</tbody></table></div>
+        <div class="table-scroll" style="margin-top:12px"><table><thead><tr><th>Tabel database</th><th>Ukuran tabel + indeks</th></tr></thead><tbody>${tableRows}</tbody></table></div>
+        ${measuredAt ? `<div class="admin-storage-note">Pengukuran Supabase: ${escapeHtml(measuredAt)}.</div>` : ""}
+        <div class="admin-storage-note">Kuota paket Supabase tidak dapat dibaca dari aplikasi ini. GitHub dan Vercel belum dihubungkan dengan API token, jadi pemakaiannya hanya dapat dilihat di dashboard masing-masing.</div>`;
+    }
+
+    function renderAdminStoragePanel() {
+      return `<section class="table-section" id="admin-storage-panel"><div class="table-toolbar"><div><div class="table-title">Pemakaian Storage</div><div class="admin-storage-note">Ukuran data yang saat ini dapat diukur dari aplikasi.</div></div><button class="button button-secondary" id="admin-refresh-storage" type="button" ${adminStorageLoading ? "disabled" : ""}>${adminStorageLoading ? "Memuat..." : "Muat ulang"}</button></div><div id="admin-storage-content">${renderAdminStorageContent()}</div><div class="table-footer"><span class="admin-storage-links"><a href="https://supabase.com/dashboard/project/gyrzbossqkuiawwuqkfo/usage" target="_blank" rel="noopener noreferrer">Dashboard Supabase</a><a href="https://github.com/maz-proxy/gjm" target="_blank" rel="noopener noreferrer">Repository GitHub</a><a href="https://vercel.com/dashboard" target="_blank" rel="noopener noreferrer">Dashboard Vercel</a></span></div></section>`;
+    }
+
     function renderAdminUsers() {
-      return `${navMarkup()}<section class="page-head"><div><h1>Kelola Akun Staf</h1><p class="subtitle">Buat akun username, reset password, dan atur akses masuk workspace.</p></div></section><section class="table-section"><div class="table-toolbar"><div class="table-title">Tambah akun staf</div></div><form class="admin-create-form" id="admin-create-form"><label class="auth-field"><span>Username</span><input class="auth-input" name="username" type="text" minlength="3" maxlength="30" pattern="[a-z0-9][a-z0-9._-]{2,29}" required placeholder="contoh: stafbaru"></label><button class="button button-primary" type="submit">Buat akun</button></form><div class="admin-notice ${adminNoticeType}" id="admin-notice" ${adminNotice ? "" : "hidden"}>${escapeHtml(adminNotice)}</div></section><section class="table-section"><div class="table-toolbar"><div class="table-title">Daftar akun <span class="table-count">${adminUsers.length} staf</span></div><button class="button button-secondary" id="admin-refresh-users" type="button">Muat ulang</button></div><div class="table-scroll"><table><thead><tr><th>Nama</th><th>Username</th><th>Status</th><th>Peran</th><th>Aksi</th></tr></thead><tbody>${adminUsers.length ? adminUsers.map((user) => `<tr><td>${escapeHtml(formatDisplayName(user.username))}</td><td>${escapeHtml(user.username)}</td><td><span class="row-status ${user.disabled ? "pending" : "match"}">${user.disabled ? "Dinonaktifkan" : "Aktif"}</span></td><td>${user.superAdmin ? "Owner" : `<select class="form-control admin-role-select" data-admin-role="${escapeHtml(user.username)}" aria-label="Peran ${escapeHtml(user.username)}"><option value="staff"${user.resourceAdmin ? "" : " selected"}>Staf</option><option value="resource_admin"${user.resourceAdmin ? " selected" : ""}>Super Adm</option></select>`}</td><td><button class="button button-secondary" type="button" data-admin-reset="${escapeHtml(user.username)}">Reset password</button> ${user.superAdmin ? "" : `<button class="button button-secondary" type="button" data-admin-toggle="${escapeHtml(user.username)}" data-disabled="${user.disabled}">${user.disabled ? "Aktifkan" : "Nonaktifkan"}</button>`}</td></tr>`).join("") : `<tr><td colspan="5">Belum ada akun staf.</td></tr>`}</tbody></table></div><div class="table-footer"><span>Super Adm hanya dapat mengelola Nama Brand, Nama PIC, dan APK Android.</span></div></section>`;
+      return `${navMarkup()}<section class="page-head"><div><h1>Kelola Akun Staf</h1><p class="subtitle">Buat akun username, reset password, dan atur akses masuk workspace.</p></div></section><section class="table-section"><div class="table-toolbar"><div class="table-title">Tambah akun staf</div></div><form class="admin-create-form" id="admin-create-form"><label class="auth-field"><span>Username</span><input class="auth-input" name="username" type="text" minlength="3" maxlength="30" pattern="[a-z0-9][a-z0-9._-]{2,29}" required placeholder="contoh: stafbaru"></label><button class="button button-primary" type="submit">Buat akun</button></form><div class="admin-notice ${adminNoticeType}" id="admin-notice" ${adminNotice ? "" : "hidden"}>${escapeHtml(adminNotice)}</div></section>${renderAdminStoragePanel()}<section class="table-section"><div class="table-toolbar"><div class="table-title">Daftar akun <span class="table-count">${adminUsers.length} staf</span></div><button class="button button-secondary" id="admin-refresh-users" type="button">Muat ulang</button></div><div class="table-scroll"><table><thead><tr><th>Nama</th><th>Username</th><th>Status</th><th>Peran</th><th>Aksi</th></tr></thead><tbody>${adminUsers.length ? adminUsers.map((user) => `<tr><td>${escapeHtml(formatDisplayName(user.username))}</td><td>${escapeHtml(user.username)}</td><td><span class="row-status ${user.disabled ? "pending" : "match"}">${user.disabled ? "Dinonaktifkan" : "Aktif"}</span></td><td>${user.superAdmin ? "Owner" : `<select class="form-control admin-role-select" data-admin-role="${escapeHtml(user.username)}" aria-label="Peran ${escapeHtml(user.username)}"><option value="staff"${user.resourceAdmin ? "" : " selected"}>Staf</option><option value="resource_admin"${user.resourceAdmin ? " selected" : ""}>Super Adm</option></select>`}</td><td><button class="button button-secondary" type="button" data-admin-reset="${escapeHtml(user.username)}">Reset password</button> ${user.superAdmin ? "" : `<button class="button button-secondary" type="button" data-admin-toggle="${escapeHtml(user.username)}" data-disabled="${user.disabled}">${user.disabled ? "Aktifkan" : "Nonaktifkan"}</button>`}</td></tr>`).join("") : `<tr><td colspan="5">Belum ada akun staf.</td></tr>`}</tbody></table></div><div class="table-footer"><span>Super Adm hanya dapat mengelola Nama Brand, Nama PIC, dan APK Android.</span></div></section>`;
+    }
+
+    async function loadAdminStorage() {
+      if (!isSuperAdmin() || adminStorageLoading) return;
+      adminStorageLoading = true;
+      const refreshButton = document.getElementById("admin-refresh-storage");
+      if (refreshButton) {
+        refreshButton.disabled = true;
+        refreshButton.textContent = "Memuat...";
+      }
+      const content = document.getElementById("admin-storage-content");
+      if (content) content.innerHTML = renderAdminStorageContent();
+      try {
+        const { data, error } = await supabaseClient.functions.invoke("admin-storage", { body: {} });
+        if (error || data?.error || !data?.usage || !Number.isFinite(Number(data.usage.databaseBytes)) || !Array.isArray(data.usage.buckets) || !Array.isArray(data.usage.tables)) {
+          const functionError = error ? await getFunctionErrorMessage(error) : "";
+          adminStorageError = data?.error || functionError || "Pemakaian storage gagal dimuat.";
+        } else {
+          let browser = null;
+          if (navigator.storage?.estimate) {
+            try {
+              const estimate = await navigator.storage.estimate();
+              browser = { usage: estimate.usage ?? null, quota: estimate.quota ?? null };
+            } catch (error) {
+              console.error("Pemakaian storage browser tidak dapat dibaca:", error);
+              browser = { usage: null, quota: null, error: "Pemakaian browser tidak dapat dibaca." };
+            }
+          } else {
+            browser = { usage: null, quota: null, error: "Browser ini tidak menyediakan estimasi storage." };
+          }
+          adminStorageUsage = { usage: data.usage, browser };
+          adminStorageError = "";
+        }
+      } catch (error) {
+        console.error("Informasi pemakaian Supabase tidak dapat dimuat:", error);
+        adminStorageError = error instanceof Error ? error.message : "Pemakaian storage gagal dimuat.";
+      } finally {
+        adminStorageLoading = false;
+        const updatedContent = document.getElementById("admin-storage-content");
+        if (updatedContent) updatedContent.innerHTML = renderAdminStorageContent();
+        const updatedButton = document.getElementById("admin-refresh-storage");
+        if (updatedButton) {
+          updatedButton.disabled = false;
+          updatedButton.textContent = "Muat ulang";
+        }
+      }
     }
 
     async function loadAdminUsers() {
@@ -9531,6 +9665,7 @@
       if (!skipChatEvents) bindChatEvents();
       document.getElementById("add-workspace-button")?.addEventListener("click", addWorkspace);
       document.getElementById("admin-refresh-users")?.addEventListener("click", loadAdminUsers);
+      document.getElementById("admin-refresh-storage")?.addEventListener("click", () => void loadAdminStorage());
       document.getElementById("copy-reset-password")?.addEventListener("click", async () => {
         const password = document.getElementById("reset-password-value").textContent;
         try {
@@ -9853,6 +9988,7 @@
         next?.focus();
         next?.setSelectionRange(cursor, cursor);
       });
+      if (currentPage === "admin-users" && !adminStorageUsage && !adminStorageLoading) void loadAdminStorage();
     }
 
     function switchWorkspace(id, destinationPage = "opname") {
@@ -10893,7 +11029,10 @@
         layoutSearchTerm = "";
         render();
         if (isMobileDrawerEnabled()) setAndroidNavigationOpen(false);
-        if (currentPage === "admin-users") loadAdminUsers();
+        if (currentPage === "admin-users") {
+          loadAdminUsers();
+          loadAdminStorage();
+        }
       });
     });
     document.addEventListener("keydown", (event) => {

@@ -6,6 +6,57 @@ create table if not exists public.stock_opname_state (
   updated_by uuid not null references auth.users(id)
 );
 
+create or replace function public.get_stock_opname_storage_usage()
+returns jsonb
+language sql
+security definer
+set search_path = ''
+as $$
+  select pg_catalog.jsonb_build_object(
+    'measuredAt', pg_catalog.statement_timestamp(),
+    'databaseBytes', pg_catalog.pg_database_size(pg_catalog.current_database()),
+    'tables', coalesce((
+      select pg_catalog.jsonb_agg(
+        pg_catalog.jsonb_build_object(
+          'schema', schema_info.nspname,
+          'table', relation.relname,
+          'bytes', pg_catalog.pg_total_relation_size(relation.oid)
+        )
+        order by schema_info.nspname, relation.relname
+      )
+      from pg_catalog.pg_class as relation
+      join pg_catalog.pg_namespace as schema_info on schema_info.oid = relation.relnamespace
+      where schema_info.nspname = 'public'
+        and relation.relkind in ('r', 'm', 'p')
+    ), '[]'::jsonb),
+    'buckets', coalesce((
+      select pg_catalog.jsonb_agg(
+        pg_catalog.jsonb_build_object(
+          'bucketId', bucket_usage.bucket_id,
+          'bytes', bucket_usage.bytes,
+          'objects', bucket_usage.objects
+        )
+        order by bucket_usage.bucket_id
+      )
+      from (
+        select
+          storage_object.bucket_id,
+          sum(case
+            when coalesce(storage_object.metadata ->> 'size', '') ~ '^[0-9]+$'
+              then (storage_object.metadata ->> 'size')::bigint
+            else 0
+          end)::bigint as bytes,
+          count(*)::bigint as objects
+        from storage.objects as storage_object
+        group by storage_object.bucket_id
+      ) as bucket_usage
+    ), '[]'::jsonb)
+  );
+$$;
+
+revoke all on function public.get_stock_opname_storage_usage() from public, anon, authenticated;
+grant execute on function public.get_stock_opname_storage_usage() to service_role;
+
 alter table public.stock_opname_state
   add column if not exists version bigint not null default 1;
 
