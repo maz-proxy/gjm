@@ -8375,6 +8375,7 @@
       }
       const pics = session.picNames || [];
       const soProgress = recordedSoProgress(session);
+      const countMode = session.snapshot.countMode === "laptops" ? "laptops" : "all";
       const finishedAt = session.finishedAt
         ? formatDate(session.finishedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })
         : "Tidak tersedia";
@@ -8387,6 +8388,7 @@
           </div>
           <div class="recorded-pic-list" aria-label="PIC sesi">
             <div class="recorded-pic-cards">
+              <div class="recorded-pic-card"><span class="recorded-pic-label">Mode SO</span><span class="recorded-pic-name">${escapeHtml(countModeLabel(countMode))}</span></div>
               <div class="recorded-pic-card"><span class="recorded-pic-label">PIC 1</span><span class="recorded-pic-name">${escapeHtml(pics[0] || "Belum diisi")}</span></div>
               <div class="recorded-pic-card"><span class="recorded-pic-label">PIC 2</span><span class="recorded-pic-name">${escapeHtml(pics[1] || "Belum diisi")}</span></div>
             </div>
