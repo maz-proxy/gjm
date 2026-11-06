@@ -1583,10 +1583,31 @@
     .recorded-so-progress-fill { background: #a9e2c4; border-radius: inherit; height: 100%; }
     .recorded-so-progress-row { color: #e0f0e8; font-size: 9px; gap: 8px; line-height: 1.35; }
     .recorded-so-progress-row strong { color: #fff; font-size: 9px; font-variant-numeric: tabular-nums; text-align: right; }
+    .recorded-archive-summary-wrap { flex: 1 1 100%; min-width: 0; position: relative; z-index: 1; }
+    .recorded-archive-summary { align-items: stretch; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.24); border-radius: 10px; display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); max-width: none; overflow: hidden; width: 100%; }
+    .recorded-archive-summary .print-session-summary-metric,
+    .recorded-archive-summary .print-session-summary-progress { align-content: center; background: transparent; display: grid; gap: 4px; justify-items: center; min-width: 0; padding: 8px 6px; text-align: center; }
+    .recorded-archive-summary .print-session-summary-metric + .print-session-summary-metric,
+    .recorded-archive-summary .print-session-summary-progress { border-left: 1px solid rgba(255,255,255,.2); }
+    .recorded-archive-summary .print-session-summary-metric > span,
+    .recorded-archive-summary .print-session-summary-progress > span { color: #c5e0d4; font-size: 8px; font-weight: 800; letter-spacing: .35px; line-height: 1.25; text-transform: uppercase; }
+    .recorded-archive-summary .print-session-summary-metric strong { color: #fff; font-size: 11px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .recorded-archive-summary .print-session-summary-metric strong small { font-size: 8px; font-weight: 500; }
+    .recorded-archive-summary .print-session-summary-progress strong { color: #fff; font-size: 23px; font-variant-numeric: tabular-nums; font-weight: 900; line-height: 1; white-space: nowrap; }
     @media (max-width: 650px) {
       .recorded-pic-list { flex-wrap: wrap; }
       .recorded-pic-cards { flex: 1 1 100%; }
       .recorded-so-progress { flex-basis: 100%; }
+      .recorded-archive-summary { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .recorded-archive-summary .print-session-summary-metric:nth-child(5) { border-left: 0; }
+      .recorded-archive-summary .print-session-summary-metric:nth-child(n+5),
+      .recorded-archive-summary .print-session-summary-progress { border-top: 1px solid rgba(255,255,255,.2); }
+    }
+    @media (max-width: 420px) {
+      .recorded-archive-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .recorded-archive-summary .print-session-summary-metric:nth-child(odd) { border-left: 0; }
+      .recorded-archive-summary .print-session-summary-metric:nth-child(n+3),
+      .recorded-archive-summary .print-session-summary-progress { border-top: 1px solid rgba(255,255,255,.2); }
     }
     .recorded-archive-head > .button-secondary { background: #fff; border-color: rgba(255,255,255,.75); color: #285c4b; }
     .recorded-archive-head > .button-secondary:hover { background: #eaf5ef; border-color: #fff; }
@@ -7956,7 +7977,7 @@
         remainingPercent: quantityPercent(remaining, total)
       };
     }
-    function renderArchivePrintSummary(session) {
+    function renderArchivePrintSummary(session, className = "print-session-summary") {
       const snapshot = session.snapshot || {};
       const countMode = snapshot.countMode === "laptops" ? "laptops" : "all";
       const products = (snapshot.products || []).filter((product) => isCountedProduct(product, countMode));
@@ -7972,7 +7993,7 @@
       const progress = recordedSoProgress(session);
       const variance = scanQuantity + manualQuantity + pjQuantity - progress.total - inboundQuantity;
       const quantitySummary = currentLanguage === "en" ? "units" : "unit";
-      return `<aside class="print-session-summary" aria-label="${currentLanguage === "en" ? "Session quantity summary" : "Ringkasan quantity sesi"}">
+      return `<aside class="${className}" aria-label="${currentLanguage === "en" ? "Session quantity summary" : "Ringkasan quantity sesi"}">
         <div class="print-session-summary-metric"><span>Mode SO</span><strong>${escapeHtml(countModeLabel(countMode))}</strong></div>
         <div class="print-session-summary-metric"><span>Total Qty Scan</span><strong>${formatNumber(scanQuantity)} <small>${quantitySummary}</small></strong></div>
         <div class="print-session-summary-metric"><span>Total Qty Manual</span><strong>${formatNumber(manualQuantity)} <small>${quantitySummary}</small></strong></div>
@@ -8375,7 +8396,6 @@
       }
       const pics = session.picNames || [];
       const soProgress = recordedSoProgress(session);
-      const countMode = session.snapshot.countMode === "laptops" ? "laptops" : "all";
       const finishedAt = session.finishedAt
         ? formatDate(session.finishedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })
         : "Tidak tersedia";
@@ -8388,7 +8408,6 @@
           </div>
           <div class="recorded-pic-list" aria-label="PIC sesi">
             <div class="recorded-pic-cards">
-              <div class="recorded-pic-card"><span class="recorded-pic-label">Mode SO</span><span class="recorded-pic-name">${escapeHtml(countModeLabel(countMode))}</span></div>
               <div class="recorded-pic-card"><span class="recorded-pic-label">PIC 1</span><span class="recorded-pic-name">${escapeHtml(pics[0] || "Belum diisi")}</span></div>
               <div class="recorded-pic-card"><span class="recorded-pic-label">PIC 2</span><span class="recorded-pic-name">${escapeHtml(pics[1] || "Belum diisi")}</span></div>
             </div>
@@ -8399,6 +8418,7 @@
               <div class="recorded-so-progress-row"><span>Qty kurang</span><strong>${formatNumber(soProgress.remaining)} unit · ${formatNumber(soProgress.remainingPercent)}%</strong></div>
             </div>
           </div>
+          <div class="recorded-archive-summary-wrap">${renderArchivePrintSummary(session, "print-session-summary recorded-archive-summary")}</div>
           <button class="button button-secondary" type="button" data-recorded-return>← Kembali ke Dashboard</button>
         </section>
         <section class="recorded-view-actions" aria-label="Lembar arsip dan cetak">
