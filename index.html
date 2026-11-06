@@ -2670,7 +2670,7 @@
     <div class="dialog-actions"><button class="button button-primary" type="button" data-close="date-validation-warning-dialog">Perbaiki tanggal</button></div>
   </dialog>
   <dialog id="finish-dialog">
-    <div class="dialog-head"><div><div class="dialog-title">Selesaikan stock opname?</div><div class="dialog-subtitle">Hasil diarsipkan, lalu seluruh data kerja sesi ini direset. Jika ada sesi lain yang berjalan, sesi itu akan dibuka untuk dilanjutkan.</div></div><button class="dialog-close" type="button" data-close="finish-dialog" aria-label="Tutup">×</button></div>
+    <div class="dialog-head"><div><div class="dialog-title">Selesaikan stock opname?</div><div class="dialog-subtitle">Hasil akan diarsipkan dan kartu workspace ini dihapus dari jadwal. Jika ada sesi lain yang berjalan, sesi itu akan dibuka untuk dilanjutkan.</div></div><button class="dialog-close" type="button" data-close="finish-dialog" aria-label="Tutup">×</button></div>
     <div class="confirm-body" id="finish-message"></div>
     <div class="dialog-actions"><button class="button button-secondary" type="button" data-close="finish-dialog">Kembali</button><button class="button button-primary" id="confirm-finish" type="button">SO SELESAI</button></div>
   </dialog>
@@ -3285,15 +3285,16 @@
       "Nonaktifkan": "Disable",
       "Panduan lengkap menyiapkan jadwal, memproses VEF, melakukan opname, dan meninjau arsip dengan benar.": "A complete guide to scheduling, processing VEF, performing stock opname, and reviewing archives.",
       "Kontrol stock opname dalam satu workspace.": "Manage stock opname in one workspace.",
+      "Hasil akan diarsipkan dan kartu workspace ini dihapus dari jadwal. Jika ada sesi lain yang berjalan, sesi itu akan dibuka untuk dilanjutkan.": "The results will be archived and this workspace card will be removed from the schedule. If another session is running, it will be opened to continue.",
       "Aplikasi ini membantu tim mengelola master VEF, memindai serial number, dan mencocokkan hasil opname dengan data stok. Aktivitas tersimpan bersama agar dapat dipantau oleh seluruh tim.": "This app helps teams manage the VEF master, scan serial numbers, and reconcile stock opname results. Shared activity is saved so the whole team can monitor progress.",
       "Panduan menggunakan workspace": "Workspace Guide",
       "Pantau progres scan, jumlah item dan unit per warehouse, quantity SCAN/MANUAL/PJ, serta sesi yang masih berjalan. Klik tombol pada rincian sesi untuk membuka workspace-nya. Di bagian bawah, pilih brand pada Stock Opname Recorded, lalu tentukan bulan dan week. Tombol View membuka halaman arsip khusus yang menampilkan PIC 1 dan PIC 2; pilih Scan Layout, Result SO, atau Rekap Selisih untuk melihat lembar hanya-baca. Setiap lembar dapat dicetak atau disimpan sebagai PDF melalui dialog print browser.": "Track scan progress, item and unit counts by warehouse, SCAN/MANUAL/PJ quantities, and active sessions. Use the session details button to open a workspace. At the bottom, select a brand in Recorded Stock Opname, then choose a month and week. View opens a dedicated archive page showing PIC 1 and PIC 2; select Scan & Manual, Stock Reconciliation, or Recap to view a read-only sheet. Each sheet can be printed or saved as PDF using your browser's print dialog.",
-      "Tambahkan kartu jadwal, lalu pilih Nama Brand dan PIC 1/PIC 2 dari daftar yang dikelola Owner. Tentukan bulan, week, dan mode hitung laptop saja atau semua item. Ketiga nama wajib terisi sebelum sesi dapat dimulai. Tombol Mulai Stock Opname akan membuka Master VEF; setelah sesi berjalan, tombol berubah menjadi Lihat Stok Opname dan membuka Scan Layout. Kartu hanya dapat dihapus sebelum sesi dimulai dan selama belum berisi data kerja.": "Add a schedule card, then select a brand and PIC 1/PIC 2 from the list managed by the Owner. Set the month, week, and counting mode (laptops only or all items). Complete all three names before starting. Start Stock Opname opens VEF Master; once active, the button changes to View Stock Opname and opens Scan & Manual. A card can only be deleted before the session starts and while it has no work data.",
+      "Tambahkan kartu jadwal, lalu pilih Nama Brand dan PIC 1/PIC 2 dari daftar yang dikelola Owner. Tentukan bulan, week, dan mode hitung laptop saja atau semua item. Ketiga nama wajib terisi sebelum sesi dapat dimulai. Tombol Mulai Stock Opname akan membuka Master VEF; setelah sesi berjalan, tombol berubah menjadi Lihat Stok Opname dan membuka Scan Layout. Kartu dapat dihapus sebelum sesi dimulai selama belum berisi data kerja; setelah SO selesai, hasil diarsipkan dan kartu workspace dihapus dari jadwal.": "Add a schedule card, then select a brand and PIC 1/PIC 2 from the list managed by the Owner. Set the month, week, and counting mode (laptops only or all items). Complete all three names before starting. Start Stock Opname opens VEF Master; once active, the button changes to View Stock Opname and opens Scan & Manual. A card can be deleted before the session starts while it has no work data; after stock opname is completed, the results are archived and the workspace card is removed from the schedule.",
       "Setelah memulai jadwal, unggah XLSX/XLS dengan sheet Serial No atau format workbook VEF yang didukung; file CSV dengan kolom Serial No, Item Code, Brand, Warehouse, dan Item Name juga dapat digunakan. Periksa jumlah item, serial, dan quantity per warehouse. Panel menampilkan metadata waktu sumber dan waktu unggah. File sumber disimpan dalam arsip sesi untuk dapat diunduh kembali.": "After starting the schedule, upload an XLSX/XLS file with a Serial No sheet or a supported VEF workbook; CSV files with Serial No, Item Code, Brand, Warehouse, and Item Name columns are also supported. Check item, serial, and quantity totals by warehouse. The panel shows source and upload timestamps. The source file is stored in the session archive for later download.",
       "Buat rack dan isi label rack (angka atau keterangan teks) serta target scan. Pindai serial number pada rack yang sesuai atau gunakan tombol kamera untuk membaca barcode. Hasil cocok, duplikat, bukan laptop, atau tidak ditemukan tampil pada catatan scan; serial cocok juga menampilkan item code, nama item, serial number, dan waktu saat rinciannya dibuka. Rack dengan SN duplikat diberi tanda peringatan. Untuk barang tanpa serial, cari item dari VEF, pilih hasil yang benar, masukkan quantity, lalu Catat Manual. Catatan manual terbaru akan ditandai dan difokuskan.": "Create a rack, enter its label (a number or text), and set the scan target. Scan serial numbers at the appropriate rack or use the camera button to read a barcode. Matching, duplicate, non-laptop, or not-found results appear in the scan log; matching serials also show the item code, item name, serial number, and timestamp when expanded. Racks with duplicate serial numbers are flagged. For items without serial numbers, search VEF, select the correct item, enter the quantity, then record it manually. The latest manual entry is highlighted.",
       "Lembar ini menghitung SCAN + MANUAL + PJ dan membandingkan hasilnya dengan VEF. Untuk PJ, klik quantity pada item, lalu isi tanggal/waktu dan nomor invoice. Input hanya diterima jika waktu invoice lebih baru daripada timestamp file VEF yang tercatat di Master VEF. Tekan SO SELESAI setelah pemeriksaan selesai untuk mengunci dan mengarsipkan hasil.": "This sheet totals SCAN + MANUAL + PJ and compares the result with VEF. For PJ, click an item's quantity, then enter the date/time and invoice number. Entries are accepted only when the invoice timestamp is later than the VEF file timestamp in VEF Master. Select FINISH STOCK OPNAME when checks are complete to lock and archive the results.",
       "Tinjau hanya item yang belum sesuai; kolom selisih membandingkan jumlah SCAN + MANUAL + PJ dengan quantity VEF. Tambahkan catatan untuk menjelaskan kekurangan atau kelebihan. Periksa kembali data sebelum sesi diselesaikan karena hasil yang diarsipkan menjadi rekaman baca-saja.": "Review only items with discrepancies; the variance column compares SCAN + MANUAL + PJ with VEF quantity. Add notes to explain shortages or surpluses. Review the data before completing the session, as archived results are read-only.",
-      "Gunakan Buka sesi untuk meninjau workbook sumber, rincian setiap rack, input manual, seluruh item Result SO, daftar invoice PJ, dan Rekap Selisih. Ekspor XLSX berisi worksheet arsip beserta detail input, sedangkan Print menyusun laporan untuk dicetak atau disimpan sebagai PDF. Arsip lama tetap tersedia walaupun kartu jadwal sudah direset.": "Use Open session to review the source workbook, each rack's details, manual entries, all Stock Reconciliation items, PJ invoices, and Recap. XLSX export includes archive worksheets and input details; Print creates a report to print or save as PDF. Older archives remain available even after a schedule card is reset.",
+      "Gunakan Buka sesi untuk meninjau workbook sumber, rincian setiap rack, input manual, seluruh item Result SO, daftar invoice PJ, dan Rekap Selisih. Ekspor XLSX berisi worksheet arsip beserta detail input, sedangkan Print menyusun laporan untuk dicetak atau disimpan sebagai PDF. Arsip lama tetap tersedia walaupun kartu workspace sudah dihapus dari jadwal setelah sesi selesai.": "Use Open session to review the source workbook, each rack's details, manual entries, all Stock Reconciliation items, PJ invoices, and Recap. XLSX export includes archive worksheets and input details; Print creates a report to print or save as PDF. Older archives remain available even after a workspace card is removed from the schedule when its session completes.",
       "Lihat aktivitas berdasarkan waktu dan sesi, seperti mulai/selesai opname, scan ditambahkan, input manual, dan perubahan catatan atau quantity. Gunakan riwayat untuk membantu audit dan menelusuri perubahan data.": "Review activity by time and session, including stock opname start/completion, added scans, manual entries, and note or quantity changes. Use history to audit and trace data changes.",
       "Tambahkan, ubah, atau hapus pilihan Nama Brand dan Nama PIC. Daftar ini dibagikan kepada semua akun dan menjadi sumber pencarian pada kartu Jadwal. Pastikan nama sudah benar sebelum staf memulai sesi.": "Add, edit, or remove brand and PIC names. This list is shared with all accounts and provides search options on Schedule cards. Verify names before staff start a session.",
       "Buat akun staf, reset password, dan aktifkan atau nonaktifkan akses akun.": "Create staff accounts, reset passwords, and enable or disable account access.",
@@ -10803,31 +10804,31 @@
       const unarchivedWorkbooks = (state.workbookFiles || []).filter((workbook) => workbook.sessionId !== archivedSessionId);
       state.sessions.push({ ...stats, id: state.activeSession.id, status: "completed", workspaceId: state.currentWorkspaceId, workspaceName, month: workspace.month, period: workspace.period, picNames: [...(workspace?.picNames || ["", ""])], createdByUserId: state.activeSession.createdByUserId || authSession?.user?.id || "", createdByUsername: state.activeSession.createdByUsername || authSession?.user?.user_metadata?.username || authSession?.user?.email || "", startedAt: state.activeSession.startedAt, finishedAt, snapshot, workbooks });
       recordActivity("Sesi diselesaikan", `Stock opname ${workspaceName} diselesaikan dan diarsipkan.`);
-      const completedWorkspace = workspace;
-      completedWorkspace.name = "";
-      completedWorkspace.picNames = ["", ""];
-      completedWorkspace.startedAt = "";
-      completedWorkspace.data = { ...emptyWorkspaceData(), activeSession: makeSession(authSession?.user || null), historyEvents: state.historyEvents, workbookFiles: unarchivedWorkbooks };
-      const nextRunningWorkspace = state.workspaces.find((item) => item !== completedWorkspace
+      state.workspaces = state.workspaces.filter((item) => item !== workspace);
+      normalizeWorkspaceScheduleCards(state.workspaces, state.sessions);
+      const nextRunningWorkspace = state.workspaces.find((item) => item
         && item.data.activeSession.status === "active"
         && workspaceHasStarted(item));
       if (nextRunningWorkspace) {
         state.workspaces = [nextRunningWorkspace, ...state.workspaces.filter((item) => item !== nextRunningWorkspace)];
-        state.currentWorkspaceId = nextRunningWorkspace.id;
-        Object.assign(state, snapshotWorkspaceData(nextRunningWorkspace.data));
-        currentPage = "layouts";
-      } else {
-        state.currentWorkspaceId = completedWorkspace.id;
-        Object.assign(state, snapshotWorkspaceData(completedWorkspace.data));
       }
+      const nextWorkspace = nextRunningWorkspace
+        || state.workspaces.find((item) => !item.schedulePlaceholder)
+        || state.workspaces.find((item) => item.schedulePlaceholder);
+      state.currentWorkspaceId = nextWorkspace.id;
+      Object.assign(state, snapshotWorkspaceData({
+        ...nextWorkspace.data,
+        workbookFiles: [...(nextWorkspace.data.workbookFiles || []), ...unarchivedWorkbooks]
+      }));
+      if (nextRunningWorkspace) currentPage = "layouts";
       state.lastScan = null;
       document.getElementById("workbook-input").value = "";
       persist();
       document.getElementById("finish-dialog").close();
       render();
       notify(nextRunningWorkspace
-        ? `Hasil ${workspaceName} diarsipkan dan kartunya direset. ${nextRunningWorkspace.name} yang sedang berjalan dibuka.`
-        : `Hasil ${workspaceName} diarsipkan dan kartunya direset.`);
+        ? `Hasil ${workspaceName} diarsipkan dan kartunya dihapus dari jadwal. ${nextRunningWorkspace.name} yang sedang berjalan dibuka.`
+        : `Hasil ${workspaceName} diarsipkan dan kartunya dihapus dari jadwal.`);
     }
 
     function startNewSession() {
