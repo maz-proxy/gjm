@@ -7973,6 +7973,7 @@
       const variance = scanQuantity + manualQuantity + pjQuantity - progress.total - inboundQuantity;
       const quantitySummary = currentLanguage === "en" ? "units" : "unit";
       return `<aside class="print-session-summary" aria-label="${currentLanguage === "en" ? "Session quantity summary" : "Ringkasan quantity sesi"}">
+        <div class="print-session-summary-metric"><span>Mode SO</span><strong>${escapeHtml(countModeLabel(countMode))}</strong></div>
         <div class="print-session-summary-metric"><span>Total Qty Scan</span><strong>${formatNumber(scanQuantity)} <small>${quantitySummary}</small></strong></div>
         <div class="print-session-summary-metric"><span>Total Qty Manual</span><strong>${formatNumber(manualQuantity)} <small>${quantitySummary}</small></strong></div>
         <div class="print-session-summary-metric"><span>Total Qty Inbound/Retur</span><strong>${formatNumber(inboundQuantity)} <small>${quantitySummary}</small></strong></div>
@@ -8017,6 +8018,33 @@
       dialog.style.setProperty("--bubble-arrow-left", `${arrowLeft}px`);
     }
     function openRackFromRecordedEntry(layout) {
+      if (currentPage === "recorded-archive") {
+        const session = state.sessions.find((item) => item.id === selectedRecordedSessionId && item.snapshot);
+        const snapshot = session?.snapshot;
+        const layouts = snapshot?.layouts?.length ? snapshot.layouts : [...new Set([
+          ...(snapshot?.scanEvents || []).map((entry) => entry.layout),
+          ...(snapshot?.manualEntries || []).map((entry) => entry.layout)
+        ].filter(Boolean))];
+        if (!layouts.includes(layout)) {
+          notify("Kartu Rack untuk detail arsip ini tidak ditemukan.");
+          return;
+        }
+        closeRecordedEntryDetails({ restoreFocus: false });
+        selectedRecordedSheet = "layouts";
+        recordedArchiveSearchTerm = "";
+        render();
+        requestAnimationFrame(() => {
+          const card = document.querySelector(`[data-recorded-layout="${CSS.escape(layout)}"]`);
+          if (!card) {
+            notify("Kartu Rack pada arsip ini tidak dapat dibuka.");
+            return;
+          }
+          card.scrollIntoView({ behavior: "smooth", block: "center" });
+          card.classList.add("rack-navigation-target");
+          setTimeout(() => card.classList.remove("rack-navigation-target"), 2200);
+        });
+        return;
+      }
       if (!state.layouts.includes(layout)) {
         notify("Kartu Rack untuk detail ini tidak ditemukan di sesi aktif.");
         return;
@@ -8044,17 +8072,21 @@
       }
       const session = state.sessions.find((item) => item.id === selectedRecordedSessionId && item.snapshot);
       const isActiveCountDetail = kind === "scan" || kind === "manual";
-      const product = isActiveCountDetail
-        ? state.products.find((item) => item.id === productId)
+      const isArchivedCountDetail = isActiveCountDetail && currentPage === "recorded-archive" && Boolean(session?.snapshot);
+      const sourceSnapshot = isArchivedCountDetail ? session.snapshot : null;
+      const product = isArchivedCountDetail
+        ? (sourceSnapshot.products || []).find((item) => item.id === productId)
+        : isActiveCountDetail
+          ? state.products.find((item) => item.id === productId)
         : session?.snapshot?.products?.find((item) => item.id === productId);
       if ((!isActiveCountDetail && !session) || !product) {
         console.error("Detail transaksi arsip tidak dapat dibuka: sesi atau item tidak ditemukan.");
         return;
       }
       const config = kind === "scan"
-        ? { entries: (state.scanEvents || []).filter((entry) => entry.status === "match"), dateKey: "scannedAt", title: "Detail SCAN" }
+        ? { entries: (sourceSnapshot?.scanEvents || (isArchivedCountDetail ? [] : state.scanEvents) || []).filter((entry) => entry.status === "match"), dateKey: "scannedAt", title: "Detail SCAN" }
         : kind === "manual"
-          ? { entries: state.manualEntries || [], dateKey: "createdAt", title: "Detail MANUAL" }
+          ? { entries: sourceSnapshot?.manualEntries || (isArchivedCountDetail ? [] : state.manualEntries) || [], dateKey: "createdAt", title: "Detail MANUAL" }
           : kind === "pj"
             ? { entries: session?.snapshot?.pjEntries || [], numberKey: "invoiceNumber", dateKey: "invoiceAt", numberLabel: "Nomor invoice", dateLabel: "Tanggal Invoice", title: "Detail PJ" }
             : kind === "inbound"
@@ -8072,13 +8104,18 @@
         .filter((entry) => entry.productId === product.id || (!entry.productId && entry.sku && entry.sku === product.sku))
         .slice()
         .sort((left, right) => timestampFor(right[config.dateKey]) - timestampFor(left[config.dateKey]));
+      const entryRackLabel = (layout) => {
+        if (!sourceSnapshot) return rackLabel(layout);
+        const value = String(sourceSnapshot.layoutNumbers?.[layout] || "").trim();
+        return value ? (/^\d+$/.test(value) ? `Rack ${value}` : value) : "Rack";
+      };
       const rackSummary = document.getElementById("recorded-entry-rack-summary");
       if (isActiveCountDetail) {
         const rackQuantities = new Map();
         for (const entry of entries) {
           const layout = entry.layout || "";
-          const key = layout || rackLabel(entry.layout);
-          const rack = rackQuantities.get(key) || { layout, name: rackLabel(entry.layout), quantity: 0 };
+          const key = layout || entryRackLabel(entry.layout);
+          const rack = rackQuantities.get(key) || { layout, name: entryRackLabel(entry.layout), quantity: 0 };
           rack.quantity += kind === "scan" ? 1 : Number(entry.quantity || 0);
           rackQuantities.set(key, rack);
         }
@@ -8101,8 +8138,8 @@
             ? formatDate(date, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
             : "-";
           const rackCell = entry.layout
-            ? `<button class="recorded-entry-rack-link" type="button" data-open-rack="${escapeHtml(entry.layout)}">${escapeHtml(rackLabel(entry.layout))}</button>`
-            : escapeHtml(rackLabel(entry.layout));
+            ? `<button class="recorded-entry-rack-link" type="button" data-open-rack="${escapeHtml(entry.layout)}">${escapeHtml(entryRackLabel(entry.layout))}</button>`
+            : escapeHtml(entryRackLabel(entry.layout));
           return `<div class="recorded-detail-row"><span class="recorded-detail-cell" data-user-content>${escapeHtml(isScan ? entry.serial || "-" : entry.sku || product.sku || "-")}</span><span class="recorded-detail-cell" data-user-content>${isScan ? escapeHtml(entry.sku || product.sku || "-") : `${formatNumber(Number(entry.quantity || 0))} Pcs`}</span><span class="recorded-detail-cell">${rackCell}</span><span class="recorded-detail-cell">${escapeHtml(formattedDate)}</span></div>`;
         }).join("")}</div></div>` : ""
         : entries.map((entry) => {
@@ -8205,7 +8242,10 @@
         record.serial
       ].some((value) => String(value || "").toLocaleLowerCase("id-ID").includes(query));
       if (sheet === "layouts") {
-        const layouts = snapshot.layouts?.length ? snapshot.layouts : [...new Set((snapshot.scanEvents || []).map((scan) => scan.layout).filter(Boolean))];
+        const layouts = snapshot.layouts?.length ? snapshot.layouts : [...new Set([
+          ...(snapshot.scanEvents || []).map((scan) => scan.layout),
+          ...(snapshot.manualEntries || []).map((entry) => entry.layout)
+        ].filter(Boolean))];
         const rackMarkup = layouts.map((layout) => {
           const allScans = (snapshot.scanEvents || []).filter((scan) => scan.layout === layout);
           const allManualEntries = (snapshot.manualEntries || []).filter((entry) => entry.layout === layout);
@@ -8224,7 +8264,7 @@
           const manualRows = manualEntries.length
             ? renderManualEntryCards(manualEntries, { products, printMode })
             : `<div class="layout-record-empty">${query ? "Tidak ada input manual yang cocok di rack ini." : "Belum ada input manual."}</div>`;
-          return `<article class="layout-card"><div class="layout-card-head"><div><div class="layout-name">${escapeHtml(title)}</div><div class="layout-location">Scan Layout · tampilan arsip</div></div><div class="layout-card-summary"><span class="layout-count">Target ${target === undefined ? "-" : formatNumber(target)} · ${query ? `${scans.length} hasil scan · ${manualEntries.length} hasil manual` : `${allScans.length} scan · ${allManualEntries.reduce((sum, entry) => sum + Number(entry.quantity || 0), 0)} manual`}</span></div></div><div class="layout-card-foot"><div class="layout-record-group"><div class="layout-record-heading">Scan ${query ? `· ${scans.length} hasil` : ""}</div><div class="layout-scan-list">${scanRows}</div></div><div class="layout-record-group"><div class="layout-record-heading">Manual ${query ? `· ${manualEntries.length} hasil` : ""}</div><div class="layout-scan-list">${manualRows}</div></div></div></article>`;
+          return `<article class="layout-card" data-recorded-layout="${escapeHtml(layout)}"><div class="layout-card-head"><div><div class="layout-name">${escapeHtml(title)}</div><div class="layout-location">Scan Layout · tampilan arsip</div></div><div class="layout-card-summary"><span class="layout-count">Target ${target === undefined ? "-" : formatNumber(target)} · ${query ? `${scans.length} hasil scan · ${manualEntries.length} hasil manual` : `${allScans.length} scan · ${allManualEntries.reduce((sum, entry) => sum + Number(entry.quantity || 0), 0)} manual`}</span></div></div><div class="layout-card-foot"><div class="layout-record-group"><div class="layout-record-heading">Scan ${query ? `· ${scans.length} hasil` : ""}</div><div class="layout-scan-list">${scanRows}</div></div><div class="layout-record-group"><div class="layout-record-heading">Manual ${query ? `· ${manualEntries.length} hasil` : ""}</div><div class="layout-scan-list">${manualRows}</div></div></div></article>`;
         }).join("");
         const matchingRackCount = (rackMarkup.match(/<article class="layout-card"/g) || []).length;
         const emptyMessage = query ? `Tidak ada item yang cocok dengan “${escapeHtml(recordedArchiveSearchTerm.trim())}”.` : "Tidak ada data Rack.";
@@ -8240,13 +8280,21 @@
         const included = isCountedProduct(product, countMode);
         const variance = varianceFor(product, inboundEntries);
         const status = statusFor(product, countMode, inboundEntries);
+        const scanQuantity = included
+          ? !printMode
+            ? `<button class="recorded-quantity-trigger" type="button" data-recorded-entry="scan" data-product-id="${escapeHtml(product.id)}" aria-label="Lihat detail scan untuk ${escapeHtml(product.sku)}" aria-haspopup="dialog" aria-expanded="false">${formatNumber(product.count || 0)}</button>`
+            : formatNumber(product.count || 0)
+          : "-";
+        const manualQuantity = !printMode
+          ? `<button class="recorded-quantity-trigger" type="button" data-recorded-entry="manual" data-product-id="${escapeHtml(product.id)}" aria-label="Lihat detail input manual untuk ${escapeHtml(product.sku)}" aria-haspopup="dialog" aria-expanded="false">${formatNumber(product.box || 0)}</button>`
+          : formatNumber(product.box || 0);
         const inboundQuantity = included
           ? `<button class="recorded-quantity-trigger" type="button" data-recorded-entry="inbound" data-product-id="${escapeHtml(product.id)}" aria-label="Lihat detail Inbound/Retur" aria-haspopup="dialog" aria-expanded="false">${formatNumber(inboundQuantityFor(product.id, inboundEntries))}</button>`
           : "-";
         const pjQuantity = included
           ? `<button class="recorded-quantity-trigger" type="button" data-recorded-entry="pj" data-product-id="${escapeHtml(product.id)}" aria-label="Lihat detail PJ" aria-haspopup="dialog" aria-expanded="false">${formatNumber(product.pj || 0)}</button>`
           : "-";
-        return `<tr><td class="number-cell">${index + 1}</td><td>${renderProductIdentity(product)}</td><td><span class="category-chip" data-user-content>${escapeHtml(product.brand || "-")}</span></td><td class="number-cell quantity-cell">${formatNumber(product.stock)}</td><td class="number-cell quantity-cell">${included ? formatNumber(product.count || 0) : "-"}</td><td class="number-cell quantity-cell">${formatNumber(product.box || 0)}</td><td class="number-cell quantity-cell">${inboundQuantity}</td><td class="number-cell quantity-cell">${pjQuantity}</td><td class="quantity-cell"><span class="variance ${variance === 0 ? "zero" : variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td><td><span class="row-status ${status.className}">${status.label}</span></td><td data-user-content>${escapeHtml(product.note || "-")}</td></tr>`;
+        return `<tr><td class="number-cell">${index + 1}</td><td>${renderProductIdentity(product)}</td><td><span class="category-chip" data-user-content>${escapeHtml(product.brand || "-")}</span></td><td class="number-cell quantity-cell">${formatNumber(product.stock)}</td><td class="number-cell quantity-cell">${scanQuantity}</td><td class="number-cell quantity-cell">${manualQuantity}</td><td class="number-cell quantity-cell">${inboundQuantity}</td><td class="number-cell quantity-cell">${pjQuantity}</td><td class="quantity-cell"><span class="variance ${variance === 0 ? "zero" : variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td><td><span class="row-status ${status.className}">${status.label}</span></td><td data-user-content>${escapeHtml(product.note || "-")}</td></tr>`;
       }).join("");
       const title = sheet === "recap" ? "Item belum sesuai" : "Rekonsiliasi per item";
       const emptyMessage = query ? `Tidak ada hasil untuk “${escapeHtml(recordedArchiveSearchTerm.trim())}”.` : sheet === "recap" ? "Belum ada item bermasalah. Semua item sesuai dengan VEF." : "Data Result SO tidak tersedia.";
@@ -8422,7 +8470,7 @@
         #print-session-root .print-session-heading .workspace-brand-icon { flex: 0 0 50px; height: 50px; width: 50px; }
         #print-session-root .print-session-heading .workspace-brand-icon img { height: 48px; width: 48px; }
         #print-session-root h1 { color: var(--print-accent-dark); font-size: 21px; margin: 0; }
-        #print-session-root .print-session-summary { align-items: stretch; border: 1px solid #cbd5d1; border-radius: 8px; display: grid; flex: 1 1 800px; grid-template-columns: repeat(7, minmax(0, 1fr)); max-width: 82%; overflow: hidden; }
+        #print-session-root .print-session-summary { align-items: stretch; border: 1px solid #cbd5d1; border-radius: 8px; display: grid; flex: 1 1 800px; grid-template-columns: repeat(8, minmax(0, 1fr)); max-width: 82%; overflow: hidden; }
         #print-session-root .print-session-summary-metric { align-content: center; display: grid; gap: 1px; grid-template-rows: 1.4em auto; justify-items: center; min-width: 0; padding: 2px 5px; text-align: center; }
         #print-session-root .print-session-summary-metric + .print-session-summary-metric,
         #print-session-root .print-session-summary-progress { border-left: 1px solid #dfe5e2 !important; }
