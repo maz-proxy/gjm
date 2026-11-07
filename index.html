@@ -8057,7 +8057,8 @@
         Number(product.count || 0) + Number(product.box || 0) + Number(product.pj || 0)
           - Number(product.stock || 0) - inboundQuantityFor(product.id, inboundEntries) !== 0
       ).length;
-      const quantitySummary = currentLanguage === "en" ? "units" : "unit";
+      const quantitySummary = "Pcs";
+      const skuSummary = "Item";
       if (printBreakdown) {
         return `<aside class="${className} print-session-summary-breakdown" aria-label="${currentLanguage === "en" ? "Session quantity summary" : "Ringkasan quantity sesi"}">
           <div class="print-summary-column">
@@ -8070,12 +8071,12 @@
           <div class="print-summary-column">
             <div class="print-session-summary-metric print-summary-danger"><span>Master VEF</span><strong>${formatNumber(progress.total)} <small>${quantitySummary}</small></strong></div>
             <div class="print-session-summary-metric print-summary-success"><span>Stock Opname</span><strong>${formatNumber(opnameQuantity)} <small>${quantitySummary}</small></strong></div>
-            <div class="print-session-summary-metric print-summary-danger"><span>Item/SKU VEF</span><strong>${formatNumber(products.length)}</strong></div>
-            <div class="print-session-summary-metric print-summary-success"><span>Item/SKU SO</span><strong>${formatNumber(opnameSkuCount)}</strong></div>
+            <div class="print-session-summary-metric print-summary-danger"><span>Item/SKU VEF</span><strong>${formatNumber(products.length)} <small>${skuSummary}</small></strong></div>
+            <div class="print-session-summary-metric print-summary-success"><span>Item/SKU SO</span><strong>${formatNumber(opnameSkuCount)} <small>${skuSummary}</small></strong></div>
           </div>
           <div class="print-summary-column">
             <div class="print-session-summary-metric"><span>Selisih Qty</span><strong>${variance > 0 ? "+" : ""}${formatNumber(variance)} <small>${quantitySummary}</small></strong></div>
-            <div class="print-session-summary-metric"><span>Selisih Item/SKU</span><strong>${formatNumber(mismatchedSkuCount)}</strong></div>
+            <div class="print-session-summary-metric"><span>Selisih Item/SKU</span><strong>${formatNumber(mismatchedSkuCount)} <small>${skuSummary}</small></strong></div>
           </div>
           <div class="print-session-summary-progress"><span>Progress</span><strong>${formatNumber(progress.completedPercent)}%</strong></div>
         </aside>`;
