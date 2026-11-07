@@ -2674,7 +2674,7 @@
     <div class="dialog-actions"><button class="button button-primary" type="button" data-close="date-validation-warning-dialog">Perbaiki tanggal</button></div>
   </dialog>
   <dialog id="finish-dialog">
-    <div class="dialog-head"><div><div class="dialog-title">Selesaikan stock opname?</div><div class="dialog-subtitle">Hasil akan diarsipkan dan kartu workspace ini dihapus dari jadwal. Jika ada sesi lain yang berjalan, sesi itu akan dibuka untuk dilanjutkan.</div></div><button class="dialog-close" type="button" data-close="finish-dialog" aria-label="Tutup">×</button></div>
+    <div class="dialog-head"><div><div class="dialog-title">Selesaikan stock opname?</div><div class="dialog-subtitle">Hasil akan diarsipkan dan kartu workspace ini dihapus dari jadwal. Setelah tersimpan, detail hasil akan dibuka.</div></div><button class="dialog-close" type="button" data-close="finish-dialog" aria-label="Tutup">×</button></div>
     <div class="confirm-body" id="finish-message"></div>
     <div class="dialog-actions"><button class="button button-secondary" type="button" data-close="finish-dialog">Kembali</button><button class="button button-primary" id="confirm-finish" type="button">SO SELESAI</button></div>
   </dialog>
@@ -3289,7 +3289,7 @@
       "Nonaktifkan": "Disable",
       "Panduan lengkap menyiapkan jadwal, memproses VEF, melakukan opname, dan meninjau arsip dengan benar.": "A complete guide to scheduling, processing VEF, performing stock opname, and reviewing archives.",
       "Kontrol stock opname dalam satu workspace.": "Manage stock opname in one workspace.",
-      "Hasil akan diarsipkan dan kartu workspace ini dihapus dari jadwal. Jika ada sesi lain yang berjalan, sesi itu akan dibuka untuk dilanjutkan.": "The results will be archived and this workspace card will be removed from the schedule. If another session is running, it will be opened to continue.",
+      "Hasil akan diarsipkan dan kartu workspace ini dihapus dari jadwal. Setelah tersimpan, detail hasil akan dibuka.": "The results will be archived and this workspace card will be removed from the schedule. The completed results will open after they are saved.",
       "Aplikasi ini membantu tim mengelola master VEF, memindai serial number, dan mencocokkan hasil opname dengan data stok. Aktivitas tersimpan bersama agar dapat dipantau oleh seluruh tim.": "This app helps teams manage the VEF master, scan serial numbers, and reconcile stock opname results. Shared activity is saved so the whole team can monitor progress.",
       "Panduan menggunakan workspace": "Workspace Guide",
       "Pantau progres scan, jumlah item dan unit per warehouse, quantity SCAN/MANUAL/PJ, serta sesi yang masih berjalan. Klik tombol pada rincian sesi untuk membuka workspace-nya. Di bagian bawah, pilih brand pada Stock Opname Recorded, lalu tentukan bulan dan week. Tombol View membuka halaman arsip khusus yang menampilkan PIC 1 dan PIC 2; pilih Scan Layout, Result SO, atau Rekap Selisih untuk melihat lembar hanya-baca. Setiap lembar dapat dicetak atau disimpan sebagai PDF melalui dialog print browser.": "Track scan progress, item and unit counts by warehouse, SCAN/MANUAL/PJ quantities, and active sessions. Use the session details button to open a workspace. At the bottom, select a brand in Recorded Stock Opname, then choose a month and week. View opens a dedicated archive page showing PIC 1 and PIC 2; select Scan & Manual, Stock Reconciliation, or Recap to view a read-only sheet. Each sheet can be printed or saved as PDF using your browser's print dialog.",
@@ -5776,7 +5776,7 @@
         return "Fungsi trigger database masih versi lama dan memakai jsonb_object_length yang tidak tersedia. Jalankan ulang seluruh file supabase-setup.sql di Supabase → SQL Editor untuk memperbarui trigger, lalu muat ulang aplikasi.";
       }
       if (/schedule cards can only be removed/i.test(message)) {
-        return "Database menolak penghapusan kartu. Jalankan ulang supabase-setup.sql di Supabase → SQL Editor agar izin pemilik dan placeholder terbaru aktif, lalu muat ulang aplikasi.";
+        return "Database masih memakai aturan lama yang menolak pengarsipan kartu dengan file VEF. Minta Owner jalankan versi terbaru supabase-setup.sql di Supabase → SQL Editor, lalu muat ulang aplikasi.";
       }
       if (error.code === "PGRST205" || error.code === "42P01" || /stock_opname_state.*(not found|does not exist)|schema cache/i.test(message)) {
         return "Tabel database belum dibuat. Jalankan file supabase-setup.sql di Supabase → SQL Editor, lalu login kembali.";
@@ -10901,29 +10901,20 @@
       recordActivity("Sesi diselesaikan", `Stock opname ${workspaceName} diselesaikan dan diarsipkan.`);
       state.workspaces = state.workspaces.filter((item) => item !== workspace);
       normalizeWorkspaceScheduleCards(state.workspaces, state.sessions);
-      const nextRunningWorkspace = state.workspaces.find((item) => item
-        && item.data.activeSession.status === "active"
-        && workspaceHasStarted(item));
-      if (nextRunningWorkspace) {
-        state.workspaces = [nextRunningWorkspace, ...state.workspaces.filter((item) => item !== nextRunningWorkspace)];
-      }
-      const nextWorkspace = nextRunningWorkspace
-        || state.workspaces.find((item) => !item.schedulePlaceholder)
-        || state.workspaces.find((item) => item.schedulePlaceholder);
+      const nextWorkspace = state.workspaces.find((item) => item.schedulePlaceholder) || state.workspaces[0];
       state.currentWorkspaceId = nextWorkspace.id;
       Object.assign(state, snapshotWorkspaceData({
         ...nextWorkspace.data,
         workbookFiles: [...(nextWorkspace.data.workbookFiles || []), ...unarchivedWorkbooks]
       }));
-      if (nextRunningWorkspace) currentPage = "layouts";
+      selectedCompletedSessionId = archivedSessionId;
+      currentPage = "completed-session-detail";
       state.lastScan = null;
       document.getElementById("workbook-input").value = "";
       persist();
       document.getElementById("finish-dialog").close();
       render();
-      notify(nextRunningWorkspace
-        ? `Hasil ${workspaceName} diarsipkan dan kartunya dihapus dari jadwal. ${nextRunningWorkspace.name} yang sedang berjalan dibuka.`
-        : `Hasil ${workspaceName} diarsipkan dan kartunya dihapus dari jadwal.`);
+      notify(`Hasil ${workspaceName} berhasil diarsipkan.`);
     }
 
     function startNewSession() {

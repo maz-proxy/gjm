@@ -290,18 +290,57 @@ begin
           or coalesce(removed_owner_id = current_user_id, false)
           or (removed_owner_id is null and removed_owner_names && current_user_names)
         )
-        and not exists (
-          select 1
-            from jsonb_array_elements(coalesce(removed_workspace -> 'data' -> 'workbookFiles', '[]'::jsonb)) as workbook(value)
-           where workbook.value ->> 'sessionId' = removed_session_id
-        )
-        and not exists (
-          select 1
-            from jsonb_array_elements(coalesce(old.data -> 'workbookFiles', '[]'::jsonb)) as workbook(value)
-           where workbook.value ->> 'sessionId' = removed_session_id
+        and (
+          (
+            not exists (
+              select 1
+                from jsonb_array_elements(coalesce(removed_workspace -> 'data' -> 'workbookFiles', '[]'::jsonb)) as workbook(value)
+               where workbook.value ->> 'sessionId' = removed_session_id
+            )
+            and not exists (
+              select 1
+                from jsonb_array_elements(coalesce(old.data -> 'workbookFiles', '[]'::jsonb)) as workbook(value)
+               where workbook.value ->> 'sessionId' = removed_session_id
+            )
+          )
+          or exists (
+            select 1
+              from jsonb_array_elements(coalesce(new.data -> 'sessions', '[]'::jsonb)) as archived(value)
+             where archived.value ->> 'id' = removed_session_id
+               and archived.value ->> 'workspaceId' = removed_workspace ->> 'id'
+               and archived.value ->> 'status' = 'completed'
+               and (
+                 archived.value ->> 'createdByUserId' = current_user_id
+                 or is_workspace_super_admin
+               )
+               and archived.value -> 'snapshot' -> 'activeSession' ->> 'id' = removed_session_id
+               and archived.value -> 'snapshot' -> 'activeSession' ->> 'status' = 'completed'
+               and (
+                 archived.value -> 'snapshot' -> 'activeSession' ->> 'createdByUserId' = current_user_id
+                 or is_workspace_super_admin
+               )
+               and nullif(archived.value -> 'snapshot' -> 'activeSession' ->> 'finishedAt', '') is not null
+               and not exists (
+                 select 1
+                   from (
+                     select workbook.value
+                       from jsonb_array_elements(coalesce(removed_workspace -> 'data' -> 'workbookFiles', '[]'::jsonb)) as workbook(value)
+                      where workbook.value ->> 'sessionId' = removed_session_id
+                     union
+                     select workbook.value
+                       from jsonb_array_elements(coalesce(old.data -> 'workbookFiles', '[]'::jsonb)) as workbook(value)
+                      where workbook.value ->> 'sessionId' = removed_session_id
+                   ) as source_workbook
+                  where not exists (
+                    select 1
+                      from jsonb_array_elements(coalesce(archived.value -> 'workbooks', '[]'::jsonb)) as archived_workbook(value)
+                     where archived_workbook.value = source_workbook.value
+                  )
+               )
+          )
         )
       ) then
-        raise exception 'Schedule cards can only be removed by their owner while the active session has no uploaded workbook.'
+        raise exception 'Schedule cards can only be removed by their owner without an uploaded workbook or together with a complete archive.'
           using errcode = '42501';
       end if;
     end loop;
