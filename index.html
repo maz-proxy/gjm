@@ -8748,7 +8748,7 @@
         subtitleElement.replaceWith(structuredSubtitle);
       }
       const documentLogo = printWindow.document.querySelector(".print-document-heading img");
-      if (documentLogo) documentLogo.src = new URL("./assets/about-workspace-logo.png", window.location.href).href;
+      if (documentLogo) documentLogo.src = new URL("./assets/Logo.svg", window.location.href).href;
       const openPrintDialog = () => {
         printWindow.focus();
         printWindow.print();
