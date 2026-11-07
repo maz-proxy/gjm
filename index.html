@@ -1626,9 +1626,7 @@
     }
     .recorded-archive-head > .button-secondary { background: #fff; border-color: rgba(255,255,255,.75); color: #285c4b; }
     .recorded-archive-head > .button-secondary:hover { background: #eaf5ef; border-color: #fff; }
-    .recorded-print-toolbar { align-items: center; align-self: stretch; background: color-mix(in srgb, var(--paper) 94%, transparent); display: flex; gap: 8px; justify-content: flex-end; margin: -8px 0; padding: 8px 0; position: sticky; top: 0; z-index: 20; }
-    .recorded-print-toolbar .button { box-shadow: 0 3px 12px rgba(20, 45, 37, .12); }
-    .recorded-view-actions { align-items: center; display: grid; gap: 12px; grid-template-columns: auto minmax(180px, 1fr); margin: 0; }
+    .recorded-view-actions { align-items: center; display: grid; gap: 12px; grid-template-columns: auto minmax(180px, 1fr) auto; margin: 0; }
     .recorded-view-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
     .recorded-view-tabs .active { background: var(--green); border-color: var(--green); color: #fff; }
     .recorded-archive-search { justify-self: center; max-width: 440px; min-width: 0; width: 100%; }
@@ -1640,16 +1638,17 @@
     .recorded-search-summary { color: var(--muted); font-size: 10px; margin: 0 0 9px; }
     .recorded-search-type { color: var(--muted); display: block; font-size: 9px; margin-top: 3px; }
     @media (max-width: 760px) {
-      .recorded-view-actions { grid-template-columns: minmax(0, 1fr); }
+      .recorded-view-actions { grid-template-columns: minmax(0, 1fr) auto; }
       .recorded-view-tabs { grid-column: 1 / -1; }
-      .recorded-archive-search { grid-column: 1; grid-row: 2; justify-self: stretch; max-width: none; }
+      .recorded-archive-search { grid-column: 1; grid-row: 2; max-width: none; }
+      .recorded-view-actions > #print-recorded-sheet { grid-column: 2; grid-row: 2; }
     }
     @media (max-width: 480px) {
       .recorded-view-actions { gap: 9px; }
       .recorded-view-tabs { gap: 5px; }
       .recorded-view-tabs .button { font-size: 10px; min-height: 34px; padding: 0 8px; }
       .recorded-archive-search .search-input { font-size: 10px; }
-      .recorded-print-toolbar .button { font-size: 10px; min-height: 34px; padding: 0 9px; }
+      .recorded-view-actions > #print-recorded-sheet { font-size: 10px; min-height: 34px; padding: 0 9px; }
     }
     html[data-theme="dark"] .recorded-archive-head { background: linear-gradient(115deg, #14372f, #1a5243 68%, #28654d); box-shadow: 0 3px 7px rgba(0,0,0,.2), 0 14px 30px rgba(0,0,0,.3), inset 0 1px rgba(255,255,255,.1); }
     html[data-theme="dark"] .recorded-archive-head > .button-secondary { background: #1a2826; border-color: #344744; color: #e5efed; }
@@ -2478,7 +2477,6 @@
       body:not(.printing-session):not(.auth-locked) [data-export-session],
       body:not(.printing-session):not(.auth-locked) [data-print-session],
       body:not(.printing-session):not(.auth-locked) [data-download-workbook] { display: none !important; }
-      body:not(.printing-session):not(.auth-locked) .recorded-print-toolbar { display: none !important; }
       body:not(.printing-session):not(.auth-locked) .workspace-main-viewport,
       body:not(.printing-session):not(.auth-locked) #main-content { display: block !important; min-width: 0; overflow: visible !important; width: 100%; }
       body:not(.printing-session):not(.auth-locked) #main-content { padding: 0 !important; }
@@ -8451,10 +8449,6 @@
         ? formatDate(session.finishedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })
         : "Tidak tersedia";
       return `${navMarkup()}<div class="recorded-archive-page">
-        <div class="recorded-print-toolbar" role="group" aria-label="Cetak atau simpan lembar arsip">
-          <button class="button button-secondary" id="print-recorded-sheet" type="button">Cetak</button>
-          <button class="button button-primary" id="save-recorded-pdf" type="button">Simpan PDF</button>
-        </div>
         <section class="recorded-archive-head">
           <div class="recorded-archive-heading">
             <div class="recorded-archive-title">${renderWorkspaceBrandIcon(session.workspaceName)}<h1>${escapeHtml(session.workspaceName || "Stock Opname Recorded")}</h1></div>
@@ -8483,6 +8477,7 @@
             <button class="button button-secondary${selectedRecordedSheet === "recap" ? " active" : ""}" type="button" role="tab" aria-selected="${selectedRecordedSheet === "recap"}" data-recorded-sheet="recap">Recap</button>
           </div>
           <div class="recorded-archive-search"><div class="search-wrap"><span class="search-icon" aria-hidden="true">⌕</span><input class="search-input" id="recorded-archive-search" type="search" placeholder="Cari item code, nama, atau SN" value="${escapeHtml(recordedArchiveSearchTerm)}" aria-label="Cari item code, nama, atau Serial Number dalam lembar arsip"></div></div>
+          <button class="button button-primary" id="print-recorded-sheet" type="button">Print / Save PDF</button>
         </section>
         <div id="recorded-sheet-content" class="recorded-sheet-content">${renderRecordedSheet(session, selectedRecordedSheet)}</div>
       </div>`;
@@ -8537,8 +8532,12 @@
             else handleError();
           }
         })));
-        printWindow.focus();
-        printWindow.print();
+        const openPrintDialog = () => {
+          printWindow.focus();
+          printWindow.print();
+        };
+        printWindow.document.getElementById("print-session-action")?.addEventListener("click", openPrintDialog);
+        printWindow.document.getElementById("save-pdf-session-action")?.addEventListener("click", openPrintDialog);
       }, { once: true });
       printWindow.document.open();
       const documentTitle = session ? archivePdfFileName(session) : title;
@@ -8546,7 +8545,12 @@
         html[data-accent="burgundy"] { --print-accent: #842b4b; --print-accent-dark: #5d1c35; --print-accent-soft: #f5e7ec; --print-accent-line: #ead1d9; }
         html:not([data-accent="burgundy"]) { --print-accent: #176b5b; --print-accent-dark: #124a41; --print-accent-soft: #e5f2ee; --print-accent-line: #c9dfd0; }
         html, body.printing-session, #print-session-root { background: #fff !important; color: #17211d !important; color-scheme: light; }
-        body.printing-session { display: block; margin: 0; min-height: 0; padding: 12mm; }
+        body.printing-session { display: block; margin: 0; min-height: 0; padding: 68px 12mm 12mm; }
+        .print-action-toolbar { align-items: center; background: rgba(255,255,255,.96); border: 1px solid #cbd5d1; border-radius: 10px; box-shadow: 0 5px 18px rgba(20,45,37,.16); display: flex; gap: 8px; padding: 7px; position: fixed; right: 12mm; top: 10px; z-index: 1000; }
+        .print-action-toolbar button { background: #176b5b; border: 1px solid #176b5b; border-radius: 7px; color: #fff; cursor: pointer; font: 700 12px/1 "DM Sans", "Segoe UI", sans-serif; min-height: 36px; padding: 0 13px; }
+        .print-action-toolbar button.secondary { background: #fff; color: #176b5b; }
+        .print-action-toolbar button:hover { filter: brightness(.95); }
+        @media print { .print-action-toolbar { display: none !important; } }
         #print-session-root { display: block; margin: 0 auto; max-width: none; padding: 0; }
         #print-session-root, #print-session-root *, #print-session-root *::before, #print-session-root *::after { box-shadow: none !important; text-shadow: none !important; }
         #print-session-root * { background-color: #fff !important; background-image: none !important; border-color: #cbd5d1 !important; color: #17211d !important; }
@@ -8650,7 +8654,7 @@
           body.printing-session { padding: 0; }
           #print-session-root { width: 100%; }
         }
-      </style></head><body class="printing-session"><main id="print-session-root"><div class="print-session-header"><div class="print-session-heading">${renderWorkspaceBrandIcon(brandName)}<h1 data-user-content>${escapeHtml(title)}</h1></div>${session ? renderArchivePrintSummary(session) : ""}</div><p class="print-session-subtitle" data-user-content>${escapeHtml(subtitle)}</p>${content}<section class="print-signatures" aria-label="${currentLanguage === "en" ? "PIC signatures" : "Paraf PIC"}"><div class="print-signature"><div class="print-signature-line"></div><div class="print-signature-name">${currentLanguage === "en" ? "PIC 1 name:" : "Nama PIC 1:"} <strong>${escapeHtml(picNames[0] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</strong></div></div><div class="print-signature"><div class="print-signature-line"></div><div class="print-signature-name">${currentLanguage === "en" ? "PIC 2 name:" : "Nama PIC 2:"} <strong>${escapeHtml(picNames[1] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</strong></div></div></section></main></body></html>`);
+      </style></head><body class="printing-session"><div class="print-action-toolbar" role="group" aria-label="${currentLanguage === "en" ? "Print actions" : "Aksi cetak"}"><button class="secondary" id="print-session-action" type="button">Print</button><button id="save-pdf-session-action" type="button">${currentLanguage === "en" ? "Save PDF" : "Simpan PDF"}</button></div><main id="print-session-root"><div class="print-session-header"><div class="print-session-heading">${renderWorkspaceBrandIcon(brandName)}<h1 data-user-content>${escapeHtml(title)}</h1></div>${session ? renderArchivePrintSummary(session) : ""}</div><p class="print-session-subtitle" data-user-content>${escapeHtml(subtitle)}</p>${content}<section class="print-signatures" aria-label="${currentLanguage === "en" ? "PIC signatures" : "Paraf PIC"}"><div class="print-signature"><div class="print-signature-line"></div><div class="print-signature-name">${currentLanguage === "en" ? "PIC 1 name:" : "Nama PIC 1:"} <strong>${escapeHtml(picNames[0] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</strong></div></div><div class="print-signature"><div class="print-signature-line"></div><div class="print-signature-name">${currentLanguage === "en" ? "PIC 2 name:" : "Nama PIC 2:"} <strong>${escapeHtml(picNames[1] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</strong></div></div></section></main></body></html>`);
       printWindow.document.close();
       translateDocument(printWindow.document.body);
       return printWindow;
@@ -9951,7 +9955,6 @@
         next?.setSelectionRange(cursor, cursor);
       });
       document.getElementById("print-recorded-sheet")?.addEventListener("click", printRecordedSheet);
-      document.getElementById("save-recorded-pdf")?.addEventListener("click", printRecordedSheet);
       document.querySelector("[data-recorded-return]")?.addEventListener("click", () => {
         currentPage = "dashboard";
         render();
