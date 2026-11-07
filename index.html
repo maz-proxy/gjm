@@ -8532,12 +8532,6 @@
             else handleError();
           }
         })));
-        const openPrintDialog = () => {
-          printWindow.focus();
-          printWindow.print();
-        };
-        printWindow.document.getElementById("print-session-action")?.addEventListener("click", openPrintDialog);
-        printWindow.document.getElementById("save-pdf-session-action")?.addEventListener("click", openPrintDialog);
       }, { once: true });
       printWindow.document.open();
       const documentTitle = session ? archivePdfFileName(session) : title;
@@ -8656,6 +8650,12 @@
         }
       </style></head><body class="printing-session"><div class="print-action-toolbar" role="group" aria-label="${currentLanguage === "en" ? "Print actions" : "Aksi cetak"}"><button class="secondary" id="print-session-action" type="button">Print</button><button id="save-pdf-session-action" type="button">${currentLanguage === "en" ? "Save PDF" : "Simpan PDF"}</button></div><main id="print-session-root"><div class="print-session-header"><div class="print-session-heading">${renderWorkspaceBrandIcon(brandName)}<h1 data-user-content>${escapeHtml(title)}</h1></div>${session ? renderArchivePrintSummary(session) : ""}</div><p class="print-session-subtitle" data-user-content>${escapeHtml(subtitle)}</p>${content}<section class="print-signatures" aria-label="${currentLanguage === "en" ? "PIC signatures" : "Paraf PIC"}"><div class="print-signature"><div class="print-signature-line"></div><div class="print-signature-name">${currentLanguage === "en" ? "PIC 1 name:" : "Nama PIC 1:"} <strong>${escapeHtml(picNames[0] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</strong></div></div><div class="print-signature"><div class="print-signature-line"></div><div class="print-signature-name">${currentLanguage === "en" ? "PIC 2 name:" : "Nama PIC 2:"} <strong>${escapeHtml(picNames[1] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</strong></div></div></section></main></body></html>`);
       printWindow.document.close();
+      const openPrintDialog = () => {
+        printWindow.focus();
+        printWindow.print();
+      };
+      printWindow.document.getElementById("print-session-action")?.addEventListener("click", openPrintDialog);
+      printWindow.document.getElementById("save-pdf-session-action")?.addEventListener("click", openPrintDialog);
       translateDocument(printWindow.document.body);
       return printWindow;
     }
