@@ -2792,7 +2792,6 @@
       "Detail MANUAL": "MANUAL details",
       "Ekspor Excel": "Export Excel",
       "Cetak": "Print",
-      "Simpan PDF": "Save PDF",
       "Nomor PREC/RETUR": "PREC/RETURN number",
       "Tanggal PREC/RETUR": "PREC/RETURN date",
       "Nomor invoice": "Invoice number",
@@ -3014,8 +3013,7 @@
       "Lembar kerja arsip": "Archive worksheets",
       "Cari item code, nama, atau SN": "Search item code, name, or SN",
       "Cari item code, nama, atau Serial Number dalam lembar arsip": "Search item code, name, or serial number in the archive",
-      "Print / Save PDF": "Print / Save PDF",
-      "Jendela cetak diblokir browser. Izinkan pop-up untuk mencetak atau menyimpan PDF.": "The print window was blocked by your browser. Allow pop-ups to print or save as PDF.",
+      "Jendela cetak diblokir browser. Izinkan pop-up untuk mencetak.": "The print window was blocked by your browser. Allow pop-ups to print.",
       "Data detail sesi tidak tersedia untuk dicetak.": "Session details are unavailable for printing.",
       "Invoice tanpa nomor": "Invoice without a number",
       "Tanggal tidak tersedia": "Date unavailable",
@@ -8484,7 +8482,7 @@
             <button class="button button-secondary${selectedRecordedSheet === "recap" ? " active" : ""}" type="button" role="tab" aria-selected="${selectedRecordedSheet === "recap"}" data-recorded-sheet="recap">Recap</button>
           </div>
           <div class="recorded-archive-search"><div class="search-wrap"><span class="search-icon" aria-hidden="true">⌕</span><input class="search-input" id="recorded-archive-search" type="search" placeholder="Cari item code, nama, atau SN" value="${escapeHtml(recordedArchiveSearchTerm)}" aria-label="Cari item code, nama, atau Serial Number dalam lembar arsip"></div></div>
-          <button class="button button-primary" id="print-recorded-sheet" type="button">Print / Save PDF</button>
+          <button class="button button-primary" id="print-recorded-sheet" type="button">Cetak</button>
         </section>
         <div id="recorded-sheet-content" class="recorded-sheet-content">${renderRecordedSheet(session, selectedRecordedSheet)}</div>
       </div>`;
@@ -8501,7 +8499,7 @@
     function openArchivePrintWindow(title, subtitle, content, brandName = "", picNames = [], session = null) {
       const printWindow = window.open("", "_blank");
       if (!printWindow) {
-        notify("Jendela cetak diblokir browser. Izinkan pop-up untuk mencetak atau menyimpan PDF.");
+        notify("Jendela cetak diblokir browser. Izinkan pop-up untuk mencetak.");
         return null;
       }
       const styles = [...document.querySelectorAll("style")].map((style) => style.textContent || "").join("\n").replace(/<\/style/gi, "<\\/style");
@@ -8552,7 +8550,6 @@
         .print-action-toolbar button.secondary { background: #fff; color: #176b5b; }
         .print-action-toolbar button:hover { filter: brightness(.95); }
         .print-action-toolbar button:disabled { cursor: wait; opacity: .6; }
-        #print-session-status { color: #52635d; font: 11px/1.35 "DM Sans", "Segoe UI", sans-serif; max-width: 240px; }
         @media print { .print-action-toolbar { display: none !important; } }
         #print-session-root { display: block; margin: 0 auto; max-width: none; padding: 0; }
         #print-session-root, #print-session-root *, #print-session-root *::before, #print-session-root *::after { box-shadow: none !important; text-shadow: none !important; }
@@ -8664,240 +8661,13 @@
           body.printing-session { padding: 0; }
           #print-session-root { width: 100%; }
         }
-      </style></head><body class="printing-session"><div class="print-action-toolbar" role="group" aria-label="${currentLanguage === "en" ? "Print actions" : "Aksi cetak"}"><button class="secondary" id="print-session-action" type="button">Print</button><button id="save-pdf-session-action" type="button" disabled>${currentLanguage === "en" ? "Save PDF" : "Simpan PDF"}</button><span id="print-session-status" role="status" aria-live="polite">${currentLanguage === "en" ? "Loading PDF tools..." : "Memuat alat PDF..."}</span></div><main id="print-session-root"><div class="print-session-header"><div class="print-session-heading">${renderWorkspaceBrandIcon(brandName)}<h1 data-user-content>${escapeHtml(title)}</h1></div>${session ? renderArchivePrintSummary(session) : ""}</div><p class="print-session-subtitle" data-user-content>${escapeHtml(subtitle)}</p>${content}<section class="print-signatures" aria-label="${currentLanguage === "en" ? "PIC signatures" : "Paraf PIC"}"><div class="print-signature"><div class="print-signature-line"></div><div class="print-signature-name">${currentLanguage === "en" ? "PIC 1 name:" : "Nama PIC 1:"} <strong>${escapeHtml(picNames[0] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</strong></div></div><div class="print-signature"><div class="print-signature-line"></div><div class="print-signature-name">${currentLanguage === "en" ? "PIC 2 name:" : "Nama PIC 2:"} <strong>${escapeHtml(picNames[1] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</strong></div></div></section></main></body></html>`);
+      </style></head><body class="printing-session"><div class="print-action-toolbar" role="group" aria-label="${currentLanguage === "en" ? "Print actions" : "Aksi cetak"}"><button class="secondary" id="print-session-action" type="button">Print</button></div><main id="print-session-root"><div class="print-session-header"><div class="print-session-heading">${renderWorkspaceBrandIcon(brandName)}<h1 data-user-content>${escapeHtml(title)}</h1></div>${session ? renderArchivePrintSummary(session) : ""}</div><p class="print-session-subtitle" data-user-content>${escapeHtml(subtitle)}</p>${content}<section class="print-signatures" aria-label="${currentLanguage === "en" ? "PIC signatures" : "Paraf PIC"}"><div class="print-signature"><div class="print-signature-line"></div><div class="print-signature-name">${currentLanguage === "en" ? "PIC 1 name:" : "Nama PIC 1:"} <strong>${escapeHtml(picNames[0] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</strong></div></div><div class="print-signature"><div class="print-signature-line"></div><div class="print-signature-name">${currentLanguage === "en" ? "PIC 2 name:" : "Nama PIC 2:"} <strong>${escapeHtml(picNames[1] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</strong></div></div></section></main></body></html>`);
       printWindow.document.close();
       const openPrintDialog = () => {
         printWindow.focus();
         printWindow.print();
       };
       printWindow.document.getElementById("print-session-action")?.addEventListener("click", openPrintDialog);
-      const savePdfButton = printWindow.document.getElementById("save-pdf-session-action");
-      const status = printWindow.document.getElementById("print-session-status");
-      const pdfLibraryUrls = [
-        "https://cdn.jsdelivr.net/npm/pdfmake@0.2.20/build/pdfmake.min.js",
-        "https://cdn.jsdelivr.net/npm/pdfmake@0.2.20/build/vfs_fonts.min.js",
-        "https://cdn.jsdelivr.net/npm/html-to-pdfmake@2.5.31/browser.js",
-      ];
-      const isEnglish = currentLanguage === "en";
-      const setPdfLibraryReady = () => {
-        const ready = typeof printWindow.pdfMake?.createPdf === "function"
-          && typeof printWindow.htmlToPdfmake === "function";
-        savePdfButton.disabled = !ready;
-        status.textContent = ready
-          ? (isEnglish ? "PDF is ready to save." : "PDF siap disimpan.")
-          : (isEnglish ? "PDF tools could not be loaded. Check your internet connection." : "Alat PDF gagal dimuat. Periksa koneksi internet.");
-      };
-      const loadPdfLibraries = async () => {
-        for (const [index, source] of pdfLibraryUrls.entries()) {
-          await new Promise((resolve, reject) => {
-            const script = printWindow.document.createElement("script");
-            script.src = source;
-            script.addEventListener("load", resolve, { once: true });
-            script.addEventListener("error", () => reject(new Error(`Unable to load PDF library ${index + 1}.`)), { once: true });
-            printWindow.document.head.appendChild(script);
-          });
-        }
-        setPdfLibraryReady();
-      };
-      setPdfLibraryReady();
-      loadPdfLibraries().catch((error) => {
-        status.textContent = isEnglish ? "PDF tools could not be loaded. Check your internet connection." : "Alat PDF gagal dimuat. Periksa koneksi internet.";
-        console.error("Unable to load vector PDF libraries.", error);
-      });
-      const createPdfBlob = async () => {
-        const root = printWindow.document.getElementById("print-session-root");
-        const titleText = root.querySelector(".print-session-heading h1")?.textContent?.trim() || "Stock Opname";
-        const subtitleText = root.querySelector(".print-session-subtitle")?.textContent?.trim() || "";
-        const summaryItems = [...root.querySelectorAll(".print-session-summary > *")].map((item) => ({
-          label: item.querySelector("span")?.textContent?.trim() || "",
-          value: item.querySelector("strong")?.textContent?.trim() || "",
-        })).filter((item) => item.label || item.value);
-        const signatureNames = [...root.querySelectorAll(".print-signature-name")]
-          .map((item) => item.textContent.replace(/\s+/g, " ").trim());
-        const clone = root.cloneNode(true);
-        const cloneElements = [clone, ...clone.querySelectorAll("*")];
-        const sourceElements = [root, ...root.querySelectorAll("*")];
-        const styleProperties = [
-          "font-size", "font-weight", "font-style", "color", "background-color", "text-align", "vertical-align",
-          "text-decoration", "line-height", "padding-top", "padding-right", "padding-bottom", "padding-left",
-          "margin-top", "margin-right", "margin-bottom", "margin-left", "width", "height", "white-space",
-          "border-top-width", "border-top-style", "border-top-color", "border-right-width", "border-right-style",
-          "border-right-color", "border-bottom-width", "border-bottom-style", "border-bottom-color",
-          "border-left-width", "border-left-style", "border-left-color", "border-collapse", "border-spacing",
-        ];
-        cloneElements.forEach((element, index) => {
-          const computed = printWindow.getComputedStyle(sourceElements[index]);
-          styleProperties.forEach((property) => {
-            const value = computed.getPropertyValue(property);
-            if (value) element.style.setProperty(property, value);
-          });
-        });
-        clone.querySelector(".print-session-header")?.remove();
-        clone.querySelector(".print-session-subtitle")?.remove();
-        clone.querySelector(".print-signatures")?.remove();
-        clone.querySelectorAll(".workspace-brand-icon, img, button, input, select, [data-export-session], [data-print-session]").forEach((element) => element.remove());
-        const convertedContent = printWindow.htmlToPdfmake(clone.innerHTML, {
-          window: printWindow,
-          tableAutoSize: true,
-          defaultStyles: {
-            h1: { fontSize: 18, bold: true, margin: [0, 0, 4, 0] },
-            h2: { fontSize: 12, bold: true, margin: [0, 4, 0, 2] },
-            h3: { fontSize: 10, bold: true, margin: [0, 3, 0, 2] },
-            p: { fontSize: 8, margin: [0, 0, 4, 0] },
-            th: { bold: true, fillColor: "#e8eeeb", fontSize: 6 },
-            td: { fontSize: 6 },
-            table: { marginBottom: 5 },
-          },
-        });
-        const sourceTables = [...root.querySelectorAll("table")];
-        let tableIndex = 0;
-        const applyTablePagination = (nodes) => {
-          if (!Array.isArray(nodes)) return;
-          nodes.forEach((node) => {
-            if (node.table) {
-              const sourceTable = sourceTables[tableIndex++];
-              const headerRows = sourceTable?.tHead?.rows.length || 0;
-              node.table.dontBreakRows = true;
-              if (headerRows) {
-                node.table.headerRows = headerRows;
-                node.table.keepWithHeaderRows = headerRows;
-              }
-              node.layout = {
-                hLineWidth: (index, table) => index === 0 || index === table.table.body.length ? 0.6 : 0.3,
-                vLineWidth: () => 0.3,
-                hLineColor: () => "#cbd5d1",
-                vLineColor: () => "#cbd5d1",
-                paddingLeft: () => 3,
-                paddingRight: () => 3,
-                paddingTop: () => 2,
-                paddingBottom: () => 2,
-              };
-            }
-            Object.values(node).forEach(applyTablePagination);
-          });
-        };
-        applyTablePagination(convertedContent);
-        const pdfContent = [
-          { text: titleText, fontSize: 18, bold: true, margin: [0, 0, 0, 5] },
-          ...(summaryItems.length ? [{
-            table: {
-              dontBreakRows: true,
-              widths: Array(summaryItems.length).fill("*"),
-              body: [summaryItems.map((item) => ({
-                stack: [
-                  { text: item.label.toLocaleUpperCase(), fontSize: 5, bold: true, color: "#64746f" },
-                  { text: item.value, fontSize: 7, bold: true, color: "#17211d", margin: [0, 2, 0, 0] },
-                ],
-                alignment: "center",
-                margin: [2, 3, 2, 3],
-              }))],
-            },
-            layout: "noBorders",
-            margin: [0, 0, 0, 5],
-          }] : []),
-          ...(subtitleText ? [{ text: subtitleText, fontSize: 8, color: "#64746f", margin: [0, 0, 0, 8] }] : []),
-          ...convertedContent,
-        ];
-        if (signatureNames.length) {
-          pdfContent.push({
-            table: {
-              dontBreakRows: true,
-              widths: ["*", "*"],
-              body: [[0, 1].map((index) => ({
-                stack: [
-                  { text: "____________________", alignment: "center", margin: [0, 12, 0, 3] },
-                  { text: signatureNames[index] || "", alignment: "center", fontSize: 8 },
-                ],
-              }))],
-            },
-            layout: "noBorders",
-            margin: [0, 12, 0, 0],
-          });
-        }
-        const definition = {
-          pageSize: "A4",
-          pageOrientation: "landscape",
-          pageMargins: [24, 24, 24, 30],
-          defaultStyle: { font: "Roboto", fontSize: 7, color: "#17211d" },
-          content: pdfContent,
-          footer: (pageNumber, pageCount) => ({
-            columns: [
-              { text: "maz.is-local.org", alignment: "left" },
-              { text: `${isEnglish ? "Page" : "Halaman"} ${pageNumber} ${isEnglish ? "of" : "dari"} ${pageCount}`, alignment: "right" },
-            ],
-            color: "#64746f",
-            fontSize: 8,
-            margin: [24, 0, 24, 8],
-          }),
-        };
-        const blob = await new Promise((resolve, reject) => {
-          try {
-            printWindow.pdfMake.createPdf(definition).getBlob(resolve);
-          } catch (error) {
-            reject(error);
-          }
-        });
-        if (!(blob instanceof printWindow.Blob) || blob.type !== "application/pdf" || blob.size < 100) {
-          throw new Error("PDF generator returned invalid binary data.");
-        }
-        const pdfBytes = new Uint8Array(await blob.arrayBuffer());
-        const pdfHeader = String.fromCharCode(...pdfBytes.subarray(0, 5));
-        const pdfEnd = new TextDecoder().decode(pdfBytes.subarray(Math.max(0, pdfBytes.length - 32)));
-        if (pdfHeader !== "%PDF-" || !pdfEnd.includes("%%EOF")) {
-          throw new Error("Generated PDF is incomplete or invalid.");
-        }
-        return blob;
-      };
-      savePdfButton.addEventListener("click", async () => {
-        if (typeof printWindow.pdfMake?.createPdf !== "function" || typeof printWindow.htmlToPdfmake !== "function") {
-          setPdfLibraryReady();
-          return;
-        }
-        const baseName = (session ? archivePdfFileName(session) : title)
-          .replace(/[<>:"/\\|?*\u0000-\u001f]/g, " ")
-          .replace(/\s+/g, " ")
-          .replace(/[. ]+$/g, "")
-          .trim() || "Stock Opname";
-        const useSavePicker = typeof printWindow.showSaveFilePicker === "function";
-        try {
-          savePdfButton.disabled = true;
-          let fileHandle = null;
-          if (useSavePicker) {
-            fileHandle = await printWindow.showSaveFilePicker({
-              suggestedName: `${baseName}.pdf`,
-              types: [{ description: "PDF document", accept: { "application/pdf": [".pdf"] } }],
-            });
-          }
-          status.textContent = isEnglish ? "Creating PDF..." : "Membuat PDF...";
-          const blob = await createPdfBlob();
-          if (fileHandle) {
-            const writable = await fileHandle.createWritable();
-            await writable.write(blob);
-            await writable.close();
-            status.textContent = isEnglish ? "PDF saved." : "PDF berhasil disimpan.";
-          } else {
-            const downloadUrl = printWindow.URL.createObjectURL(blob);
-            const downloadLink = printWindow.document.createElement("a");
-            downloadLink.href = downloadUrl;
-            downloadLink.download = `${baseName}.pdf`;
-            downloadLink.click();
-            printWindow.setTimeout(() => printWindow.URL.revokeObjectURL(downloadUrl), 60000);
-            status.textContent = isEnglish
-              ? "This browser does not support choosing a save location; the PDF was downloaded."
-              : "Browser ini tidak mendukung pemilihan lokasi; PDF diunduh ke folder Unduhan.";
-          }
-        } catch (error) {
-          if (error?.name === "AbortError") {
-            status.textContent = isEnglish ? "Save cancelled." : "Penyimpanan dibatalkan.";
-          } else {
-            status.textContent = isEnglish ? "Could not create or save the PDF." : "PDF gagal dibuat atau disimpan.";
-            console.error("Unable to create or save stock opname PDF.", error);
-          }
-        } finally {
-          savePdfButton.disabled = typeof printWindow.pdfMake?.createPdf !== "function"
-            || typeof printWindow.htmlToPdfmake !== "function";
-        }
-      });
       translateDocument(printWindow.document.body);
       return printWindow;
     }
