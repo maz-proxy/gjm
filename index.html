@@ -7670,13 +7670,19 @@
         const variance = varianceFor(product, inboundEntries);
         const included = isCountedProduct(product, countMode);
         const status = statusFor(product, countMode, inboundEntries);
-        return `<tr><td>${index + 1}</td><td class="print-item-code">${escapeHtml(product.sku)}</td><td class="print-item-name">${escapeHtml(product.name)}</td><td class="quantity-cell">${formatNumber(product.stock)}</td><td class="quantity-cell">${included ? formatNumber(product.count || 0) : "-"}</td><td class="quantity-cell">${formatNumber(product.box || 0)}</td><td class="quantity-cell">${included ? formatNumber(inboundQuantityFor(product.id, inboundEntries)) : "-"}</td><td class="quantity-cell">${included ? formatNumber(product.pj || 0) : "-"}</td><td class="quantity-cell"><span class="variance ${variance === 0 ? "zero" : variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td><td><span class="row-status ${status.className}">${status.label}</span></td><td>${escapeHtml(product.note || "-")}</td></tr>`;
+        const checkMarkup = printMode
+          ? `<span class="row-status ${status.className}">${status.label}${status.className === "match" ? ' <span class="check-success-icon" aria-hidden="true">✓</span>' : ""}</span>`
+          : status.label;
+        return `<tr><td>${index + 1}</td><td class="print-item-code">${escapeHtml(product.sku)}</td><td class="print-item-name">${escapeHtml(product.name)}</td><td class="quantity-cell">${formatNumber(product.stock)}</td><td class="quantity-cell">${included ? formatNumber(product.count || 0) : "-"}</td><td class="quantity-cell">${formatNumber(product.box || 0)}</td><td class="quantity-cell">${included ? formatNumber(inboundQuantityFor(product.id, inboundEntries)) : "-"}</td><td class="quantity-cell">${included ? formatNumber(product.pj || 0) : "-"}</td><td class="quantity-cell"><span class="variance ${variance === 0 ? "zero" : variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td><td>${checkMarkup}</td><td>${escapeHtml(product.note || "-")}</td></tr>`;
       }).join("");
       const recapProducts = products.filter((product) => isCountedProduct(product, countMode) && varianceFor(product, inboundEntries) !== 0);
       const recapRows = recapProducts.map((product, index) => {
         const variance = varianceFor(product, inboundEntries);
         const status = statusFor(product, countMode, inboundEntries);
-        return `<tr><td>${index + 1}</td><td class="print-item-code">${escapeHtml(product.sku)}</td><td class="print-item-name">${escapeHtml(product.name)}</td><td class="quantity-cell">${formatNumber(product.stock)}</td><td class="quantity-cell">${formatNumber(product.count || 0)}</td><td class="quantity-cell">${formatNumber(product.box || 0)}</td><td class="quantity-cell">${formatNumber(inboundQuantityFor(product.id, inboundEntries))}</td><td class="quantity-cell">${formatNumber(product.pj || 0)}</td><td class="quantity-cell"><span class="variance ${variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td><td>${escapeHtml(status.label)}</td><td>${escapeHtml(product.note || "-")}</td></tr>`;
+        const checkMarkup = printMode
+          ? `<span class="row-status ${status.className}">${status.label}${status.className === "match" ? ' <span class="check-success-icon" aria-hidden="true">✓</span>' : ""}</span>`
+          : status.label;
+        return `<tr><td>${index + 1}</td><td class="print-item-code">${escapeHtml(product.sku)}</td><td class="print-item-name">${escapeHtml(product.name)}</td><td class="quantity-cell">${formatNumber(product.stock)}</td><td class="quantity-cell">${formatNumber(product.count || 0)}</td><td class="quantity-cell">${formatNumber(product.box || 0)}</td><td class="quantity-cell">${formatNumber(inboundQuantityFor(product.id, inboundEntries))}</td><td class="quantity-cell">${formatNumber(product.pj || 0)}</td><td class="quantity-cell"><span class="variance ${variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td><td>${checkMarkup}</td><td>${escapeHtml(product.note || "-")}</td></tr>`;
       }).join("");
       const manualRows = (snapshot.manualEntries || []).map((entry, index) => {
         const rackNumber = snapshot.layoutNumbers?.[entry.layout];
@@ -8364,7 +8370,8 @@
         const pjQuantity = included
           ? `<button class="recorded-quantity-trigger" type="button" data-recorded-entry="pj" data-product-id="${escapeHtml(product.id)}" aria-label="Lihat detail PJ" aria-haspopup="dialog" aria-expanded="false">${formatNumber(product.pj || 0)}</button>`
           : "-";
-        return `<tr><td class="number-cell">${index + 1}</td><td>${renderProductIdentity(product)}</td><td><span class="category-chip" data-user-content>${escapeHtml(product.brand || "-")}</span></td><td class="number-cell quantity-cell">${formatNumber(product.stock)}</td><td class="number-cell quantity-cell">${scanQuantity}</td><td class="number-cell quantity-cell">${manualQuantity}</td><td class="number-cell quantity-cell">${inboundQuantity}</td><td class="number-cell quantity-cell">${pjQuantity}</td><td class="quantity-cell"><span class="variance ${variance === 0 ? "zero" : variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td><td><span class="row-status ${status.className}">${status.label}</span></td><td data-user-content>${escapeHtml(product.note || "-")}</td></tr>`;
+        const checkMarkup = `<span class="row-status ${status.className}">${status.label}${printMode && status.className === "match" ? ' <span class="check-success-icon" aria-hidden="true">✓</span>' : ""}</span>`;
+        return `<tr><td class="number-cell">${index + 1}</td><td>${renderProductIdentity(product)}</td><td><span class="category-chip" data-user-content>${escapeHtml(product.brand || "-")}</span></td><td class="number-cell quantity-cell">${formatNumber(product.stock)}</td><td class="number-cell quantity-cell">${scanQuantity}</td><td class="number-cell quantity-cell">${manualQuantity}</td><td class="number-cell quantity-cell">${inboundQuantity}</td><td class="number-cell quantity-cell">${pjQuantity}</td><td class="quantity-cell"><span class="variance ${variance === 0 ? "zero" : variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td><td>${checkMarkup}</td><td data-user-content>${escapeHtml(product.note || "-")}</td></tr>`;
       }).join("");
       const title = sheet === "recap" ? "Item belum sesuai" : "Rekonsiliasi per item";
       const emptyMessage = query ? `Tidak ada hasil untuk “${escapeHtml(recordedArchiveSearchTerm.trim())}”.` : sheet === "recap" ? "Belum ada item bermasalah. Semua item sesuai dengan VEF." : "Data Result SO tidak tersedia.";
@@ -8550,6 +8557,12 @@
         #print-session-root { display: block; margin: 0 auto; max-width: none; padding: 0; }
         #print-session-root, #print-session-root *, #print-session-root *::before, #print-session-root *::after { box-shadow: none !important; text-shadow: none !important; }
         #print-session-root * { background-color: #fff !important; background-image: none !important; border-color: #cbd5d1 !important; color: #17211d !important; }
+        #print-session-root .variance.positive, #print-session-root .variance.negative,
+        #print-session-root .row-status.different, #print-session-root .row-status.shortage { color: #b42318 !important; }
+        #print-session-root .row-status.different, #print-session-root .row-status.shortage { background-color: #fce8e6 !important; }
+        #print-session-root .variance.zero, #print-session-root .row-status.match { color: #176b36 !important; }
+        #print-session-root .row-status.match { background-color: #e2f4e7 !important; }
+        #print-session-root .row-status.match .check-success-icon { color: #16824d !important; }
         #print-session-root th { background-color: #e8eeeb !important; }
         #print-session-root .print-session-header { align-items: flex-start; display: flex; gap: 16px; justify-content: space-between; margin: 0 0 5px; }
         #print-session-root .print-session-heading { align-items: center; display: flex; flex: 1 1 auto; gap: 10px; margin: 0 0 4px; min-width: 0; }
@@ -8633,14 +8646,6 @@
         #print-session-root .print-signature-name { font-size: 10px; margin: 5px auto 0; text-align: center; width: 72%; }
         #print-session-root [data-export-session], #print-session-root [data-print-session] { display: none !important; }
         #print-session-root details:not([open]) > :not(summary) { display: block !important; }
-        #print-session-root.pdf-exporting h1 { font-size: 20px; margin-bottom: 4px; }
-        #print-session-root.pdf-exporting > p { color: #555 !important; font-size: 11px; margin: 0 0 16px; }
-        #print-session-root.pdf-exporting .completed-detail-panel { background: #fff; border: 0; max-height: none; min-width: 0; overflow: visible; padding: 0; }
-        #print-session-root.pdf-exporting .completed-racks { grid-template-columns: repeat(3, 1fr); }
-        #print-session-root.pdf-exporting .completed-rack { break-inside: avoid; }
-        #print-session-root.pdf-exporting .completed-result-table { font-size: 9px; min-width: 0; }
-        #print-session-root.pdf-exporting th, #print-session-root.pdf-exporting td { font-size: 8px; padding: 5px; }
-        #print-session-root.pdf-exporting h3 { break-after: avoid; }
         @media print {
           @page {
             size: landscape;
@@ -8668,71 +8673,183 @@
       printWindow.document.getElementById("print-session-action")?.addEventListener("click", openPrintDialog);
       const savePdfButton = printWindow.document.getElementById("save-pdf-session-action");
       const status = printWindow.document.getElementById("print-session-status");
-      const pdfLibrary = printWindow.document.createElement("script");
-      pdfLibrary.id = "html2pdf-library";
-      pdfLibrary.src = "https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.3/dist/html2pdf.bundle.min.js";
+      const pdfLibraryUrls = [
+        "https://cdn.jsdelivr.net/npm/pdfmake@0.2.20/build/pdfmake.min.js",
+        "https://cdn.jsdelivr.net/npm/pdfmake@0.2.20/build/vfs_fonts.min.js",
+        "https://cdn.jsdelivr.net/npm/html-to-pdfmake@2.5.31/browser.js",
+      ];
       const isEnglish = currentLanguage === "en";
       const setPdfLibraryReady = () => {
-        const ready = typeof printWindow.html2pdf === "function";
+        const ready = typeof printWindow.pdfMake?.createPdf === "function"
+          && typeof printWindow.htmlToPdfmake === "function";
         savePdfButton.disabled = !ready;
         status.textContent = ready
           ? (isEnglish ? "PDF is ready to save." : "PDF siap disimpan.")
           : (isEnglish ? "PDF tools could not be loaded. Check your internet connection." : "Alat PDF gagal dimuat. Periksa koneksi internet.");
       };
-      pdfLibrary.addEventListener("load", setPdfLibraryReady, { once: true });
-      pdfLibrary.addEventListener("error", setPdfLibraryReady, { once: true });
+      const loadPdfLibraries = async () => {
+        for (const [index, source] of pdfLibraryUrls.entries()) {
+          await new Promise((resolve, reject) => {
+            const script = printWindow.document.createElement("script");
+            script.src = source;
+            script.addEventListener("load", resolve, { once: true });
+            script.addEventListener("error", () => reject(new Error(`Unable to load PDF library ${index + 1}.`)), { once: true });
+            printWindow.document.head.appendChild(script);
+          });
+        }
+        setPdfLibraryReady();
+      };
       setPdfLibraryReady();
-      printWindow.document.head.appendChild(pdfLibrary);
+      loadPdfLibraries().catch((error) => {
+        status.textContent = isEnglish ? "PDF tools could not be loaded. Check your internet connection." : "Alat PDF gagal dimuat. Periksa koneksi internet.";
+        console.error("Unable to load vector PDF libraries.", error);
+      });
       const createPdfBlob = async () => {
         const root = printWindow.document.getElementById("print-session-root");
-        const originalWidth = root.style.width;
-        root.classList.add("pdf-exporting");
-        root.style.width = "281mm";
-        try {
-          const worker = printWindow.html2pdf().set({
-            margin: 8,
-            image: { type: "jpeg", quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff", logging: false },
-            jsPDF: { unit: "mm", format: "a4", orientation: "landscape" },
-            pagebreak: { mode: ["css", "legacy"], avoid: [".print-session-header", ".print-signature", ".completed-rack", "#print-session-root tr"] },
-          }).from(root).toPdf();
-          return await new Promise((resolve, reject) => {
-            worker.get("pdf", (pdf) => {
-              try {
-                const pageCount = pdf.internal.getNumberOfPages();
-                for (let page = 1; page <= pageCount; page += 1) {
-                  pdf.setPage(page);
-                  const pageWidth = pdf.internal.pageSize.getWidth();
-                  const pageHeight = pdf.internal.pageSize.getHeight();
-                  pdf.setFont("helvetica", "normal");
-                  pdf.setFontSize(8);
-                  pdf.setTextColor(100, 116, 111);
-                  pdf.text("maz.is-local.org", 8, pageHeight - 4);
-                  pdf.text(`${isEnglish ? "Page" : "Halaman"} ${page} ${isEnglish ? "of" : "dari"} ${pageCount}`, pageWidth - 8, pageHeight - 4, { align: "right" });
-                }
-                const pdfData = pdf.output("arraybuffer");
-                if (Object.prototype.toString.call(pdfData) !== "[object ArrayBuffer]") {
-                  throw new TypeError("PDF generator returned invalid binary data.");
-                }
-                const pdfBytes = new Uint8Array(pdfData);
-                const pdfHeader = String.fromCharCode(...pdfBytes.subarray(0, 5));
-                const pdfEnd = new TextDecoder().decode(pdfBytes.subarray(Math.max(0, pdfBytes.length - 32)));
-                if (pdfBytes.length < 100 || pdfHeader !== "%PDF-" || !pdfEnd.includes("%%EOF")) {
-                  throw new Error("Generated PDF is incomplete or invalid.");
-                }
-                resolve(new printWindow.Blob([pdfData], { type: "application/pdf" }));
-              } catch (error) {
-                reject(error);
-              }
-            }).catchExternal(reject);
+        const titleText = root.querySelector(".print-session-heading h1")?.textContent?.trim() || "Stock Opname";
+        const subtitleText = root.querySelector(".print-session-subtitle")?.textContent?.trim() || "";
+        const summaryItems = [...root.querySelectorAll(".print-session-summary > *")].map((item) => ({
+          label: item.querySelector("span")?.textContent?.trim() || "",
+          value: item.querySelector("strong")?.textContent?.trim() || "",
+        })).filter((item) => item.label || item.value);
+        const signatureNames = [...root.querySelectorAll(".print-signature-name")]
+          .map((item) => item.textContent.replace(/\s+/g, " ").trim());
+        const clone = root.cloneNode(true);
+        const cloneElements = [clone, ...clone.querySelectorAll("*")];
+        const sourceElements = [root, ...root.querySelectorAll("*")];
+        const styleProperties = [
+          "font-size", "font-weight", "font-style", "color", "background-color", "text-align", "vertical-align",
+          "text-decoration", "line-height", "padding-top", "padding-right", "padding-bottom", "padding-left",
+          "margin-top", "margin-right", "margin-bottom", "margin-left", "width", "height", "white-space",
+          "border-top-width", "border-top-style", "border-top-color", "border-right-width", "border-right-style",
+          "border-right-color", "border-bottom-width", "border-bottom-style", "border-bottom-color",
+          "border-left-width", "border-left-style", "border-left-color", "border-collapse", "border-spacing",
+        ];
+        cloneElements.forEach((element, index) => {
+          const computed = printWindow.getComputedStyle(sourceElements[index]);
+          styleProperties.forEach((property) => {
+            const value = computed.getPropertyValue(property);
+            if (value) element.style.setProperty(property, value);
           });
-        } finally {
-          root.style.width = originalWidth;
-          root.classList.remove("pdf-exporting");
+        });
+        clone.querySelector(".print-session-header")?.remove();
+        clone.querySelector(".print-session-subtitle")?.remove();
+        clone.querySelector(".print-signatures")?.remove();
+        clone.querySelectorAll(".workspace-brand-icon, img, button, input, select, [data-export-session], [data-print-session]").forEach((element) => element.remove());
+        const convertedContent = printWindow.htmlToPdfmake(clone.innerHTML, {
+          window: printWindow,
+          tableAutoSize: true,
+          defaultStyles: {
+            h1: { fontSize: 18, bold: true, margin: [0, 0, 4, 0] },
+            h2: { fontSize: 12, bold: true, margin: [0, 4, 0, 2] },
+            h3: { fontSize: 10, bold: true, margin: [0, 3, 0, 2] },
+            p: { fontSize: 8, margin: [0, 0, 4, 0] },
+            th: { bold: true, fillColor: "#e8eeeb", fontSize: 6 },
+            td: { fontSize: 6 },
+            table: { marginBottom: 5 },
+          },
+        });
+        const sourceTables = [...root.querySelectorAll("table")];
+        let tableIndex = 0;
+        const applyTablePagination = (nodes) => {
+          if (!Array.isArray(nodes)) return;
+          nodes.forEach((node) => {
+            if (node.table) {
+              const sourceTable = sourceTables[tableIndex++];
+              const headerRows = sourceTable?.tHead?.rows.length || 0;
+              node.table.dontBreakRows = true;
+              if (headerRows) {
+                node.table.headerRows = headerRows;
+                node.table.keepWithHeaderRows = headerRows;
+              }
+              node.layout = {
+                hLineWidth: (index, table) => index === 0 || index === table.table.body.length ? 0.6 : 0.3,
+                vLineWidth: () => 0.3,
+                hLineColor: () => "#cbd5d1",
+                vLineColor: () => "#cbd5d1",
+                paddingLeft: () => 3,
+                paddingRight: () => 3,
+                paddingTop: () => 2,
+                paddingBottom: () => 2,
+              };
+            }
+            Object.values(node).forEach(applyTablePagination);
+          });
+        };
+        applyTablePagination(convertedContent);
+        const pdfContent = [
+          { text: titleText, fontSize: 18, bold: true, margin: [0, 0, 0, 5] },
+          ...(summaryItems.length ? [{
+            table: {
+              dontBreakRows: true,
+              widths: Array(summaryItems.length).fill("*"),
+              body: [summaryItems.map((item) => ({
+                stack: [
+                  { text: item.label.toLocaleUpperCase(), fontSize: 5, bold: true, color: "#64746f" },
+                  { text: item.value, fontSize: 7, bold: true, color: "#17211d", margin: [0, 2, 0, 0] },
+                ],
+                alignment: "center",
+                margin: [2, 3, 2, 3],
+              }))],
+            },
+            layout: "noBorders",
+            margin: [0, 0, 0, 5],
+          }] : []),
+          ...(subtitleText ? [{ text: subtitleText, fontSize: 8, color: "#64746f", margin: [0, 0, 0, 8] }] : []),
+          ...convertedContent,
+        ];
+        if (signatureNames.length) {
+          pdfContent.push({
+            table: {
+              dontBreakRows: true,
+              widths: ["*", "*"],
+              body: [[0, 1].map((index) => ({
+                stack: [
+                  { text: "____________________", alignment: "center", margin: [0, 12, 0, 3] },
+                  { text: signatureNames[index] || "", alignment: "center", fontSize: 8 },
+                ],
+              }))],
+            },
+            layout: "noBorders",
+            margin: [0, 12, 0, 0],
+          });
         }
+        const definition = {
+          pageSize: "A4",
+          pageOrientation: "landscape",
+          pageMargins: [24, 24, 24, 30],
+          defaultStyle: { font: "Roboto", fontSize: 7, color: "#17211d" },
+          content: pdfContent,
+          footer: (pageNumber, pageCount) => ({
+            columns: [
+              { text: "maz.is-local.org", alignment: "left" },
+              { text: `${isEnglish ? "Page" : "Halaman"} ${pageNumber} ${isEnglish ? "of" : "dari"} ${pageCount}`, alignment: "right" },
+            ],
+            color: "#64746f",
+            fontSize: 8,
+            margin: [24, 0, 24, 8],
+          }),
+        };
+        const blob = await new Promise((resolve, reject) => {
+          try {
+            printWindow.pdfMake.createPdf(definition).getBlob(resolve);
+          } catch (error) {
+            reject(error);
+          }
+        });
+        if (!(blob instanceof printWindow.Blob) || blob.type !== "application/pdf" || blob.size < 100) {
+          throw new Error("PDF generator returned invalid binary data.");
+        }
+        const pdfBytes = new Uint8Array(await blob.arrayBuffer());
+        const pdfHeader = String.fromCharCode(...pdfBytes.subarray(0, 5));
+        const pdfEnd = new TextDecoder().decode(pdfBytes.subarray(Math.max(0, pdfBytes.length - 32)));
+        if (pdfHeader !== "%PDF-" || !pdfEnd.includes("%%EOF")) {
+          throw new Error("Generated PDF is incomplete or invalid.");
+        }
+        return blob;
       };
       savePdfButton.addEventListener("click", async () => {
-        if (typeof printWindow.html2pdf !== "function") {
+        if (typeof printWindow.pdfMake?.createPdf !== "function" || typeof printWindow.htmlToPdfmake !== "function") {
           setPdfLibraryReady();
           return;
         }
@@ -8777,7 +8894,8 @@
             console.error("Unable to create or save stock opname PDF.", error);
           }
         } finally {
-          savePdfButton.disabled = typeof printWindow.html2pdf !== "function";
+          savePdfButton.disabled = typeof printWindow.pdfMake?.createPdf !== "function"
+            || typeof printWindow.htmlToPdfmake !== "function";
         }
       });
       translateDocument(printWindow.document.body);
