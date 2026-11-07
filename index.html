@@ -8578,6 +8578,7 @@
         #print-session-root thead { display: table-header-group; }
         #print-session-root th { font-size: 7px; line-height: 1.1; padding: 3px 4px; white-space: normal; }
         #print-session-root td { font-size: 7.5px; line-height: 1.15; padding: 2px 4px; }
+        #print-session-root tr { break-inside: avoid; page-break-inside: avoid; }
         #print-session-root .quantity-cell { font-variant-numeric: tabular-nums; white-space: nowrap; }
         #print-session-root .table-section { margin: 7px 0 !important; }
         #print-session-root .table-toolbar { min-height: 0; padding: 5px 8px; }
@@ -8693,7 +8694,7 @@
             image: { type: "jpeg", quality: 0.98 },
             html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff", logging: false },
             jsPDF: { unit: "mm", format: "a4", orientation: "landscape" },
-            pagebreak: { mode: ["css", "legacy"], avoid: [".print-session-header", ".print-signature", ".completed-rack"] },
+            pagebreak: { mode: ["css", "legacy"], avoid: [".print-session-header", ".print-signature", ".completed-rack", "#print-session-root tr"] },
           }).from(root).toPdf();
           return await new Promise((resolve, reject) => {
             worker.get("pdf", (pdf) => {
