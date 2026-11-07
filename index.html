@@ -2689,7 +2689,7 @@
     <div class="dialog-actions"><button class="button button-primary" type="button" data-close="date-validation-warning-dialog">Perbaiki tanggal</button></div>
   </dialog>
   <dialog id="finish-dialog">
-    <div class="dialog-head"><div><div class="dialog-title">Selesaikan stock opname?</div><div class="dialog-subtitle">Hasil akan diarsipkan dan kartu workspace ini dihapus dari jadwal. Setelah tersimpan, detail hasil akan dibuka.</div></div><button class="dialog-close" type="button" data-close="finish-dialog" aria-label="Tutup">×</button></div>
+    <div class="dialog-head"><div><div class="dialog-title">Selesaikan stock opname?</div><div class="dialog-subtitle">Hasil akan diarsipkan dan kartu workspace ini dihapus dari jadwal. Setelah tersimpan, Stock Opname Recorded akan dibuka.</div></div><button class="dialog-close" type="button" data-close="finish-dialog" aria-label="Tutup">×</button></div>
     <div class="confirm-body" id="finish-message"></div>
     <div class="dialog-actions"><button class="button button-secondary" type="button" data-close="finish-dialog">Kembali</button><button class="button button-primary" id="confirm-finish" type="button">SO SELESAI</button></div>
   </dialog>
@@ -3315,7 +3315,7 @@
       "Nonaktifkan": "Disable",
       "Panduan lengkap menyiapkan jadwal, memproses VEF, melakukan opname, dan meninjau arsip dengan benar.": "A complete guide to scheduling, processing VEF, performing stock opname, and reviewing archives.",
       "Kontrol stock opname dalam satu workspace.": "Manage stock opname in one workspace.",
-      "Hasil akan diarsipkan dan kartu workspace ini dihapus dari jadwal. Setelah tersimpan, detail hasil akan dibuka.": "The results will be archived and this workspace card will be removed from the schedule. The completed results will open after they are saved.",
+      "Hasil akan diarsipkan dan kartu workspace ini dihapus dari jadwal. Setelah tersimpan, Stock Opname Recorded akan dibuka.": "The results will be archived and this workspace card will be removed from the schedule. Stock Opname Recorded will open after they are saved.",
       "Aplikasi ini membantu tim mengelola master VEF, memindai serial number, dan mencocokkan hasil opname dengan data stok. Aktivitas tersimpan bersama agar dapat dipantau oleh seluruh tim.": "This app helps teams manage the VEF master, scan serial numbers, and reconcile stock opname results. Shared activity is saved so the whole team can monitor progress.",
       "Panduan menggunakan workspace": "Workspace Guide",
       "Pantau progres scan, jumlah item dan unit per warehouse, quantity SCAN/MANUAL/PJ, serta sesi yang masih berjalan. Klik tombol pada rincian sesi untuk membuka workspace-nya. Di bagian bawah, pilih brand pada Stock Opname Recorded, lalu tentukan bulan dan week. Tombol View membuka halaman arsip khusus yang menampilkan PIC 1 dan PIC 2; pilih Scan Layout, Result SO, atau Rekap Selisih untuk melihat lembar hanya-baca. Setiap lembar dapat dicetak atau disimpan sebagai PDF melalui dialog print browser.": "Track scan progress, item and unit counts by warehouse, SCAN/MANUAL/PJ quantities, and active sessions. Use the session details button to open a workspace. At the bottom, select a brand in Recorded Stock Opname, then choose a month and week. View opens a dedicated archive page showing PIC 1 and PIC 2; select Scan & Manual, Stock Reconciliation, or Recap to view a read-only sheet. Each sheet can be printed or saved as PDF using your browser's print dialog.",
@@ -10933,8 +10933,10 @@
         ...nextWorkspace.data,
         workbookFiles: [...(nextWorkspace.data.workbookFiles || []), ...unarchivedWorkbooks]
       }));
-      selectedCompletedSessionId = archivedSessionId;
-      currentPage = "completed-session-detail";
+      selectedRecordedSessionId = archivedSessionId;
+      selectedRecordedSheet = "layouts";
+      recordedArchiveSearchTerm = "";
+      currentPage = "recorded-archive";
       state.lastScan = null;
       document.getElementById("workbook-input").value = "";
       persist();
