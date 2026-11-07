@@ -286,13 +286,13 @@ begin
       ) and not (
         coalesce(removed_workspace -> 'data' -> 'activeSession' ->> 'status', 'active') = 'active'
         and (
-          is_workspace_super_admin
-          or coalesce(removed_owner_id = current_user_id, false)
-          or (removed_owner_id is null and removed_owner_names && current_user_names)
-        )
-        and (
           (
-            not exists (
+            (
+              is_workspace_super_admin
+              or coalesce(removed_owner_id = current_user_id, false)
+              or (removed_owner_id is null and removed_owner_names && current_user_names)
+            )
+            and not exists (
               select 1
                 from jsonb_array_elements(coalesce(removed_workspace -> 'data' -> 'workbookFiles', '[]'::jsonb)) as workbook(value)
                where workbook.value ->> 'sessionId' = removed_session_id
@@ -312,11 +312,19 @@ begin
                and (
                  archived.value ->> 'createdByUserId' = current_user_id
                  or is_workspace_super_admin
+                 or (
+                   archived.value ->> 'createdByUserId' = removed_owner_id
+                   and exists (
+                     select 1
+                       from jsonb_array_elements_text(coalesce(removed_workspace -> 'picNames', '[]'::jsonb)) as pic(name)
+                      where lower(btrim(pic.name)) = any(current_user_names)
+                   )
+                 )
                )
                and archived.value -> 'snapshot' -> 'activeSession' ->> 'id' = removed_session_id
                and archived.value -> 'snapshot' -> 'activeSession' ->> 'status' = 'completed'
                and (
-                 archived.value -> 'snapshot' -> 'activeSession' ->> 'createdByUserId' = current_user_id
+                 archived.value -> 'snapshot' -> 'activeSession' ->> 'createdByUserId' = archived.value ->> 'createdByUserId'
                  or is_workspace_super_admin
                )
                and nullif(archived.value -> 'snapshot' -> 'activeSession' ->> 'finishedAt', '') is not null
@@ -531,7 +539,6 @@ declare
   is_current_user_pic boolean;
   old_archive jsonb;
   new_archive jsonb;
-  archive_workspace jsonb;
   previous_archive_workspace jsonb;
   workspace_id text;
   archive_id text;
@@ -730,8 +737,14 @@ begin
             or (old_active_session -> 'finishedAt') is distinct from (new_active_session -> 'finishedAt')
             or (old_active_session -> 'createdByUsername') is distinct from (new_active_session -> 'createdByUsername')
           ) then
-          raise exception 'Only the session owner can finish or restart the active session.'
-            using errcode = '42501';
+          if coalesce(old_active_session ->> 'status', 'active') <> 'active'
+            or new_active_session ->> 'status' is distinct from 'completed'
+            or nullif(old_active_session ->> 'finishedAt', '') is not null
+            or nullif(new_active_session ->> 'finishedAt', '') is null
+            or (old_active_session - 'status' - 'finishedAt') is distinct from (new_active_session - 'status' - 'finishedAt') then
+            raise exception 'Assigned PICs may only finish, not restart or replace, the active session.'
+              using errcode = '42501';
+          end if;
         end if;
         if (old_owner_id is not null and new_owner_id is distinct from old_owner_id)
           or (old_owner_id is null and new_owner_id is not null and new_owner_id is distinct from current_user_id) then
@@ -759,30 +772,44 @@ begin
       raise exception 'Only the stock opname session owner can change or delete its archive.'
         using errcode = '42501';
     end if;
-    if new_archive ->> 'createdByUserId' is distinct from current_user_id then
+    if new_archive ->> 'createdByUserId' is distinct from current_user_id
+      and not exists (
+        select 1
+          from jsonb_array_elements(coalesce(old.data -> 'workspaces', '[]'::jsonb)) as assigned_workspace(value)
+         where assigned_workspace.value ->> 'id' = new_archive ->> 'workspaceId'
+           and assigned_workspace.value -> 'data' -> 'activeSession' ->> 'id' = archive_id
+           and assigned_workspace.value -> 'data' -> 'activeSession' ->> 'status' = 'active'
+           and assigned_workspace.value -> 'data' -> 'activeSession' ->> 'createdByUserId' = new_archive ->> 'createdByUserId'
+           and exists (
+             select 1
+               from jsonb_array_elements_text(coalesce(assigned_workspace.value -> 'picNames', '[]'::jsonb)) as pic(name)
+              where lower(btrim(pic.name)) = any(current_user_names)
+           )
+      ) then
       raise exception 'Only the stock opname session owner can change or create its archive.'
         using errcode = '42501';
     end if;
     if old_archive is null then
-      select value into archive_workspace
-        from jsonb_array_elements(coalesce(new.data -> 'workspaces', '[]'::jsonb))
+      if new_archive -> 'snapshot' -> 'activeSession' ->> 'id' is distinct from archive_id
+        or new_archive -> 'snapshot' -> 'activeSession' ->> 'status' is distinct from 'completed'
+        or new_archive -> 'snapshot' -> 'activeSession' ->> 'createdByUserId' is distinct from new_archive ->> 'createdByUserId'
+        or nullif(new_archive -> 'snapshot' -> 'activeSession' ->> 'finishedAt', '') is null then
+        raise exception 'A stock opname archive must contain its matching completed session.'
+          using errcode = '42501';
+      end if;
+      select value into previous_archive_workspace
+        from jsonb_array_elements(coalesce(old.data -> 'workspaces', '[]'::jsonb))
         where value ->> 'id' = new_archive ->> 'workspaceId'
         limit 1;
-      if archive_workspace is null
-        or archive_workspace -> 'data' -> 'activeSession' ->> 'id' is distinct from archive_id
-        or archive_workspace -> 'data' -> 'activeSession' ->> 'status' is distinct from 'completed'
-        or archive_workspace -> 'data' -> 'activeSession' ->> 'createdByUserId' is distinct from current_user_id then
-        select value into previous_archive_workspace
-          from jsonb_array_elements(coalesce(old.data -> 'workspaces', '[]'::jsonb))
-          where value ->> 'id' = new_archive ->> 'workspaceId'
-          limit 1;
-        if previous_archive_workspace is null
-          or previous_archive_workspace -> 'data' -> 'activeSession' ->> 'id' is distinct from archive_id
-          or previous_archive_workspace -> 'data' -> 'activeSession' ->> 'status' is distinct from 'active'
-          or previous_archive_workspace -> 'data' -> 'activeSession' ->> 'createdByUserId' is distinct from current_user_id then
-          raise exception 'A stock opname archive must match a completed session owned by the current user.'
-            using errcode = '42501';
-        end if;
+      if previous_archive_workspace is null
+        or previous_archive_workspace -> 'data' -> 'activeSession' ->> 'id' is distinct from archive_id
+        or coalesce(previous_archive_workspace -> 'data' -> 'activeSession' ->> 'status', 'active') <> 'active'
+        or previous_archive_workspace -> 'data' -> 'activeSession' ->> 'createdByUserId' is distinct from new_archive ->> 'createdByUserId'
+        or nullif(previous_archive_workspace -> 'data' -> 'activeSession' ->> 'finishedAt', '') is not null
+        or (new_archive -> 'snapshot' -> 'activeSession' - 'status' - 'finishedAt')
+          is distinct from (previous_archive_workspace -> 'data' -> 'activeSession' - 'status' - 'finishedAt') then
+        raise exception 'A stock opname archive must match an active session completed without changing its ownership.'
+          using errcode = '42501';
       end if;
     end if;
   end loop;
