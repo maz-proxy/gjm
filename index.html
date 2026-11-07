@@ -8480,6 +8480,15 @@
         <div id="recorded-sheet-content" class="recorded-sheet-content">${renderRecordedSheet(session, selectedRecordedSheet)}</div>
       </div>`;
     }
+    function archivePdfFileName(session) {
+      const brandName = session.workspaceName || (currentLanguage === "en" ? "Stock opname session" : "Sesi opname");
+      const fileName = `${brandName} ${archivedSessionMonth(session)} ${archivedSessionWeek(session)} ${new Date().getFullYear()}`
+        .replace(/[<>:"/\\|?*\u0000-\u001f]/g, " ")
+        .replace(/\s+/g, " ")
+        .replace(/[. ]+$/g, "")
+        .trim();
+      return fileName || "Stock Opname";
+    }
     function openArchivePrintWindow(title, subtitle, content, brandName = "", picNames = [], session = null) {
       const printWindow = window.open("", "_blank");
       if (!printWindow) {
@@ -8525,7 +8534,8 @@
         printWindow.print();
       }, { once: true });
       printWindow.document.open();
-      printWindow.document.write(`<!doctype html><html lang="${currentLanguage}" data-theme="light" data-accent="green"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHtml(title)}</title><style>${styles}
+      const documentTitle = session ? archivePdfFileName(session) : title;
+      printWindow.document.write(`<!doctype html><html lang="${currentLanguage}" data-theme="light" data-accent="green"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHtml(documentTitle)}</title><style>${styles}
         html[data-accent="burgundy"] { --print-accent: #842b4b; --print-accent-dark: #5d1c35; --print-accent-soft: #f5e7ec; --print-accent-line: #ead1d9; }
         html:not([data-accent="burgundy"]) { --print-accent: #176b5b; --print-accent-dark: #124a41; --print-accent-soft: #e5f2ee; --print-accent-line: #c9dfd0; }
         html, body.printing-session, #print-session-root { background: #fff !important; color: #17211d !important; color-scheme: light; }
