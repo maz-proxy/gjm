@@ -8544,6 +8544,8 @@
         .print-action-toolbar button { background: #176b5b; border: 1px solid #176b5b; border-radius: 7px; color: #fff; cursor: pointer; font: 700 12px/1 "DM Sans", "Segoe UI", sans-serif; min-height: 36px; padding: 0 13px; }
         .print-action-toolbar button.secondary { background: #fff; color: #176b5b; }
         .print-action-toolbar button:hover { filter: brightness(.95); }
+        .print-action-toolbar button:disabled { cursor: wait; opacity: .6; }
+        #print-session-status { color: #52635d; font: 11px/1.35 "DM Sans", "Segoe UI", sans-serif; max-width: 240px; }
         @media print { .print-action-toolbar { display: none !important; } }
         #print-session-root { display: block; margin: 0 auto; max-width: none; padding: 0; }
         #print-session-root, #print-session-root *, #print-session-root *::before, #print-session-root *::after { box-shadow: none !important; text-shadow: none !important; }
@@ -8630,6 +8632,14 @@
         #print-session-root .print-signature-name { font-size: 10px; margin: 5px auto 0; text-align: center; width: 72%; }
         #print-session-root [data-export-session], #print-session-root [data-print-session] { display: none !important; }
         #print-session-root details:not([open]) > :not(summary) { display: block !important; }
+        #print-session-root.pdf-exporting h1 { font-size: 20px; margin-bottom: 4px; }
+        #print-session-root.pdf-exporting > p { color: #555 !important; font-size: 11px; margin: 0 0 16px; }
+        #print-session-root.pdf-exporting .completed-detail-panel { background: #fff; border: 0; max-height: none; min-width: 0; overflow: visible; padding: 0; }
+        #print-session-root.pdf-exporting .completed-racks { grid-template-columns: repeat(3, 1fr); }
+        #print-session-root.pdf-exporting .completed-rack { break-inside: avoid; }
+        #print-session-root.pdf-exporting .completed-result-table { font-size: 9px; min-width: 0; }
+        #print-session-root.pdf-exporting th, #print-session-root.pdf-exporting td { font-size: 8px; padding: 5px; }
+        #print-session-root.pdf-exporting h3 { break-after: avoid; }
         @media print {
           @page {
             size: landscape;
@@ -8648,14 +8658,109 @@
           body.printing-session { padding: 0; }
           #print-session-root { width: 100%; }
         }
-      </style></head><body class="printing-session"><div class="print-action-toolbar" role="group" aria-label="${currentLanguage === "en" ? "Print actions" : "Aksi cetak"}"><button class="secondary" id="print-session-action" type="button">Print</button><button id="save-pdf-session-action" type="button">${currentLanguage === "en" ? "Save PDF" : "Simpan PDF"}</button></div><main id="print-session-root"><div class="print-session-header"><div class="print-session-heading">${renderWorkspaceBrandIcon(brandName)}<h1 data-user-content>${escapeHtml(title)}</h1></div>${session ? renderArchivePrintSummary(session) : ""}</div><p class="print-session-subtitle" data-user-content>${escapeHtml(subtitle)}</p>${content}<section class="print-signatures" aria-label="${currentLanguage === "en" ? "PIC signatures" : "Paraf PIC"}"><div class="print-signature"><div class="print-signature-line"></div><div class="print-signature-name">${currentLanguage === "en" ? "PIC 1 name:" : "Nama PIC 1:"} <strong>${escapeHtml(picNames[0] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</strong></div></div><div class="print-signature"><div class="print-signature-line"></div><div class="print-signature-name">${currentLanguage === "en" ? "PIC 2 name:" : "Nama PIC 2:"} <strong>${escapeHtml(picNames[1] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</strong></div></div></section></main></body></html>`);
+      </style></head><body class="printing-session"><div class="print-action-toolbar" role="group" aria-label="${currentLanguage === "en" ? "Print actions" : "Aksi cetak"}"><button class="secondary" id="print-session-action" type="button">Print</button><button id="save-pdf-session-action" type="button" disabled>${currentLanguage === "en" ? "Save PDF" : "Simpan PDF"}</button><span id="print-session-status" role="status" aria-live="polite">${currentLanguage === "en" ? "Loading PDF tools..." : "Memuat alat PDF..."}</span></div><main id="print-session-root"><div class="print-session-header"><div class="print-session-heading">${renderWorkspaceBrandIcon(brandName)}<h1 data-user-content>${escapeHtml(title)}</h1></div>${session ? renderArchivePrintSummary(session) : ""}</div><p class="print-session-subtitle" data-user-content>${escapeHtml(subtitle)}</p>${content}<section class="print-signatures" aria-label="${currentLanguage === "en" ? "PIC signatures" : "Paraf PIC"}"><div class="print-signature"><div class="print-signature-line"></div><div class="print-signature-name">${currentLanguage === "en" ? "PIC 1 name:" : "Nama PIC 1:"} <strong>${escapeHtml(picNames[0] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</strong></div></div><div class="print-signature"><div class="print-signature-line"></div><div class="print-signature-name">${currentLanguage === "en" ? "PIC 2 name:" : "Nama PIC 2:"} <strong>${escapeHtml(picNames[1] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</strong></div></div></section></main></body></html>`);
       printWindow.document.close();
       const openPrintDialog = () => {
         printWindow.focus();
         printWindow.print();
       };
       printWindow.document.getElementById("print-session-action")?.addEventListener("click", openPrintDialog);
-      printWindow.document.getElementById("save-pdf-session-action")?.addEventListener("click", openPrintDialog);
+      const savePdfButton = printWindow.document.getElementById("save-pdf-session-action");
+      const status = printWindow.document.getElementById("print-session-status");
+      const pdfLibrary = printWindow.document.createElement("script");
+      pdfLibrary.id = "html2pdf-library";
+      pdfLibrary.src = "https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.3/dist/html2pdf.bundle.min.js";
+      const isEnglish = currentLanguage === "en";
+      const setPdfLibraryReady = () => {
+        const ready = typeof printWindow.html2pdf === "function";
+        savePdfButton.disabled = !ready;
+        status.textContent = ready
+          ? (isEnglish ? "PDF is ready to save." : "PDF siap disimpan.")
+          : (isEnglish ? "PDF tools could not be loaded. Check your internet connection." : "Alat PDF gagal dimuat. Periksa koneksi internet.");
+      };
+      pdfLibrary.addEventListener("load", setPdfLibraryReady, { once: true });
+      pdfLibrary.addEventListener("error", setPdfLibraryReady, { once: true });
+      setPdfLibraryReady();
+      printWindow.document.head.appendChild(pdfLibrary);
+      const createPdfBlob = async () => {
+        const root = printWindow.document.getElementById("print-session-root");
+        const originalWidth = root.style.width;
+        root.classList.add("pdf-exporting");
+        root.style.width = "281mm";
+        try {
+          const pdf = await printWindow.html2pdf().set({
+            margin: [8, 8, 12, 8],
+            image: { type: "jpeg", quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff", logging: false },
+            jsPDF: { unit: "mm", format: "a4", orientation: "landscape" },
+            pagebreak: { mode: ["css", "legacy"], avoid: [".print-session-header", ".print-signature", ".completed-rack"] },
+          }).from(root).toPdf().get("pdf");
+          const pageCount = pdf.internal.getNumberOfPages();
+          for (let page = 1; page <= pageCount; page += 1) {
+            pdf.setPage(page);
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            pdf.setFont("helvetica", "normal");
+            pdf.setFontSize(8);
+            pdf.setTextColor(100, 116, 111);
+            pdf.text("maz.is-local.org", 8, pageHeight - 4);
+            pdf.text(`${isEnglish ? "Page" : "Halaman"} ${page} ${isEnglish ? "of" : "dari"} ${pageCount}`, pageWidth - 8, pageHeight - 4, { align: "right" });
+          }
+          return pdf.output("blob");
+        } finally {
+          root.style.width = originalWidth;
+          root.classList.remove("pdf-exporting");
+        }
+      };
+      savePdfButton.addEventListener("click", async () => {
+        if (typeof printWindow.html2pdf !== "function") {
+          setPdfLibraryReady();
+          return;
+        }
+        const baseName = (session ? archivePdfFileName(session) : title)
+          .replace(/[<>:"/\\|?*\u0000-\u001f]/g, " ")
+          .replace(/\s+/g, " ")
+          .replace(/[. ]+$/g, "")
+          .trim() || "Stock Opname";
+        const useSavePicker = typeof printWindow.showSaveFilePicker === "function";
+        try {
+          savePdfButton.disabled = true;
+          let fileHandle = null;
+          if (useSavePicker) {
+            fileHandle = await printWindow.showSaveFilePicker({
+              suggestedName: `${baseName}.pdf`,
+              types: [{ description: "PDF document", accept: { "application/pdf": [".pdf"] } }],
+            });
+          }
+          status.textContent = isEnglish ? "Creating PDF..." : "Membuat PDF...";
+          const blob = await createPdfBlob();
+          if (fileHandle) {
+            const writable = await fileHandle.createWritable();
+            await writable.write(blob);
+            await writable.close();
+            status.textContent = isEnglish ? "PDF saved." : "PDF berhasil disimpan.";
+          } else {
+            const downloadUrl = printWindow.URL.createObjectURL(blob);
+            const downloadLink = printWindow.document.createElement("a");
+            downloadLink.href = downloadUrl;
+            downloadLink.download = `${baseName}.pdf`;
+            downloadLink.click();
+            printWindow.setTimeout(() => printWindow.URL.revokeObjectURL(downloadUrl), 60000);
+            status.textContent = isEnglish
+              ? "This browser does not support choosing a save location; the PDF was downloaded."
+              : "Browser ini tidak mendukung pemilihan lokasi; PDF diunduh ke folder Unduhan.";
+          }
+        } catch (error) {
+          if (error?.name === "AbortError") {
+            status.textContent = isEnglish ? "Save cancelled." : "Penyimpanan dibatalkan.";
+          } else {
+            status.textContent = isEnglish ? "Could not create or save the PDF." : "PDF gagal dibuat atau disimpan.";
+            console.error("Unable to create or save stock opname PDF.", error);
+          }
+        } finally {
+          savePdfButton.disabled = typeof printWindow.html2pdf !== "function";
+        }
+      });
       translateDocument(printWindow.document.body);
       return printWindow;
     }
