@@ -8034,7 +8034,7 @@
         remainingPercent: quantityPercent(remaining, total)
       };
     }
-    function renderArchivePrintSummary(session, className = "print-session-summary") {
+    function renderArchivePrintSummary(session, className = "print-session-summary", printBreakdown = className === "print-session-summary") {
       const snapshot = session.snapshot || {};
       const countMode = snapshot.countMode === "laptops" ? "laptops" : "all";
       const products = (snapshot.products || []).filter((product) => isCountedProduct(product, countMode));
@@ -8049,7 +8049,37 @@
       const inboundQuantity = products.reduce((sum, product) => sum + inboundQuantityFor(product.id, inboundEntries), 0);
       const progress = recordedSoProgress(session);
       const variance = scanQuantity + manualQuantity + pjQuantity - progress.total - inboundQuantity;
+      const opnameQuantity = scanQuantity + manualQuantity + pjQuantity;
+      const opnameSkuCount = products.filter((product) =>
+        Number(product.count || 0) + Number(product.box || 0) + Number(product.pj || 0) > 0
+      ).length;
+      const mismatchedSkuCount = products.filter((product) =>
+        Number(product.count || 0) + Number(product.box || 0) + Number(product.pj || 0)
+          - Number(product.stock || 0) - inboundQuantityFor(product.id, inboundEntries) !== 0
+      ).length;
       const quantitySummary = currentLanguage === "en" ? "units" : "unit";
+      if (printBreakdown) {
+        return `<aside class="${className} print-session-summary-breakdown" aria-label="${currentLanguage === "en" ? "Session quantity summary" : "Ringkasan quantity sesi"}">
+          <div class="print-summary-column">
+            <div class="print-summary-mode"><span>Mode SO</span><strong>${escapeHtml(countModeLabel(countMode))}</strong></div>
+            <div class="print-session-summary-metric"><span>Qty Scan</span><strong>${formatNumber(scanQuantity)} <small>${quantitySummary}</small></strong></div>
+            <div class="print-session-summary-metric"><span>Qty Manual</span><strong>${formatNumber(manualQuantity)} <small>${quantitySummary}</small></strong></div>
+            <div class="print-session-summary-metric"><span>Inbound/Retur</span><strong>${formatNumber(inboundQuantity)} <small>${quantitySummary}</small></strong></div>
+            <div class="print-session-summary-metric"><span>Total Qty PJ</span><strong>${formatNumber(pjQuantity)} <small>${quantitySummary}</small></strong></div>
+          </div>
+          <div class="print-summary-column">
+            <div class="print-session-summary-metric print-summary-danger"><span>Master VEF</span><strong>${formatNumber(progress.total)} <small>${quantitySummary}</small></strong></div>
+            <div class="print-session-summary-metric print-summary-success"><span>Stock Opname</span><strong>${formatNumber(opnameQuantity)} <small>${quantitySummary}</small></strong></div>
+            <div class="print-session-summary-metric print-summary-danger"><span>Item/SKU VEF</span><strong>${formatNumber(products.length)}</strong></div>
+            <div class="print-session-summary-metric print-summary-success"><span>Item/SKU SO</span><strong>${formatNumber(opnameSkuCount)}</strong></div>
+          </div>
+          <div class="print-summary-column">
+            <div class="print-session-summary-metric"><span>Selisih Qty</span><strong>${variance > 0 ? "+" : ""}${formatNumber(variance)} <small>${quantitySummary}</small></strong></div>
+            <div class="print-session-summary-metric"><span>Selisih Item/SKU</span><strong>${formatNumber(mismatchedSkuCount)}</strong></div>
+          </div>
+          <div class="print-session-summary-progress"><span>Progress</span><strong>${formatNumber(progress.completedPercent)}%</strong></div>
+        </aside>`;
+      }
       return `<aside class="${className}" aria-label="${currentLanguage === "en" ? "Session quantity summary" : "Ringkasan quantity sesi"}">
         <div class="print-session-summary-metric"><span>Mode SO</span><strong>${escapeHtml(countModeLabel(countMode))}</strong></div>
         <div class="print-session-summary-metric"><span>Total Qty Scan</span><strong>${formatNumber(scanQuantity)} <small>${quantitySummary}</small></strong></div>
@@ -8608,6 +8638,23 @@
         #print-session-root .print-session-summary-progress { align-content: center; background: transparent !important; display: grid; gap: 1px; grid-template-columns: 1fr; grid-template-rows: 1.4em auto; justify-items: center; min-width: 0; padding: 2px 5px; text-align: center; }
         #print-session-root .print-session-summary-progress > span { align-self: start; line-height: 1.1; }
         #print-session-root .print-session-summary-progress strong { background: transparent !important; color: var(--print-accent-dark) !important; font-size: 19px; font-variant-numeric: tabular-nums; font-weight: 900; line-height: 1; white-space: nowrap; }
+        #print-session-root .print-session-summary-breakdown { grid-template-columns: 1.2fr 1.2fr .9fr .7fr; max-width: 100%; }
+        #print-session-root .print-summary-column { align-content: center; display: grid; min-width: 0; padding: 3px 5px; }
+        #print-session-root .print-summary-column + .print-summary-column,
+        #print-session-root .print-session-summary-breakdown > .print-session-summary-progress { border-left: 1px solid #dfe5e2 !important; }
+        #print-session-root .print-summary-column .print-session-summary-metric { align-items: center; border: 0 !important; display: flex; gap: 4px; justify-content: space-between; padding: 2px 3px; text-align: left; }
+        #print-session-root .print-summary-column .print-session-summary-metric + .print-session-summary-metric { border-top: 1px solid #edf0ee !important; }
+        #print-session-root .print-summary-column .print-session-summary-metric > span,
+        #print-session-root .print-summary-mode > span { color: #64746f !important; font-size: 6px; font-weight: 700; letter-spacing: .15px; line-height: 1.1; text-transform: uppercase; }
+        #print-session-root .print-summary-column .print-session-summary-metric strong { font-size: 8px; }
+        #print-session-root .print-summary-column .print-session-summary-metric strong small { font-size: 6px; }
+        #print-session-root .print-summary-mode { align-items: center; border-bottom: 1px solid #edf0ee; display: flex; gap: 4px; justify-content: space-between; padding: 2px 3px 4px; }
+        #print-session-root .print-summary-mode strong { color: #34443f !important; font-size: 8px; }
+        #print-session-root .print-summary-column .print-summary-danger > span,
+        #print-session-root .print-summary-column .print-summary-danger strong { color: #b42318 !important; }
+        #print-session-root .print-summary-column .print-summary-success > span,
+        #print-session-root .print-summary-column .print-summary-success strong { color: #176b36 !important; }
+        #print-session-root .print-session-summary-breakdown > .print-session-summary-progress { padding: 3px; }
         #print-session-root > .print-session-subtitle { color: #64746f; font-size: 10px; grid-column: 1; grid-row: 2; margin: 0; }
         #print-session-root .print-session-subtitle-structured { color: #64746f; font-size: 10px; grid-column: 1; grid-row: 2; margin: 0; }
         #print-session-root > :not(.print-document-heading):not(.print-session-header):not(.print-session-subtitle):not(.print-session-subtitle-structured) { grid-column: 1 / -1; }
