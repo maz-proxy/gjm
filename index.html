@@ -8609,6 +8609,8 @@
         #print-session-root .print-session-summary-progress > span { align-self: start; line-height: 1.1; }
         #print-session-root .print-session-summary-progress strong { background: transparent !important; color: var(--print-accent-dark) !important; font-size: 19px; font-variant-numeric: tabular-nums; font-weight: 900; line-height: 1; white-space: nowrap; }
         #print-session-root > .print-session-subtitle { color: #64746f; font-size: 10px; margin: 0 0 14px; }
+        #print-session-root .print-session-subtitle-structured { color: #64746f; font-size: 10px; margin: 0 0 14px; }
+        #print-session-root .print-session-subtitle-date { display: grid; grid-template-columns: 58px 8px minmax(0, 1fr); }
         #print-session-root th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         #print-session-root .table-section, #print-session-root .layout-card, #print-session-root .completed-rack { border-color: var(--print-accent-line); }
         #print-session-root .layout-card-head { background: color-mix(in srgb, var(--print-accent) 9%, #fff); border-color: var(--print-accent-line); }
@@ -8706,6 +8708,28 @@
         }
       </style></head><body class="printing-session"><div class="print-action-toolbar" role="group" aria-label="${currentLanguage === "en" ? "Print actions" : "Aksi cetak"}"><button class="secondary" id="print-session-action" type="button"><svg class="print-button-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6z"/><path d="M18 12h.01"/></svg>Print</button></div><main id="print-session-root"><header class="print-document-heading"><img src="${new URL("./assets/brand-emblem-source.png", window.location.href).href}" alt=""><strong>STOCK OPNAME</strong></header><div class="print-session-header"><div class="print-session-heading">${renderWorkspaceBrandIcon(brandName)}<h1 data-user-content>${escapeHtml(title)}</h1></div>${session ? renderArchivePrintSummary(session) : ""}</div><p class="print-session-subtitle" data-user-content>${escapeHtml(subtitle)}</p>${content}<section class="print-signatures" aria-label="${currentLanguage === "en" ? "PIC signatures" : "Paraf PIC"}"><div class="print-signature"><div class="print-signature-line"></div><div class="print-signature-name">${currentLanguage === "en" ? "PIC 1 name:" : "Nama PIC 1:"} <strong>${escapeHtml(picNames[0] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</strong></div></div><div class="print-signature"><div class="print-signature-line"></div><div class="print-signature-name">${currentLanguage === "en" ? "PIC 2 name:" : "Nama PIC 2:"} <strong>${escapeHtml(picNames[1] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</strong></div></div></section></main></body></html>`);
       printWindow.document.close();
+      const subtitleElement = printWindow.document.querySelector(".print-session-subtitle");
+      if (subtitleElement && Array.isArray(subtitle)) {
+        const structuredSubtitle = printWindow.document.createElement("div");
+        structuredSubtitle.className = "print-session-subtitle-structured";
+        structuredSubtitle.setAttribute("data-user-content", "");
+        for (const line of subtitle) {
+          const row = printWindow.document.createElement("div");
+          row.setAttribute("data-user-content", "");
+          if (line.label) {
+            row.className = "print-session-subtitle-date";
+            for (const text of [line.label, ":", line.value]) {
+              const cell = printWindow.document.createElement("span");
+              cell.textContent = text;
+              row.append(cell);
+            }
+          } else {
+            row.textContent = line.text;
+          }
+          structuredSubtitle.append(row);
+        }
+        subtitleElement.replaceWith(structuredSubtitle);
+      }
       const documentLogo = printWindow.document.querySelector(".print-document-heading img");
       if (documentLogo) documentLogo.src = new URL("./assets/favicon-green-light-32.png", window.location.href).href;
       const openPrintDialog = () => {
@@ -8735,8 +8759,14 @@
       }
       const sheetName = selectedRecordedSheet === "layouts" ? "Scan & Manual" : selectedRecordedSheet === "result" ? "Reconciliation" : selectedRecordedSheet === "master" ? "Master VEF" : "Recap";
       const pics = session.picNames || [];
-      const unset = currentLanguage === "en" ? "Not set" : "Belum diisi";
-      const subtitle = `${archivedSessionMonth(session)} · ${archivedSessionWeek(session)} · PIC 1: ${pics[0] || unset} · PIC 2: ${pics[1] || unset} · ${currentLanguage === "en" ? "Completed" : "Selesai"} ${session.finishedAt ? formatDate(session.finishedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }) : (currentLanguage === "en" ? "Unavailable" : "Tidak tersedia")} · ${currentLanguage === "en" ? "Read-only view" : "Tampilan hanya-baca"}`;
+      const unavailable = currentLanguage === "en" ? "Unavailable" : "Tidak tersedia";
+      const dateOptions = { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" };
+      const subtitle = [
+        { text: `${archivedSessionMonth(session).toLocaleUpperCase("id-ID")} · ${archivedSessionWeek(session)}` },
+        { text: `PIC 1: ${pics[0] || (currentLanguage === "en" ? "Not set" : "Belum diisi")} · PIC 2: ${pics[1] || (currentLanguage === "en" ? "Not set" : "Belum diisi")}` },
+        { label: currentLanguage === "en" ? "Start" : "Mulai", value: session.startedAt ? formatDate(session.startedAt, dateOptions) : unavailable },
+        { label: currentLanguage === "en" ? "Completed" : "Selesai", value: session.finishedAt ? formatDate(session.finishedAt, dateOptions) : unavailable }
+      ];
       openArchivePrintWindow(`${session.workspaceName || (currentLanguage === "en" ? "Stock opname session" : "Sesi opname")} · ${translateText(sheetName)}`, subtitle, renderRecordedSheet(session, selectedRecordedSheet, true), session.workspaceName, pics, session);
     }
 
