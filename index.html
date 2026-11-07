@@ -8501,10 +8501,10 @@
         </section>
         <section class="recorded-view-actions" aria-label="Lembar arsip dan cetak">
           <div class="recorded-view-tabs" role="tablist" aria-label="Lembar kerja arsip">
+            <button class="button button-secondary${selectedRecordedSheet === "master" ? " active" : ""}" type="button" role="tab" aria-selected="${selectedRecordedSheet === "master"}" data-recorded-sheet="master">Master VEF</button>
             <button class="button button-secondary${selectedRecordedSheet === "layouts" ? " active" : ""}" type="button" role="tab" aria-selected="${selectedRecordedSheet === "layouts"}" data-recorded-sheet="layouts">Scan &amp; Manual</button>
             <button class="button button-secondary${selectedRecordedSheet === "result" ? " active" : ""}" type="button" role="tab" aria-selected="${selectedRecordedSheet === "result"}" data-recorded-sheet="result">Reconciliation</button>
             <button class="button button-secondary${selectedRecordedSheet === "recap" ? " active" : ""}" type="button" role="tab" aria-selected="${selectedRecordedSheet === "recap"}" data-recorded-sheet="recap">Recap</button>
-            <button class="button button-secondary${selectedRecordedSheet === "master" ? " active" : ""}" type="button" role="tab" aria-selected="${selectedRecordedSheet === "master"}" data-recorded-sheet="master">Master VEF</button>
           </div>
           <div class="recorded-archive-search"><div class="search-wrap"><span class="search-icon" aria-hidden="true">⌕</span><input class="search-input" id="recorded-archive-search" type="search" placeholder="Cari item code, nama, atau SN" value="${escapeHtml(recordedArchiveSearchTerm)}" aria-label="Cari item code, nama, atau Serial Number dalam lembar arsip"></div></div>
           <button class="button button-primary" id="print-recorded-sheet" type="button"><svg class="print-button-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6z"/><path d="M18 12h.01"/></svg>Cetak</button>
