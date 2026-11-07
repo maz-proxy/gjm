@@ -8547,9 +8547,9 @@
         html, body.printing-session, #print-session-root { background: #fff !important; color: #17211d !important; color-scheme: light; }
         body.printing-session { display: block; margin: 0; min-height: 0; padding: 68px 12mm 12mm; }
         .print-action-toolbar { align-items: center; background: rgba(255,255,255,.96); border: 1px solid #cbd5d1; border-radius: 10px; box-shadow: 0 5px 18px rgba(20,45,37,.16); display: flex; gap: 8px; padding: 7px; position: fixed; right: 12mm; top: 10px; z-index: 1000; }
-        .print-action-toolbar button { align-items: center; background: #5d1c35; border: 1px solid #ff2948; border-radius: 7px; box-shadow: 0 0 0 2px rgba(35, 255, 115, .34), 0 0 12px rgba(35, 255, 115, .62); color: #fff; cursor: pointer; display: inline-flex; font: 700 12px/1 "DM Sans", "Segoe UI", sans-serif; gap: 8px; justify-content: center; min-height: 36px; padding: 0 13px; }
-        .print-action-toolbar button.secondary { background: #5d1c35; border-color: #ff2948; color: #fff; }
-        .print-action-toolbar button:hover { box-shadow: 0 0 0 3px rgba(35, 255, 115, .46), 0 0 18px rgba(35, 255, 115, .82); filter: brightness(1.08); }
+        .print-action-toolbar button { align-items: center; background: #124a41; border: 1px solid #ff1744; border-radius: 7px; color: #fff; cursor: pointer; display: inline-flex; font: 700 12px/1 "DM Sans", "Segoe UI", sans-serif; gap: 8px; justify-content: center; min-height: 36px; padding: 0 13px; transition: background .15s ease, box-shadow .15s ease; }
+        .print-action-toolbar button.secondary { background: #124a41; border-color: #ff1744; color: #fff; }
+        .print-action-toolbar button:hover { background: #5d1c35; box-shadow: 0 0 0 2px rgba(132, 43, 75, .3), 0 0 14px rgba(132, 43, 75, .65); }
         .print-action-toolbar button:disabled { cursor: wait; opacity: .6; }
         @media print { .print-action-toolbar { display: none !important; } }
         #print-session-root { display: block; margin: 0 auto; max-width: none; padding: 0; }
