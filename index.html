@@ -8315,7 +8315,8 @@
         serialsByProduct.set(product.id, serials);
       }
       const recordMatches = (record, product) => !query || [
-        record.sku, record.name, record.itemGroup, product?.sku, product?.name, product?.itemGroup,
+        record.sku, record.name, record.itemGroup, record.brand, record.warehouse,
+        product?.sku, product?.name, product?.itemGroup, product?.brand, product?.warehouse,
         ...(product ? serialsByProduct.get(product.id) || [] : []),
         record.serial
       ].some((value) => String(value || "").toLocaleLowerCase("id-ID").includes(query));
@@ -8347,6 +8348,25 @@
         const matchingRackCount = (rackMarkup.match(/<article class="layout-card"/g) || []).length;
         const emptyMessage = query ? `Tidak ada item yang cocok dengan “${escapeHtml(recordedArchiveSearchTerm.trim())}”.` : "Tidak ada data Rack.";
         return `<div class="recorded-search-summary">${query ? `${matchingRackCount} rack berisi hasil · pencarian berdasarkan item code, nama, atau Serial Number` : `${layouts.length} rack · tampilan arsip`}</div><div class="completed-racks">${rackMarkup || `<div class="completed-rack-meta">${emptyMessage}</div>`}</div>`;
+      }
+      if (sheet === "master") {
+        const masterProducts = products.filter((product) => recordMatches(product, product));
+        const rows = masterProducts.map((product, index) => {
+          const serials = serialsByProduct.get(product.id) || [];
+          const serialMarkup = serials.length
+            ? `<details class="serial-details"${printMode ? " open" : ""}><summary>${formatNumber(serials.length)} SN · tampilkan</summary><div class="serial-list">${serials.map((serial) => `<span class="serial-token">${escapeHtml(serial)}</span>`).join("")}</div></details>`
+            : "-";
+          return `<tr><td class="number-cell">${index + 1}</td><td class="print-item-code" data-user-content>${escapeHtml(product.sku || "-")}</td><td class="print-item-name" data-user-content>${escapeHtml(product.name || "-")}</td><td data-user-content>${escapeHtml(product.itemGroup || "-")}</td><td data-user-content>${escapeHtml(product.brand || "-")}</td><td data-user-content>${escapeHtml(product.warehouse || "-")}</td><td class="number-cell quantity-cell">${formatNumber(product.stock || 0)}</td><td>${serialMarkup}</td></tr>`;
+        }).join("");
+        const sourceFile = snapshot.importFile || "File sumber tidak tercatat";
+        const downloadedAt = snapshot.importDownloadedAt
+          ? formatDate(snapshot.importDownloadedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })
+          : "Metadata waktu unduh tidak tersedia";
+        const uploadedAt = snapshot.importUploadedAt
+          ? formatDate(snapshot.importUploadedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })
+          : "Metadata waktu unggah tidak tersedia";
+        const emptyMessage = query ? `Tidak ada hasil untuk “${escapeHtml(recordedArchiveSearchTerm.trim())}”.` : "Data Master VEF tidak tersedia di arsip sesi ini.";
+        return `<section class="table-section"><div class="table-toolbar"><div class="table-title">Master VEF <span class="table-count">${masterProducts.length} item · hanya-baca${query ? " · hasil pencarian" : ""}</span><div class="vef-timestamps"><span>File sumber <strong data-user-content>${escapeHtml(sourceFile)}</strong></span><span>Data didownload dari VEF <strong>${escapeHtml(downloadedAt)}</strong></span><span>Data diupload Stock Opname <strong>${escapeHtml(uploadedAt)}</strong></span></div></div></div><div class="table-scroll"><table class="recorded-master-table"><thead><tr><th>No</th><th>Item code</th><th>Item name</th><th>Item Group</th><th>Brand</th><th>Warehouse</th><th>VEF</th><th>Serial Number</th></tr></thead><tbody>${rows || `<tr><td class="empty-row" colspan="8">${emptyMessage}</td></tr>`}</tbody></table></div><div class="table-footer"><span>${formatNumber(Object.keys(snapshot.serialMaster || {}).length)} serial terdaftar dalam Master VEF</span></div></section>`;
       }
       const visibleProducts = products.filter((product) => {
         const includedInSheet = sheet === "result" || sheet === "recap"
@@ -8484,6 +8504,7 @@
             <button class="button button-secondary${selectedRecordedSheet === "layouts" ? " active" : ""}" type="button" role="tab" aria-selected="${selectedRecordedSheet === "layouts"}" data-recorded-sheet="layouts">Scan &amp; Manual</button>
             <button class="button button-secondary${selectedRecordedSheet === "result" ? " active" : ""}" type="button" role="tab" aria-selected="${selectedRecordedSheet === "result"}" data-recorded-sheet="result">Reconciliation</button>
             <button class="button button-secondary${selectedRecordedSheet === "recap" ? " active" : ""}" type="button" role="tab" aria-selected="${selectedRecordedSheet === "recap"}" data-recorded-sheet="recap">Recap</button>
+            <button class="button button-secondary${selectedRecordedSheet === "master" ? " active" : ""}" type="button" role="tab" aria-selected="${selectedRecordedSheet === "master"}" data-recorded-sheet="master">Master VEF</button>
           </div>
           <div class="recorded-archive-search"><div class="search-wrap"><span class="search-icon" aria-hidden="true">⌕</span><input class="search-input" id="recorded-archive-search" type="search" placeholder="Cari item code, nama, atau SN" value="${escapeHtml(recordedArchiveSearchTerm)}" aria-label="Cari item code, nama, atau Serial Number dalam lembar arsip"></div></div>
           <button class="button button-primary" id="print-recorded-sheet" type="button"><svg class="print-button-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6z"/><path d="M18 12h.01"/></svg>Cetak</button>
@@ -8641,6 +8662,17 @@
         #print-session-root .print-reconciliation-archive-table .product-cell { gap: 0; min-width: 0; }
         #print-session-root .print-reconciliation-archive-table .product-name { font-size: 7.5px; font-weight: 400; line-height: 1.15; min-width: 0; overflow-wrap: anywhere; }
         #print-session-root .print-reconciliation-archive-table .product-sku { font-size: 6.5px; font-weight: 700; line-height: 1.1; margin-top: 1px; }
+        #print-session-root .recorded-master-table { table-layout: fixed; }
+        #print-session-root .recorded-master-table th:nth-child(1), #print-session-root .recorded-master-table td:nth-child(1) { text-align: center; width: 4%; }
+        #print-session-root .recorded-master-table th:nth-child(2), #print-session-root .recorded-master-table td:nth-child(2) { overflow-wrap: anywhere; width: 12%; }
+        #print-session-root .recorded-master-table th:nth-child(3), #print-session-root .recorded-master-table td:nth-child(3) { overflow-wrap: anywhere; width: 30%; }
+        #print-session-root .recorded-master-table th:nth-child(4), #print-session-root .recorded-master-table td:nth-child(4) { overflow-wrap: anywhere; width: 12%; }
+        #print-session-root .recorded-master-table th:nth-child(5), #print-session-root .recorded-master-table td:nth-child(5) { overflow-wrap: anywhere; width: 9%; }
+        #print-session-root .recorded-master-table th:nth-child(6), #print-session-root .recorded-master-table td:nth-child(6) { overflow-wrap: anywhere; width: 12%; }
+        #print-session-root .recorded-master-table th:nth-child(7), #print-session-root .recorded-master-table td:nth-child(7) { text-align: center; width: 6%; }
+        #print-session-root .recorded-master-table th:nth-child(8), #print-session-root .recorded-master-table td:nth-child(8) { overflow-wrap: anywhere; width: 15%; }
+        #print-session-root .recorded-master-table .serial-list { max-height: none; max-width: none; overflow: visible; }
+        #print-session-root .recorded-master-table .serial-token { background: transparent !important; color: #17211d !important; font-size: 6px; padding: 0 3px 0 0; }
         #print-session-root .print-item-code { font-weight: 700 !important; }
         #print-session-root .print-item-name { font-weight: 400 !important; }
         #print-session-root .print-signatures { break-inside: avoid; display: grid; gap: 36px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 48px; }
@@ -8694,7 +8726,7 @@
         notify("Arsip tidak ditemukan untuk dicetak.");
         return;
       }
-      const sheetName = selectedRecordedSheet === "layouts" ? "Scan & Manual" : selectedRecordedSheet === "result" ? "Reconciliation" : "Recap";
+      const sheetName = selectedRecordedSheet === "layouts" ? "Scan & Manual" : selectedRecordedSheet === "result" ? "Reconciliation" : selectedRecordedSheet === "master" ? "Master VEF" : "Recap";
       const pics = session.picNames || [];
       const unset = currentLanguage === "en" ? "Not set" : "Belum diisi";
       const subtitle = `${archivedSessionMonth(session)} · ${archivedSessionWeek(session)} · PIC 1: ${pics[0] || unset} · PIC 2: ${pics[1] || unset} · ${currentLanguage === "en" ? "Completed" : "Selesai"} ${session.finishedAt ? formatDate(session.finishedAt, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }) : (currentLanguage === "en" ? "Unavailable" : "Tidak tersedia")} · ${currentLanguage === "en" ? "Read-only view" : "Tampilan hanya-baca"}`;
