@@ -247,8 +247,8 @@
     .top-theme-controls { align-items: center; display: flex; flex-direction: row; gap: 4px; }
     .today { color: #656c61; font-size: 12px; }
     .top-date-chat { align-items: center; bottom: 16px; display: flex; position: fixed; right: 16px; z-index: 70; }
-    .top-chat-button { align-items: center; background: var(--paper); border: 1px solid var(--line); border-radius: 9px; color: var(--ink); cursor: pointer; display: inline-flex; gap: 6px; justify-content: center; min-height: 34px; opacity: .8; padding: 0 9px; position: relative; }
-    html[data-theme="dark"] .top-chat-button { border-color: var(--green); box-shadow: 0 0 0 1px color-mix(in srgb, var(--green) 55%, transparent); }
+    .top-chat-button { align-items: center; background: var(--paper); border: 1px solid color-mix(in srgb, var(--green) 55%, #000); border-radius: 9px; color: var(--ink); cursor: pointer; display: inline-flex; gap: 6px; justify-content: center; min-height: 34px; opacity: .8; padding: 0 9px; position: relative; }
+    html[data-theme="dark"] .top-chat-button { border-color: color-mix(in srgb, var(--green) 55%, #000); box-shadow: 0 0 0 1px color-mix(in srgb, var(--green) 35%, transparent); }
     .top-chat-button:hover, .top-chat-button:focus-visible { border-color: var(--green); box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 14%, transparent); opacity: 1; outline: 0; }
     .top-chat-button svg { fill: none; height: 17px; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; width: 17px; }
     .top-chat-label { font-size: 10px; font-weight: 700; }
