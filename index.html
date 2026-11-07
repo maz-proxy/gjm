@@ -8591,13 +8591,13 @@
         #print-session-root .row-status.match { background-color: #e2f4e7 !important; }
         #print-session-root .row-status.match .check-success-icon { color: #16824d !important; }
         #print-session-root th { background-color: #e8eeeb !important; }
-        #print-session-root .print-session-header { display: grid; gap: 8px; grid-template-columns: minmax(0, 1fr); margin: 0 0 5px; }
-        #print-session-root .print-session-identities { align-items: center; display: flex; gap: 16px; justify-content: space-between; min-width: 0; }
+        #print-session-root .print-session-header { align-items: flex-start; display: flex; gap: 16px; justify-content: space-between; margin: 0 0 5px; }
+        #print-session-root .print-session-identities { align-items: center; display: flex; gap: 16px; justify-content: space-between; margin: 0 0 8px; min-width: 0; }
         #print-session-root .print-session-heading { align-items: center; display: flex; flex: 0 1 50%; gap: 10px; justify-content: flex-end; margin: 0; min-width: 0; text-align: right; }
         #print-session-root .print-session-heading .workspace-brand-icon { flex: 0 0 50px; height: 50px; width: 50px; }
         #print-session-root .print-session-heading .workspace-brand-icon img { height: 48px; width: 48px; }
         #print-session-root h1 { color: var(--print-accent-dark); font-size: 21px; margin: 0; }
-        #print-session-root .print-session-summary { align-items: stretch; border: 1px solid #cbd5d1; border-radius: 8px; display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); max-width: 100%; overflow: hidden; width: 100%; }
+        #print-session-root .print-session-summary { align-items: stretch; border: 1px solid #cbd5d1; border-radius: 8px; display: grid; flex: 1 1 800px; grid-template-columns: repeat(8, minmax(0, 1fr)); max-width: 82%; overflow: hidden; }
         #print-session-root .print-session-summary-metric { align-content: center; display: grid; gap: 1px; grid-template-rows: 1.4em auto; justify-items: center; min-width: 0; padding: 2px 5px; text-align: center; }
         #print-session-root .print-session-summary-metric + .print-session-summary-metric,
         #print-session-root .print-session-summary-progress { border-left: 1px solid #dfe5e2 !important; }
@@ -8715,7 +8715,7 @@
       if (sessionHeader && documentHeading && brandHeading) {
         const identities = printWindow.document.createElement("div");
         identities.className = "print-session-identities";
-        sessionHeader.prepend(identities);
+        sessionHeader.before(identities);
         identities.append(documentHeading, brandHeading);
       }
       const subtitleElement = printWindow.document.querySelector(".print-session-subtitle");
