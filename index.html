@@ -8579,9 +8579,9 @@
         .print-action-toolbar button:disabled { cursor: wait; opacity: .6; }
         @media print { .print-action-toolbar { display: none !important; } }
         #print-session-root { display: block; margin: 0 auto; max-width: none; padding: 0; }
-        #print-session-root .print-document-heading { align-items: center; border-bottom: 2px solid #124a41 !important; break-after: avoid; display: flex; gap: 9px; margin: 0 0 8px; padding: 0 0 6px; page-break-after: avoid; }
-        #print-session-root .print-document-heading img { flex: 0 0 32px; height: 32px; object-fit: contain; width: 32px; }
-        #print-session-root .print-document-heading strong { color: #124a41 !important; font: 800 14px/1.1 "DM Sans", "Segoe UI", sans-serif; letter-spacing: .7px; }
+        #print-session-root .print-document-heading { align-items: center; break-after: avoid; display: flex; gap: 9px; justify-content: center; margin: 0 0 8px; page-break-after: avoid; text-align: center; }
+        #print-session-root .print-document-heading img { filter: brightness(0) saturate(100%) invert(22%) sepia(22%) saturate(982%) hue-rotate(119deg) brightness(94%) contrast(96%); flex: 0 0 32px; height: 32px; object-fit: contain; width: 32px; }
+        #print-session-root .print-document-heading strong { color: #124a41 !important; font: 800 21px/1.1 "DM Sans", "Segoe UI", sans-serif; }
         #print-session-root, #print-session-root *, #print-session-root *::before, #print-session-root *::after { box-shadow: none !important; text-shadow: none !important; }
         #print-session-root * { background-color: #fff !important; background-image: none !important; border-color: #cbd5d1 !important; color: #17211d !important; }
         #print-session-root .variance.positive, #print-session-root .variance.negative,
