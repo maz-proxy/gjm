@@ -384,6 +384,7 @@
     .subtitle { color: var(--muted); margin: 8px 0 0; }
     .head-buttons { align-items: center; display: flex; gap: 9px; }
     .button { align-items: center; border: 1px solid transparent; border-radius: 8px; display: inline-flex; font-size: 12px; font-weight: 700; gap: 8px; justify-content: center; min-height: 39px; padding: 0 14px; transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, transform .15s ease; white-space: nowrap; }
+    .print-button-icon { fill: none; height: 16px; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; width: 16px; }
     .button:active { transform: translateY(1px); }
     .button-primary { background: linear-gradient(135deg, #31744b, var(--green)); box-shadow: 0 3px 8px rgba(40, 99, 68, .14); color: #fff; }
     .button-primary:hover { background: var(--green-dark); box-shadow: 0 5px 12px rgba(40, 99, 68, .2); }
@@ -7691,7 +7692,7 @@
       const pjRows = (snapshot.pjEntries || []).map((entry, index) => `<tr><td>${index + 1}</td><td>${escapeHtml(entry.sku || "-")}</td><td>${escapeHtml(entry.invoiceNumber || "-")}</td><td>${escapeHtml(entry.invoiceAt ? formatDate(entry.invoiceAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "-")}</td><td>${formatNumber(entry.quantity || 0)}</td></tr>`).join("");
       const inboundRows = inboundEntries.map((entry, index) => `<tr><td>${index + 1}</td><td>${escapeHtml(entry.sku || "-")}</td><td>${escapeHtml(entry.referenceNumber || "-")}</td><td>${escapeHtml(entry.entryAt ? formatDate(entry.entryAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "-")}</td><td>${formatNumber(entry.quantity || 0)}</td></tr>`).join("");
       return `${workbookArchive}
-        <div class="completed-export-actions"><button class="button button-primary" type="button" data-export-session="${escapeHtml(session.id)}">↓ Ekspor XLSX</button><button class="button button-secondary" type="button" data-print-session="${escapeHtml(session.id)}">▤ Print</button></div>
+        <div class="completed-export-actions"><button class="button button-primary" type="button" data-export-session="${escapeHtml(session.id)}">↓ Ekspor XLSX</button><button class="button button-secondary" type="button" data-print-session="${escapeHtml(session.id)}"><svg class="print-button-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6z"/><path d="M18 12h.01"/></svg>Cetak</button></div>
         <div class="completed-detail-panel">
           ${printMode ? "" : `<p class="subtitle">Data didownload dari VEF ${escapeHtml(sourceTimestamp)} · Data diupload Stock Opname ${escapeHtml(uploadedTimestamp)}. Tampilan arsip mengikuti format Scan & Manual, Stock Reconciliation, dan Recap.</p>`}
           <h3>Scan Layout · ${scans.length} scan</h3><div class="completed-racks">${racks || `<div class="completed-rack-meta">Tidak ada data Rack.</div>`}</div>
@@ -8482,7 +8483,7 @@
             <button class="button button-secondary${selectedRecordedSheet === "recap" ? " active" : ""}" type="button" role="tab" aria-selected="${selectedRecordedSheet === "recap"}" data-recorded-sheet="recap">Recap</button>
           </div>
           <div class="recorded-archive-search"><div class="search-wrap"><span class="search-icon" aria-hidden="true">⌕</span><input class="search-input" id="recorded-archive-search" type="search" placeholder="Cari item code, nama, atau SN" value="${escapeHtml(recordedArchiveSearchTerm)}" aria-label="Cari item code, nama, atau Serial Number dalam lembar arsip"></div></div>
-          <button class="button button-primary" id="print-recorded-sheet" type="button">Cetak</button>
+          <button class="button button-primary" id="print-recorded-sheet" type="button"><svg class="print-button-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6z"/><path d="M18 12h.01"/></svg>Cetak</button>
         </section>
         <div id="recorded-sheet-content" class="recorded-sheet-content">${renderRecordedSheet(session, selectedRecordedSheet)}</div>
       </div>`;
@@ -8546,7 +8547,7 @@
         html, body.printing-session, #print-session-root { background: #fff !important; color: #17211d !important; color-scheme: light; }
         body.printing-session { display: block; margin: 0; min-height: 0; padding: 68px 12mm 12mm; }
         .print-action-toolbar { align-items: center; background: rgba(255,255,255,.96); border: 1px solid #cbd5d1; border-radius: 10px; box-shadow: 0 5px 18px rgba(20,45,37,.16); display: flex; gap: 8px; padding: 7px; position: fixed; right: 12mm; top: 10px; z-index: 1000; }
-        .print-action-toolbar button { background: #176b5b; border: 1px solid #176b5b; border-radius: 7px; color: #fff; cursor: pointer; font: 700 12px/1 "DM Sans", "Segoe UI", sans-serif; min-height: 36px; padding: 0 13px; }
+        .print-action-toolbar button { align-items: center; background: #176b5b; border: 1px solid #176b5b; border-radius: 7px; color: #fff; cursor: pointer; display: inline-flex; font: 700 12px/1 "DM Sans", "Segoe UI", sans-serif; gap: 8px; justify-content: center; min-height: 36px; padding: 0 13px; }
         .print-action-toolbar button.secondary { background: #fff; color: #176b5b; }
         .print-action-toolbar button:hover { filter: brightness(.95); }
         .print-action-toolbar button:disabled { cursor: wait; opacity: .6; }
@@ -8661,7 +8662,7 @@
           body.printing-session { padding: 0; }
           #print-session-root { width: 100%; }
         }
-      </style></head><body class="printing-session"><div class="print-action-toolbar" role="group" aria-label="${currentLanguage === "en" ? "Print actions" : "Aksi cetak"}"><button class="secondary" id="print-session-action" type="button">Print</button></div><main id="print-session-root"><div class="print-session-header"><div class="print-session-heading">${renderWorkspaceBrandIcon(brandName)}<h1 data-user-content>${escapeHtml(title)}</h1></div>${session ? renderArchivePrintSummary(session) : ""}</div><p class="print-session-subtitle" data-user-content>${escapeHtml(subtitle)}</p>${content}<section class="print-signatures" aria-label="${currentLanguage === "en" ? "PIC signatures" : "Paraf PIC"}"><div class="print-signature"><div class="print-signature-line"></div><div class="print-signature-name">${currentLanguage === "en" ? "PIC 1 name:" : "Nama PIC 1:"} <strong>${escapeHtml(picNames[0] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</strong></div></div><div class="print-signature"><div class="print-signature-line"></div><div class="print-signature-name">${currentLanguage === "en" ? "PIC 2 name:" : "Nama PIC 2:"} <strong>${escapeHtml(picNames[1] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</strong></div></div></section></main></body></html>`);
+      </style></head><body class="printing-session"><div class="print-action-toolbar" role="group" aria-label="${currentLanguage === "en" ? "Print actions" : "Aksi cetak"}"><button class="secondary" id="print-session-action" type="button"><svg class="print-button-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6z"/><path d="M18 12h.01"/></svg>Print</button></div><main id="print-session-root"><div class="print-session-header"><div class="print-session-heading">${renderWorkspaceBrandIcon(brandName)}<h1 data-user-content>${escapeHtml(title)}</h1></div>${session ? renderArchivePrintSummary(session) : ""}</div><p class="print-session-subtitle" data-user-content>${escapeHtml(subtitle)}</p>${content}<section class="print-signatures" aria-label="${currentLanguage === "en" ? "PIC signatures" : "Paraf PIC"}"><div class="print-signature"><div class="print-signature-line"></div><div class="print-signature-name">${currentLanguage === "en" ? "PIC 1 name:" : "Nama PIC 1:"} <strong>${escapeHtml(picNames[0] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</strong></div></div><div class="print-signature"><div class="print-signature-line"></div><div class="print-signature-name">${currentLanguage === "en" ? "PIC 2 name:" : "Nama PIC 2:"} <strong>${escapeHtml(picNames[1] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</strong></div></div></section></main></body></html>`);
       printWindow.document.close();
       const openPrintDialog = () => {
         printWindow.focus();
