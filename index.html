@@ -964,6 +964,21 @@
     .reset-password-value { align-items: center; background: #f5f8f6; border: 1px solid var(--line); border-radius: 8px; display: flex; gap: 10px; justify-content: space-between; padding: 8px 9px 8px 13px; }
     .reset-password-value code { color: var(--green-dark); font: 700 18px/1.3 "Space Grotesk", "Segoe UI", sans-serif; letter-spacing: 1px; }
     .reset-password-warning { background: #fbf2df; border: 1px solid #f0dfb8; border-radius: 8px; color: #765521; font-size: 10px; line-height: 1.5; margin-top: 13px; padding: 10px 12px; }
+    .session-finish-success-dialog { max-width: min(390px, calc(100vw - 32px)); overflow: hidden; padding: 0; text-align: center; width: min(390px, calc(100vw - 32px)); }
+    .session-finish-success-content { padding: 27px 24px 24px; }
+    .session-finish-success-icon { align-items: center; background: #e7f5ed; border: 1px solid #c8e8d5; border-radius: 50%; color: #198754; display: flex; height: 68px; justify-content: center; margin: 0 auto 16px; width: 68px; }
+    .session-finish-success-icon svg { height: 35px; width: 35px; }
+    .session-finish-success-icon circle { animation: finish-success-circle .42s cubic-bezier(.2,.8,.2,1) both; transform-origin: center; }
+    .session-finish-success-icon path { stroke-dasharray: 34; stroke-dashoffset: 34; animation: finish-success-check .38s .28s ease-out forwards; }
+    .session-finish-success-title { color: var(--ink); font-size: 18px; font-weight: 800; margin: 0; }
+    .session-finish-success-copy { color: var(--muted); font-size: 12px; line-height: 1.6; margin: 7px 0 0; }
+    .session-finish-success-dialog .dialog-actions { justify-content: center; }
+    @keyframes finish-success-circle { from { opacity: 0; transform: scale(.55); } to { opacity: 1; transform: scale(1); } }
+    @keyframes finish-success-check { to { stroke-dashoffset: 0; } }
+    @media (prefers-reduced-motion: reduce) {
+      .session-finish-success-icon circle { animation: none; }
+      .session-finish-success-icon path { animation: none; stroke-dashoffset: 0; }
+    }
     .upload-success-dialog { max-width: min(440px, calc(100vw - 32px)); overflow: hidden; padding: 0; }
     .upload-success-content { padding: 24px 25px 20px; text-align: center; }
     .upload-success-icon { align-items: center; background: var(--green-soft); border: 1px solid var(--line); border-radius: 50%; color: var(--green); display: flex; font-size: 24px; font-weight: 800; height: 54px; justify-content: center; margin: 0 auto 14px; width: 54px; }
@@ -2678,6 +2693,14 @@
     <div class="confirm-body" id="finish-message"></div>
     <div class="dialog-actions"><button class="button button-secondary" type="button" data-close="finish-dialog">Kembali</button><button class="button button-primary" id="confirm-finish" type="button">SO SELESAI</button></div>
   </dialog>
+  <dialog id="session-finish-success-dialog" class="session-finish-success-dialog" aria-labelledby="session-finish-success-title" aria-describedby="session-finish-success-copy">
+    <div class="session-finish-success-content">
+      <div class="session-finish-success-icon" aria-hidden="true"><svg viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="18" fill="currentColor"/><path d="m11 20 6 6 12-13" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/></svg></div>
+      <h2 class="session-finish-success-title" id="session-finish-success-title">Stock Opname berhasil disimpan</h2>
+      <p class="session-finish-success-copy" id="session-finish-success-copy">Hasil stock opname sudah masuk ke arsip.</p>
+    </div>
+    <div class="dialog-actions"><button class="button button-primary" type="button" data-close="session-finish-success-dialog">OK</button></div>
+  </dialog>
   <dialog id="delete-master-dialog">
     <div class="dialog-head"><div><div class="dialog-title">Hapus semua data master VEF?</div><div class="dialog-subtitle">Tindakan ini tidak dapat dibatalkan.</div></div><button class="dialog-close" type="button" data-close="delete-master-dialog" aria-label="Tutup">×</button></div>
     <div class="confirm-body">Semua item, Serial Number, hasil scan, jumlah BOX/PJ, dan catatan sesi aktif akan dihapus dari workspace bersama. <strong>Riwayat opname yang sudah selesai tetap disimpan.</strong></div>
@@ -2753,6 +2776,9 @@
       "Progres SO berdasarkan total quantity Master VEF": "Stock Opname progress based on total VEF Master quantity",
       "Ganti tema warna ke burgundy": "Switch accent color to burgundy",
       "Aktifkan dark mode": "Enable dark mode",
+      "Stock Opname berhasil disimpan": "Stock Opname saved successfully",
+      "Hasil stock opname sudah masuk ke arsip.": "The stock opname results have been added to the archive.",
+      "OK": "OK",
       "Nonaktifkan dark mode": "Disable dark mode",
       "Ganti tema warna ke green": "Switch accent color to green",
       "Detail Inbound/Retur": "Inbound/Return details",
@@ -10914,7 +10940,7 @@
       persist();
       document.getElementById("finish-dialog").close();
       render();
-      notify(`Hasil ${workspaceName} berhasil diarsipkan.`);
+      document.getElementById("session-finish-success-dialog").showModal();
     }
 
     function startNewSession() {
