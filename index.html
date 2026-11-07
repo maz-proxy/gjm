@@ -8062,7 +8062,6 @@
       if (printBreakdown) {
         return `<aside class="${className} print-session-summary-breakdown" aria-label="${currentLanguage === "en" ? "Session quantity summary" : "Ringkasan quantity sesi"}">
           <div class="print-summary-column">
-            <div class="print-summary-mode"><span>Mode SO</span><strong>${escapeHtml(countModeLabel(countMode))}</strong></div>
             <div class="print-session-summary-metric"><span>Qty Scan</span><strong>${formatNumber(scanQuantity)} <small>${quantitySummary}</small></strong></div>
             <div class="print-session-summary-metric"><span>Qty Manual</span><strong>${formatNumber(manualQuantity)} <small>${quantitySummary}</small></strong></div>
             <div class="print-session-summary-metric"><span>Inbound/Retur</span><strong>${formatNumber(inboundQuantity)} <small>${quantitySummary}</small></strong></div>
@@ -8646,11 +8645,9 @@
         #print-session-root .print-summary-column .print-session-summary-metric { align-items: center; border: 0 !important; display: flex; gap: 4px; justify-content: space-between; padding: 2px 3px; text-align: left; }
         #print-session-root .print-summary-column .print-session-summary-metric + .print-session-summary-metric { border-top: 1px solid #edf0ee !important; }
         #print-session-root .print-summary-column .print-session-summary-metric > span,
-        #print-session-root .print-summary-mode > span { color: #64746f !important; font-size: 6px; font-weight: 700; letter-spacing: .15px; line-height: 1.1; text-transform: uppercase; }
+        #print-session-root .print-summary-column .print-session-summary-metric > span { color: #64746f !important; font-size: 6px; font-weight: 700; letter-spacing: .15px; line-height: 1.1; text-transform: uppercase; }
         #print-session-root .print-summary-column .print-session-summary-metric strong { font-size: 8px; }
         #print-session-root .print-summary-column .print-session-summary-metric strong small { font-size: 6px; }
-        #print-session-root .print-summary-mode { align-items: center; border-bottom: 1px solid #edf0ee; display: flex; gap: 4px; justify-content: space-between; padding: 2px 3px 4px; }
-        #print-session-root .print-summary-mode strong { color: #34443f !important; font-size: 8px; }
         #print-session-root .print-summary-column .print-summary-danger > span,
         #print-session-root .print-summary-column .print-summary-danger strong { color: #b42318 !important; }
         #print-session-root .print-summary-column .print-summary-success > span,
@@ -8810,9 +8807,11 @@
       const pics = session.picNames || [];
       const unavailable = currentLanguage === "en" ? "Unavailable" : "Tidak tersedia";
       const dateOptions = { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" };
+      const countMode = session.snapshot.countMode === "laptops" ? "laptops" : "all";
       const subtitle = [
         { text: `${archivedSessionMonth(session).toLocaleUpperCase("id-ID")} · ${archivedSessionWeek(session)}` },
         { text: `PIC 1: ${pics[0] || (currentLanguage === "en" ? "Not set" : "Belum diisi")} · PIC 2: ${pics[1] || (currentLanguage === "en" ? "Not set" : "Belum diisi")}` },
+        { label: "mode", value: countModeLabel(countMode) },
         { label: currentLanguage === "en" ? "Start" : "Mulai", value: session.startedAt ? formatDate(session.startedAt, dateOptions) : unavailable },
         { label: currentLanguage === "en" ? "Completed" : "Selesai", value: session.finishedAt ? formatDate(session.finishedAt, dateOptions) : unavailable }
       ];
