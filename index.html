@@ -8578,8 +8578,8 @@
         .print-action-toolbar button:hover { background: #5d1c35; box-shadow: 0 0 0 2px rgba(132, 43, 75, .3), 0 0 14px rgba(132, 43, 75, .65); }
         .print-action-toolbar button:disabled { cursor: wait; opacity: .6; }
         @media print { .print-action-toolbar { display: none !important; } }
-        #print-session-root { display: block; margin: 0 auto; max-width: none; padding: 0; }
-        #print-session-root .print-document-heading { align-items: center; break-after: avoid; display: flex; flex: 0 1 25%; gap: 9px; justify-content: flex-start; margin: 0; min-width: 0; page-break-after: avoid; text-align: left; }
+        #print-session-root { column-gap: 16px; display: grid; grid-template-columns: minmax(280px, 1fr) minmax(0, 4fr); margin: 0 auto; max-width: none; padding: 0; row-gap: 8px; }
+        #print-session-root .print-document-heading { align-items: center; break-after: avoid; display: flex; grid-column: 1; grid-row: 1; gap: 9px; justify-content: flex-start; margin: 0; min-width: 0; page-break-after: avoid; text-align: left; }
         #print-session-root .print-document-heading img { flex: 0 0 74px; height: 50px; object-fit: contain; width: 74px; }
         #print-session-root .print-document-heading strong { color: #124a41 !important; font: 800 21px/1.1 "DM Sans", "Segoe UI", sans-serif; }
         #print-session-root, #print-session-root *, #print-session-root *::before, #print-session-root *::after { box-shadow: none !important; text-shadow: none !important; }
@@ -8591,14 +8591,12 @@
         #print-session-root .row-status.match { background-color: #e2f4e7 !important; }
         #print-session-root .row-status.match .check-success-icon { color: #16824d !important; }
         #print-session-root th { background-color: #e8eeeb !important; }
-        #print-session-root .print-session-header { align-items: flex-start; display: flex; gap: 16px; justify-content: space-between; margin: 0 0 5px; }
-        #print-session-root .print-session-identities { align-items: start; display: grid; gap: 16px; grid-template-columns: minmax(280px, 1fr) minmax(0, 4fr); margin: 0 0 8px; min-width: 0; }
-        #print-session-root .print-session-brand-summary { display: grid; gap: 6px; justify-items: center; min-width: 0; }
-        #print-session-root .print-session-heading { align-items: center; display: flex; gap: 10px; justify-content: center; margin: 0; min-width: 0; text-align: center; }
+        #print-session-root .print-session-header { display: contents; }
+        #print-session-root .print-session-heading { align-items: center; display: flex; grid-column: 2; grid-row: 1; gap: 10px; justify-content: center; justify-self: center; margin: 0; min-width: 0; text-align: center; }
         #print-session-root .print-session-heading .workspace-brand-icon { flex: 0 0 50px; height: 50px; width: 50px; }
         #print-session-root .print-session-heading .workspace-brand-icon img { height: 48px; width: 48px; }
         #print-session-root h1 { color: var(--print-accent-dark); font-size: 21px; margin: 0; }
-        #print-session-root .print-session-summary { align-items: stretch; border: 1px solid #cbd5d1; border-radius: 8px; display: grid; flex: 1 1 800px; grid-template-columns: repeat(8, minmax(0, 1fr)); max-width: 82%; overflow: hidden; width: 100%; }
+        #print-session-root .print-session-summary { align-items: stretch; border: 1px solid #cbd5d1; border-radius: 8px; display: grid; flex: 1 1 800px; grid-column: 2; grid-row: 2; grid-template-columns: repeat(8, minmax(0, 1fr)); justify-self: center; max-width: 82%; overflow: hidden; width: 100%; }
         #print-session-root .print-session-summary-metric { align-content: center; display: grid; gap: 1px; grid-template-rows: 1.4em auto; justify-items: center; min-width: 0; padding: 2px 5px; text-align: center; }
         #print-session-root .print-session-summary-metric + .print-session-summary-metric,
         #print-session-root .print-session-summary-progress { border-left: 1px solid #dfe5e2 !important; }
@@ -8610,8 +8608,9 @@
         #print-session-root .print-session-summary-progress { align-content: center; background: transparent !important; display: grid; gap: 1px; grid-template-columns: 1fr; grid-template-rows: 1.4em auto; justify-items: center; min-width: 0; padding: 2px 5px; text-align: center; }
         #print-session-root .print-session-summary-progress > span { align-self: start; line-height: 1.1; }
         #print-session-root .print-session-summary-progress strong { background: transparent !important; color: var(--print-accent-dark) !important; font-size: 19px; font-variant-numeric: tabular-nums; font-weight: 900; line-height: 1; white-space: nowrap; }
-        #print-session-root > .print-session-subtitle { color: #64746f; font-size: 10px; margin: 0 0 14px; }
-        #print-session-root .print-session-subtitle-structured { color: #64746f; font-size: 10px; margin: 0 0 14px; }
+        #print-session-root > .print-session-subtitle { color: #64746f; font-size: 10px; grid-column: 1; grid-row: 2; margin: 0; }
+        #print-session-root .print-session-subtitle-structured { color: #64746f; font-size: 10px; grid-column: 1; grid-row: 2; margin: 0; }
+        #print-session-root > :not(.print-document-heading):not(.print-session-header):not(.print-session-subtitle):not(.print-session-subtitle-structured) { grid-column: 1 / -1; }
         #print-session-root .print-session-subtitle-date { display: grid; grid-template-columns: 58px 8px minmax(0, 1fr); }
         #print-session-root th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         #print-session-root .table-section, #print-session-root .layout-card, #print-session-root .completed-rack { border-color: var(--print-accent-line); }
@@ -8710,21 +8709,6 @@
         }
       </style></head><body class="printing-session"><div class="print-action-toolbar" role="group" aria-label="${currentLanguage === "en" ? "Print actions" : "Aksi cetak"}"><button class="secondary" id="print-session-action" type="button"><svg class="print-button-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6z"/><path d="M18 12h.01"/></svg>Print</button></div><main id="print-session-root"><header class="print-document-heading"><img src="${new URL("./assets/brand-emblem-source.png", window.location.href).href}" alt=""><strong>STOCK OPNAME</strong></header><div class="print-session-header"><div class="print-session-heading">${renderWorkspaceBrandIcon(brandName)}<h1 data-user-content>${escapeHtml(title)}</h1></div>${session ? renderArchivePrintSummary(session) : ""}</div><p class="print-session-subtitle" data-user-content>${escapeHtml(subtitle)}</p>${content}<section class="print-signatures" aria-label="${currentLanguage === "en" ? "PIC signatures" : "Paraf PIC"}"><div class="print-signature"><div class="print-signature-line"></div><div class="print-signature-name">${currentLanguage === "en" ? "PIC 1 name:" : "Nama PIC 1:"} <strong>${escapeHtml(picNames[0] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</strong></div></div><div class="print-signature"><div class="print-signature-line"></div><div class="print-signature-name">${currentLanguage === "en" ? "PIC 2 name:" : "Nama PIC 2:"} <strong>${escapeHtml(picNames[1] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</strong></div></div></section></main></body></html>`);
       printWindow.document.close();
-      const sessionHeader = printWindow.document.querySelector(".print-session-header");
-      const documentHeading = printWindow.document.querySelector(".print-document-heading");
-      const brandHeading = sessionHeader?.querySelector(".print-session-heading");
-      if (sessionHeader && documentHeading && brandHeading) {
-        const identities = printWindow.document.createElement("div");
-        identities.className = "print-session-identities";
-        sessionHeader.before(identities);
-        const brandSummary = printWindow.document.createElement("div");
-        brandSummary.className = "print-session-brand-summary";
-        const summary = sessionHeader.querySelector(".print-session-summary");
-        identities.append(documentHeading, brandSummary);
-        brandSummary.append(brandHeading);
-        if (summary) brandSummary.append(summary);
-        sessionHeader.remove();
-      }
       const subtitleElement = printWindow.document.querySelector(".print-session-subtitle");
       if (subtitleElement && Array.isArray(subtitle)) {
         const structuredSubtitle = printWindow.document.createElement("div");
