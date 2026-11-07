@@ -8689,7 +8689,7 @@
         root.style.width = "281mm";
         try {
           const worker = printWindow.html2pdf().set({
-            margin: [8, 8, 12, 8],
+            margin: 8,
             image: { type: "jpeg", quality: 0.98 },
             html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff", logging: false },
             jsPDF: { unit: "mm", format: "a4", orientation: "landscape" },
