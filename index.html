@@ -8638,9 +8638,9 @@
         .print-action-toolbar button:disabled { cursor: wait; opacity: .6; }
         @media print { .print-action-toolbar { display: none !important; } }
         #print-session-root { column-gap: 16px; display: grid; grid-template-columns: minmax(0, 30fr) minmax(0, 70fr); margin: 0 auto; max-width: none; padding: 0; row-gap: 8px; }
-        #print-session-root .print-document-heading { align-items: center; break-after: avoid; display: flex; grid-column: 1; grid-row: 1; gap: 11px; justify-content: flex-start; margin: 0; min-width: 0; page-break-after: avoid; text-align: left; }
-        #print-session-root .print-document-heading img { flex: 0 0 92px; height: 64px; object-fit: contain; width: 92px; }
-        #print-session-root .print-document-heading strong { color: #124a41 !important; font: 800 22px/1.1 "DM Sans", "Segoe UI", sans-serif; }
+        #print-session-root .print-document-heading { align-items: stretch; break-after: avoid; display: grid; grid-column: 1; grid-row: 1 / span 2; grid-template-columns: 92px minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); column-gap: 11px; justify-content: flex-start; margin: 0; min-width: 0; page-break-after: avoid; text-align: left; }
+        #print-session-root .print-document-heading img { align-self: center; flex: 0 0 92px; grid-column: 1; grid-row: 1 / -1; height: 64px; object-fit: contain; width: 92px; }
+        #print-session-root .print-document-heading strong { align-self: end; color: #124a41 !important; font: 800 22px/1.1 "DM Sans", "Segoe UI", sans-serif; grid-column: 2; grid-row: 1; }
         #print-session-root, #print-session-root *, #print-session-root *::before, #print-session-root *::after { box-shadow: none !important; text-shadow: none !important; }
         #print-session-root * { background-color: #fff !important; background-image: none !important; border-color: #cbd5d1 !important; color: #17211d !important; }
         #print-session-root .variance.positive, #print-session-root .variance.negative,
@@ -8683,10 +8683,10 @@
         #print-session-root .print-summary-column .print-summary-success > span,
         #print-session-root .print-summary-column .print-summary-success strong { color: #176b36 !important; }
         #print-session-root .print-session-summary-breakdown > .print-session-summary-progress { padding: 3px; }
-        #print-session-root > .print-session-subtitle { color: #64746f; font-size: 10px; grid-column: 1; grid-row: 2; margin: 0 0 0 84px; }
-        #print-session-root .print-session-subtitle-structured { color: #64746f; font-size: 10px; grid-column: 1; grid-row: 2; margin: 0 0 0 84px; text-transform: uppercase; }
+        #print-session-root > .print-session-subtitle { color: #64746f; font-size: 9px; grid-column: 1; grid-row: 2; line-height: 1.25; margin: 0 0 0 103px; }
+        #print-session-root .print-session-subtitle-structured { color: #64746f; display: grid; font-size: 9px; gap: 2px; grid-column: 1; grid-row: 2; line-height: 1.25; margin: 0 0 0 103px; text-transform: none; }
         #print-session-root > :not(.print-document-heading):not(.print-session-header):not(.print-session-subtitle):not(.print-session-subtitle-structured) { grid-column: 1 / -1; }
-        #print-session-root .print-session-subtitle-date { display: grid; grid-template-columns: 58px 8px minmax(0, 1fr); }
+        #print-session-root .print-session-subtitle-date { display: grid; grid-template-columns: 42px 8px minmax(0, 1fr); }
         #print-session-root th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         #print-session-root .table-section, #print-session-root .layout-card, #print-session-root .completed-rack { border-color: var(--print-accent-line); }
         #print-session-root .layout-card-head { background: color-mix(in srgb, var(--print-accent) 9%, #fff); border-color: var(--print-accent-line); }
