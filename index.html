@@ -3688,19 +3688,28 @@
       offlineCacheTabId = crypto.randomUUID();
     }
     const LEGACY_AUTH_STORAGE_KEY = `sb-${new URL(SUPABASE_URL).hostname.split(".")[0]}-auth-token`;
+    let authSessionStorage;
     try {
-      if (!sessionStorage.getItem(AUTH_SESSION_STORAGE_KEY)
-        && localStorage.getItem(AUTH_SESSION_MIGRATION_KEY) !== "true") {
-        const legacySession = localStorage.getItem(LEGACY_AUTH_STORAGE_KEY);
-        if (legacySession) sessionStorage.setItem(AUTH_SESSION_STORAGE_KEY, legacySession);
+      authSessionStorage = window.localStorage;
+      if (!authSessionStorage.getItem(AUTH_SESSION_STORAGE_KEY)) {
+        const tabSession = sessionStorage.getItem(AUTH_SESSION_STORAGE_KEY);
+        const legacySession = localStorage.getItem(AUTH_SESSION_MIGRATION_KEY) === "true"
+          ? null
+          : localStorage.getItem(LEGACY_AUTH_STORAGE_KEY);
+        const sessionToMigrate = tabSession || legacySession;
+        if (sessionToMigrate) authSessionStorage.setItem(AUTH_SESSION_STORAGE_KEY, sessionToMigrate);
+      }
+      sessionStorage.removeItem(AUTH_SESSION_STORAGE_KEY);
+      if (localStorage.getItem(AUTH_SESSION_MIGRATION_KEY) !== "true") {
         localStorage.setItem(AUTH_SESSION_MIGRATION_KEY, "true");
       }
     } catch (error) {
-      console.error("Sesi login per tab tidak dapat diinisialisasi:", error);
+      console.error("Sesi login lintas tab tidak dapat diinisialisasi:", error);
+      authSessionStorage = window.sessionStorage;
     }
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
       auth: {
-        storage: window.sessionStorage,
+        storage: authSessionStorage,
         storageKey: AUTH_SESSION_STORAGE_KEY
       }
     });
@@ -6291,7 +6300,7 @@
       }
     }
     async function signOut() {
-      const { error } = await supabaseClient.auth.signOut();
+      const { error } = await supabaseClient.auth.signOut({ scope: "local" });
       if (error) notify(`Gagal keluar: ${error.message}`);
     }
     function requestSignOut() {
