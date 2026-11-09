@@ -431,6 +431,8 @@
     .segregation-status.success { background: rgba(36, 124, 76, .1); color: var(--green); }
     .segregation-status.error { background: rgba(190, 56, 49, .1); color: var(--red); }
     .segregation-scan-form { display: grid; gap: 8px; padding: 14px 16px 16px; }
+    .segregation-item-select { background: var(--paper); border: 1px solid var(--line); border-radius: 5px; color: var(--ink); font: inherit; height: 38px; max-width: 100%; padding: 0 10px; width: 100%; }
+    .segregation-item-select:focus { border-color: #739b7c; outline: 2px solid rgba(40, 93, 69, .1); }
     .segregation-scan-controls { display: flex; gap: 8px; }
     .segregation-scan-controls .scan-input { flex: 1; }
     .segregation-camera-button { align-items: center; display: inline-flex; justify-content: center; white-space: nowrap; }
@@ -4015,6 +4017,7 @@
     let pendingWorkspaceDeletionId = "";
     let segregationSource = null;
     let segregationScans = [];
+    let segregationSelectedItemCode = "";
     let segregationFileLoading = false;
     let segregationStatus = { message: "", type: "" };
     let segregationPersistenceQueue = Promise.resolve();
@@ -4824,6 +4827,7 @@
         sheetName: segregationSource.sheetName,
         records: [...segregationSource.recordsBySerial.entries()],
         warehouses: [...segregationSource.warehouses],
+        selectedItemCode: segregationSelectedItemCode,
         scans: segregationScans.map((scan) => ({ ...scan }))
       };
     }
@@ -4865,6 +4869,15 @@
         serials: new Set(recordsBySerial.keys()),
         warehouses: new Set(record.warehouses)
       };
+      if (record.selectedItemCode !== undefined && typeof record.selectedItemCode !== "string") {
+        throw new Error("Pilihan Item/SKU Segregasi tersimpan tidak valid.");
+      }
+      const availableItemCodes = new Set([...recordsBySerial.values()]
+        .map((item) => item.itemCode.trim().toLocaleUpperCase("id-ID"))
+        .filter(Boolean));
+      segregationSelectedItemCode = availableItemCodes.has(record.selectedItemCode || "")
+        ? record.selectedItemCode
+        : "";
       segregationScans = record.scans.map((scan) => ({ ...scan }));
     }
     async function restoreSegregationData(userId) {
@@ -5827,6 +5840,7 @@
       authSession = null;
       segregationSource = null;
       segregationScans = [];
+      segregationSelectedItemCode = "";
       segregationFileLoading = false;
       segregationStatus = { message: "", type: "" };
       if (isMobileDrawerEnabled()) setAndroidNavigationOpen(false);
@@ -7723,6 +7737,16 @@
           .map((record) => record.itemCode.trim().toLocaleUpperCase("id-ID"))
           .filter(Boolean)).size
         : 0;
+      const itemChoices = segregationSource
+        ? Array.from(new Map(
+          [...segregationSource.recordsBySerial.values()]
+            .filter((record) => record.itemCode.trim())
+            .map((record) => [
+              record.itemCode.trim().toLocaleUpperCase("id-ID"),
+              { itemCode: record.itemCode.trim(), itemName: record.itemName.trim() }
+            ])
+        ).entries()).sort(([left], [right]) => left.localeCompare(right))
+        : [];
       const renderFoundRows = () => foundScans.length
         ? foundScans.slice().reverse().map((scan, index) => `<tr><td class="number-cell">${foundScans.length - index}</td><td>${escapeHtml(scan.brand || "-")}</td><td>${escapeHtml(scan.itemCode || "-")}</td><td>${escapeHtml(scan.itemName || "-")}</td><td class="quantity-cell">${escapeHtml(scan.serial)}</td><td>${escapeHtml(scan.sourceWarehouse || "-")}</td><td><input class="segregation-target-input" type="text" list="segregation-target-warehouses" value="${escapeHtml(scan.targetWarehouse || "")}" data-segregation-target="${escapeHtml(scan.normalizedSerial)}" aria-label="Warehouse Target untuk ${escapeHtml(scan.serial)}" placeholder="Pilih atau ketik warehouse"></td></tr>`).join("")
         : `<tr><td class="segregation-empty" colspan="7">Belum ada SN yang cocok.</td></tr>`;
@@ -7742,6 +7766,7 @@
           <div class="segregation-status ${escapeHtml(segregationStatus.type)}" role="status" aria-live="polite">${escapeHtml(segregationStatus.message)}</div>
           <datalist id="segregation-target-warehouses">${[...(segregationSource?.warehouses || [])].sort().map((warehouse) => `<option value="${escapeHtml(warehouse)}"></option>`).join("")}</datalist>
           <form class="segregation-scan-form" id="segregation-scan-form">
+            ${segregationSource ? `<label for="segregation-item-select"><strong>Cari Item/SKU</strong><span class="table-count">Pilih item tertentu untuk membatasi hasil scan, atau pilih semua item.</span><select class="segregation-item-select" id="segregation-item-select"><option value="">Semua item</option>${itemChoices.map(([code, item]) => `<option value="${escapeHtml(code)}" ${segregationSelectedItemCode === code ? "selected" : ""}>${escapeHtml(item.itemCode)}${item.itemName ? ` · ${escapeHtml(item.itemName)}` : ""}</option>`).join("")}</select></label>` : ""}
             <label for="segregation-scan-input"><strong>Get SN</strong><span class="table-count">Scan SN dengan scanner fisik. Item, Brand, dan Warehouse Source diambil dari file VEF.</span></label>
             <div class="segregation-scan-controls"><input class="scan-input segregation-scan-input" id="segregation-scan-input" name="serial" type="text" autocomplete="off" autocapitalize="characters" placeholder="${segregationSource ? "Scan atau ketik SN, lalu tekan Enter" : "Unggah file VEF terlebih dahulu"}" ${segregationSource && !segregationFileLoading ? "" : "disabled"}><button class="button button-secondary segregation-camera-button" id="segregation-camera-button" type="button" aria-label="Scan SN dengan kamera" ${segregationSource && !segregationFileLoading ? "" : "disabled"}><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7V5h3m10 0h3v3M4 17v2h3m10 0h3v-3"/><path d="M7 9v6m3-6v6m3-6v6m3-6v6"/></svg></button><button class="button button-primary" type="submit" ${segregationSource && !segregationFileLoading ? "" : "disabled"}>Periksa SN</button></div>
           </form>
@@ -7825,6 +7850,7 @@
         if (!uploadUserId || authSession?.user?.id !== uploadUserId) throw new Error("Akun berubah saat file diproses. Unggahan dibatalkan.");
         segregationSource = { fileName: file.name, ...importedList };
         segregationScans = [];
+        segregationSelectedItemCode = "";
         await persistSegregationData();
         segregationStatus = { message: `Daftar berhasil dimuat: ${formatNumber(segregationSource.serials.size)} SN unik. Hasil scan sebelumnya telah dikosongkan.`, type: "success" };
       } catch (error) {
@@ -7854,8 +7880,9 @@
         if (!cameraSegregationScanInProgress) document.getElementById("segregation-scan-input")?.focus();
         return;
       }
-      const found = segregationSource.serials.has(normalizedSerial);
       const sourceRecord = segregationSource.recordsBySerial.get(normalizedSerial);
+      const found = Boolean(sourceRecord && (!segregationSelectedItemCode
+        || sourceRecord.itemCode.trim().toLocaleUpperCase("id-ID") === segregationSelectedItemCode));
       segregationScans.push({
         serial,
         normalizedSerial,
@@ -7867,10 +7894,36 @@
         targetWarehouse: "",
         scannedAt: new Date().toISOString()
       });
-      segregationStatus = { message: found ? `SN ${serial} ditemukan di daftar sumber.` : `SN ${serial} tidak ditemukan dan ditambahkan ke tabel SN not Found.`, type: found ? "success" : "error" };
+      segregationStatus = {
+        message: found
+          ? `SN ${serial} ditemukan di daftar sumber.`
+          : sourceRecord && segregationSelectedItemCode
+            ? `SN ${serial} ditemukan, tetapi bukan bagian dari Item/SKU ${segregationSelectedItemCode}.`
+            : `SN ${serial} tidak ditemukan dan ditambahkan ke tabel SN not Found.`,
+        type: found ? "success" : "error"
+      };
       await persistSegregationData();
       render();
       if (!cameraSegregationScanInProgress) document.getElementById("segregation-scan-input")?.focus();
+    }
+
+    async function setSegregationItemFilter(event) {
+      segregationSelectedItemCode = event.currentTarget.value;
+      segregationScans = segregationScans.map((scan) => {
+        const sourceRecord = segregationSource.recordsBySerial.get(scan.normalizedSerial);
+        const found = Boolean(sourceRecord && (!segregationSelectedItemCode
+          || sourceRecord.itemCode.trim().toLocaleUpperCase("id-ID") === segregationSelectedItemCode));
+        return { ...scan, found };
+      });
+      segregationStatus = {
+        message: segregationSelectedItemCode
+          ? `Pencarian dibatasi ke Item/SKU ${segregationSelectedItemCode}.`
+          : "Pencarian mencakup semua item.",
+        type: "success"
+      };
+      await persistSegregationData();
+      render();
+      document.getElementById("segregation-scan-input")?.focus();
     }
 
     async function setSegregationTarget(event) {
@@ -10537,6 +10590,7 @@
       document.getElementById("admin-refresh-storage")?.addEventListener("click", () => void loadAdminStorage());
       document.getElementById("segregation-file-button")?.addEventListener("click", () => document.getElementById("segregation-file-input")?.click());
       document.getElementById("segregation-file-input")?.addEventListener("change", (event) => void importSegregationFile(event));
+      document.getElementById("segregation-item-select")?.addEventListener("change", setSegregationItemFilter);
       document.getElementById("segregation-scan-form")?.addEventListener("submit", submitSegregationScan);
       document.getElementById("segregation-camera-button")?.addEventListener("click", () => {
         const input = document.getElementById("segregation-scan-input");
