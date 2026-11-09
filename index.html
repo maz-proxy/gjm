@@ -4017,6 +4017,7 @@
     let segregationScans = [];
     let segregationFileLoading = false;
     let segregationStatus = { message: "", type: "" };
+    let segregationPersistenceQueue = Promise.resolve();
     let lastManualEntryId = "";
     let searchTerm = "";
     let layoutSearchTerm = "";
@@ -4793,6 +4794,105 @@
         transaction.oncomplete = () => resolve();
         transaction.onerror = () => reject(transaction.error || new Error("Cache lokal gagal disimpan."));
         transaction.onabort = () => reject(transaction.error || new Error("Penyimpanan cache lokal dibatalkan."));
+      });
+    }
+    async function readSegregationCacheRecord(userId) {
+      const database = await openOfflineCacheDatabase();
+      return new Promise((resolve, reject) => {
+        const transaction = database.transaction(OFFLINE_CACHE_STORE_NAME, "readonly");
+        const request = transaction.objectStore(OFFLINE_CACHE_STORE_NAME).get(`segregation:${userId}`);
+        request.onsuccess = () => resolve(request.result || null);
+        request.onerror = () => reject(request.error || new Error("Data Segregasi gagal dibaca."));
+        transaction.onabort = () => reject(transaction.error || new Error("Pembacaan data Segregasi dibatalkan."));
+      });
+    }
+    async function writeSegregationCacheRecord(userId, record) {
+      const database = await openOfflineCacheDatabase();
+      return new Promise((resolve, reject) => {
+        const transaction = database.transaction(OFFLINE_CACHE_STORE_NAME, "readwrite");
+        transaction.objectStore(OFFLINE_CACHE_STORE_NAME).put(record, `segregation:${userId}`);
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error || new Error("Data Segregasi gagal disimpan."));
+        transaction.onabort = () => reject(transaction.error || new Error("Penyimpanan data Segregasi dibatalkan."));
+      });
+    }
+    function createSegregationCacheRecord() {
+      return {
+        format: "stock-opname-segregation",
+        version: 1,
+        fileName: segregationSource.fileName,
+        sheetName: segregationSource.sheetName,
+        records: [...segregationSource.recordsBySerial.entries()],
+        warehouses: [...segregationSource.warehouses],
+        scans: segregationScans.map((scan) => ({ ...scan }))
+      };
+    }
+    function restoreSegregationCacheRecord(record) {
+      if (!record || record.format !== "stock-opname-segregation" || record.version !== 1
+        || typeof record.fileName !== "string" || typeof record.sheetName !== "string"
+        || !Array.isArray(record.records) || !record.records.length
+        || !Array.isArray(record.warehouses) || !Array.isArray(record.scans)) {
+        throw new Error("Format data Segregasi tersimpan tidak dikenal atau rusak.");
+      }
+      const recordsBySerial = new Map();
+      for (const entry of record.records) {
+        if (!Array.isArray(entry) || entry.length !== 2 || typeof entry[0] !== "string"
+          || !entry[1] || typeof entry[1] !== "object") {
+          throw new Error("Data daftar SN Segregasi tersimpan tidak valid.");
+        }
+        const [serial, item] = entry;
+        if (!serial || ["itemCode", "itemName", "brand", "sourceWarehouse"].some((key) => typeof item[key] !== "string")) {
+          throw new Error("Metadata SN Segregasi tersimpan tidak valid.");
+        }
+        recordsBySerial.set(serial, {
+          itemCode: item.itemCode,
+          itemName: item.itemName,
+          brand: item.brand,
+          sourceWarehouse: item.sourceWarehouse
+        });
+      }
+      if (record.warehouses.some((warehouse) => typeof warehouse !== "string")
+        || record.scans.some((scan) => !scan || typeof scan !== "object"
+          || ["serial", "normalizedSerial", "targetWarehouse", "scannedAt"].some((key) => typeof scan[key] !== "string")
+          || typeof scan.found !== "boolean"
+          || ["brand", "itemCode", "itemName", "sourceWarehouse"].some((key) => typeof scan[key] !== "string"))) {
+        throw new Error("Hasil scan Segregasi tersimpan tidak valid.");
+      }
+      segregationSource = {
+        fileName: record.fileName,
+        sheetName: record.sheetName,
+        recordsBySerial,
+        serials: new Set(recordsBySerial.keys()),
+        warehouses: new Set(record.warehouses)
+      };
+      segregationScans = record.scans.map((scan) => ({ ...scan }));
+    }
+    async function restoreSegregationData(userId) {
+      try {
+        const record = await readSegregationCacheRecord(userId);
+        if (!record || authSession?.user?.id !== userId) return;
+        restoreSegregationCacheRecord(record);
+      } catch (error) {
+        console.error("Data Segregasi tersimpan gagal dipulihkan:", error);
+        segregationStatus = {
+          message: `Data Segregasi tersimpan tidak dapat dipulihkan: ${error instanceof Error ? error.message : "kesalahan tidak diketahui"}`,
+          type: "error"
+        };
+        notify("Data Segregasi lokal gagal dipulihkan. Unggah kembali file VEF.");
+      }
+    }
+    function persistSegregationData() {
+      const userId = authSession?.user?.id;
+      if (!userId || !segregationSource) return Promise.resolve();
+      const record = createSegregationCacheRecord();
+      const write = segregationPersistenceQueue.catch(() => {}).then(() => {
+        if (authSession?.user?.id !== userId) return;
+        return writeSegregationCacheRecord(userId, record);
+      });
+      segregationPersistenceQueue = write;
+      return write.catch((error) => {
+        console.error("Data Segregasi lokal gagal disimpan:", error);
+        notify("Data Segregasi gagal disimpan di perangkat. Jangan muat ulang sebelum mengekspor atau mengunggah kembali file VEF.");
       });
     }
     async function loadOfflineSyncCache(userId) {
@@ -6064,6 +6164,7 @@
         resetSharedSyncFailures("read");
         resetSharedSyncFailures("write");
         currentPage = pageFromUrl() || (freshLogin ? "dashboard" : restoreLastPage(session));
+        await restoreSegregationData(session.user.id);
         unlockApp(session);
         render();
         startSharedStateChannel();
@@ -7715,6 +7816,7 @@
         if (!uploadUserId || authSession?.user?.id !== uploadUserId) throw new Error("Akun berubah saat file diproses. Unggahan dibatalkan.");
         segregationSource = { fileName: file.name, ...importedList };
         segregationScans = [];
+        await persistSegregationData();
         segregationStatus = { message: `Daftar berhasil dimuat: ${formatNumber(segregationSource.serials.size)} SN unik. Hasil scan sebelumnya telah dikosongkan.`, type: "success" };
       } catch (error) {
         console.error("Daftar SN Segregasi gagal dibaca:", error);
@@ -7726,7 +7828,7 @@
       }
     }
 
-    function submitSegregationScan(event) {
+    async function submitSegregationScan(event) {
       event.preventDefault();
       const input = document.getElementById("segregation-scan-input");
       const serial = input?.value.trim() || "";
@@ -7757,11 +7859,12 @@
         scannedAt: new Date().toISOString()
       });
       segregationStatus = { message: found ? `SN ${serial} ditemukan di daftar sumber.` : `SN ${serial} tidak ditemukan dan ditambahkan ke tabel SN not Found.`, type: found ? "success" : "error" };
+      await persistSegregationData();
       render();
       if (!cameraSegregationScanInProgress) document.getElementById("segregation-scan-input")?.focus();
     }
 
-    function setSegregationTarget(event) {
+    async function setSegregationTarget(event) {
       const input = event.currentTarget;
       const scan = segregationScans.find((item) => item.found && item.normalizedSerial === input.dataset.segregationTarget);
       if (!scan) {
@@ -7769,6 +7872,7 @@
         return;
       }
       scan.targetWarehouse = input.value.trim();
+      await persistSegregationData();
       render();
       document.getElementById("segregation-scan-input")?.focus();
     }
@@ -7879,9 +7983,10 @@
       URL.revokeObjectURL(link.href);
     }
 
-    function clearSegregationScans() {
+    async function clearSegregationScans() {
       segregationScans = [];
       segregationStatus = { message: "Hasil scan telah dikosongkan.", type: "success" };
+      await persistSegregationData();
       render();
       document.getElementById("segregation-scan-input")?.focus();
     }
