@@ -431,6 +431,14 @@
     .segregation-status.success { background: rgba(36, 124, 76, .1); color: var(--green); }
     .segregation-status.error { background: rgba(190, 56, 49, .1); color: var(--red); }
     .segregation-scan-form { display: grid; gap: 8px; padding: 14px 16px 16px; }
+    .segregation-source-card .table-toolbar { min-height: 48px; padding: 8px 14px; }
+    .segregation-source-card .segregation-status { margin: 0 14px 7px; padding: 6px 9px; }
+    .segregation-filter-form { gap: 4px; padding: 8px 14px 2px; }
+    .segregation-source-card .segregation-item-select { height: 34px; }
+    .segregation-source-card .segregation-scan-form { gap: 5px; padding: 7px 14px 10px; }
+    .segregation-source-card .segregation-scan-controls { gap: 6px; }
+    .segregation-source-card .segregation-scan-controls .scan-input,
+    .segregation-source-card .segregation-scan-controls .button { height: 36px; min-height: 36px; }
     .segregation-item-select { background: var(--paper); border: 1px solid var(--line); border-radius: 6px; color: var(--ink); font: inherit; height: 38px; max-width: 100%; padding: 0 11px; transition: border-color .15s ease, box-shadow .15s ease; width: 100%; }
     .segregation-item-select:focus { border-color: #739b7c; box-shadow: 0 0 0 3px rgba(40, 93, 69, .1); outline: 0; }
     .segregation-scan-controls { display: flex; gap: 8px; }
@@ -7781,11 +7789,11 @@
         : "Belum ada daftar SN. Unggah file Excel atau CSV terlebih dahulu.";
       return `${navMarkup()}
         <section class="page-head archive-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Tools mandiri</div><h1>Segregasi</h1><p class="subtitle">Unggah file VEF, scan SN yang akan dipindahkan, tentukan Warehouse Target, lalu unduh hasil dalam format Stock Entry Template.</p></div></section>
-        <section class="table-section">
+        <section class="table-section segregation-source-card">
           <div class="table-toolbar"><div><div class="table-title">Data VEF sumber</div><span class="table-count">${sourceDescription}</span></div><div class="segregation-source-actions"><input class="upload-input" id="segregation-file-input" type="file" accept=".xlsx,.xls,.csv" aria-label="Pilih workbook Excel atau CSV VEF"><button class="button button-secondary" id="segregation-file-button" type="button" ${segregationFileLoading ? "disabled" : ""}>${segregationFileLoading ? "Memproses file..." : segregationSource ? "Ganti file VEF" : "Unggah file VEF"}</button></div></div>
           <div class="segregation-status ${escapeHtml(segregationStatus.type)}" role="status" aria-live="polite">${escapeHtml(segregationStatus.message)}</div>
           <datalist id="segregation-target-warehouses">${[...(segregationSource?.warehouses || [])].sort().map((warehouse) => `<option value="${escapeHtml(warehouse)}"></option>`).join("")}</datalist>
-          ${segregationSource ? `<label class="segregation-scan-form" for="segregation-item-select"><strong>Cari Item/SKU</strong><span class="table-count">Ketik SKU atau pilih dari daftar. Kosongkan untuk semua item.</span><input class="segregation-item-select" id="segregation-item-select" type="text" list="segregation-item-options" value="${escapeHtml(selectedItemLabel)}" placeholder="Cari SKU atau nama item..." autocomplete="off"><datalist id="segregation-item-options">${itemChoices.map(([code, item]) => `<option value="${escapeHtml(`${item.itemCode}${item.itemName ? ` · ${item.itemName}` : ""}`)}" label="${escapeHtml(code)}"></option>`).join("")}</datalist></label>` : ""}
+          ${segregationSource ? `<label class="segregation-scan-form segregation-filter-form" for="segregation-item-select"><strong>Cari Item/SKU</strong><span class="table-count">Ketik SKU atau pilih dari daftar. Kosongkan untuk semua item.</span><input class="segregation-item-select" id="segregation-item-select" type="text" list="segregation-item-options" value="${escapeHtml(selectedItemLabel)}" placeholder="Cari SKU atau nama item..." autocomplete="off"><datalist id="segregation-item-options">${itemChoices.map(([code, item]) => `<option value="${escapeHtml(`${item.itemCode}${item.itemName ? ` · ${item.itemName}` : ""}`)}" label="${escapeHtml(code)}"></option>`).join("")}</datalist></label>` : ""}
           <form class="segregation-scan-form" id="segregation-scan-form">
             <label for="segregation-scan-input"><strong>Get SN</strong><span class="table-count">Scan SN dengan scanner fisik. Item, Brand, dan Warehouse Source diambil dari file VEF.</span></label>
             <div class="segregation-scan-controls"><input class="scan-input segregation-scan-input" id="segregation-scan-input" name="serial" type="text" autocomplete="off" autocapitalize="characters" placeholder="${segregationSource ? "Scan atau ketik SN, lalu tekan Enter" : "Unggah file VEF terlebih dahulu"}" ${segregationSource && !segregationFileLoading ? "" : "disabled"}><button class="button button-secondary segregation-camera-button" id="segregation-camera-button" type="button" aria-label="Scan SN dengan kamera" ${segregationSource && !segregationFileLoading ? "" : "disabled"}><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7V5h3m10 0h3v3M4 17v2h3m10 0h3v-3"/><path d="M7 9v6m3-6v6m3-6v6m3-6v6"/></svg></button><button class="button button-primary" type="submit" ${segregationSource && !segregationFileLoading ? "" : "disabled"}>Periksa SN</button></div>
