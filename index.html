@@ -424,6 +424,16 @@
     .progress-percent { color: var(--green); font-size: 12px; font-weight: 700; min-width: 37px; text-align: right; }
     .scan-input { background: #fbfcf9; border: 1px solid #dce1d8; border-radius: 5px; font-size: 13px; height: 40px; min-width: 0; outline: 0; padding: 0 12px; width: 100%; }
     .scan-input:focus { background: #fff; border-color: #739b7c; box-shadow: 0 0 0 3px rgba(40, 93, 69, .1); }
+    .segregation-source-actions { align-items: center; display: flex; flex-wrap: wrap; gap: 10px; }
+    .segregation-source-name { color: var(--muted); font-size: 11px; }
+    .segregation-status { border-radius: 7px; font-size: 12px; margin: 0 16px 14px; padding: 9px 11px; }
+    .segregation-status:empty { display: none; }
+    .segregation-status.success { background: rgba(36, 124, 76, .1); color: var(--green); }
+    .segregation-status.error { background: rgba(190, 56, 49, .1); color: var(--red); }
+    .segregation-scan-form { display: grid; gap: 8px; padding: 14px 16px 16px; }
+    .segregation-scan-controls { display: flex; gap: 8px; }
+    .segregation-scan-controls .scan-input { flex: 1; }
+    .segregation-empty { color: var(--muted); padding: 22px 14px !important; text-align: center; }
     .issue-count { color: var(--red); }
     .qty-input { background: #fff; border: 1px solid #dce1d8; border-radius: 4px; font-size: 11px; height: 29px; outline: 0; padding: 0 7px; width: 66px; }
     .qty-input:focus { border-color: #739b7c; box-shadow: 0 0 0 2px rgba(40,93,69,.09); }
@@ -2617,6 +2627,7 @@
       <nav class="nav-list" aria-label="Arsip stock opname">
         <a class="nav-item" href="?page=History%20Changes" data-page="history"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 7.5A8 8 0 1 1 4 13"/><path d="M5 3.5v4h4M12 7v5l3.5 2"/><circle cx="12" cy="12" r="1"/></svg></span><span>History Changes</span></a>
         <a class="nav-item" href="?page=Session%20SO" data-page="completed-sessions"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m4 8 8-4 8 4v10l-8 4-8-4V8Z"/><path d="m4.5 8.5 7.5 4 7.5-4M12 12.5V21"/><path d="m9 7 6 3m-3 4v3m-2-2 2 2 4-4"/></svg></span><span>Session SO</span></a>
+        <a class="nav-item" href="?page=Segregasi" data-page="segregation"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5M8 10.5h5m-2.5-2.5v5"/></svg></span><span>Segregasi</span></a>
       </nav>
       <nav class="nav-list" aria-label="Bantuan" style="margin-top: 18px">
         <a class="nav-item" href="?page=Guide" data-page="about"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m4 6 5-2 6 2 5-2v14l-5 2-6-2-5 2V6Z"/><path d="m9 4v14m6-12v14"/><path d="m11 12 2-2 2 2m-2-2v4"/></svg></span><span>Guide</span></a>
@@ -3547,7 +3558,7 @@
     let scanAudioContext = null;
     let scanAudioUnlockRequested = false;
     let scanAudioUnsupportedNotified = false;
-    const RESTORABLE_PAGES = new Set(["opname", "dashboard", "workspaces", "products", "layouts", "recap", "about", "about-info", "admin-users", "data-resources", "completed-sessions", "history"]);
+    const RESTORABLE_PAGES = new Set(["opname", "dashboard", "workspaces", "products", "layouts", "recap", "about", "about-info", "admin-users", "data-resources", "completed-sessions", "history", "segregation"]);
     const PAGE_URL_NAMES = Object.freeze({
       dashboard: "Dashboard",
       workspaces: "Schedule",
@@ -3557,6 +3568,7 @@
       recap: "Recap",
       history: "History Changes",
       "completed-sessions": "Session SO",
+      segregation: "Segregasi",
       about: "Guide",
       "about-info": "About",
       "data-resources": "Data Resource",
@@ -3978,7 +3990,7 @@
     let currentPage = "opname";
     let lastRenderedPage = "";
     let lastRenderedWorkspaceId = "";
-    const BACK_NAVIGATION_PAGES = ["dashboard", "workspaces", "products", "layouts", "opname", "recap", "history", "completed-sessions", "about", "about-info"];
+    const BACK_NAVIGATION_PAGES = ["dashboard", "workspaces", "products", "layouts", "opname", "recap", "history", "completed-sessions", "segregation", "about", "about-info"];
     let appBackNavigationInitialized = false;
     let selectedCompletedSessionId = "";
     let selectedRecordedBrand = "";
@@ -3992,6 +4004,10 @@
     let pendingInboundEntryId = "";
     let pendingCompletedSessionDeletionId = "";
     let pendingWorkspaceDeletionId = "";
+    let segregationSource = null;
+    let segregationScans = [];
+    let segregationFileLoading = false;
+    let segregationStatus = { message: "", type: "" };
     let lastManualEntryId = "";
     let searchTerm = "";
     let layoutSearchTerm = "";
@@ -5672,6 +5688,10 @@
     }
     function lockApp() {
       authSession = null;
+      segregationSource = null;
+      segregationScans = [];
+      segregationFileLoading = false;
+      segregationStatus = { message: "", type: "" };
       if (isMobileDrawerEnabled()) setAndroidNavigationOpen(false);
       stopPresenceChannel();
       stopSharedStateChannel();
@@ -7149,6 +7169,7 @@
         history: "History Changes",
         "completed-sessions": "Session SO",
         "completed-session-detail": "Session SO",
+        segregation: "Segregasi",
         about: "Guide",
         "about-info": "About",
         "recorded-archive": "Stock Opname Recorded",
@@ -7156,7 +7177,8 @@
         "data-resources": "Data Resource"
       };
       const pageLabel = pageLabels[currentPage] || "History Changes";
-      return `<div class="topline"><div class="topline-heading"><div class="language-options workspace-language-options" role="group" aria-label="Pilih bahasa"><button class="language-option" type="button" data-language-option="id" aria-label="Bahasa Indonesia" aria-pressed="false"><svg class="language-flag" aria-hidden="true" viewBox="0 0 30 20"><rect width="30" height="10" fill="#ce1126"/><rect y="10" width="30" height="10" fill="#fff"/></svg></button><button class="language-option" type="button" data-language-option="en" aria-label="English" aria-pressed="false"><svg class="language-flag" aria-hidden="true" viewBox="0 0 60 30"><rect width="60" height="30" fill="#012169"/><path d="M0 0 60 30M60 0 0 30" stroke="#fff" stroke-width="6"/><path d="M0 0 60 30M60 0 0 30" stroke="#c8102e" stroke-width="2"/><path d="M30 0v30M0 15h60" stroke="#fff" stroke-width="10"/><path d="M30 0v30M0 15h60" stroke="#c8102e" stroke-width="4"/></svg></button></div><div class="crumb"><span class="crumb-workspace" data-user-content>${escapeHtml(activeWorkspaceName())}</span> <span> / </span> <b data-user-content>${escapeHtml(pageLabel)}</b></div>${onlineMarkup}</div><div class="top-actions"><span class="today">${formatDate(new Date(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span><div class="top-action-controls">${renderChatMarkup()}<div class="top-theme-controls"><button class="accent-toggle" type="button" data-accent-toggle aria-label="Ganti tema warna ke burgundy"><span class="accent-swatch" aria-hidden="true"></span><span data-accent-label>Burgundy</span></button><button class="theme-toggle" type="button" data-theme-toggle aria-label="Aktifkan dark mode" aria-pressed="false"><span class="theme-toggle-icon" aria-hidden="true">☾</span><span class="theme-toggle-label">Dark</span></button></div></div>${picMarkup}</div></div>`;
+      const crumbWorkspaceName = currentPage === "segregation" ? "Tools Mandiri" : activeWorkspaceName();
+      return `<div class="topline"><div class="topline-heading"><div class="language-options workspace-language-options" role="group" aria-label="Pilih bahasa"><button class="language-option" type="button" data-language-option="id" aria-label="Bahasa Indonesia" aria-pressed="false"><svg class="language-flag" aria-hidden="true" viewBox="0 0 30 20"><rect width="30" height="10" fill="#ce1126"/><rect y="10" width="30" height="10" fill="#fff"/></svg></button><button class="language-option" type="button" data-language-option="en" aria-label="English" aria-pressed="false"><svg class="language-flag" aria-hidden="true" viewBox="0 0 60 30"><rect width="60" height="30" fill="#012169"/><path d="M0 0 60 30M60 0 0 30" stroke="#fff" stroke-width="6"/><path d="M0 0 60 30M60 0 0 30" stroke="#c8102e" stroke-width="2"/><path d="M30 0v30M0 15h60" stroke="#fff" stroke-width="10"/><path d="M30 0v30M0 15h60" stroke="#c8102e" stroke-width="4"/></svg></button></div><div class="crumb"><span class="crumb-workspace" data-user-content>${escapeHtml(crumbWorkspaceName)}</span> <span> / </span> <b data-user-content>${escapeHtml(pageLabel)}</b></div>${onlineMarkup}</div><div class="top-actions"><span class="today">${formatDate(new Date(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span><div class="top-action-controls">${renderChatMarkup()}<div class="top-theme-controls"><button class="accent-toggle" type="button" data-accent-toggle aria-label="Ganti tema warna ke burgundy"><span class="accent-swatch" aria-hidden="true"></span><span data-accent-label>Burgundy</span></button><button class="theme-toggle" type="button" data-theme-toggle aria-label="Aktifkan dark mode" aria-pressed="false"><span class="theme-toggle-icon" aria-hidden="true">☾</span><span class="theme-toggle-label">Dark</span></button></div></div>${picMarkup}</div></div>`;
     };
     const renderProductIdentity = (product) => `<div class="product-cell"><div><div class="product-name">${escapeHtml(product.name)}</div><div class="product-sku">${escapeHtml(product.sku)}</div></div></div>`;
     const renderReconciliationTableHead = (includeNote = false) => `<tr><th>No</th><th>Item / item code</th><th>Brand</th><th class="quantity-cell">VEF</th><th class="quantity-cell">SCAN</th><th class="quantity-cell">MANUAL</th><th class="quantity-cell">Inbound/Retur</th><th class="quantity-cell">PJ</th><th class="quantity-cell">Selisih</th><th>Check</th>${includeNote ? "<th>Note</th>" : ""}</tr>`;
@@ -7537,6 +7559,121 @@
       const workspaceNames = new Map(state.workspaces.map((workspace) => [workspace.id, workspace.name]));
       const activities = state.workspaces.flatMap((workspace) => (workspace.data.historyEvents || []).map((activity) => ({ ...activity, workspaceName: workspaceNames.get(activity.workspaceId) || workspace.name }))).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       return `${navMarkup()}<section class="page-head archive-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Aktivitas dan audit</div><h1>Riwayat Perubahan</h1><p class="subtitle">Catatan perubahan data dan aktivitas sesi, diurutkan dari yang terbaru.</p></div></section><div class="history-summary"><div><strong>${activities.length} aktivitas tercatat</strong><div style="font-size:10px;margin-top:3px">Riwayat perubahan tersimpan per sesi di perangkat ini.</div></div><span class="category-chip">${activities.length ? `Perubahan terakhir: ${escapeHtml(formatDate(activities[0].createdAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }))}` : "Belum ada perubahan"}</span></div><section class="table-section"><div class="table-toolbar"><div class="table-title">Riwayat perubahan <span class="table-count">${activities.length} aktivitas · terbaru di atas</span></div></div><div class="table-scroll"><table><thead><tr><th>Waktu</th><th>Sesi</th><th>Aktivitas</th><th>Detail perubahan</th></tr></thead><tbody>${activities.length ? activities.map((activity) => `<tr><td class="activity-time">${escapeHtml(formatDate(activity.createdAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }))}</td><td data-user-content>${escapeHtml(activity.workspaceName || "Sesi opname")}</td><td><span class="activity-type">${escapeHtml(activity.type)}</span></td><td class="activity-details">${escapeHtml(activity.description)}</td></tr>`).join("") : `<tr><td class="empty-row" colspan="4">Belum ada perubahan data.</td></tr>`}</tbody></table></div></section>`;
+    }
+
+    function renderSegregation() {
+      const foundScans = segregationScans.filter((scan) => scan.found);
+      const notFoundScans = segregationScans.filter((scan) => !scan.found);
+      const renderScanRows = (scans, found) => scans.length
+        ? scans.slice().reverse().map((scan, index) => `<tr><td class="number-cell">${scans.length - index}</td><td class="quantity-cell">${escapeHtml(scan.serial)}</td><td>${escapeHtml(formatDate(scan.scannedAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }))}</td><td><span class="row-status ${found ? "match" : "different"}">${found ? "Found" : "Not Found"}</span></td></tr>`).join("")
+        : `<tr><td class="segregation-empty" colspan="4">${found ? "Belum ada SN yang cocok." : "Belum ada SN yang tidak ditemukan."}</td></tr>`;
+      const sourceDescription = segregationSource
+        ? `${escapeHtml(segregationSource.fileName)} · Sheet: ${escapeHtml(segregationSource.sheetName)} · ${formatNumber(segregationSource.serials.size)} SN unik`
+        : "Belum ada daftar SN. Unggah file Excel atau CSV terlebih dahulu.";
+      return `${navMarkup()}
+        <section class="page-head archive-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Tools mandiri</div><h1>Segregasi</h1><p class="subtitle">Unggah daftar SN, lalu scan setiap barang untuk memeriksa apakah SN tersebut ada di dalam daftar. Data di halaman ini terpisah dari sesi stock opname.</p></div></section>
+        <section class="table-section">
+          <div class="table-toolbar"><div><div class="table-title">Daftar SN sumber</div><span class="table-count">${sourceDescription}</span></div><div class="segregation-source-actions"><input class="upload-input" id="segregation-file-input" type="file" accept=".xlsx,.xls,.csv" aria-label="Pilih daftar SN Excel atau CSV"><button class="button button-secondary" id="segregation-file-button" type="button" ${segregationFileLoading ? "disabled" : ""}>${segregationFileLoading ? "Memproses file..." : segregationSource ? "Ganti file" : "Unggah file SN"}</button></div></div>
+          <div class="segregation-status ${escapeHtml(segregationStatus.type)}" role="status" aria-live="polite">${escapeHtml(segregationStatus.message)}</div>
+          <form class="segregation-scan-form" id="segregation-scan-form">
+            <label for="segregation-scan-input"><strong>Scan Serial Number</strong><span class="table-count">Arahkan scanner fisik ke barcode. SN akan diperiksa saat scanner mengirim Enter.</span></label>
+            <div class="segregation-scan-controls"><input class="scan-input" id="segregation-scan-input" name="serial" type="text" autocomplete="off" autocapitalize="characters" placeholder="${segregationSource ? "Scan atau ketik SN, lalu tekan Enter" : "Unggah daftar SN terlebih dahulu"}" ${segregationSource && !segregationFileLoading ? "" : "disabled"}><button class="button button-primary" type="submit" ${segregationSource && !segregationFileLoading ? "" : "disabled"}>Periksa SN</button></div>
+          </form>
+        </section>
+        <section class="metric-grid compact-metrics" aria-label="Ringkasan hasil segregasi">
+          <div class="metric"><div class="metric-top">Total SN diperiksa</div><div class="metric-value">${formatNumber(segregationScans.length)}</div></div>
+          <div class="metric"><div class="metric-top">SN Found</div><div class="metric-value">${formatNumber(foundScans.length)}</div></div>
+          <div class="metric"><div class="metric-top">SN not Found</div><div class="metric-value">${formatNumber(notFoundScans.length)}</div></div>
+        </section>
+        <section class="table-section"><div class="table-toolbar"><div class="table-title">SN Found <span class="table-count">${formatNumber(foundScans.length)} SN ditemukan dalam daftar sumber</span></div><button class="button button-secondary" id="clear-segregation-scans" type="button" ${segregationScans.length ? "" : "disabled"}>Kosongkan hasil scan</button></div><div class="table-scroll"><table><thead><tr><th>No</th><th>Serial Number</th><th>Waktu Scan</th><th>Hasil</th></tr></thead><tbody>${renderScanRows(foundScans, true)}</tbody></table></div></section>
+        <section class="table-section"><div class="table-toolbar"><div class="table-title">SN not Found <span class="table-count">${formatNumber(notFoundScans.length)} SN tidak ditemukan dalam daftar sumber</span></div></div><div class="table-scroll"><table><thead><tr><th>No</th><th>Serial Number</th><th>Waktu Scan</th><th>Hasil</th></tr></thead><tbody>${renderScanRows(notFoundScans, false)}</tbody></table></div></section>`;
+    }
+
+    async function importSegregationFile(event) {
+      const input = event.currentTarget;
+      const file = input.files?.[0];
+      const uploadUserId = authSession?.user?.id;
+      input.value = "";
+      if (!file) return;
+      if (typeof XLSX === "undefined") {
+        segregationStatus = { message: "Parser Excel/CSV tidak termuat. Periksa koneksi internet lalu muat ulang aplikasi.", type: "error" };
+        render();
+        return;
+      }
+      if (!/\.(xlsx|xls|csv)$/i.test(file.name)) {
+        segregationStatus = { message: "Pilih file Excel .xlsx/.xls atau CSV.", type: "error" };
+        render();
+        return;
+      }
+      if (file.size > 50 * 1024 * 1024) {
+        segregationStatus = { message: "Ukuran file melebihi batas 50 MB.", type: "error" };
+        render();
+        return;
+      }
+      if (segregationFileLoading) return;
+      segregationFileLoading = true;
+      segregationStatus = { message: "Membaca daftar SN...", type: "" };
+      render();
+      try {
+        const fileBuffer = await readWorkbookFile(file, () => {});
+        const workbook = XLSX.read(fileBuffer, { type: "array", codepage: 65001 });
+        let importedList = null;
+        for (const sheetName of workbook.SheetNames) {
+          const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, defval: "", raw: false });
+          const header = findHeader(rows, [["serial number", "serial no", "serial", "sn"]]);
+          if (!header) continue;
+          const serials = rows.slice(header.rowIndex + 1)
+            .map((row) => normalizeSerial(row[header.indexes[0]]))
+            .filter(Boolean);
+          if (serials.length) {
+            importedList = { sheetName, serials: new Set(serials) };
+            break;
+          }
+        }
+        if (!importedList) throw new Error("Kolom SN tidak ditemukan atau tidak berisi data. Pastikan ada header Serial Number, Serial No, Serial, atau SN.");
+        if (!uploadUserId || authSession?.user?.id !== uploadUserId) throw new Error("Akun berubah saat file diproses. Unggahan dibatalkan.");
+        segregationSource = { fileName: file.name, ...importedList };
+        segregationScans = [];
+        segregationStatus = { message: `Daftar berhasil dimuat: ${formatNumber(segregationSource.serials.size)} SN unik. Hasil scan sebelumnya telah dikosongkan.`, type: "success" };
+      } catch (error) {
+        console.error("Daftar SN Segregasi gagal dibaca:", error);
+        segregationStatus = { message: `File gagal diproses: ${error instanceof Error ? error.message : "kesalahan tidak diketahui"}`, type: "error" };
+      } finally {
+        segregationFileLoading = false;
+        render();
+        document.getElementById("segregation-scan-input")?.focus();
+      }
+    }
+
+    function submitSegregationScan(event) {
+      event.preventDefault();
+      const input = document.getElementById("segregation-scan-input");
+      const serial = input?.value.trim() || "";
+      if (!serial) return;
+      if (!segregationSource) {
+        segregationStatus = { message: "Unggah daftar SN terlebih dahulu.", type: "error" };
+        render();
+        return;
+      }
+      const normalizedSerial = normalizeSerial(serial);
+      if (segregationScans.some((scan) => scan.normalizedSerial === normalizedSerial)) {
+        segregationStatus = { message: `SN ${serial} sudah pernah diperiksa.`, type: "error" };
+        render();
+        document.getElementById("segregation-scan-input")?.focus();
+        return;
+      }
+      const found = segregationSource.serials.has(normalizedSerial);
+      segregationScans.push({ serial, normalizedSerial, found, scannedAt: new Date().toISOString() });
+      segregationStatus = { message: found ? `SN ${serial} ditemukan di daftar sumber.` : `SN ${serial} tidak ditemukan dan ditambahkan ke tabel SN not Found.`, type: found ? "success" : "error" };
+      render();
+      document.getElementById("segregation-scan-input")?.focus();
+    }
+
+    function clearSegregationScans() {
+      segregationScans = [];
+      segregationStatus = { message: "Hasil scan telah dikosongkan.", type: "success" };
+      render();
+      document.getElementById("segregation-scan-input")?.focus();
     }
 
     function renderCompletedSessions() {
@@ -9167,7 +9304,7 @@
       if (currentPage !== "layouts") closeLayoutDetails();
       lastRenderedPage = currentPage;
       lastRenderedWorkspaceId = state.currentWorkspaceId;
-      main.innerHTML = currentPage === "dashboard" ? renderDashboard() : currentPage === "recorded-archive" ? renderRecordedSessionPage() : currentPage === "opname" ? renderOpname() : currentPage === "layouts" ? renderLayouts() : currentPage === "workspaces" ? renderWorkspaceSchedule() : currentPage === "products" ? renderProducts() : currentPage === "recap" ? renderRecap() : currentPage === "about-info" ? renderAboutWorkspace() : currentPage === "about" ? renderAbout() : currentPage === "admin-users" ? renderAdminUsers() : currentPage === "data-resources" ? renderDataResources() : currentPage === "completed-session-detail" ? renderCompletedSessionView() : currentPage === "completed-sessions" ? renderCompletedSessions() : renderHistory();
+      main.innerHTML = currentPage === "dashboard" ? renderDashboard() : currentPage === "recorded-archive" ? renderRecordedSessionPage() : currentPage === "opname" ? renderOpname() : currentPage === "layouts" ? renderLayouts() : currentPage === "workspaces" ? renderWorkspaceSchedule() : currentPage === "products" ? renderProducts() : currentPage === "recap" ? renderRecap() : currentPage === "about-info" ? renderAboutWorkspace() : currentPage === "about" ? renderAbout() : currentPage === "admin-users" ? renderAdminUsers() : currentPage === "data-resources" ? renderDataResources() : currentPage === "completed-session-detail" ? renderCompletedSessionView() : currentPage === "completed-sessions" ? renderCompletedSessions() : currentPage === "segregation" ? renderSegregation() : renderHistory();
       if (preserveLayoutScanner) {
         if (currentPage === "layouts") {
           document.querySelector(".layout-page-head")?.after(cameraDialog);
@@ -9259,6 +9396,7 @@
           ${guide("Langkah 3", "▦", "Scan Layout", "Buat rack dan isi label rack (angka atau keterangan teks) serta target scan. Pindai serial number pada rack yang sesuai atau gunakan tombol kamera untuk membaca barcode. Hasil cocok, duplikat, bukan laptop, atau tidak ditemukan tampil pada catatan scan; serial cocok juga menampilkan item code, nama item, serial number, dan waktu saat rinciannya dibuka. Rack dengan SN duplikat diberi tanda peringatan. Untuk barang tanpa serial, cari item dari VEF, pilih hasil yang benar, masukkan quantity, lalu Catat Manual. Catatan manual terbaru akan ditandai dan difokuskan.", "layouts", "Scan Layout")}
           ${guide("Langkah 4", "⌗", "Result SO", "Lembar ini menghitung SCAN + MANUAL + PJ dan membandingkan hasilnya dengan VEF. Untuk PJ, klik quantity pada item, lalu isi tanggal/waktu dan nomor invoice. Input hanya diterima jika waktu invoice lebih baru daripada timestamp file VEF yang tercatat di Master VEF. Tekan SO SELESAI setelah pemeriksaan selesai untuk mengunci dan mengarsipkan hasil.", "opname", "Result SO")}
           ${guide("Langkah 5", "↕", "Rekap Selisih", "Tinjau hanya item yang belum sesuai; kolom selisih membandingkan jumlah SCAN + MANUAL + PJ dengan quantity VEF. Tambahkan catatan untuk menjelaskan kekurangan atau kelebihan. Periksa kembali data sebelum sesi diselesaikan karena hasil yang diarsipkan menjadi rekaman baca-saja.", "recap", "Rekap Selisih")}
+          ${guide("Tool", "⌕", "Segregasi", "Unggah file Excel atau CSV yang memiliki kolom Serial Number/Serial No/Serial/SN, lalu scan SN menggunakan scanner fisik. Halaman mandiri ini memisahkan hasil yang ditemukan dan tidak ditemukan tanpa mengubah sesi stock opname. Data sementara akan dikosongkan saat file sumber diganti atau aplikasi dimuat ulang.", "segregation", "Segregasi")}
           ${guide("Arsip", "▣", "Sesi Stock Opname", "Gunakan Buka sesi untuk meninjau workbook sumber, rincian setiap rack, input manual, seluruh item Result SO, daftar invoice PJ, dan Rekap Selisih. Ekspor XLSX berisi worksheet arsip beserta detail input, sedangkan Print menyusun laporan untuk dicetak atau disimpan sebagai PDF. Arsip lama tetap tersedia walaupun kartu jadwal sudah direset.", "completed-sessions", "Sesi Stock Opname")}
           ${guide("Aktivitas", "◷", "Riwayat Perubahan", "Lihat aktivitas berdasarkan waktu dan sesi, seperti mulai/selesai opname, scan ditambahkan, input manual, dan perubahan catatan atau quantity. Gunakan riwayat untuk membantu audit dan menelusuri perubahan data.", "history", "Riwayat Perubahan")}
           ${canManageDataResources() ? guide("Admin", "▧", "Data Resource", "Tambahkan, ubah, atau hapus pilihan Nama Brand dan Nama PIC, serta unggah atau ganti APK yang tersedia untuk diunduh dari halaman login. Daftar dan informasi APK dibagikan kepada seluruh akun.", "data-resources", "Data Resource") : ""}
@@ -10073,6 +10211,10 @@
       document.getElementById("add-workspace-button")?.addEventListener("click", addWorkspace);
       document.getElementById("admin-refresh-users")?.addEventListener("click", loadAdminUsers);
       document.getElementById("admin-refresh-storage")?.addEventListener("click", () => void loadAdminStorage());
+      document.getElementById("segregation-file-button")?.addEventListener("click", () => document.getElementById("segregation-file-input")?.click());
+      document.getElementById("segregation-file-input")?.addEventListener("change", (event) => void importSegregationFile(event));
+      document.getElementById("segregation-scan-form")?.addEventListener("submit", submitSegregationScan);
+      document.getElementById("clear-segregation-scans")?.addEventListener("click", clearSegregationScans);
       document.getElementById("copy-reset-password")?.addEventListener("click", async () => {
         const password = document.getElementById("reset-password-value").textContent;
         try {
