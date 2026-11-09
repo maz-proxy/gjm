@@ -8852,7 +8852,7 @@
       const subtitle = [
         { text: `${archivedSessionMonth(session).toLocaleUpperCase("id-ID")} · ${archivedSessionWeek(session)}` },
         { text: `PIC 1: ${pics[0] || (currentLanguage === "en" ? "Not set" : "Belum diisi")} · PIC 2: ${pics[1] || (currentLanguage === "en" ? "Not set" : "Belum diisi")}` },
-        { label: "mode", value: countModeLabel(countMode) },
+        { label: "Mode", value: countModeLabel(countMode) },
         { label: currentLanguage === "en" ? "Start" : "Mulai", value: session.startedAt ? formatDate(session.startedAt, dateOptions) : unavailable },
         { label: currentLanguage === "en" ? "Completed" : "Selesai", value: session.finishedAt ? formatDate(session.finishedAt, dateOptions) : unavailable }
       ];
