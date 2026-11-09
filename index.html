@@ -71,7 +71,7 @@
     .nav-label { color: #b3cbb7; font-size: 10px; font-weight: 800; letter-spacing: 1.2px; margin: 40px 12px 10px; text-transform: uppercase; }
     .nav-list + .nav-label { margin-top: 24px; }
     .nav-list { display: grid; gap: 6px; }
-    .nav-item { align-items: center; background: transparent; border: 0; border-radius: 9px; color: #e0ebe0; display: flex; gap: 12px; min-height: 44px; padding: 0 12px; text-align: left; transition: background .16s ease, color .16s ease, transform .16s ease; width: 100%; }
+    .nav-item { align-items: center; background: transparent; border: 0; border-radius: 9px; color: #e0ebe0; display: flex; gap: 12px; min-height: 44px; padding: 0 12px; text-align: left; text-decoration: none; transition: background .16s ease, color .16s ease, transform .16s ease; width: 100%; }
     .nav-item[hidden], .nav-list[hidden] { display: none !important; }
     .nav-item:hover { background: rgba(255,255,255,.1); color: #fff; transform: translateX(2px); }
     .nav-item.active { background: linear-gradient(100deg, #d9efcf, #eff8e9); box-shadow: inset 3px 0 var(--lime); color: #194a32; font-weight: 700; }
@@ -2606,26 +2606,26 @@
       </div>
       <div class="nav-label">Workspace</div>
       <nav class="nav-list" aria-label="Navigasi utama">
-        <button class="nav-item" data-page="dashboard"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 5.5a1.5 1.5 0 0 1 1.5-1.5h13A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5v-13Z"/><path d="M7 16.5h2v-3H7v3Zm4 0h2v-7h-2v7Zm4 0h2v-5h-2v5Zm-8-6 3-2 3 1 4-3"/></svg></span><span>Dashboard</span></button>
-        <button class="nav-item" data-page="workspaces"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 5h14v14H5z"/><path d="M8 3v4m8-4v4M5 9h14"/><path d="M8 13h2l1.5 2 2-3 1.5 2H17"/><circle cx="8" cy="16.5" r=".7"/><circle cx="16" cy="12.5" r=".7"/></svg></span><span>Schedule</span></button>
-        <button class="nav-item" data-page="products"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m12 3 8 4.2v9.6L12 21l-8-4.2V7.2L12 3Z"/><path d="m4.5 7.5 7.5 4 7.5-4M12 12v8.5"/><path d="M8 5.1 16 9m-6 5v4m3-5v5m3-7v4"/></svg></span><span>Master VEF</span></button>
-        <button class="nav-item" data-page="layouts"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M7 4H5a2 2 0 0 0-2 2v3m14-5h2a2 2 0 0 1 2 2v3M3 15v3a2 2 0 0 0 2 2h2m10 0h2a2 2 0 0 0 2-2v-3"/><path d="M8 12h8m-6-3v6m4-6v6"/><path d="m10 6 2-2 2 2m-4 12 2 2 2-2"/></svg></span><span>Scan &amp; Manual</span></button>
-        <button class="nav-item active" data-page="opname"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 6.5 12 3l8 3.5v11L12 21l-8-3.5v-11Z"/><path d="M4.5 7 12 10l7.5-3M12 10v10"/><path d="m8 13 2 2 4-4m-5-7 3 2 3-2"/></svg></span><span>Stock Reconciliation</span></button>
-        <button class="nav-item" data-page="recap"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 4.5h8l4 4V20H6z"/><path d="M14 4.5v4h4m-9 7h2v2H9zm4-3h2v5h-2zm4-2h2v7h-2z"/><path d="M4 8v11a2 2 0 0 0 2 2"/></svg></span><span>Recap</span></button>
+        <a class="nav-item" href="?page=dashboard" data-page="dashboard"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 5.5a1.5 1.5 0 0 1 1.5-1.5h13A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5v-13Z"/><path d="M7 16.5h2v-3H7v3Zm4 0h2v-7h-2v7Zm4 0h2v-5h-2v5Zm-8-6 3-2 3 1 4-3"/></svg></span><span>Dashboard</span></a>
+        <a class="nav-item" href="?page=workspaces" data-page="workspaces"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 5h14v14H5z"/><path d="M8 3v4m8-4v4M5 9h14"/><path d="M8 13h2l1.5 2 2-3 1.5 2H17"/><circle cx="8" cy="16.5" r=".7"/><circle cx="16" cy="12.5" r=".7"/></svg></span><span>Schedule</span></a>
+        <a class="nav-item" href="?page=products" data-page="products"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m12 3 8 4.2v9.6L12 21l-8-4.2V7.2L12 3Z"/><path d="m4.5 7.5 7.5 4 7.5-4M12 12v8.5"/><path d="M8 5.1 16 9m-6 5v4m3-5v5m3-7v4"/></svg></span><span>Master VEF</span></a>
+        <a class="nav-item" href="?page=layouts" data-page="layouts"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M7 4H5a2 2 0 0 0-2 2v3m14-5h2a2 2 0 0 1 2 2v3M3 15v3a2 2 0 0 0 2 2h2m10 0h2a2 2 0 0 0 2-2v-3"/><path d="M8 12h8m-6-3v6m4-6v6"/><path d="m10 6 2-2 2 2m-4 12 2 2 2-2"/></svg></span><span>Scan &amp; Manual</span></a>
+        <a class="nav-item active" href="?page=opname" data-page="opname"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 6.5 12 3l8 3.5v11L12 21l-8-3.5v-11Z"/><path d="M4.5 7 12 10l7.5-3M12 10v10"/><path d="m8 13 2 2 4-4m-5-7 3 2 3-2"/></svg></span><span>Stock Reconciliation</span></a>
+        <a class="nav-item" href="?page=recap" data-page="recap"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 4.5h8l4 4V20H6z"/><path d="M14 4.5v4h4m-9 7h2v2H9zm4-3h2v5h-2zm4-2h2v7h-2z"/><path d="M4 8v11a2 2 0 0 0 2 2"/></svg></span><span>Recap</span></a>
       </nav>
       <div class="nav-label">Arsip</div>
       <nav class="nav-list" aria-label="Arsip stock opname">
-        <button class="nav-item" data-page="history"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 7.5A8 8 0 1 1 4 13"/><path d="M5 3.5v4h4M12 7v5l3.5 2"/><circle cx="12" cy="12" r="1"/></svg></span><span>History Changes</span></button>
-        <button class="nav-item" data-page="completed-sessions"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m4 8 8-4 8 4v10l-8 4-8-4V8Z"/><path d="m4.5 8.5 7.5 4 7.5-4M12 12.5V21"/><path d="m9 7 6 3m-3 4v3m-2-2 2 2 4-4"/></svg></span><span>Session SO</span></button>
+        <a class="nav-item" href="?page=history" data-page="history"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 7.5A8 8 0 1 1 4 13"/><path d="M5 3.5v4h4M12 7v5l3.5 2"/><circle cx="12" cy="12" r="1"/></svg></span><span>History Changes</span></a>
+        <a class="nav-item" href="?page=completed-sessions" data-page="completed-sessions"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m4 8 8-4 8 4v10l-8 4-8-4V8Z"/><path d="m4.5 8.5 7.5 4 7.5-4M12 12.5V21"/><path d="m9 7 6 3m-3 4v3m-2-2 2 2 4-4"/></svg></span><span>Session SO</span></a>
       </nav>
       <nav class="nav-list" aria-label="Bantuan" style="margin-top: 18px">
-        <button class="nav-item" data-page="about"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m4 6 5-2 6 2 5-2v14l-5 2-6-2-5 2V6Z"/><path d="m9 4v14m6-12v14"/><path d="m11 12 2-2 2 2m-2-2v4"/></svg></span><span>Guide</span></button>
-        <button class="nav-item" data-page="about-info"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m12 3 2.4 4.1 4.8-.5-.5 4.8 4.1 2.6-4.1 2.5.5 4.9-4.8-.6L12 25l-2.4-4.2-4.8.6.5-4.9-4.1-2.5 4.1-2.6-.5-4.8 4.8.5L12 3Z" transform="translate(0 -2)"/><path d="M12 10v5m0-8h.01"/></svg></span><span>About</span></button>
+        <a class="nav-item" href="?page=about" data-page="about"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m4 6 5-2 6 2 5-2v14l-5 2-6-2-5 2V6Z"/><path d="m9 4v14m6-12v14"/><path d="m11 12 2-2 2 2m-2-2v4"/></svg></span><span>Guide</span></a>
+        <a class="nav-item" href="?page=about-info" data-page="about-info"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m12 3 2.4 4.1 4.8-.5-.5 4.8 4.1 2.6-4.1 2.5.5 4.9-4.8-.6L12 25l-2.4-4.2-4.8.6.5-4.9-4.1-2.5 4.1-2.6-.5-4.8 4.8.5L12 3Z" transform="translate(0 -2)"/><path d="M12 10v5m0-8h.01"/></svg></span><span>About</span></a>
       </nav>
       <div class="nav-label" id="admin-nav-label" hidden>Owner</div>
       <nav class="nav-list" id="admin-navigation" aria-label="Administrasi" hidden>
-        <button class="nav-item" data-page="data-resources" id="data-resources-nav" hidden><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 4h10l4 4v12H5z"/><path d="M15 4v4h4M8 12h8m-8 3h5"/><path d="M8 9h.01m3 0h.01m3 0h.01"/><path d="M3 7v13a2 2 0 0 0 2 2"/></svg></span><span>Data Resource</span></button>
-        <button class="nav-item" data-page="admin-users" id="admin-users-nav" hidden><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3"/><path d="M3 20v-1a6 6 0 0 1 12 0v1H3Zm12-10 5 5m-2-7 2 2-5 5-2-2 5-5Z"/><circle cx="17.5" cy="17.5" r="1"/></svg></span><span>Account Manager</span></button>
+        <a class="nav-item" href="?page=data-resources" data-page="data-resources" id="data-resources-nav" hidden><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 4h10l4 4v12H5z"/><path d="M15 4v4h4M8 12h8m-8 3h5"/><path d="M8 9h.01m3 0h.01m3 0h.01"/><path d="M3 7v13a2 2 0 0 0 2 2"/></svg></span><span>Data Resource</span></a>
+        <a class="nav-item" href="?page=admin-users" data-page="admin-users" id="admin-users-nav" hidden><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3"/><path d="M3 20v-1a6 6 0 0 1 12 0v1H3Zm12-10 5 5m-2-7 2 2-5 5-2-2 5-5Z"/><circle cx="17.5" cy="17.5" r="1"/></svg></span><span>Account Manager</span></a>
       </nav>
       <div class="sidebar-bottom">
         <div class="profile"><div class="profile-details"><div class="profile-name" id="profile-name">Pengguna</div><span class="profile-role" id="profile-role"></span></div><button class="logout-button" id="logout-button" type="button">Keluar</button></div>
@@ -5977,7 +5977,8 @@
         if (archiveExpiredChatMessages() || stableSerialize(serializeSharedState()) !== lastSyncedState) persist();
         resetSharedSyncFailures("read");
         resetSharedSyncFailures("write");
-        currentPage = freshLogin ? "dashboard" : restoreLastPage(session);
+        const requestedPage = new URLSearchParams(location.search).get("page");
+        currentPage = RESTORABLE_PAGES.has(requestedPage) ? requestedPage : freshLogin ? "dashboard" : restoreLastPage(session);
         unlockApp(session);
         render();
         startSharedStateChannel();
@@ -9106,6 +9107,14 @@
       if ((currentPage === "admin-users" && !isSuperAdmin())
         || (currentPage === "data-resources" && !canManageDataResources())) currentPage = "opname";
       if (authSession) {
+        if (RESTORABLE_PAGES.has(currentPage)) {
+          const nextUrl = new URL(location.href);
+          nextUrl.searchParams.set("page", currentPage);
+          const nextLocation = `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`;
+          if (nextLocation !== `${location.pathname}${location.search}${location.hash}`) {
+            history.replaceState(history.state, "", nextLocation);
+          }
+        }
         const savedPage = currentPage === "completed-session-detail" ? "completed-sessions" : currentPage === "recorded-archive" ? "dashboard" : currentPage;
         try {
           localStorage.setItem(`${PAGE_STORAGE_KEY}${authSession.user.id}`, RESTORABLE_PAGES.has(savedPage) ? savedPage : "opname");
@@ -9197,6 +9206,8 @@
     }
 
     function restoreLastPage(session) {
+      const requestedPage = new URLSearchParams(location.search).get("page");
+      if (RESTORABLE_PAGES.has(requestedPage)) return requestedPage;
       try {
         const savedPage = localStorage.getItem(`${PAGE_STORAGE_KEY}${session.user.id}`);
         return RESTORABLE_PAGES.has(savedPage) ? savedPage : "opname";
@@ -11462,7 +11473,9 @@
       const label = item.querySelector("span:last-child").textContent.trim();
       item.setAttribute("aria-label", label);
       item.title = label;
-      item.addEventListener("click", () => {
+      item.addEventListener("click", (event) => {
+        if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        event.preventDefault();
         currentPage = item.dataset.page;
         searchTerm = "";
         layoutSearchTerm = "";
