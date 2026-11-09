@@ -8091,20 +8091,20 @@
       if (printBreakdown) {
         return `<aside class="${className} print-session-summary-breakdown" aria-label="${currentLanguage === "en" ? "Session quantity summary" : "Ringkasan quantity sesi"}">
           <div class="print-summary-column">
-            <div class="print-session-summary-metric"><span>Qty Scan</span><strong>${formatNumber(scanQuantity)} <small>${quantitySummary}</small></strong></div>
-            <div class="print-session-summary-metric"><span>Qty Manual</span><strong>${formatNumber(manualQuantity)} <small>${quantitySummary}</small></strong></div>
-            <div class="print-session-summary-metric"><span>Inbound/Retur</span><strong>${formatNumber(inboundQuantity)} <small>${quantitySummary}</small></strong></div>
-            <div class="print-session-summary-metric"><span>Total Qty PJ</span><strong>${formatNumber(pjQuantity)} <small>${quantitySummary}</small></strong></div>
+            <div class="print-session-summary-metric"><span>Qty Scan</span><strong><span>${formatNumber(scanQuantity)}</span><small>${quantitySummary}</small></strong></div>
+            <div class="print-session-summary-metric"><span>Qty Manual</span><strong><span>${formatNumber(manualQuantity)}</span><small>${quantitySummary}</small></strong></div>
+            <div class="print-session-summary-metric"><span>Inbound/Retur</span><strong><span>${formatNumber(inboundQuantity)}</span><small>${quantitySummary}</small></strong></div>
+            <div class="print-session-summary-metric"><span>Total Qty PJ</span><strong><span>${formatNumber(pjQuantity)}</span><small>${quantitySummary}</small></strong></div>
           </div>
           <div class="print-summary-column">
-            <div class="print-session-summary-metric print-summary-danger"><span>Master VEF</span><strong>${formatNumber(progress.total)} <small>${quantitySummary}</small></strong></div>
-            <div class="print-session-summary-metric print-summary-success"><span>Stock Opname</span><strong>${formatNumber(opnameQuantity)} <small>${quantitySummary}</small></strong></div>
-            <div class="print-session-summary-metric print-summary-danger"><span>Item/SKU VEF</span><strong>${formatNumber(products.length)} <small>${skuSummary}</small></strong></div>
-            <div class="print-session-summary-metric print-summary-success"><span>Item/SKU SO</span><strong>${formatNumber(opnameSkuCount)} <small>${skuSummary}</small></strong></div>
+            <div class="print-session-summary-metric print-summary-danger"><span>Master VEF</span><strong><span>${formatNumber(progress.total)}</span><small>${quantitySummary}</small></strong></div>
+            <div class="print-session-summary-metric print-summary-success"><span>Stock Opname</span><strong><span>${formatNumber(opnameQuantity)}</span><small>${quantitySummary}</small></strong></div>
+            <div class="print-session-summary-metric print-summary-danger"><span>Item/SKU VEF</span><strong><span>${formatNumber(products.length)}</span><small>${skuSummary}</small></strong></div>
+            <div class="print-session-summary-metric print-summary-success"><span>Item/SKU SO</span><strong><span>${formatNumber(opnameSkuCount)}</span><small>${skuSummary}</small></strong></div>
           </div>
           <div class="print-summary-column">
-            <div class="print-session-summary-metric"><span>Selisih Qty</span><strong>${variance > 0 ? "+" : ""}${formatNumber(variance)} <small>${quantitySummary}</small></strong></div>
-            <div class="print-session-summary-metric"><span>Selisih Item/SKU</span><strong>${formatNumber(mismatchedSkuCount)} <small>${skuSummary}</small></strong></div>
+            <div class="print-session-summary-metric"><span>Selisih Qty</span><strong><span>${variance > 0 ? "+" : ""}${formatNumber(variance)}</span><small>${quantitySummary}</small></strong></div>
+            <div class="print-session-summary-metric"><span>Selisih Item/SKU</span><strong><span>${formatNumber(mismatchedSkuCount)}</span><small>${skuSummary}</small></strong></div>
           </div>
           <div class="print-session-summary-progress"><span>Progress</span><strong>${formatNumber(progress.completedPercent)}%</strong></div>
         </aside>`;
@@ -8678,8 +8678,9 @@
         #print-session-root .print-summary-column .print-session-summary-metric + .print-session-summary-metric { border-top: 1px solid #edf0ee !important; }
         #print-session-root .print-summary-column .print-session-summary-metric > span { align-self: center; }
         #print-session-root .print-summary-column .print-session-summary-metric > span { color: #64746f !important; font-size: 7px; font-weight: 700; letter-spacing: .15px; line-height: 1.15; text-transform: uppercase; }
-        #print-session-root .print-summary-column .print-session-summary-metric strong { align-items: baseline; display: inline-flex; font-size: 9px; gap: 3px; white-space: nowrap; }
-        #print-session-root .print-summary-column .print-session-summary-metric strong small { font-size: 7px; }
+        #print-session-root .print-summary-column .print-session-summary-metric strong { align-items: baseline; display: grid; flex: 0 0 54px; font-size: 9px; gap: 3px; grid-template-columns: minmax(0, 1fr) auto; text-align: right; white-space: nowrap; width: 54px; }
+        #print-session-root .print-summary-column .print-session-summary-metric strong > span { text-align: right; }
+        #print-session-root .print-summary-column .print-session-summary-metric strong small { font-size: 7px; text-align: left; }
         #print-session-root .print-summary-column .print-summary-danger > span,
         #print-session-root .print-summary-column .print-summary-danger strong { color: #b42318 !important; }
         #print-session-root .print-summary-column .print-summary-success > span,
