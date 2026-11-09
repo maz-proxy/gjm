@@ -8637,10 +8637,11 @@
         .print-action-toolbar button:hover { background: #5d1c35; box-shadow: 0 0 0 2px rgba(132, 43, 75, .3), 0 0 14px rgba(132, 43, 75, .65); }
         .print-action-toolbar button:disabled { cursor: wait; opacity: .6; }
         @media print { .print-action-toolbar { display: none !important; } }
-        #print-session-root { column-gap: 16px; display: grid; grid-template-columns: minmax(280px, 1fr) minmax(0, 4fr); margin: 0 auto; max-width: none; padding: 0; row-gap: 8px; }
-        #print-session-root .print-document-heading { align-items: center; break-after: avoid; display: flex; grid-column: 1; grid-row: 1; gap: 9px; justify-content: flex-start; margin: 0; min-width: 0; page-break-after: avoid; text-align: left; }
-        #print-session-root .print-document-heading img { flex: 0 0 58px; height: 40px; object-fit: contain; width: 58px; }
-        #print-session-root .print-document-heading strong { color: #124a41 !important; font: 800 18px/1.1 "DM Sans", "Segoe UI", sans-serif; }
+        #print-session-root { column-gap: 16px; display: grid; grid-template-columns: minmax(0, 30fr) minmax(0, 70fr); margin: 0 auto; max-width: none; padding: 0; row-gap: 8px; }
+        #print-session-root::before { content: ""; grid-column: 1 / -1; grid-row: 2; min-height: 80px; }
+        #print-session-root .print-document-heading { display: contents; }
+        #print-session-root .print-document-heading img { align-self: start; grid-column: 1; grid-row: 1; height: 190px; max-width: 100%; object-fit: contain; object-position: left top; width: 100%; }
+        #print-session-root .print-document-heading strong { align-self: start; color: #124a41 !important; font: 800 34px/1.1 "DM Sans", "Segoe UI", sans-serif; grid-column: 2; grid-row: 1; margin-top: 0; }
         #print-session-root, #print-session-root *, #print-session-root *::before, #print-session-root *::after { box-shadow: none !important; text-shadow: none !important; }
         #print-session-root * { background-color: #fff !important; background-image: none !important; border-color: #cbd5d1 !important; color: #17211d !important; }
         #print-session-root .variance.positive, #print-session-root .variance.negative,
@@ -8651,12 +8652,11 @@
         #print-session-root .row-status.match .check-success-icon { color: #16824d !important; }
         #print-session-root th { background-color: #e8eeeb !important; }
         #print-session-root .print-session-header { display: contents; }
-        #print-session-root .print-session-heading { align-items: center; align-self: end; display: flex; grid-column: 2; grid-row: 1; gap: 10px; justify-content: center; justify-self: center; margin: 0; min-width: 0; text-align: center; }
-        #print-session-root .print-session-heading .workspace-brand-icon { flex: 0 0 28px; height: 28px; width: 28px; }
-        #print-session-root .print-session-heading .workspace-brand-icon img { height: 26px; width: 26px; }
+        #print-session-root .print-session-heading { align-items: center; align-self: start; display: flex; grid-column: 2; grid-row: 1; gap: 10px; justify-content: flex-start; justify-self: stretch; margin: 42px 0 0; min-width: 0; text-align: left; }
+        #print-session-root .print-session-heading .workspace-brand-icon { display: none; }
         #print-session-root h1 { color: var(--print-accent-dark); font-size: 21px; margin: 0; }
         #print-session-root .print-session-heading h1 { font-size: 11px; text-transform: uppercase; }
-        #print-session-root .print-session-summary { align-items: stretch; border: 1px solid #cbd5d1; border-radius: 8px; display: grid; flex: 1 1 800px; grid-column: 2; grid-row: 2; grid-template-columns: repeat(8, minmax(0, 1fr)); justify-self: center; max-width: 82%; overflow: hidden; width: 100%; }
+        #print-session-root .print-session-summary { align-items: stretch; border: 1px solid #cbd5d1; border-radius: 8px; display: grid; flex: 1 1 800px; grid-column: 1 / -1; grid-row: 3; grid-template-columns: repeat(8, minmax(0, 1fr)); justify-self: center; max-width: 100%; overflow: hidden; width: 100%; }
         #print-session-root .print-session-summary-metric { align-content: center; display: grid; gap: 1px; grid-template-rows: 1.4em auto; justify-items: center; min-width: 0; padding: 2px 5px; text-align: center; }
         #print-session-root .print-session-summary-metric + .print-session-summary-metric,
         #print-session-root .print-session-summary-progress { border-left: 1px solid #dfe5e2 !important; }
@@ -8668,7 +8668,7 @@
         #print-session-root .print-session-summary-progress { align-content: center; background: transparent !important; display: grid; gap: 1px; grid-template-columns: 1fr; grid-template-rows: 1.4em auto; justify-items: center; min-width: 0; padding: 2px 5px; text-align: center; }
         #print-session-root .print-session-summary-progress > span { align-self: start; line-height: 1.1; }
         #print-session-root .print-session-summary-progress strong { background: transparent !important; color: var(--print-accent-dark) !important; font-size: 19px; font-variant-numeric: tabular-nums; font-weight: 900; line-height: 1; white-space: nowrap; }
-        #print-session-root .print-session-summary-breakdown { grid-template-columns: 1.2fr 1.2fr .9fr .7fr; max-width: 100%; }
+        #print-session-root .print-session-summary-breakdown { grid-template-columns: 1.2fr 1.2fr .9fr .7fr; }
         #print-session-root .print-summary-column { align-content: center; display: grid; min-width: 0; padding: 3px 5px; }
         #print-session-root .print-summary-column + .print-summary-column,
         #print-session-root .print-session-summary-breakdown > .print-session-summary-progress { border-left: 1px solid #dfe5e2 !important; }
@@ -8683,10 +8683,18 @@
         #print-session-root .print-summary-column .print-summary-success > span,
         #print-session-root .print-summary-column .print-summary-success strong { color: #176b36 !important; }
         #print-session-root .print-session-summary-breakdown > .print-session-summary-progress { padding: 3px; }
-        #print-session-root > .print-session-subtitle { color: #64746f; font-size: 10px; grid-column: 1; grid-row: 2; margin: 0; }
-        #print-session-root .print-session-subtitle-structured { color: #64746f; font-size: 10px; grid-column: 1; grid-row: 2; margin: 0; text-transform: uppercase; }
+        #print-session-root > .print-session-subtitle { align-self: start; color: #64746f; font-size: 15px; grid-column: 2; grid-row: 1; margin: 82px 0 0; }
+        #print-session-root .print-session-subtitle-structured { display: contents; }
         #print-session-root > :not(.print-document-heading):not(.print-session-header):not(.print-session-subtitle):not(.print-session-subtitle-structured) { grid-column: 1 / -1; }
-        #print-session-root .print-session-subtitle-date { display: grid; grid-template-columns: 58px 8px minmax(0, 1fr); }
+        #print-session-root .print-session-subtitle-structured > :nth-child(1),
+        #print-session-root .print-session-subtitle-structured > :nth-child(2) { align-self: start; color: #64746f; font-size: 15px; grid-column: 2; text-transform: uppercase; }
+        #print-session-root .print-session-subtitle-structured > :nth-child(1) { grid-row: 1; margin-top: 82px; }
+        #print-session-root .print-session-subtitle-structured > :nth-child(2) { grid-row: 1; margin-top: 112px; }
+        #print-session-root .print-session-subtitle-structured > :nth-child(n+3) { align-self: start; color: #17211d; font-size: 14px; grid-column: 1; margin: 0; text-transform: uppercase; }
+        #print-session-root .print-session-subtitle-structured > :nth-child(3) { grid-row: 2; }
+        #print-session-root .print-session-subtitle-structured > :nth-child(4) { grid-row: 2; margin-top: 30px; }
+        #print-session-root .print-session-subtitle-structured > :nth-child(5) { grid-row: 2; margin-top: 60px; }
+        #print-session-root .print-session-subtitle-date { display: grid; grid-template-columns: 125px 12px minmax(0, 1fr); }
         #print-session-root th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         #print-session-root .table-section, #print-session-root .layout-card, #print-session-root .completed-rack { border-color: var(--print-accent-line); }
         #print-session-root .layout-card-head { background: color-mix(in srgb, var(--print-accent) 9%, #fff); border-color: var(--print-accent-line); }
