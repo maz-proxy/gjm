@@ -8638,8 +8638,8 @@
         .print-action-toolbar button:disabled { cursor: wait; opacity: .6; }
         @media print { .print-action-toolbar { display: none !important; } }
         #print-session-root { column-gap: 16px; display: grid; grid-template-columns: minmax(0, 30fr) minmax(0, 70fr); margin: 0 auto; max-width: none; padding: 0; row-gap: 8px; }
-        #print-session-root .print-document-heading { align-items: stretch; break-after: avoid; display: grid; grid-column: 1; grid-row: 1 / span 2; grid-template-columns: 104px minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); column-gap: 11px; justify-content: flex-start; margin: 0; min-width: 0; page-break-after: avoid; text-align: left; }
-        #print-session-root .print-document-heading img { align-self: center; flex: 0 0 104px; grid-column: 1; grid-row: 1 / -1; height: 72px; object-fit: contain; width: 104px; }
+        #print-session-root .print-document-heading { align-items: stretch; break-after: avoid; display: grid; grid-column: 1; grid-row: 1 / span 2; grid-template-columns: 92px minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); column-gap: 11px; justify-content: flex-start; margin: 0; min-width: 0; page-break-after: avoid; text-align: left; }
+        #print-session-root .print-document-heading img { align-self: center; flex: 0 0 92px; grid-column: 1; grid-row: 1 / -1; height: 64px; object-fit: contain; width: 92px; }
         #print-session-root .print-document-heading strong { align-self: end; color: #124a41 !important; font: 800 22px/1.1 "DM Sans", "Segoe UI", sans-serif; grid-column: 2; grid-row: 1; }
         #print-session-root, #print-session-root *, #print-session-root *::before, #print-session-root *::after { box-shadow: none !important; text-shadow: none !important; }
         #print-session-root * { background-color: #fff !important; background-image: none !important; border-color: #cbd5d1 !important; color: #17211d !important; }
@@ -8674,15 +8674,14 @@
         #print-session-root .print-session-summary-breakdown > .print-session-summary-progress { border-left: 1px solid #dfe5e2 !important; }
         #print-session-root .print-summary-column .print-session-summary-metric { align-items: center; border: 0 !important; display: flex; gap: 4px; justify-content: space-between; padding: 2px 3px; text-align: left; }
         #print-session-root .print-summary-column .print-session-summary-metric + .print-session-summary-metric { border-top: 1px solid #edf0ee !important; }
-        #print-session-root .print-summary-column .print-session-summary-metric > span,
-        #print-session-root .print-summary-column .print-session-summary-metric > span { color: #64746f !important; font-size: 6px; font-weight: 700; letter-spacing: .15px; line-height: 1.1; text-transform: uppercase; }
-        #print-session-root .print-summary-column .print-session-summary-metric strong { font-size: 8px; }
-        #print-session-root .print-summary-column .print-session-summary-metric strong small { font-size: 6px; }
+        #print-session-root .print-summary-column .print-session-summary-metric > span { color: #64746f !important; font-size: 7px; font-weight: 700; letter-spacing: .15px; line-height: 1.15; text-transform: uppercase; }
+        #print-session-root .print-summary-column .print-session-summary-metric strong { font-size: 9px; }
+        #print-session-root .print-summary-column .print-session-summary-metric strong small { font-size: 7px; }
         #print-session-root .print-summary-column .print-summary-danger > span,
         #print-session-root .print-summary-column .print-summary-danger strong { color: #b42318 !important; }
         #print-session-root .print-summary-column .print-summary-success > span,
         #print-session-root .print-summary-column .print-summary-success strong { color: #176b36 !important; }
-        #print-session-root .print-session-summary-breakdown > .print-session-summary-progress { padding: 3px; }
+        #print-session-root .print-session-summary-breakdown > .print-session-summary-progress { align-content: center; padding: 3px; }
         #print-session-root > .print-session-subtitle { color: #64746f; font-size: 9px; grid-column: 1; grid-row: 2; line-height: 1.25; margin: 0 0 0 103px; }
         #print-session-root .print-session-subtitle-structured { color: #64746f; display: grid; font-size: 9px; gap: 2px; grid-column: 1; grid-row: 2; line-height: 1.25; margin: 0 0 0 103px; text-transform: none; }
         #print-session-root > :not(.print-document-heading):not(.print-session-header):not(.print-session-subtitle):not(.print-session-subtitle-structured) { grid-column: 1 / -1; }
