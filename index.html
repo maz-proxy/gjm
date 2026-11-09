@@ -431,8 +431,8 @@
     .segregation-status.success { background: rgba(36, 124, 76, .1); color: var(--green); }
     .segregation-status.error { background: rgba(190, 56, 49, .1); color: var(--red); }
     .segregation-scan-form { display: grid; gap: 8px; padding: 14px 16px 16px; }
-    .segregation-item-select { background: var(--paper); border: 1px solid var(--line); border-radius: 5px; color: var(--ink); font: inherit; height: 38px; max-width: 100%; padding: 0 10px; width: 100%; }
-    .segregation-item-select:focus { border-color: #739b7c; outline: 2px solid rgba(40, 93, 69, .1); }
+    .segregation-item-select { background: var(--paper); border: 1px solid var(--line); border-radius: 6px; color: var(--ink); font: inherit; height: 38px; max-width: 100%; padding: 0 11px; transition: border-color .15s ease, box-shadow .15s ease; width: 100%; }
+    .segregation-item-select:focus { border-color: #739b7c; box-shadow: 0 0 0 3px rgba(40, 93, 69, .1); outline: 0; }
     .segregation-scan-controls { display: flex; gap: 8px; }
     .segregation-scan-controls .scan-input { flex: 1; }
     .segregation-camera-button { align-items: center; display: inline-flex; justify-content: center; white-space: nowrap; }
@@ -7747,6 +7747,10 @@
             ])
         ).entries()).sort(([left], [right]) => left.localeCompare(right))
         : [];
+      const selectedItem = itemChoices.find(([code]) => code === segregationSelectedItemCode)?.[1];
+      const selectedItemLabel = selectedItem
+        ? `${selectedItem.itemCode}${selectedItem.itemName ? ` · ${selectedItem.itemName}` : ""}`
+        : "";
       const renderFoundRows = () => foundScans.length
         ? foundScans.slice().reverse().map((scan, index) => `<tr><td class="number-cell">${foundScans.length - index}</td><td>${escapeHtml(scan.brand || "-")}</td><td>${escapeHtml(scan.itemCode || "-")}</td><td>${escapeHtml(scan.itemName || "-")}</td><td class="quantity-cell">${escapeHtml(scan.serial)}</td><td>${escapeHtml(scan.sourceWarehouse || "-")}</td><td><input class="segregation-target-input" type="text" list="segregation-target-warehouses" value="${escapeHtml(scan.targetWarehouse || "")}" data-segregation-target="${escapeHtml(scan.normalizedSerial)}" aria-label="Warehouse Target untuk ${escapeHtml(scan.serial)}" placeholder="Pilih atau ketik warehouse"></td></tr>`).join("")
         : `<tr><td class="segregation-empty" colspan="7">Belum ada SN yang cocok.</td></tr>`;
@@ -7765,8 +7769,8 @@
           <div class="table-toolbar"><div><div class="table-title">Data VEF sumber</div><span class="table-count">${sourceDescription}</span></div><div class="segregation-source-actions"><input class="upload-input" id="segregation-file-input" type="file" accept=".xlsx,.xls,.csv" aria-label="Pilih workbook Excel atau CSV VEF"><button class="button button-secondary" id="segregation-file-button" type="button" ${segregationFileLoading ? "disabled" : ""}>${segregationFileLoading ? "Memproses file..." : segregationSource ? "Ganti file VEF" : "Unggah file VEF"}</button></div></div>
           <div class="segregation-status ${escapeHtml(segregationStatus.type)}" role="status" aria-live="polite">${escapeHtml(segregationStatus.message)}</div>
           <datalist id="segregation-target-warehouses">${[...(segregationSource?.warehouses || [])].sort().map((warehouse) => `<option value="${escapeHtml(warehouse)}"></option>`).join("")}</datalist>
+          ${segregationSource ? `<label class="segregation-scan-form" for="segregation-item-select"><strong>Cari Item/SKU</strong><span class="table-count">Ketik SKU atau pilih dari daftar. Kosongkan untuk semua item.</span><input class="segregation-item-select" id="segregation-item-select" type="text" list="segregation-item-options" value="${escapeHtml(selectedItemLabel)}" placeholder="Cari SKU atau nama item..." autocomplete="off"><datalist id="segregation-item-options">${itemChoices.map(([code, item]) => `<option value="${escapeHtml(`${item.itemCode}${item.itemName ? ` · ${item.itemName}` : ""}`)}" label="${escapeHtml(code)}"></option>`).join("")}</datalist></label>` : ""}
           <form class="segregation-scan-form" id="segregation-scan-form">
-            ${segregationSource ? `<label for="segregation-item-select"><strong>Cari Item/SKU</strong><span class="table-count">Pilih item tertentu untuk membatasi hasil scan, atau pilih semua item.</span><select class="segregation-item-select" id="segregation-item-select"><option value="">Semua item</option>${itemChoices.map(([code, item]) => `<option value="${escapeHtml(code)}" ${segregationSelectedItemCode === code ? "selected" : ""}>${escapeHtml(item.itemCode)}${item.itemName ? ` · ${escapeHtml(item.itemName)}` : ""}</option>`).join("")}</select></label>` : ""}
             <label for="segregation-scan-input"><strong>Get SN</strong><span class="table-count">Scan SN dengan scanner fisik. Item, Brand, dan Warehouse Source diambil dari file VEF.</span></label>
             <div class="segregation-scan-controls"><input class="scan-input segregation-scan-input" id="segregation-scan-input" name="serial" type="text" autocomplete="off" autocapitalize="characters" placeholder="${segregationSource ? "Scan atau ketik SN, lalu tekan Enter" : "Unggah file VEF terlebih dahulu"}" ${segregationSource && !segregationFileLoading ? "" : "disabled"}><button class="button button-secondary segregation-camera-button" id="segregation-camera-button" type="button" aria-label="Scan SN dengan kamera" ${segregationSource && !segregationFileLoading ? "" : "disabled"}><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7V5h3m10 0h3v3M4 17v2h3m10 0h3v-3"/><path d="M7 9v6m3-6v6m3-6v6m3-6v6"/></svg></button><button class="button button-primary" type="submit" ${segregationSource && !segregationFileLoading ? "" : "disabled"}>Periksa SN</button></div>
           </form>
@@ -7908,7 +7912,26 @@
     }
 
     async function setSegregationItemFilter(event) {
-      segregationSelectedItemCode = event.currentTarget.value;
+      const enteredValue = event.currentTarget.value.trim();
+      const normalizedValue = enteredValue.toLocaleUpperCase("id-ID");
+      const itemChoices = Array.from(new Map(
+        [...segregationSource.recordsBySerial.values()]
+          .filter((record) => record.itemCode.trim())
+          .map((record) => [
+            record.itemCode.trim().toLocaleUpperCase("id-ID"),
+            { itemCode: record.itemCode.trim(), itemName: record.itemName.trim() }
+          ])
+      ).entries());
+      const selectedItem = enteredValue
+        ? itemChoices.find(([code, item]) => code === normalizedValue
+          || `${item.itemCode}${item.itemName ? ` · ${item.itemName}` : ""}`.toLocaleUpperCase("id-ID") === normalizedValue)
+        : null;
+      if (enteredValue && !selectedItem) {
+        segregationStatus = { message: "Pilih Item/SKU dari daftar atau hapus teks untuk mencari semua item.", type: "error" };
+        render();
+        return;
+      }
+      segregationSelectedItemCode = selectedItem?.[0] || "";
       segregationScans = segregationScans.map((scan) => {
         const sourceRecord = segregationSource.recordsBySerial.get(scan.normalizedSerial);
         const found = Boolean(sourceRecord && (!segregationSelectedItemCode
