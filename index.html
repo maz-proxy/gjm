@@ -7732,11 +7732,16 @@
       const notFoundScans = segregationScans.filter((scan) => !scan.found);
       const mergedRows = buildSegregationMergeRows();
       const hasUnassignedTarget = foundScans.some((scan) => !scan.targetWarehouse);
-      const totalSkus = segregationSource
-        ? new Set([...segregationSource.recordsBySerial.values()]
+      const sourceRecords = segregationSource ? [...segregationSource.recordsBySerial.values()] : [];
+      const totalSkus = segregationSelectedItemCode
+        ? 1
+        : new Set(sourceRecords
           .map((record) => record.itemCode.trim().toLocaleUpperCase("id-ID"))
-          .filter(Boolean)).size
-        : 0;
+          .filter(Boolean)).size;
+      const totalSourceSerials = segregationSelectedItemCode
+        ? sourceRecords.filter((record) =>
+          record.itemCode.trim().toLocaleUpperCase("id-ID") === segregationSelectedItemCode).length
+        : segregationSource?.serials.size || 0;
       const itemChoices = segregationSource
         ? Array.from(new Map(
           [...segregationSource.recordsBySerial.values()]
@@ -7777,7 +7782,7 @@
         </section>
         ${segregationSource ? `<section class="metric-grid compact-metrics" aria-label="Ringkasan file VEF">
           <div class="metric"><div class="metric-top">Total Item/SKU</div><div class="metric-value">${formatNumber(totalSkus)}</div></div>
-          <div class="metric"><div class="metric-top">Total SN</div><div class="metric-value">${formatNumber(segregationSource.serials.size)}</div></div>
+          <div class="metric"><div class="metric-top">Total SN</div><div class="metric-value">${formatNumber(totalSourceSerials)}</div></div>
         </section>` : ""}
         <section class="metric-grid compact-metrics" aria-label="Ringkasan hasil segregasi">
           <div class="metric"><div class="metric-top">Total SN diperiksa</div><div class="metric-value">${formatNumber(segregationScans.length)}</div></div>
