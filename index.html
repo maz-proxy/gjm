@@ -7718,6 +7718,11 @@
       const notFoundScans = segregationScans.filter((scan) => !scan.found);
       const mergedRows = buildSegregationMergeRows();
       const hasUnassignedTarget = foundScans.some((scan) => !scan.targetWarehouse);
+      const totalSkus = segregationSource
+        ? new Set([...segregationSource.recordsBySerial.values()]
+          .map((record) => record.itemCode.trim().toLocaleUpperCase("id-ID"))
+          .filter(Boolean)).size
+        : 0;
       const renderFoundRows = () => foundScans.length
         ? foundScans.slice().reverse().map((scan, index) => `<tr><td class="number-cell">${foundScans.length - index}</td><td>${escapeHtml(scan.brand || "-")}</td><td>${escapeHtml(scan.itemCode || "-")}</td><td>${escapeHtml(scan.itemName || "-")}</td><td class="quantity-cell">${escapeHtml(scan.serial)}</td><td>${escapeHtml(scan.sourceWarehouse || "-")}</td><td><input class="segregation-target-input" type="text" list="segregation-target-warehouses" value="${escapeHtml(scan.targetWarehouse || "")}" data-segregation-target="${escapeHtml(scan.normalizedSerial)}" aria-label="Warehouse Target untuk ${escapeHtml(scan.serial)}" placeholder="Pilih atau ketik warehouse"></td></tr>`).join("")
         : `<tr><td class="segregation-empty" colspan="7">Belum ada SN yang cocok.</td></tr>`;
@@ -7741,6 +7746,10 @@
             <div class="segregation-scan-controls"><input class="scan-input segregation-scan-input" id="segregation-scan-input" name="serial" type="text" autocomplete="off" autocapitalize="characters" placeholder="${segregationSource ? "Scan atau ketik SN, lalu tekan Enter" : "Unggah file VEF terlebih dahulu"}" ${segregationSource && !segregationFileLoading ? "" : "disabled"}><button class="button button-secondary segregation-camera-button" id="segregation-camera-button" type="button" aria-label="Scan SN dengan kamera" ${segregationSource && !segregationFileLoading ? "" : "disabled"}><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7V5h3m10 0h3v3M4 17v2h3m10 0h3v-3"/><path d="M7 9v6m3-6v6m3-6v6m3-6v6"/></svg></button><button class="button button-primary" type="submit" ${segregationSource && !segregationFileLoading ? "" : "disabled"}>Periksa SN</button></div>
           </form>
         </section>
+        ${segregationSource ? `<section class="metric-grid compact-metrics" aria-label="Ringkasan file VEF">
+          <div class="metric"><div class="metric-top">Total Item/SKU</div><div class="metric-value">${formatNumber(totalSkus)}</div></div>
+          <div class="metric"><div class="metric-top">Total SN</div><div class="metric-value">${formatNumber(segregationSource.serials.size)}</div></div>
+        </section>` : ""}
         <section class="metric-grid compact-metrics" aria-label="Ringkasan hasil segregasi">
           <div class="metric"><div class="metric-top">Total SN diperiksa</div><div class="metric-value">${formatNumber(segregationScans.length)}</div></div>
           <div class="metric"><div class="metric-top">SN Found</div><div class="metric-value">${formatNumber(foundScans.length)}</div></div>
