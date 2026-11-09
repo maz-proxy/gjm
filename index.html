@@ -8638,9 +8638,9 @@
         .print-action-toolbar button:disabled { cursor: wait; opacity: .6; }
         @media print { .print-action-toolbar { display: none !important; } }
         #print-session-root { column-gap: 16px; display: grid; grid-template-columns: minmax(0, 30fr) minmax(0, 70fr); margin: 0 auto; max-width: none; padding: 0; row-gap: 8px; }
-        #print-session-root .print-document-heading { align-items: center; break-after: avoid; display: flex; grid-column: 1; grid-row: 1; gap: 8px; justify-content: flex-start; margin: 0; min-width: 0; page-break-after: avoid; text-align: left; }
-        #print-session-root .print-document-heading img { flex: 0 0 76px; height: 56px; object-fit: contain; width: 76px; }
-        #print-session-root .print-document-heading strong { color: #124a41 !important; font: 800 18px/1.1 "DM Sans", "Segoe UI", sans-serif; }
+        #print-session-root .print-document-heading { align-items: flex-start; break-after: avoid; display: flex; grid-column: 1; grid-row: 1; gap: 6px; justify-content: flex-start; margin: 10px 0 0 4px; min-width: 0; page-break-after: avoid; text-align: left; }
+        #print-session-root .print-document-heading img { flex: 0 0 68px; height: 44px; object-fit: contain; width: 68px; }
+        #print-session-root .print-document-heading strong { color: #124a41 !important; font: 800 28px/1.1 "DM Sans", "Segoe UI", sans-serif; margin-top: -3px; }
         #print-session-root, #print-session-root *, #print-session-root *::before, #print-session-root *::after { box-shadow: none !important; text-shadow: none !important; }
         #print-session-root * { background-color: #fff !important; background-image: none !important; border-color: #cbd5d1 !important; color: #17211d !important; }
         #print-session-root .variance.positive, #print-session-root .variance.negative,
@@ -8782,7 +8782,7 @@
           body.printing-session { padding: 0; }
           #print-session-root { width: 100%; }
         }
-      </style></head><body class="printing-session"><div class="print-action-toolbar" role="group" aria-label="${currentLanguage === "en" ? "Print actions" : "Aksi cetak"}"><button class="secondary" id="print-session-action" type="button"><svg class="print-button-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6z"/><path d="M18 12h.01"/></svg>Print</button></div><main id="print-session-root"><header class="print-document-heading"><img src="${new URL("./assets/brand-emblem-source.png", window.location.href).href}" alt=""><strong>STOCK OPNAME</strong></header><div class="print-session-header"><div class="print-session-heading">${renderWorkspaceBrandIcon(brandName)}<h1 data-user-content>${escapeHtml(title)}</h1></div>${session ? renderArchivePrintSummary(session) : ""}</div><p class="print-session-subtitle" data-user-content>${escapeHtml(subtitle)}</p>${content}<section class="print-signatures" aria-label="${currentLanguage === "en" ? "PIC signatures" : "Paraf PIC"}"><div class="print-signature"><div class="print-signature-line"></div><div class="print-signature-name">${currentLanguage === "en" ? "PIC 1 name:" : "Nama PIC 1:"} <strong>${escapeHtml(picNames[0] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</strong></div></div><div class="print-signature"><div class="print-signature-line"></div><div class="print-signature-name">${currentLanguage === "en" ? "PIC 2 name:" : "Nama PIC 2:"} <strong>${escapeHtml(picNames[1] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</strong></div></div></section></main></body></html>`);
+      </style></head><body class="printing-session"><div class="print-action-toolbar" role="group" aria-label="${currentLanguage === "en" ? "Print actions" : "Aksi cetak"}"><button class="secondary" id="print-session-action" type="button"><svg class="print-button-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6z"/><path d="M18 12h.01"/></svg>Print</button></div><main id="print-session-root"><header class="print-document-heading"><img src="${new URL("./assets/Logo.svg", window.location.href).href}" alt=""><strong>STOCK OPNAME</strong></header><div class="print-session-header"><div class="print-session-heading">${renderWorkspaceBrandIcon(brandName)}<h1 data-user-content>${escapeHtml(title)}</h1></div>${session ? renderArchivePrintSummary(session) : ""}</div><p class="print-session-subtitle" data-user-content>${escapeHtml(subtitle)}</p>${content}<section class="print-signatures" aria-label="${currentLanguage === "en" ? "PIC signatures" : "Paraf PIC"}"><div class="print-signature"><div class="print-signature-line"></div><div class="print-signature-name">${currentLanguage === "en" ? "PIC 1 name:" : "Nama PIC 1:"} <strong>${escapeHtml(picNames[0] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</strong></div></div><div class="print-signature"><div class="print-signature-line"></div><div class="print-signature-name">${currentLanguage === "en" ? "PIC 2 name:" : "Nama PIC 2:"} <strong>${escapeHtml(picNames[1] || (currentLanguage === "en" ? "Not set" : "Belum diisi"))}</strong></div></div></section></main></body></html>`);
       printWindow.document.close();
       printWindow.history.pushState({ archivePrintPreview: true }, "", printWindow.location.href);
       const returnButton = printWindow.document.createElement("button");
@@ -8815,8 +8815,6 @@
         }
         subtitleElement.replaceWith(structuredSubtitle);
       }
-      const documentLogo = printWindow.document.querySelector(".print-document-heading img");
-      if (documentLogo) documentLogo.src = new URL("./assets/Logo.svg", window.location.href).href;
       const openPrintDialog = () => {
         printWindow.focus();
         printWindow.print();
