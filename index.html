@@ -7565,7 +7565,7 @@
       const foundScans = segregationScans.filter((scan) => scan.found);
       const notFoundScans = segregationScans.filter((scan) => !scan.found);
       const renderScanRows = (scans, found) => scans.length
-        ? scans.slice().reverse().map((scan, index) => `<tr><td class="number-cell">${scans.length - index}</td><td class="quantity-cell">${escapeHtml(scan.serial)}</td><td>${escapeHtml(formatDate(scan.scannedAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }))}</td><td><span class="row-status ${found ? "match" : "different"}">${found ? "Found" : "Not Found"}</span></td></tr>`).join("")
+        ? scans.slice().reverse().map((scan, index) => `<tr><td class="number-cell">${scans.length - index}</td><td>${escapeHtml(scan.itemCode || "-")}</td><td>${escapeHtml(scan.itemName || "-")}</td><td class="quantity-cell">${escapeHtml(scan.serial)}</td></tr>`).join("")
         : `<tr><td class="segregation-empty" colspan="4">${found ? "Belum ada SN yang cocok." : "Belum ada SN yang tidak ditemukan."}</td></tr>`;
       const sourceDescription = segregationSource
         ? `${escapeHtml(segregationSource.fileName)} · Sheet: ${escapeHtml(segregationSource.sheetName)} · ${formatNumber(segregationSource.serials.size)} SN unik`
@@ -7585,8 +7585,8 @@
           <div class="metric"><div class="metric-top">SN Found</div><div class="metric-value">${formatNumber(foundScans.length)}</div></div>
           <div class="metric"><div class="metric-top">SN not Found</div><div class="metric-value">${formatNumber(notFoundScans.length)}</div></div>
         </section>
-        <section class="table-section"><div class="table-toolbar"><div class="table-title">SN Found <span class="table-count">${formatNumber(foundScans.length)} SN ditemukan dalam daftar sumber</span></div><button class="button button-secondary" id="clear-segregation-scans" type="button" ${segregationScans.length ? "" : "disabled"}>Kosongkan hasil scan</button></div><div class="table-scroll"><table><thead><tr><th>No</th><th>Serial Number</th><th>Waktu Scan</th><th>Hasil</th></tr></thead><tbody>${renderScanRows(foundScans, true)}</tbody></table></div></section>
-        <section class="table-section"><div class="table-toolbar"><div class="table-title">SN not Found <span class="table-count">${formatNumber(notFoundScans.length)} SN tidak ditemukan dalam daftar sumber</span></div></div><div class="table-scroll"><table><thead><tr><th>No</th><th>Serial Number</th><th>Waktu Scan</th><th>Hasil</th></tr></thead><tbody>${renderScanRows(notFoundScans, false)}</tbody></table></div></section>`;
+        <section class="table-section"><div class="table-toolbar"><div class="table-title">SN Found <span class="table-count">${formatNumber(foundScans.length)} SN ditemukan dalam daftar sumber</span></div><button class="button button-secondary" id="clear-segregation-scans" type="button" ${segregationScans.length ? "" : "disabled"}>Kosongkan hasil scan</button></div><div class="table-scroll"><table><thead><tr><th>No.</th><th>Item Code/SKU</th><th>Item Name</th><th>Serial Number</th></tr></thead><tbody>${renderScanRows(foundScans, true)}</tbody></table></div></section>
+        <section class="table-section"><div class="table-toolbar"><div class="table-title">SN not Found <span class="table-count">${formatNumber(notFoundScans.length)} SN tidak ditemukan dalam daftar sumber</span></div></div><div class="table-scroll"><table><thead><tr><th>No.</th><th>Item Code/SKU</th><th>Item Name</th><th>Serial Number</th></tr></thead><tbody>${renderScanRows(notFoundScans, false)}</tbody></table></div></section>`;
     }
 
     async function importSegregationFile(event) {
@@ -7622,11 +7622,23 @@
           const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, defval: "", raw: false });
           const header = findHeader(rows, [["serial number", "serial no", "serial", "sn"]]);
           if (!header) continue;
-          const serials = rows.slice(header.rowIndex + 1)
-            .map((row) => normalizeSerial(row[header.indexes[0]]))
-            .filter(Boolean);
-          if (serials.length) {
-            importedList = { sheetName, serials: new Set(serials) };
+          const normalizedHeaders = rows[header.rowIndex].map(normalizeField);
+          const findOptionalIndex = (aliases) => normalizedHeaders.findIndex((value) =>
+            aliases.some((alias) => value === normalizeField(alias) || value.includes(normalizeField(alias)))
+          );
+          const itemCodeIndex = findOptionalIndex(["item code", "sku"]);
+          const itemNameIndex = findOptionalIndex(["item name", "product name", "description"]);
+          const recordsBySerial = new Map();
+          for (const row of rows.slice(header.rowIndex + 1)) {
+            const serial = normalizeSerial(row[header.indexes[0]]);
+            if (!serial || recordsBySerial.has(serial)) continue;
+            recordsBySerial.set(serial, {
+              itemCode: itemCodeIndex >= 0 ? String(row[itemCodeIndex] ?? "").trim() : "",
+              itemName: itemNameIndex >= 0 ? String(row[itemNameIndex] ?? "").trim() : ""
+            });
+          }
+          if (recordsBySerial.size) {
+            importedList = { sheetName, serials: new Set(recordsBySerial.keys()), recordsBySerial };
             break;
           }
         }
@@ -7663,7 +7675,15 @@
         return;
       }
       const found = segregationSource.serials.has(normalizedSerial);
-      segregationScans.push({ serial, normalizedSerial, found, scannedAt: new Date().toISOString() });
+      const sourceRecord = segregationSource.recordsBySerial.get(normalizedSerial);
+      segregationScans.push({
+        serial,
+        normalizedSerial,
+        found,
+        itemCode: sourceRecord?.itemCode || "",
+        itemName: sourceRecord?.itemName || "",
+        scannedAt: new Date().toISOString()
+      });
       segregationStatus = { message: found ? `SN ${serial} ditemukan di daftar sumber.` : `SN ${serial} tidak ditemukan dan ditambahkan ke tabel SN not Found.`, type: found ? "success" : "error" };
       render();
       document.getElementById("segregation-scan-input")?.focus();
