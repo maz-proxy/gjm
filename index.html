@@ -8637,9 +8637,9 @@
         .print-action-toolbar button:hover { background: #5d1c35; box-shadow: 0 0 0 2px rgba(132, 43, 75, .3), 0 0 14px rgba(132, 43, 75, .65); }
         .print-action-toolbar button:disabled { cursor: wait; opacity: .6; }
         @media print { .print-action-toolbar { display: none !important; } }
-        #print-session-root { column-gap: 16px; display: grid; grid-template-columns: minmax(280px, 1fr) minmax(0, 4fr); margin: 0 auto; max-width: none; padding: 0; row-gap: 8px; }
-        #print-session-root .print-document-heading { align-items: center; break-after: avoid; display: flex; grid-column: 1; grid-row: 1; gap: 9px; justify-content: flex-start; margin: 0; min-width: 0; page-break-after: avoid; text-align: left; }
-        #print-session-root .print-document-heading img { flex: 0 0 58px; height: 40px; object-fit: contain; width: 58px; }
+        #print-session-root { column-gap: 16px; display: grid; grid-template-columns: minmax(0, 30fr) minmax(0, 70fr); margin: 0 auto; max-width: none; padding: 0; row-gap: 8px; }
+        #print-session-root .print-document-heading { align-items: center; break-after: avoid; display: flex; grid-column: 1; grid-row: 1; gap: 8px; justify-content: flex-start; margin: 0; min-width: 0; page-break-after: avoid; text-align: left; }
+        #print-session-root .print-document-heading img { flex: 0 0 76px; height: 56px; object-fit: contain; width: 76px; }
         #print-session-root .print-document-heading strong { color: #124a41 !important; font: 800 18px/1.1 "DM Sans", "Segoe UI", sans-serif; }
         #print-session-root, #print-session-root *, #print-session-root *::before, #print-session-root *::after { box-shadow: none !important; text-shadow: none !important; }
         #print-session-root * { background-color: #fff !important; background-image: none !important; border-color: #cbd5d1 !important; color: #17211d !important; }
@@ -8683,8 +8683,8 @@
         #print-session-root .print-summary-column .print-summary-success > span,
         #print-session-root .print-summary-column .print-summary-success strong { color: #176b36 !important; }
         #print-session-root .print-session-summary-breakdown > .print-session-summary-progress { padding: 3px; }
-        #print-session-root > .print-session-subtitle { color: #64746f; font-size: 10px; grid-column: 1; grid-row: 2; margin: 0; }
-        #print-session-root .print-session-subtitle-structured { color: #64746f; font-size: 10px; grid-column: 1; grid-row: 2; margin: 0; text-transform: uppercase; }
+        #print-session-root > .print-session-subtitle { color: #64746f; font-size: 10px; grid-column: 1; grid-row: 2; margin: 0 0 0 84px; }
+        #print-session-root .print-session-subtitle-structured { color: #64746f; font-size: 10px; grid-column: 1; grid-row: 2; margin: 0 0 0 84px; text-transform: uppercase; }
         #print-session-root > :not(.print-document-heading):not(.print-session-header):not(.print-session-subtitle):not(.print-session-subtitle-structured) { grid-column: 1 / -1; }
         #print-session-root .print-session-subtitle-date { display: grid; grid-template-columns: 58px 8px minmax(0, 1fr); }
         #print-session-root th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
