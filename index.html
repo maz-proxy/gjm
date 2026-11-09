@@ -433,6 +433,8 @@
     .segregation-scan-form { display: grid; gap: 8px; padding: 14px 16px 16px; }
     .segregation-scan-controls { display: flex; gap: 8px; }
     .segregation-scan-controls .scan-input { flex: 1; }
+    .segregation-camera-button { align-items: center; display: inline-flex; gap: 7px; justify-content: center; white-space: nowrap; }
+    .segregation-camera-button svg { fill: none; height: 17px; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; width: 17px; }
     .segregation-target-input { background: var(--paper); border: 1px solid var(--line); border-radius: 5px; color: var(--ink); font: inherit; min-width: 135px; padding: 6px 8px; width: 100%; }
     .segregation-target-input:focus { border-color: #739b7c; outline: 2px solid rgba(40, 93, 69, .1); }
     .segregation-serial-list { font: 10px/1.5 ui-monospace, Consolas, monospace; max-width: 320px; overflow-wrap: anywhere; white-space: pre-wrap; }
@@ -4050,6 +4052,7 @@
     let nativeCameraListenerHandles = [];
     let cameraRackScanLocked = false;
     let cameraRackScanMissTimer = null;
+    let cameraSegregationScanInProgress = false;
     function initializeAppBackNavigation() {
       if (appBackNavigationInitialized) return;
       const backState = { stockOpnameBackNavigation: true };
@@ -4915,6 +4918,28 @@
         if (!submitCameraRackScan(normalizedValue)) cameraRackScanLocked = false;
         return;
       }
+      if (cameraTargetInput?.matches(".segregation-scan-input")) {
+        if (cameraRackScanLocked) {
+          markCameraRackBarcodeVisible();
+          return;
+        }
+        cameraRackScanLocked = true;
+        const form = cameraTargetInput.closest("#segregation-scan-form");
+        if (!form) {
+          cameraRackScanLocked = false;
+          return;
+        }
+        cameraTargetInput.value = normalizedValue;
+        cameraSegregationScanInProgress = true;
+        try {
+          form.requestSubmit();
+        } finally {
+          cameraSegregationScanInProgress = false;
+        }
+        cameraTargetInput = document.getElementById("segregation-scan-input");
+        setCameraScanStatus("SN berhasil diperiksa. Arahkan barcode berikutnya.", "success");
+        return;
+      }
       if (!cameraTargetInput?.isConnected) return;
       cameraTargetInput.value = normalizedValue;
       cameraTargetInput.dispatchEvent(new Event("input", { bubbles: true }));
@@ -5212,6 +5237,11 @@
               cameraScanTimer = setTimeout(detectCameraBarcode, 180);
               return;
             }
+            if (cameraTargetInput?.matches(".segregation-scan-input")) {
+              handleCameraBarcodeValue(value);
+              cameraScanTimer = setTimeout(detectCameraBarcode, 180);
+              return;
+            }
             if (cameraTargetInput?.isConnected) {
               cameraTargetInput.value = value;
               cameraTargetInput.dispatchEvent(new Event("input", { bubbles: true }));
@@ -5266,14 +5296,14 @@
               const value = result?.getText()?.trim();
               const insideScanFrame = value && isCameraBarcodeInsideScanFrame(result, video);
               if (value && !insideScanFrame) {
-                if (cameraTargetInput?.matches(".layout-input")) markCameraRackBarcodeMissed();
+                if (cameraTargetInput?.matches(".layout-input, .segregation-scan-input")) markCameraRackBarcodeMissed();
                 return;
               }
-              if (!value && cameraTargetInput?.matches(".layout-input")) {
+              if (!value && cameraTargetInput?.matches(".layout-input, .segregation-scan-input")) {
                 markCameraRackBarcodeMissed();
                 return;
               }
-              if (value && cameraTargetInput?.matches(".layout-input")) {
+              if (value && cameraTargetInput?.matches(".layout-input, .segregation-scan-input")) {
                 handleCameraBarcodeValue(value);
                 return;
               }
@@ -7604,7 +7634,7 @@
           <datalist id="segregation-target-warehouses">${[...(segregationSource?.warehouses || [])].sort().map((warehouse) => `<option value="${escapeHtml(warehouse)}"></option>`).join("")}</datalist>
           <form class="segregation-scan-form" id="segregation-scan-form">
             <label for="segregation-scan-input"><strong>Get SN</strong><span class="table-count">Scan SN dengan scanner fisik. Item, Brand, dan Warehouse Source diambil dari file VEF.</span></label>
-            <div class="segregation-scan-controls"><input class="scan-input" id="segregation-scan-input" name="serial" type="text" autocomplete="off" autocapitalize="characters" placeholder="${segregationSource ? "Scan atau ketik SN, lalu tekan Enter" : "Unggah file VEF terlebih dahulu"}" ${segregationSource && !segregationFileLoading ? "" : "disabled"}><button class="button button-primary" type="submit" ${segregationSource && !segregationFileLoading ? "" : "disabled"}>Periksa SN</button></div>
+            <div class="segregation-scan-controls"><input class="scan-input segregation-scan-input" id="segregation-scan-input" name="serial" type="text" autocomplete="off" autocapitalize="characters" placeholder="${segregationSource ? "Scan atau ketik SN, lalu tekan Enter" : "Unggah file VEF terlebih dahulu"}" ${segregationSource && !segregationFileLoading ? "" : "disabled"}><button class="button button-secondary segregation-camera-button" id="segregation-camera-button" type="button" aria-label="Scan SN dengan kamera" ${segregationSource && !segregationFileLoading ? "" : "disabled"}><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7V5h3m10 0h3v3M4 17v2h3m10 0h3v-3"/><path d="M7 9v6m3-6v6m3-6v6m3-6v6"/></svg>Kamera</button><button class="button button-primary" type="submit" ${segregationSource && !segregationFileLoading ? "" : "disabled"}>Periksa SN</button></div>
           </form>
         </section>
         <section class="metric-grid compact-metrics" aria-label="Ringkasan hasil segregasi">
@@ -7707,7 +7737,7 @@
       if (segregationScans.some((scan) => scan.normalizedSerial === normalizedSerial)) {
         segregationStatus = { message: `SN ${serial} sudah pernah diperiksa.`, type: "error" };
         render();
-        document.getElementById("segregation-scan-input")?.focus();
+        if (!cameraSegregationScanInProgress) document.getElementById("segregation-scan-input")?.focus();
         return;
       }
       const found = segregationSource.serials.has(normalizedSerial);
@@ -7725,7 +7755,7 @@
       });
       segregationStatus = { message: found ? `SN ${serial} ditemukan di daftar sumber.` : `SN ${serial} tidak ditemukan dan ditambahkan ke tabel SN not Found.`, type: found ? "success" : "error" };
       render();
-      document.getElementById("segregation-scan-input")?.focus();
+      if (!cameraSegregationScanInProgress) document.getElementById("segregation-scan-input")?.focus();
     }
 
     function setSegregationTarget(event) {
@@ -10391,6 +10421,10 @@
       document.getElementById("segregation-file-button")?.addEventListener("click", () => document.getElementById("segregation-file-input")?.click());
       document.getElementById("segregation-file-input")?.addEventListener("change", (event) => void importSegregationFile(event));
       document.getElementById("segregation-scan-form")?.addEventListener("submit", submitSegregationScan);
+      document.getElementById("segregation-camera-button")?.addEventListener("click", () => {
+        const input = document.getElementById("segregation-scan-input");
+        if (input) void openCameraScannerForInput(input);
+      });
       document.getElementById("clear-segregation-scans")?.addEventListener("click", clearSegregationScans);
       document.querySelectorAll("[data-segregation-target]").forEach((input) => input.addEventListener("change", setSegregationTarget));
       document.getElementById("export-segregation-workbook")?.addEventListener("click", exportSegregationWorkbook);
