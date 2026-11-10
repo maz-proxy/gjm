@@ -449,6 +449,12 @@
     .segregation-target-input:focus { border-color: #739b7c; outline: 2px solid rgba(40, 93, 69, .1); }
     .segregation-serial-list { font: 10px/1.5 ui-monospace, Consolas, monospace; max-width: 320px; overflow-wrap: anywhere; white-space: pre-wrap; }
     .segregation-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .segregation-scan-results { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 12px; }
+    .segregation-scan-results .table-section { min-width: 0; }
+    .segregation-scan-results .table-toolbar { min-height: 52px; padding: 9px 13px; }
+    .segregation-scan-results .table-title { font-size: 12px; }
+    .segregation-scan-results table { min-width: 560px; }
+    @media (max-width: 900px) { .segregation-scan-results { grid-template-columns: minmax(0, 1fr); } }
     .segregation-preview-actions { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); margin-bottom: 16px; }
     .segregation-preview-button { align-items: flex-start; display: flex; flex-direction: column; gap: 4px; min-height: 66px; padding: 11px 14px; text-align: left; }
     .segregation-preview-button strong { font-size: 12px; }
@@ -7808,8 +7814,10 @@
           <div class="metric"><div class="metric-top">SN Found</div><div class="metric-value">${formatNumber(foundScans.length)}</div></div>
           <div class="metric"><div class="metric-top">SN not Found</div><div class="metric-value">${formatNumber(notFoundScans.length)}</div></div>
         </section>
-        <section class="table-section"><div class="table-toolbar"><div class="table-title">Get SN · Hasil pencarian</div><button class="button button-secondary" id="clear-segregation-scans" type="button" ${segregationScans.length ? "" : "disabled"}>Kosongkan hasil scan</button></div><div class="table-scroll"><table><thead><tr><th>No.</th><th>Brand</th><th>Item Code</th><th>Item Name</th><th>Serial</th><th>Warehouse Source</th><th>Warehouse Target</th></tr></thead><tbody>${renderFoundRows()}</tbody></table></div></section>
-        <section class="table-section"><div class="table-toolbar"><div class="table-title">SN not Found <span class="table-count">${formatNumber(notFoundScans.length)} SN tidak ditemukan dalam data VEF</span></div></div><div class="table-scroll"><table><thead><tr><th>No.</th><th>Item Code/SKU</th><th>Item Name</th><th>Serial Number</th></tr></thead><tbody>${renderNotFoundRows()}</tbody></table></div></section>
+        <div class="segregation-scan-results">
+          <section class="table-section"><div class="table-toolbar"><div class="table-title">Get SN · Hasil pencarian</div><button class="button button-secondary" id="clear-segregation-scans" type="button" ${segregationScans.length ? "" : "disabled"}>Kosongkan hasil scan</button></div><div class="table-scroll"><table><thead><tr><th>No.</th><th>Brand</th><th>Item Code</th><th>Item Name</th><th>Serial</th><th>Warehouse Source</th><th>Warehouse Target</th></tr></thead><tbody>${renderFoundRows()}</tbody></table></div></section>
+          <section class="table-section"><div class="table-toolbar"><div class="table-title">SN not Found <span class="table-count">${formatNumber(notFoundScans.length)} tidak ditemukan</span></div></div><div class="table-scroll"><table><thead><tr><th>No.</th><th>Item Code/SKU</th><th>Item Name</th><th>Serial Number</th></tr></thead><tbody>${renderNotFoundRows()}</tbody></table></div></section>
+        </div>
         <section class="segregation-preview-actions" aria-label="Laporan Segregasi">
           <button class="button button-secondary segregation-preview-button" id="open-segregation-merge" type="button"><strong>Data Merge &amp; Sort</strong><span>${formatNumber(mergedRows.length)} kelompok · ${formatNumber(foundScans.length)} SN Found</span></button>
           <button class="button button-secondary segregation-preview-button" id="open-segregation-template" type="button"><strong>Stock Entry Template</strong><span>${hasUnassignedTarget ? "Isi Warehouse Target untuk ekspor" : `${formatNumber(mergedRows.length)} baris siap diekspor`}</span></button>
