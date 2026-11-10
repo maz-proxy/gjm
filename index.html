@@ -140,6 +140,8 @@
     .app-confirm-mark { align-items: center; background: var(--green-soft); border-radius: 50%; color: var(--green-dark); display: inline-flex; flex: 0 0 38px; font-size: 19px; font-weight: 800; height: 38px; justify-content: center; width: 38px; }
     .app-confirm-dialog[data-tone="danger"] .app-confirm-mark { background: var(--red-soft); color: var(--red); }
     .app-confirm-dialog .dialog-title { font-size: 15px; }
+    .app-confirm-dialog[data-purpose="reconciliation"] .dialog-head { justify-content: center; text-align: center; }
+    .app-confirm-dialog[data-purpose="reconciliation"] .dialog-head > div { flex: 1; }
     .app-confirm-dialog .dialog-subtitle { margin-top: 3px; }
     .app-confirm-copy { color: var(--muted); font-size: 13px; line-height: 1.6; padding: 17px 21px 19px; }
     .app-confirm-copy.is-emphasized { color: var(--ink); font-weight: 700; text-align: center; white-space: pre-line; }
@@ -5590,10 +5592,12 @@
         stopCameraScanner();
       }
     }
-    function showConfirmDialog(message, { title = "Konfirmasi tindakan", subtitle = "Periksa kembali sebelum melanjutkan.", confirmLabel = "Lanjutkan", cancelLabel = "Batal", destructive = false, emphasized = false } = {}) {
+    function showConfirmDialog(message, { title = "Konfirmasi tindakan", subtitle = "Periksa kembali sebelum melanjutkan.", confirmLabel = "Lanjutkan", cancelLabel = "Batal", destructive = false, emphasized = false, purpose = "" } = {}) {
       const dialog = document.getElementById("app-confirm-dialog");
       const confirmButton = document.getElementById("app-confirm-submit");
       const cancelButton = dialog.querySelector('[value="cancel"]');
+      if (purpose) dialog.dataset.purpose = purpose;
+      else delete dialog.dataset.purpose;
       document.getElementById("app-confirm-title").textContent = title;
       document.getElementById("app-confirm-subtitle").textContent = subtitle;
       const copy = document.getElementById("app-confirm-copy");
@@ -7472,7 +7476,8 @@
           subtitle: "",
           confirmLabel: translateText("Mulai"),
           cancelLabel: translateText("Cancel"),
-          emphasized: true
+          emphasized: true,
+          purpose: "reconciliation"
         }
       );
       if (!confirmed || reconciliationHasStarted()) return;
