@@ -454,6 +454,7 @@
     .segregation-scan-results .table-toolbar { min-height: 52px; padding: 9px 13px; }
     .segregation-scan-results .table-title { font-size: 12px; }
     .segregation-scan-results table { min-width: 560px; }
+    .segregation-scan-results .segregation-found-table { min-width: 680px; table-layout: fixed; }
     .segregation-scan-results th,
     .segregation-scan-results td { white-space: nowrap; }
     .segregation-scan-results .segregation-not-found-table { min-width: 0; table-layout: fixed; }
@@ -465,8 +466,15 @@
     .segregation-scan-results .segregation-found-table td:nth-child(5) { text-align: center; }
     .segregation-scan-results .segregation-found-table th:first-child,
     .segregation-scan-results .segregation-found-table td:first-child { padding-left: 4px; padding-right: 4px; text-align: center; width: 52px; }
-    .segregation-scan-results .segregation-found-table td:nth-child(4) { max-width: 190px; width: 190px; }
-    .segregation-item-name-button { background: transparent; border: 0; color: inherit; cursor: pointer; display: block; font: inherit; max-width: 100%; overflow: hidden; padding: 0; text-align: left; text-overflow: ellipsis; white-space: nowrap; width: 180px; }
+    .segregation-scan-results .segregation-found-table th:nth-child(2),
+    .segregation-scan-results .segregation-found-table td:nth-child(2) { width: 78px; }
+    .segregation-scan-results .segregation-found-table th:nth-child(3),
+    .segregation-scan-results .segregation-found-table td:nth-child(3) { width: 112px; }
+    .segregation-scan-results .segregation-found-table th:nth-child(5),
+    .segregation-scan-results .segregation-found-table td:nth-child(5) { width: 150px; }
+    .segregation-scan-results .segregation-found-table th:nth-child(6),
+    .segregation-scan-results .segregation-found-table td:nth-child(6) { width: 128px; }
+    .segregation-item-name-button { background: transparent; border: 0; color: inherit; cursor: pointer; display: block; font: inherit; max-width: 100%; overflow: hidden; padding: 0; text-align: left; text-overflow: ellipsis; white-space: nowrap; width: 100%; }
     .segregation-item-name-button:hover { color: var(--green-dark); text-decoration: underline; }
     .segregation-scan-results .segregation-row-delete { align-items: center; background: transparent; border: 1px solid transparent; border-radius: 4px; color: var(--red); display: inline-flex; font-size: 15px; height: 25px; justify-content: center; line-height: 1; padding: 0; width: 25px; }
     .segregation-scan-results .segregation-row-delete:hover { background: var(--red-soft); border-color: color-mix(in srgb, var(--red) 24%, var(--line)); }
