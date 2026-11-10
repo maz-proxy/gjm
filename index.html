@@ -459,7 +459,8 @@
     @media (max-width: 900px) { .segregation-scan-results { grid-template-columns: minmax(0, 1fr); } }
     @media (max-width: 700px) { .segregation-source-top { grid-template-columns: minmax(0, 1fr); gap: 0; } }
     .segregation-preview-actions { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); margin-bottom: 16px; }
-    .segregation-preview-button { align-items: flex-start; display: flex; flex-direction: column; gap: 4px; min-height: 66px; padding: 11px 14px; text-align: left; }
+    .segregation-preview-button { align-items: flex-start; background: var(--scan-button-bg); border-color: var(--scan-button-bg); color: #fff; display: flex; flex-direction: column; gap: 4px; min-height: 66px; padding: 11px 14px; text-align: left; }
+    .segregation-preview-button:hover:not(:disabled) { background: var(--scan-button-hover); border-color: var(--scan-button-hover); }
     .segregation-preview-button strong { font-size: 12px; }
     .segregation-preview-button span { font-size: 10px; font-weight: 400; opacity: .8; }
     .segregation-preview-dialog { display: none; max-width: min(1120px, calc(100vw - 28px)); overflow: hidden; padding: 0; width: 100%; }
@@ -7822,8 +7823,8 @@
           <section class="table-section"><div class="table-toolbar"><div class="table-title">SN not Found <span class="table-count">${formatNumber(notFoundScans.length)} tidak ditemukan</span></div></div><div class="table-scroll"><table><thead><tr><th>No.</th><th>Item Code/SKU</th><th>Item Name</th><th>Serial Number</th></tr></thead><tbody>${renderNotFoundRows()}</tbody></table></div></section>
         </div>
         <section class="segregation-preview-actions" aria-label="Laporan Segregasi">
-          <button class="button button-secondary segregation-preview-button" id="open-segregation-merge" type="button"><strong>Data Merge &amp; Sort</strong><span>${formatNumber(mergedRows.length)} kelompok · ${formatNumber(foundScans.length)} SN Found</span></button>
-          <button class="button button-secondary segregation-preview-button" id="open-segregation-template" type="button"><strong>Stock Entry Template</strong><span>${formatNumber(mergedRows.length)} baris siap diekspor</span></button>
+          <button class="button segregation-preview-button" id="open-segregation-merge" type="button"><strong>Data Merge &amp; Sort</strong><span>${formatNumber(mergedRows.length)} kelompok · ${formatNumber(foundScans.length)} SN Found</span></button>
+          <button class="button segregation-preview-button" id="open-segregation-template" type="button"><strong>Stock Entry Template</strong><span>${formatNumber(mergedRows.length)} baris siap diekspor</span></button>
         </section>
         <dialog class="feature-dialog segregation-preview-dialog" id="segregation-merge-dialog" aria-labelledby="segregation-merge-title">
           <div class="dialog-head"><div><div class="dialog-title" id="segregation-merge-title">Data Merge &amp; Sort</div><div class="dialog-subtitle">${formatNumber(mergedRows.length)} kelompok · ${formatNumber(foundScans.length)} SN Found</div></div><button class="dialog-close" type="button" data-segregation-dialog-close="segregation-merge-dialog" aria-label="Tutup">×</button></div>
