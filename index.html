@@ -463,6 +463,10 @@
     .segregation-scan-results .segregation-not-found-table td { text-align: center; }
     .segregation-scan-results .segregation-found-table th:nth-child(5),
     .segregation-scan-results .segregation-found-table td:nth-child(5) { text-align: center; }
+    .segregation-scan-results .segregation-found-table th:first-child,
+    .segregation-scan-results .segregation-found-table td:first-child { padding-left: 4px; padding-right: 4px; width: 52px; }
+    .segregation-scan-results .segregation-row-delete { align-items: center; background: transparent; border: 1px solid transparent; border-radius: 4px; color: var(--red); display: inline-flex; font-size: 15px; height: 25px; justify-content: center; line-height: 1; padding: 0; width: 25px; }
+    .segregation-scan-results .segregation-row-delete:hover { background: var(--red-soft); border-color: color-mix(in srgb, var(--red) 24%, var(--line)); }
     @media (max-width: 900px) { .segregation-scan-results { grid-template-columns: minmax(0, 1fr); } }
     @media (max-width: 700px) { .segregation-source-top { grid-template-columns: minmax(0, 1fr); gap: 0; } }
     .segregation-preview-actions { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); margin-bottom: 16px; }
@@ -7804,11 +7808,11 @@
         ? `${selectedItem.itemCode}${selectedItem.itemName ? ` · ${selectedItem.itemName}` : ""}`
         : "";
       const renderFoundRows = () => foundScans.length
-        ? foundScans.slice().reverse().map((scan, index) => `<tr id="segregation-scan-row-${segregationScans.indexOf(scan)}"><td class="number-cell">${foundScans.length - index}</td><td>${escapeHtml(scan.brand || "-")}</td><td>${escapeHtml(scan.itemCode || "-")}</td><td>${escapeHtml(scan.itemName || "-")}</td><td class="quantity-cell">${escapeHtml(scan.serial)}</td><td>${escapeHtml(scan.sourceWarehouse || "-")}</td></tr>`).join("")
-        : `<tr><td class="segregation-empty" colspan="6">Belum ada SN yang cocok.</td></tr>`;
+        ? foundScans.slice().reverse().map((scan, index) => `<tr id="segregation-scan-row-${segregationScans.indexOf(scan)}"><td class="number-cell">${foundScans.length - index}</td><td>${escapeHtml(scan.brand || "-")}</td><td>${escapeHtml(scan.itemCode || "-")}</td><td>${escapeHtml(scan.itemName || "-")}</td><td class="quantity-cell">${escapeHtml(scan.serial)}</td><td>${escapeHtml(scan.sourceWarehouse || "-")}</td><td><button class="segregation-row-delete" type="button" data-delete-segregation-scan="${segregationScans.indexOf(scan)}" aria-label="Hapus SN ${escapeHtml(scan.serial)}" title="Hapus">×</button></td></tr>`).join("")
+        : `<tr><td class="segregation-empty" colspan="7">Belum ada SN yang cocok.</td></tr>`;
       const renderNotFoundRows = () => notFoundScans.length
-        ? notFoundScans.map((scan, index) => `<tr id="segregation-scan-row-${segregationScans.indexOf(scan)}"><td class="number-cell">${index + 1}</td><td class="quantity-cell">${escapeHtml(scan.serial)}</td></tr>`).join("")
-        : `<tr><td class="segregation-empty" colspan="2">Belum ada SN yang tidak ditemukan.</td></tr>`;
+        ? notFoundScans.map((scan, index) => `<tr id="segregation-scan-row-${segregationScans.indexOf(scan)}"><td class="number-cell">${index + 1}</td><td class="quantity-cell">${escapeHtml(scan.serial)}</td><td><button class="segregation-row-delete" type="button" data-delete-segregation-scan="${segregationScans.indexOf(scan)}" aria-label="Hapus SN ${escapeHtml(scan.serial)}" title="Hapus">×</button></td></tr>`).join("")
+        : `<tr><td class="segregation-empty" colspan="3">Belum ada SN yang tidak ditemukan.</td></tr>`;
       const renderMergedRows = () => mergedRows.length
         ? mergedRows.map((group, index) => `<tr><td class="number-cell">${index + 1}</td><td>${escapeHtml(group.sourceWarehouse || "-")}</td><td>${escapeHtml(group.brand || "-")}</td><td>${escapeHtml(group.itemCode || "-")}</td><td>${escapeHtml(group.itemName || "-")}</td><td class="number-cell">${formatNumber(group.serials.length)}</td><td><div class="segregation-serial-list">${escapeHtml(group.serials.join("\n"))}</div></td></tr>`).join("")
         : `<tr><td class="segregation-empty" colspan="7">Data hasil scan akan dikelompokkan di sini.</td></tr>`;
@@ -7842,8 +7846,8 @@
           <div class="metric"><div class="metric-top">SN not Found</div><div class="metric-value">${formatNumber(notFoundScans.length)}</div></div>
         </section>
         <div class="segregation-scan-results">
-          <section class="table-section"><div class="table-toolbar"><div class="table-title">Get SN · Hasil pencarian</div><div class="segregation-actions"><button class="button button-secondary" id="export-segregation-found-workbook" type="button" ${foundScans.length ? "" : "disabled"}>Unduh Excel</button><button class="button button-secondary" id="clear-segregation-scans" type="button" ${segregationScans.length ? "" : "disabled"}>Kosongkan hasil scan</button></div></div><div class="table-scroll"><table class="segregation-found-table"><thead><tr><th>No.</th><th>Brand</th><th>Item Code</th><th>Item Name</th><th>Serial Number</th><th>Warehouse Source</th></tr></thead><tbody>${renderFoundRows()}</tbody></table></div></section>
-          <section class="table-section"><div class="table-toolbar"><div class="table-title">SN not Found <span class="table-count">${formatNumber(notFoundScans.length)} tidak ditemukan</span></div><button class="button button-secondary" id="export-segregation-not-found-workbook" type="button" ${notFoundScans.length ? "" : "disabled"}>Unduh Excel</button></div><div class="table-scroll"><table class="segregation-not-found-table"><thead><tr><th>No.</th><th>Serial Number</th></tr></thead><tbody>${renderNotFoundRows()}</tbody></table></div></section>
+          <section class="table-section"><div class="table-toolbar"><div class="table-title">Get SN · Hasil pencarian</div><div class="segregation-actions"><button class="button button-secondary" id="export-segregation-found-workbook" type="button" ${foundScans.length ? "" : "disabled"}>Unduh Excel</button><button class="button button-secondary" id="clear-segregation-scans" type="button" ${segregationScans.length ? "" : "disabled"}>Kosongkan hasil scan</button></div></div><div class="table-scroll"><table class="segregation-found-table"><thead><tr><th>No.</th><th>Brand</th><th>Item Code</th><th>Item Name</th><th>Serial Number</th><th>Warehouse Source</th><th></th></tr></thead><tbody>${renderFoundRows()}</tbody></table></div></section>
+          <section class="table-section"><div class="table-toolbar"><div class="table-title">SN not Found <span class="table-count">${formatNumber(notFoundScans.length)} tidak ditemukan</span></div><button class="button button-secondary" id="export-segregation-not-found-workbook" type="button" ${notFoundScans.length ? "" : "disabled"}>Unduh Excel</button></div><div class="table-scroll"><table class="segregation-not-found-table"><thead><tr><th>No.</th><th>Serial Number</th><th></th></tr></thead><tbody>${renderNotFoundRows()}</tbody></table></div></section>
         </div>
         <section class="segregation-preview-actions" aria-label="Laporan Segregasi">
           <button class="button segregation-preview-button" id="open-segregation-merge" type="button"><strong>Data Merge &amp; Sort</strong><span>${formatNumber(mergedRows.length)} kelompok · ${formatNumber(foundScans.length)} SN Found</span></button>
@@ -8202,6 +8206,22 @@
       segregationScans = [];
       segregationDuplicateScanIndex = null;
       segregationStatus = { message: "Hasil scan telah dikosongkan.", type: "success" };
+      await persistSegregationData();
+      render();
+      document.getElementById("segregation-scan-input")?.focus();
+    }
+
+    async function deleteSegregationScan(index) {
+      if (!Number.isInteger(index) || !segregationScans[index]) {
+        notify("Data scan tidak ditemukan.");
+        return;
+      }
+      segregationScans.splice(index, 1);
+      if (segregationDuplicateScanIndex !== null) {
+        if (segregationDuplicateScanIndex === index) segregationDuplicateScanIndex = null;
+        else if (segregationDuplicateScanIndex > index) segregationDuplicateScanIndex--;
+      }
+      segregationStatus = { message: "SN dihapus dari hasil scan.", type: "success" };
       await persistSegregationData();
       render();
       document.getElementById("segregation-scan-input")?.focus();
@@ -10781,6 +10801,9 @@
         if (input) void openCameraScannerForInput(input);
       });
       document.getElementById("clear-segregation-scans")?.addEventListener("click", clearSegregationScans);
+      document.querySelectorAll("[data-delete-segregation-scan]").forEach((button) => {
+        button.addEventListener("click", () => void deleteSegregationScan(Number(button.dataset.deleteSegregationScan)));
+      });
       document.getElementById("export-segregation-found-workbook")?.addEventListener("click", () => exportSegregationScanWorkbook(true));
       document.getElementById("export-segregation-not-found-workbook")?.addEventListener("click", () => exportSegregationScanWorkbook(false));
       document.getElementById("export-segregation-workbook")?.addEventListener("click", exportSegregationWorkbook);
