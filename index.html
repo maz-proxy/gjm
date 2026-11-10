@@ -7829,7 +7829,7 @@
         <dialog class="feature-dialog segregation-preview-dialog" id="segregation-merge-dialog" aria-labelledby="segregation-merge-title">
           <div class="dialog-head"><div><div class="dialog-title" id="segregation-merge-title">Data Merge &amp; Sort</div><div class="dialog-subtitle">${formatNumber(mergedRows.length)} kelompok · ${formatNumber(foundScans.length)} SN Found</div></div><button class="dialog-close" type="button" data-segregation-dialog-close="segregation-merge-dialog" aria-label="Tutup">×</button></div>
           <div class="segregation-preview-body"><div class="table-scroll"><table><thead><tr><th>No.</th><th>Warehouse Source</th><th>Brand</th><th>Item Code</th><th>Item Name</th><th>Qty</th><th>SN Merge</th></tr></thead><tbody>${renderMergedRows()}</tbody></table></div></div>
-          <div class="dialog-actions"><button class="button button-secondary" type="button" data-segregation-dialog-close="segregation-merge-dialog">Tutup</button></div>
+          <div class="dialog-actions"><button class="button button-secondary" type="button" data-segregation-dialog-close="segregation-merge-dialog">Tutup</button><button class="button button-primary" id="export-segregation-merge-workbook" type="button" ${foundScans.length ? "" : "disabled"}>Unduh Excel</button></div>
         </dialog>
         <dialog class="feature-dialog segregation-preview-dialog" id="segregation-template-dialog" aria-labelledby="segregation-template-title">
           <div class="dialog-head"><div><div class="dialog-title" id="segregation-template-title">Stock Entry Template</div><div class="dialog-subtitle">${formatNumber(mergedRows.length)} baris siap diekspor; Warehouse Target dibiarkan kosong.</div></div><button class="dialog-close" type="button" data-segregation-dialog-close="segregation-template-dialog" aria-label="Tutup">×</button></div>
@@ -8008,6 +8008,38 @@
         group.serials.join("\n"),
         ""
       ]);
+    }
+
+    function exportSegregationMergeWorkbook() {
+      const mergedRows = buildSegregationMergeRows();
+      if (!mergedRows.length) {
+        notify("Belum ada data Data Merge & Sort untuk diekspor.");
+        return;
+      }
+      if (typeof XLSX === "undefined") {
+        notify("Fitur ekspor Excel tidak termuat. Periksa koneksi internet lalu muat ulang aplikasi.");
+        return;
+      }
+      const rows = [
+        ["No.", "Warehouse Source", "Brand", "Item Code", "Item Name", "Qty", "SN Merge"],
+        ...mergedRows.map((group, index) => [
+          index + 1,
+          group.sourceWarehouse,
+          group.brand,
+          group.itemCode,
+          group.itemName,
+          group.serials.length,
+          group.serials.join("\n")
+        ])
+      ];
+      try {
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(rows), "Data Merge & Sort");
+        XLSX.writeFile(workbook, `Data-Merge-Sort-${new Date().toISOString().slice(0, 10)}.xlsx`);
+      } catch (error) {
+        console.error("Data Merge & Sort gagal diekspor:", error);
+        notify(`Data Merge & Sort gagal diekspor: ${error instanceof Error ? error.message : "kesalahan tidak diketahui"}`);
+      }
     }
 
     function exportSegregationWorkbook() {
@@ -10651,6 +10683,7 @@
       });
       document.getElementById("clear-segregation-scans")?.addEventListener("click", clearSegregationScans);
       document.getElementById("export-segregation-workbook")?.addEventListener("click", exportSegregationWorkbook);
+      document.getElementById("export-segregation-merge-workbook")?.addEventListener("click", exportSegregationMergeWorkbook);
       document.getElementById("export-segregation-csv")?.addEventListener("click", exportSegregationCsv);
       document.getElementById("copy-reset-password")?.addEventListener("click", async () => {
         const password = document.getElementById("reset-password-value").textContent;
