@@ -7769,9 +7769,15 @@
       );
     }
 
+    function getSegregationNotFoundScans() {
+      return segregationScans
+        .filter((scan) => !scan.found)
+        .sort((left, right) => left.scannedAt.localeCompare(right.scannedAt));
+    }
+
     function renderSegregation() {
       const foundScans = segregationScans.filter((scan) => scan.found);
-      const notFoundScans = segregationScans.filter((scan) => !scan.found);
+      const notFoundScans = getSegregationNotFoundScans();
       const mergedRows = buildSegregationMergeRows();
       const sourceRecords = segregationSource ? [...segregationSource.recordsBySerial.values()] : [];
       const totalSkus = segregationSelectedItemCode
@@ -8070,8 +8076,9 @@
     }
 
     function exportSegregationScanWorkbook(found) {
-      const scans = segregationScans.filter((scan) => scan.found === found);
-      if (found) scans.reverse();
+      const scans = found
+        ? segregationScans.filter((scan) => scan.found).reverse()
+        : getSegregationNotFoundScans();
       const sheetName = found ? "Get SN" : "SN not Found";
       if (!scans.length) {
         notify(`Belum ada data ${sheetName} untuk diekspor.`);
