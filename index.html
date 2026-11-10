@@ -142,6 +142,7 @@
     .app-confirm-dialog .dialog-title { font-size: 15px; }
     .app-confirm-dialog .dialog-subtitle { margin-top: 3px; }
     .app-confirm-copy { color: var(--muted); font-size: 13px; line-height: 1.6; padding: 17px 21px 19px; }
+    .app-confirm-copy.is-emphasized { color: var(--ink); font-weight: 700; white-space: pre-line; }
     .app-confirm-dialog .dialog-actions { background: color-mix(in srgb, var(--green) 5%, var(--canvas)); border-top-color: var(--line); padding: 12px 18px; }
     .app-confirm-dialog[data-tone="danger"] .dialog-actions { background: color-mix(in srgb, var(--red) 5%, var(--canvas)); }
     html[data-theme="dark"] .app-confirm-dialog::backdrop { background: rgba(0, 0, 0, .68); }
@@ -523,6 +524,13 @@
     .layout-banner-search .search-input { height: 38px; width: 100%; }
     .layout-banner-search .search-icon { top: 10px; }
     .layout-search-count { color: #d5e9df; font-size: 10px; margin-top: 4px; }
+    .layout-reconciliation-action { display: flex; justify-content: flex-end; margin: -8px 0 12px; }
+    .layout-reconciliation-button { background: #17231f; border: 1px solid #ff304f; box-shadow: 0 0 0 1px rgba(255,48,79,.2), 0 0 13px rgba(255,48,79,.42); color: #fff; }
+    .layout-reconciliation-button:hover:not(:disabled) { background: #263a32; border-color: #ff5269; box-shadow: 0 0 0 1px rgba(255,48,79,.3), 0 0 17px rgba(255,48,79,.55); }
+    .layout-reconciliation-button:disabled { cursor: not-allowed; opacity: .7; }
+    .reconciliation-pending { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; margin: 24px auto; max-width: 620px; padding: 24px; text-align: center; }
+    .reconciliation-pending h2 { color: var(--ink); font-size: 18px; margin: 0; }
+    .reconciliation-pending p { color: var(--muted); font-size: 12px; line-height: 1.6; margin: 8px 0 16px; }
     .layout-card { background: linear-gradient(145deg, #fff, #fcfdfb); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 5px 16px rgba(35, 59, 38, .045); min-width: 0; overflow: hidden; position: relative; transition: background .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease; }
     .layout-card:hover { border-color: #cbd9ca; box-shadow: 0 10px 24px rgba(35, 59, 38, .085); transform: translateY(-2px); }
     .layout-card.quantity-matched { background: linear-gradient(145deg, #f1f8f2, #e7f3e9); border-color: #b8d2bc; }
@@ -557,6 +565,7 @@
     .layout-overview-metric strong { color: #fff; display: block; font-size: 13px; font-variant-numeric: tabular-nums; margin-top: 1px; }
     .layout-overview-metric em { color: #bce5d4; font-size: 7px; font-style: normal; }
     .schedule-brand-label { color: var(--muted); display: block; font-size: 9px; font-weight: 800; letter-spacing: .7px; margin: 0 0 4px 2px; text-transform: uppercase; }
+    .schedule-card:not(.reconciliation-started) .schedule-progress { display: none; }
     .start-opname-button { white-space: nowrap; }
     .layout-quantity-row { align-items: center; display: flex; gap: 6px; justify-content: flex-end; }
     .layout-quantity-label { color: var(--ink); font-size: 14px; font-weight: 700; }
@@ -2868,6 +2877,21 @@
       "Aktifkan dark mode": "Enable dark mode",
       "Stock Opname berhasil disimpan": "Stock Opname saved successfully",
       "Hasil stock opname sudah masuk ke arsip.": "The stock opname results have been added to the archive.",
+      "Mulai Rekonsiliasi": "Start Reconciliation",
+      "Rekonsiliasi Sudah Dimulai": "Reconciliation Started",
+      "Rekonsiliasi sudah dimulai": "Reconciliation has already started",
+      "Stock Reconciliation belum dimulai": "Stock Reconciliation has not started",
+      "Data rekonsiliasi dan rekap akan tersedia setelah penghitungan fisik Scan & Manual selesai dan rekonsiliasi dimulai.": "Reconciliation data and recap will be available after the physical Scan & Manual count is complete and reconciliation has started.",
+      "Kembali ke Scan & Manual": "Back to Scan & Manual",
+      "Untuk memulai Stock Rekonsiliasi, pastikan semua fisik item sudah dihitung baik Scanning & Manual.\n\nJika sudah yakin klik mulai atau untuk melanjutkan menghitung klik cancel.": "Before starting Stock Reconciliation, make sure all physical items have been counted using Scanning & Manual.\n\nIf you are sure, click Start; to continue counting, click Cancel.",
+      "Konfirmasi Stock Rekonsiliasi": "Confirm Stock Reconciliation",
+      "Mulai": "Start",
+      "Cancel": "Cancel",
+      "Stock Rekonsiliasi dimulai.": "Stock Reconciliation has started.",
+      "Sesi aktif dengan data VEF diperlukan untuk memulai rekonsiliasi.": "An active session with VEF data is required to start reconciliation.",
+      "Sesi opname tidak aktif": "Stock opname session is not active",
+      "Hanya pemilik, PIC, atau Owner yang dapat memulai rekonsiliasi": "Only the owner, PIC, or administrator can start reconciliation",
+      "Unggah file VEF terlebih dahulu": "Upload a VEF file first",
       "OK": "OK",
       "Nonaktifkan dark mode": "Disable dark mode",
       "Ganti tema warna ke green": "Switch accent color to green",
@@ -3908,6 +3932,7 @@
       id: crypto.randomUUID(),
       startedAt: new Date().toISOString(),
       status: "active",
+      reconciliationStartedAt: "",
       ...(owner ? {
         createdByUserId: owner.id,
         createdByUsername: owner.user_metadata?.username || owner.email || "Pengguna"
@@ -4559,6 +4584,9 @@
     }
     function canEditActiveSession() {
       return canEditWorkspaceSession(activeWorkspace());
+    }
+    function reconciliationHasStarted(session = state.activeSession) {
+      return Boolean(session?.reconciliationStartedAt || session?.status === "completed");
     }
     function canManageActiveSession() {
       return Boolean(isSuperAdmin() || workspaceIsOwnedByCurrentUser(activeWorkspace()));
@@ -5562,14 +5590,18 @@
         stopCameraScanner();
       }
     }
-    function showConfirmDialog(message, { title = "Konfirmasi tindakan", subtitle = "Periksa kembali sebelum melanjutkan.", confirmLabel = "Lanjutkan", destructive = false } = {}) {
+    function showConfirmDialog(message, { title = "Konfirmasi tindakan", subtitle = "Periksa kembali sebelum melanjutkan.", confirmLabel = "Lanjutkan", cancelLabel = "Batal", destructive = false, emphasized = false } = {}) {
       const dialog = document.getElementById("app-confirm-dialog");
       const confirmButton = document.getElementById("app-confirm-submit");
+      const cancelButton = dialog.querySelector('[value="cancel"]');
       document.getElementById("app-confirm-title").textContent = title;
       document.getElementById("app-confirm-subtitle").textContent = subtitle;
-      document.getElementById("app-confirm-copy").textContent = message;
+      const copy = document.getElementById("app-confirm-copy");
+      copy.textContent = message;
+      copy.classList.toggle("is-emphasized", emphasized);
       document.getElementById("app-confirm-mark").textContent = destructive ? "!" : "?";
       dialog.dataset.tone = destructive ? "danger" : "default";
+      cancelButton.textContent = cancelLabel;
       confirmButton.textContent = confirmLabel;
       confirmButton.className = `button ${destructive ? "button-danger" : "button-primary"}`;
       return new Promise((resolve) => {
@@ -7423,7 +7455,39 @@
       </tr>`;
     }).join("") : `<tr><td class="empty-row" colspan="10">${state.importFile ? "Template terbaca, tetapi tab VEF Master belum berisi Serial No dan Item Code." : "Belum ada data VEF. Unggah workbook stock opname untuk memulai."}</td></tr>`;
 
+    function renderReconciliationPending() {
+      return `${navMarkup()}<section class="reconciliation-pending" role="status"><h2>Stock Reconciliation belum dimulai</h2><p>Data rekonsiliasi dan rekap akan tersedia setelah penghitungan fisik Scan &amp; Manual selesai dan rekonsiliasi dimulai.</p><button class="button button-secondary" type="button" data-page-link="layouts">Kembali ke Scan &amp; Manual</button></section>`;
+    }
+
+    async function startReconciliation() {
+      if (reconciliationHasStarted()) return;
+      if (state.activeSession.status !== "active" || !state.products.length || !canEditActiveSession()) {
+        notify("Sesi aktif dengan data VEF diperlukan untuk memulai rekonsiliasi.");
+        return;
+      }
+      const confirmed = await showConfirmDialog(
+        translateText("Untuk memulai Stock Rekonsiliasi, pastikan semua fisik item sudah dihitung baik Scanning & Manual.\n\nJika sudah yakin klik mulai atau untuk melanjutkan menghitung klik cancel."),
+        {
+          title: translateText("Konfirmasi Stock Rekonsiliasi"),
+          subtitle: "",
+          confirmLabel: translateText("Mulai"),
+          cancelLabel: translateText("Cancel"),
+          emphasized: true
+        }
+      );
+      if (!confirmed || reconciliationHasStarted()) return;
+      if (state.activeSession.status !== "active" || !state.products.length || !canEditActiveSession()) {
+        notify("Sesi aktif dengan data VEF diperlukan untuk memulai rekonsiliasi.");
+        return;
+      }
+      state.activeSession.reconciliationStartedAt = new Date().toISOString();
+      persist();
+      render();
+      notify(translateText("Stock Rekonsiliasi dimulai."));
+    }
+
     function renderOpname() {
+      if (!reconciliationHasStarted()) return renderReconciliationPending();
       const stats = getStats();
       const totals = getReconciliationTotals();
       const active = state.activeSession.status === "active";
@@ -7642,7 +7706,18 @@
       const rackSection = hasUploadedVef
         ? `<section class="layout-grid">${cards || `<div class="schedule-empty">${searchQuery ? "Tidak ada hasil untuk pencarian ini." : "Belum ada Rack. Klik Tambah Rack untuk membuat Rack pertama."}</div>`}</section>`
         : "";
-      return `${navMarkup()}<section class="page-head layout-page-head"><div class="layout-page-heading"><div class="layout-page-eyebrow">Pemindaian inventaris</div>${workspacePageTitle()}<p class="subtitle">Isi nomor Rack dan quantity target sebelum mulai scan.</p></div><div class="layout-overview"><div class="layout-overview-metrics" aria-label="Ringkasan quantity Scan Layout"><div class="layout-overview-metric"><span>Total Rack</span><strong>${hasUploadedVef ? state.layouts.length : 0}</strong></div><div class="layout-overview-metric"><span>Total Scan</span><strong>${formatNumber(rackTotals.scan)}</strong><em>SN cocok</em></div><div class="layout-overview-metric"><span>Total Manual</span><strong>${formatNumber(rackTotals.manual)}</strong><em>unit</em></div><div class="layout-overview-metric"><span>Total Qty</span><strong>${formatNumber(rackTotals.scan + rackTotals.manual)}</strong><em>Scan + Manual</em></div><div class="layout-overview-metric"><span>Qty Master VEF</span><strong>${formatNumber(expected)}</strong><em>sesuai mode hitung</em></div></div><div class="layout-banner-search" aria-label="Pencarian Scan & Manual"><div class="search-wrap"><span class="search-icon" aria-hidden="true">⌕</span><input class="search-input" id="layout-search-input" type="search" placeholder="Cari Item Code, nama, Serial Number, atau Rack" value="${escapeHtml(layoutSearchTerm)}" aria-label="Cari Item Code, nama, Serial Number, atau Rack"></div>${hasUploadedVef && searchQuery ? `<div class="layout-search-count">${visibleRackCount} Rack ditemukan</div>` : ""}</div></div></section>${renderSessionAccessNotice()}${uploadNotice}${rackSection}<div class="schedule-add-row"><button class="button button-primary" id="add-rack-button" type="button" title="${hasUploadedVef ? "Tambah Rack" : "Unggah file VEF terlebih dahulu"}" ${!canUseRack ? "disabled" : ""}>＋ Tambah Rack</button></div>`;
+      const reconciliationStarted = reconciliationHasStarted();
+      const canStartReconciliation = active && canEdit && hasUploadedVef && state.products.length > 0;
+      const reconciliationButtonTitle = reconciliationStarted
+        ? "Rekonsiliasi sudah dimulai"
+        : !active
+          ? "Sesi opname tidak aktif"
+          : !canEdit
+            ? "Hanya pemilik, PIC, atau Owner yang dapat memulai rekonsiliasi"
+            : !hasUploadedVef
+              ? "Unggah file VEF terlebih dahulu"
+              : "";
+      return `${navMarkup()}<section class="page-head layout-page-head"><div class="layout-page-heading"><div class="layout-page-eyebrow">Pemindaian inventaris</div>${workspacePageTitle()}<p class="subtitle">Isi nomor Rack dan quantity target sebelum mulai scan.</p></div><div class="layout-overview"><div class="layout-overview-metrics" aria-label="Ringkasan quantity Scan Layout"><div class="layout-overview-metric"><span>Total Rack</span><strong>${hasUploadedVef ? state.layouts.length : 0}</strong></div><div class="layout-overview-metric"><span>Total Scan</span><strong>${formatNumber(rackTotals.scan)}</strong><em>SN cocok</em></div><div class="layout-overview-metric"><span>Total Manual</span><strong>${formatNumber(rackTotals.manual)}</strong><em>unit</em></div><div class="layout-overview-metric"><span>Total Qty</span><strong>${formatNumber(rackTotals.scan + rackTotals.manual)}</strong><em>Scan + Manual</em></div><div class="layout-overview-metric"><span>Qty Master VEF</span><strong>${formatNumber(expected)}</strong><em>sesuai mode hitung</em></div></div><div class="layout-banner-search" aria-label="Pencarian Scan & Manual"><div class="search-wrap"><span class="search-icon" aria-hidden="true">⌕</span><input class="search-input" id="layout-search-input" type="search" placeholder="Cari Item Code, nama, Serial Number, atau Rack" value="${escapeHtml(layoutSearchTerm)}" aria-label="Cari Item Code, nama, Serial Number, atau Rack"></div>${hasUploadedVef && searchQuery ? `<div class="layout-search-count">${visibleRackCount} Rack ditemukan</div>` : ""}</div></div></section><div class="layout-reconciliation-action"><button class="button layout-reconciliation-button" id="start-reconciliation-button" type="button" title="${reconciliationButtonTitle}" ${reconciliationStarted || !canStartReconciliation ? "disabled" : ""}>${reconciliationStarted ? "Rekonsiliasi Sudah Dimulai" : "Mulai Rekonsiliasi"}</button></div>${renderSessionAccessNotice()}${uploadNotice}${rackSection}<div class="schedule-add-row"><button class="button button-primary" id="add-rack-button" type="button" title="${hasUploadedVef ? "Tambah Rack" : "Unggah file VEF terlebih dahulu"}" ${!canUseRack ? "disabled" : ""}>＋ Tambah Rack</button></div>`;
     }
     function addRack() {
       if (!requireActiveSessionEdit()) return;
@@ -7752,6 +7827,7 @@
     }
 
     function renderRecap() {
+      if (!reconciliationHasStarted()) return renderReconciliationPending();
       const totals = getReconciliationTotals();
       const exceptions = state.products.filter((product) => isCountedProduct(product) && varianceFor(product) !== 0);
       const canEdit = canEditActiveSession();
@@ -8316,7 +8392,12 @@
       const now = new Date().toISOString();
       const restoredData = snapshotWorkspaceData(JSON.parse(JSON.stringify(archivedSession.snapshot)));
       const restoredStartedAt = archivedSession.startedAt || restoredData.activeSession.startedAt || now;
-      restoredData.activeSession = { ...restoredData.activeSession, status: "active", finishedAt: "" };
+      restoredData.activeSession = {
+        ...restoredData.activeSession,
+        status: "active",
+        finishedAt: "",
+        reconciliationStartedAt: restoredData.activeSession.reconciliationStartedAt || archivedSession.finishedAt || now
+      };
 
       let workspace = state.workspaces.find((item) => item.id === archivedSession.workspaceId);
       if (workspace?.data.activeSession?.status === "active" && workspaceHasStarted(workspace)) {
@@ -8666,7 +8747,7 @@
       const recordedBrands = [...new Set(recordedSessions.map((session) => session.workspaceName).filter(Boolean))]
         .sort((a, b) => a.localeCompare(b, "id-ID"));
       const workspaceStats = state.workspaces
-        .filter((workspace) => workspace.data.activeSession.status === "active" && workspaceHasStarted(workspace))
+        .filter((workspace) => workspace.data.activeSession.status === "active" && workspaceHasStarted(workspace) && reconciliationHasStarted(workspace.data.activeSession))
         .map((workspace) => ({ workspace, stats: getWorkspaceDashboardStats(workspace) }));
       const total = workspaceStats.reduce((sum, item) => ({
         active: sum.active + 1,
@@ -9629,7 +9710,7 @@
         const canDeleteWithoutUpload = canDeleteUnuploadedWorkspace(workspace);
         const canDelete = canRemoveWorkspace(workspace);
         const deleteButton = `<button class="rack-delete-button schedule-delete-button" type="button" data-delete-workspace="${escapeHtml(workspace.id)}" aria-label="${canCancelEmptyStartedWorkspace(workspace) ? "Batalkan sesi kosong" : "Hapus kartu"} ${escapeHtml(workspace.name || "Jadwal")}" title="${canDelete ? canDeleteWithoutUpload ? "Hapus sesi pemilik karena file VEF belum diunggah" : canCancelEmptyStartedWorkspace(workspace) ? "Batalkan sesi berjalan yang belum memiliki data" : "Hapus kartu yang belum dimulai" : "Kartu hanya dapat dihapus sebelum stock opname dimulai atau sebelum file VEF diunggah"}" ${canDelete ? "" : "disabled"}>−</button>`;
-        return `<details class="schedule-card ${isCurrent ? "current" : ""}">
+        return `<details class="schedule-card ${isCurrent ? "current" : ""}${reconciliationHasStarted(data.activeSession) ? " reconciliation-started" : ""}">
           <summary class="schedule-card-summary" aria-label="${escapeHtml(workspace.name || emptyBrandNameLabel())}, ${status}. Klik untuk melihat detail.">
             <span class="schedule-summary-brand-icon" data-schedule-brand-icon>${renderWorkspaceBrandIcon(workspace.name)}</span>
             <span class="schedule-summary-copy"><strong class="schedule-summary-title">${escapeHtml(workspace.name || emptyBrandNameLabel())}</strong><span class="schedule-summary-meta"><span data-workspace-schedule-summary="${escapeHtml(workspace.id)}">${month} · ${period}</span>${statsSummary} · ${summaryPicNames}</span></span>
@@ -10895,6 +10976,7 @@
       });
       document.getElementById("delete-master-button")?.addEventListener("click", () => document.getElementById("delete-master-dialog").showModal());
       document.getElementById("add-rack-button")?.addEventListener("click", addRack);
+      document.getElementById("start-reconciliation-button")?.addEventListener("click", startReconciliation);
       document.querySelectorAll("[data-delete-rack]").forEach((button) => button.addEventListener("click", () => deleteRack(button.dataset.deleteRack)));
       document.getElementById("export-button")?.addEventListener("click", exportCsv);
       document.getElementById("finish-button")?.addEventListener("click", openFinishDialog);
