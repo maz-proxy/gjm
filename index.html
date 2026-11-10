@@ -142,7 +142,7 @@
     .app-confirm-dialog .dialog-title { font-size: 15px; }
     .app-confirm-dialog .dialog-subtitle { margin-top: 3px; }
     .app-confirm-copy { color: var(--muted); font-size: 13px; line-height: 1.6; padding: 17px 21px 19px; }
-    .app-confirm-copy.is-emphasized { color: var(--ink); font-weight: 700; white-space: pre-line; }
+    .app-confirm-copy.is-emphasized { color: var(--ink); font-weight: 700; text-align: center; white-space: pre-line; }
     .app-confirm-dialog .dialog-actions { background: color-mix(in srgb, var(--green) 5%, var(--canvas)); border-top-color: var(--line); padding: 12px 18px; }
     .app-confirm-dialog[data-tone="danger"] .dialog-actions { background: color-mix(in srgb, var(--red) 5%, var(--canvas)); }
     html[data-theme="dark"] .app-confirm-dialog::backdrop { background: rgba(0, 0, 0, .68); }
@@ -525,8 +525,8 @@
     .layout-banner-search .search-icon { top: 10px; }
     .layout-search-count { color: #d5e9df; font-size: 10px; margin-top: 4px; }
     .layout-reconciliation-action { display: flex; justify-content: flex-end; margin: -8px 0 12px; }
-    .layout-reconciliation-button { background: #17231f; border: 1px solid #ff304f; box-shadow: 0 0 0 1px rgba(255,48,79,.2), 0 0 13px rgba(255,48,79,.42); color: #fff; }
-    .layout-reconciliation-button:hover:not(:disabled) { background: #263a32; border-color: #ff5269; box-shadow: 0 0 0 1px rgba(255,48,79,.3), 0 0 17px rgba(255,48,79,.55); }
+    .layout-reconciliation-button { background: #17231f; border: 1px solid var(--line); box-shadow: none; color: #fff; }
+    .layout-reconciliation-button:hover:not(:disabled) { background: #263a32; border-color: var(--line); box-shadow: none; }
     .layout-reconciliation-button:disabled { cursor: not-allowed; opacity: .7; }
     .reconciliation-pending { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; margin: 24px auto; max-width: 620px; padding: 24px; text-align: center; }
     .reconciliation-pending h2 { color: var(--ink); font-size: 18px; margin: 0; }
