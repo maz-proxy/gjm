@@ -472,7 +472,7 @@
     .segregation-preview-button span { font-size: 10px; font-weight: 400; opacity: .8; }
     .segregation-preview-dialog { display: none; max-width: min(1120px, calc(100vw - 28px)); overflow: hidden; padding: 0; width: 100%; }
     .segregation-preview-dialog[open] { display: block; }
-    .segregation-duplicate-dialog { max-width: min(390px, calc(100vw - 32px)); overflow: hidden; padding: 0; width: 100%; }
+    .feature-dialog.segregation-duplicate-dialog { max-width: min(440px, calc(100vw - 32px)); overflow: hidden; padding: 0; width: min(440px, calc(100vw - 32px)); }
     .segregation-duplicate-dialog[open] { display: block; }
     .segregation-duplicate-dialog .dialog-copy { color: var(--muted); font-size: 12px; overflow-wrap: anywhere; padding: 18px 20px; }
     .segregation-duplicate-dialog .dialog-copy strong { color: var(--ink); }
@@ -7801,7 +7801,7 @@
         ? foundScans.slice().reverse().map((scan, index) => `<tr id="segregation-scan-row-${segregationScans.indexOf(scan)}"><td class="number-cell">${foundScans.length - index}</td><td>${escapeHtml(scan.brand || "-")}</td><td>${escapeHtml(scan.itemCode || "-")}</td><td>${escapeHtml(scan.itemName || "-")}</td><td class="quantity-cell">${escapeHtml(scan.serial)}</td><td>${escapeHtml(scan.sourceWarehouse || "-")}</td></tr>`).join("")
         : `<tr><td class="segregation-empty" colspan="6">Belum ada SN yang cocok.</td></tr>`;
       const renderNotFoundRows = () => notFoundScans.length
-        ? notFoundScans.slice().reverse().map((scan, index) => `<tr id="segregation-scan-row-${segregationScans.indexOf(scan)}"><td class="number-cell">${notFoundScans.length - index}</td><td class="quantity-cell">${escapeHtml(scan.serial)}</td></tr>`).join("")
+        ? notFoundScans.map((scan, index) => `<tr id="segregation-scan-row-${segregationScans.indexOf(scan)}"><td class="number-cell">${index + 1}</td><td class="quantity-cell">${escapeHtml(scan.serial)}</td></tr>`).join("")
         : `<tr><td class="segregation-empty" colspan="2">Belum ada SN yang tidak ditemukan.</td></tr>`;
       const renderMergedRows = () => mergedRows.length
         ? mergedRows.map((group, index) => `<tr><td class="number-cell">${index + 1}</td><td>${escapeHtml(group.sourceWarehouse || "-")}</td><td>${escapeHtml(group.brand || "-")}</td><td>${escapeHtml(group.itemCode || "-")}</td><td>${escapeHtml(group.itemName || "-")}</td><td class="number-cell">${formatNumber(group.serials.length)}</td><td><div class="segregation-serial-list">${escapeHtml(group.serials.join("\n"))}</div></td></tr>`).join("")
@@ -8070,7 +8070,8 @@
     }
 
     function exportSegregationScanWorkbook(found) {
-      const scans = segregationScans.filter((scan) => scan.found === found).slice().reverse();
+      const scans = segregationScans.filter((scan) => scan.found === found);
+      if (found) scans.reverse();
       const sheetName = found ? "Get SN" : "SN not Found";
       if (!scans.length) {
         notify(`Belum ada data ${sheetName} untuk diekspor.`);
