@@ -332,7 +332,7 @@
     @media (prefers-reduced-motion: reduce) { .chat-panel { animation: none; } }
     .top-pics { color: var(--muted); font-size: 10px; text-align: right; }
     .page-head { align-items: flex-end; display: flex; gap: 24px; justify-content: space-between; margin-bottom: 25px; }
-    .layout-page-head { align-items: center; background: linear-gradient(112deg, #174b42 0%, #176b5b 62%, #398b73 100%); border: 1px solid rgba(255,255,255,.16); border-radius: 15px; box-shadow: 0 12px 28px rgba(23,76,62,.14); color: #fff; display: flex; gap: 24px; justify-content: space-between; margin-bottom: 17px; min-height: 142px; overflow: hidden; padding: 22px 26px; position: relative; }
+    .layout-page-head { align-items: center; background: linear-gradient(112deg, #174b42 0%, #176b5b 62%, #398b73 100%); border: 1px solid rgba(255,255,255,.16); border-radius: 15px; box-shadow: 0 12px 28px rgba(23,76,62,.14); color: #fff; display: flex; gap: 20px; justify-content: space-between; margin-bottom: 17px; min-height: 0; overflow: hidden; padding: 14px 18px; position: relative; }
     .layout-page-head::after { background: rgba(205,236,222,.11); border: 1px solid rgba(255,255,255,.12); border-radius: 50%; content: ""; height: 240px; position: absolute; right: 19%; top: -172px; width: 240px; }
     .layout-page-heading { min-width: 0; position: relative; z-index: 1; }
     .layout-page-eyebrow { color: #c5e0d4; display: flex; font-size: 10px; font-weight: 800; gap: 7px; letter-spacing: 1.1px; margin-bottom: 8px; text-transform: uppercase; }
@@ -551,11 +551,11 @@
     .layout-count { color: var(--green); font-size: 11px; font-weight: 700; text-align: right; }
     .rack-quantity-summary { color: var(--muted); display: flex; flex-wrap: wrap; font-size: 9px; gap: 4px 9px; justify-content: flex-end; }
     .rack-quantity-summary strong { color: var(--ink); font-variant-numeric: tabular-nums; }
-    .layout-overview-metrics { display: grid; flex: 1; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); }
-    .layout-overview-metric { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.16); border-radius: 9px; min-width: 0; padding: 8px 10px; }
-    .layout-overview-metric span { color: #d5e9df; display: block; font-size: 9px; }
-    .layout-overview-metric strong { color: #fff; display: block; font-size: 15px; font-variant-numeric: tabular-nums; margin-top: 2px; }
-    .layout-overview-metric em { color: #bce5d4; font-size: 8px; font-style: normal; }
+    .layout-overview-metrics { display: grid; flex: 1; gap: 6px; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .layout-overview-metric { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.16); border-radius: 8px; min-width: 0; padding: 6px 8px; }
+    .layout-overview-metric span { color: #d5e9df; display: block; font-size: 8px; }
+    .layout-overview-metric strong { color: #fff; display: block; font-size: 13px; font-variant-numeric: tabular-nums; margin-top: 1px; }
+    .layout-overview-metric em { color: #bce5d4; font-size: 7px; font-style: normal; }
     .schedule-brand-label { color: var(--muted); display: block; font-size: 9px; font-weight: 800; letter-spacing: .7px; margin: 0 0 4px 2px; text-transform: uppercase; }
     .start-opname-button { white-space: nowrap; }
     .layout-quantity-row { align-items: center; display: flex; gap: 6px; justify-content: flex-end; }
@@ -1124,10 +1124,8 @@
       .page-head { align-items: flex-start; flex-direction: column; gap: 15px; margin-bottom: 17px; }
       .layout-page-head { align-items: stretch; flex-direction: column; gap: 12px; min-height: 0; padding: 16px; }
       .layout-page-heading, .layout-overview, .layout-overview-metrics { width: 100%; }
-      .layout-overview-metrics { flex: none; gap: 7px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .layout-overview-metric { border-radius: 8px; padding: 7px 9px; }
-      .layout-overview-metric:last-child { grid-column: 1 / -1; }
-      .layout-overview-metric strong { font-size: 14px; }
+      .layout-overview-metrics { flex: none; gap: 6px; grid-template-columns: repeat(5, minmax(88px, 1fr)); overflow-x: auto; }
+      .layout-overview-metric { border-radius: 7px; padding: 5px 7px; }
       .layout-page-eyebrow { font-size: 9px; letter-spacing: .9px; margin-bottom: 6px; }
       .layout-page-head h1 { font-size: 25px; }
       .layout-page-head .subtitle { font-size: 11px; line-height: 1.5; max-width: 340px; }
