@@ -447,8 +447,6 @@
     .segregation-scan-controls .scan-input { flex: 1; }
     .segregation-camera-button { align-items: center; display: inline-flex; justify-content: center; white-space: nowrap; }
     .segregation-camera-button svg { fill: none; height: 17px; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; width: 17px; }
-    .segregation-target-input { background: var(--paper); border: 1px solid var(--line); border-radius: 5px; color: var(--ink); font: inherit; min-width: 135px; padding: 6px 8px; width: 100%; }
-    .segregation-target-input:focus { border-color: #739b7c; outline: 2px solid rgba(40, 93, 69, .1); }
     .segregation-serial-list { font: 10px/1.5 ui-monospace, Consolas, monospace; max-width: 320px; overflow-wrap: anywhere; white-space: pre-wrap; }
     .segregation-actions { display: flex; flex-wrap: wrap; gap: 8px; }
     .segregation-scan-results { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 12px; }
@@ -456,6 +454,8 @@
     .segregation-scan-results .table-toolbar { min-height: 52px; padding: 9px 13px; }
     .segregation-scan-results .table-title { font-size: 12px; }
     .segregation-scan-results table { min-width: 560px; }
+    .segregation-scan-results th,
+    .segregation-scan-results td { white-space: nowrap; }
     @media (max-width: 900px) { .segregation-scan-results { grid-template-columns: minmax(0, 1fr); } }
     @media (max-width: 700px) { .segregation-source-top { grid-template-columns: minmax(0, 1fr); gap: 0; } }
     .segregation-preview-actions { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); margin-bottom: 16px; }
@@ -7744,13 +7744,12 @@
     function buildSegregationMergeRows() {
       const groups = new Map();
       for (const scan of segregationScans.filter((item) => item.found)) {
-        const key = JSON.stringify([scan.sourceWarehouse, scan.targetWarehouse, scan.itemCode, scan.brand, scan.itemName]);
+        const key = JSON.stringify([scan.sourceWarehouse, scan.itemCode, scan.brand, scan.itemName]);
         if (!groups.has(key)) groups.set(key, { ...scan, serials: [] });
         groups.get(key).serials.push(scan.serial);
       }
       return [...groups.values()].sort((left, right) =>
         left.sourceWarehouse.localeCompare(right.sourceWarehouse)
-        || left.targetWarehouse.localeCompare(right.targetWarehouse)
         || left.itemCode.localeCompare(right.itemCode)
       );
     }
@@ -7759,7 +7758,6 @@
       const foundScans = segregationScans.filter((scan) => scan.found);
       const notFoundScans = segregationScans.filter((scan) => !scan.found);
       const mergedRows = buildSegregationMergeRows();
-      const hasUnassignedTarget = foundScans.some((scan) => !scan.targetWarehouse);
       const sourceRecords = segregationSource ? [...segregationSource.recordsBySerial.values()] : [];
       const totalSkus = segregationSelectedItemCode
         ? 1
@@ -7785,19 +7783,19 @@
         ? `${selectedItem.itemCode}${selectedItem.itemName ? ` · ${selectedItem.itemName}` : ""}`
         : "";
       const renderFoundRows = () => foundScans.length
-        ? foundScans.slice().reverse().map((scan, index) => `<tr><td class="number-cell">${foundScans.length - index}</td><td>${escapeHtml(scan.brand || "-")}</td><td>${escapeHtml(scan.itemCode || "-")}</td><td>${escapeHtml(scan.itemName || "-")}</td><td class="quantity-cell">${escapeHtml(scan.serial)}</td><td>${escapeHtml(scan.sourceWarehouse || "-")}</td><td><input class="segregation-target-input" type="text" list="segregation-target-warehouses" value="${escapeHtml(scan.targetWarehouse || "")}" data-segregation-target="${escapeHtml(scan.normalizedSerial)}" aria-label="Warehouse Target untuk ${escapeHtml(scan.serial)}" placeholder="Pilih atau ketik warehouse"></td></tr>`).join("")
-        : `<tr><td class="segregation-empty" colspan="7">Belum ada SN yang cocok.</td></tr>`;
+        ? foundScans.slice().reverse().map((scan, index) => `<tr><td class="number-cell">${foundScans.length - index}</td><td>${escapeHtml(scan.brand || "-")}</td><td>${escapeHtml(scan.itemCode || "-")}</td><td>${escapeHtml(scan.itemName || "-")}</td><td class="quantity-cell">${escapeHtml(scan.serial)}</td><td>${escapeHtml(scan.sourceWarehouse || "-")}</td></tr>`).join("")
+        : `<tr><td class="segregation-empty" colspan="6">Belum ada SN yang cocok.</td></tr>`;
       const renderNotFoundRows = () => notFoundScans.length
         ? notFoundScans.slice().reverse().map((scan, index) => `<tr><td class="number-cell">${notFoundScans.length - index}</td><td>-</td><td>-</td><td class="quantity-cell">${escapeHtml(scan.serial)}</td></tr>`).join("")
         : `<tr><td class="segregation-empty" colspan="4">Belum ada SN yang tidak ditemukan.</td></tr>`;
       const renderMergedRows = () => mergedRows.length
-        ? mergedRows.map((group, index) => `<tr><td class="number-cell">${index + 1}</td><td>${escapeHtml(group.sourceWarehouse || "-")}</td><td>${escapeHtml(group.targetWarehouse || "-")}</td><td>${escapeHtml(group.brand || "-")}</td><td>${escapeHtml(group.itemCode || "-")}</td><td>${escapeHtml(group.itemName || "-")}</td><td class="number-cell">${formatNumber(group.serials.length)}</td><td><div class="segregation-serial-list">${escapeHtml(group.serials.join("\n"))}</div></td></tr>`).join("")
-        : `<tr><td class="segregation-empty" colspan="8">Data hasil scan akan dikelompokkan di sini.</td></tr>`;
+        ? mergedRows.map((group, index) => `<tr><td class="number-cell">${index + 1}</td><td>${escapeHtml(group.sourceWarehouse || "-")}</td><td>${escapeHtml(group.brand || "-")}</td><td>${escapeHtml(group.itemCode || "-")}</td><td>${escapeHtml(group.itemName || "-")}</td><td class="number-cell">${formatNumber(group.serials.length)}</td><td><div class="segregation-serial-list">${escapeHtml(group.serials.join("\n"))}</div></td></tr>`).join("")
+        : `<tr><td class="segregation-empty" colspan="7">Data hasil scan akan dikelompokkan di sini.</td></tr>`;
       const sourceDescription = segregationSource
         ? `${escapeHtml(segregationSource.fileName)} · Sheet: ${escapeHtml(segregationSource.sheetName)} · ${formatNumber(segregationSource.serials.size)} SN unik`
         : "Belum ada daftar SN. Unggah file Excel atau CSV terlebih dahulu.";
       return `${navMarkup()}
-        <section class="page-head archive-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Tools mandiri</div><h1>Segregasi</h1><p class="subtitle">Unggah file VEF, scan SN yang akan dipindahkan, tentukan Warehouse Target, lalu unduh hasil dalam format Stock Entry Template.</p></div></section>
+        <section class="page-head archive-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Tools mandiri</div><h1>Segregasi</h1><p class="subtitle">Unggah file VEF, scan SN yang akan dipindahkan, lalu unduh hasil dalam format Stock Entry Template.</p></div></section>
         <section class="table-section segregation-source-card">
           <div class="segregation-source-top">
             <div class="table-toolbar"><div><div class="table-title">Data VEF sumber</div><span class="table-count">${sourceDescription}</span></div><div class="segregation-source-actions"><input class="upload-input" id="segregation-file-input" type="file" accept=".xlsx,.xls,.csv" aria-label="Pilih workbook Excel atau CSV VEF"><button class="button button-secondary" id="segregation-file-button" type="button" ${segregationFileLoading ? "disabled" : ""}>${segregationFileLoading ? "Memproses file..." : segregationSource ? "Ganti file VEF" : "Unggah file VEF"}</button></div></div>
@@ -7820,21 +7818,21 @@
           <div class="metric"><div class="metric-top">SN not Found</div><div class="metric-value">${formatNumber(notFoundScans.length)}</div></div>
         </section>
         <div class="segregation-scan-results">
-          <section class="table-section"><div class="table-toolbar"><div class="table-title">Get SN · Hasil pencarian</div><button class="button button-secondary" id="clear-segregation-scans" type="button" ${segregationScans.length ? "" : "disabled"}>Kosongkan hasil scan</button></div><div class="table-scroll"><table><thead><tr><th>No.</th><th>Brand</th><th>Item Code</th><th>Item Name</th><th>Serial</th><th>Warehouse Source</th><th>Warehouse Target</th></tr></thead><tbody>${renderFoundRows()}</tbody></table></div></section>
+          <section class="table-section"><div class="table-toolbar"><div class="table-title">Get SN · Hasil pencarian</div><button class="button button-secondary" id="clear-segregation-scans" type="button" ${segregationScans.length ? "" : "disabled"}>Kosongkan hasil scan</button></div><div class="table-scroll"><table><thead><tr><th>No.</th><th>Brand</th><th>Item Code</th><th>Item Name</th><th>Serial</th><th>Warehouse Source</th></tr></thead><tbody>${renderFoundRows()}</tbody></table></div></section>
           <section class="table-section"><div class="table-toolbar"><div class="table-title">SN not Found <span class="table-count">${formatNumber(notFoundScans.length)} tidak ditemukan</span></div></div><div class="table-scroll"><table><thead><tr><th>No.</th><th>Item Code/SKU</th><th>Item Name</th><th>Serial Number</th></tr></thead><tbody>${renderNotFoundRows()}</tbody></table></div></section>
         </div>
         <section class="segregation-preview-actions" aria-label="Laporan Segregasi">
           <button class="button button-secondary segregation-preview-button" id="open-segregation-merge" type="button"><strong>Data Merge &amp; Sort</strong><span>${formatNumber(mergedRows.length)} kelompok · ${formatNumber(foundScans.length)} SN Found</span></button>
-          <button class="button button-secondary segregation-preview-button" id="open-segregation-template" type="button"><strong>Stock Entry Template</strong><span>${hasUnassignedTarget ? "Isi Warehouse Target untuk ekspor" : `${formatNumber(mergedRows.length)} baris siap diekspor`}</span></button>
+          <button class="button button-secondary segregation-preview-button" id="open-segregation-template" type="button"><strong>Stock Entry Template</strong><span>${formatNumber(mergedRows.length)} baris siap diekspor</span></button>
         </section>
         <dialog class="feature-dialog segregation-preview-dialog" id="segregation-merge-dialog" aria-labelledby="segregation-merge-title">
           <div class="dialog-head"><div><div class="dialog-title" id="segregation-merge-title">Data Merge &amp; Sort</div><div class="dialog-subtitle">${formatNumber(mergedRows.length)} kelompok · ${formatNumber(foundScans.length)} SN Found</div></div><button class="dialog-close" type="button" data-segregation-dialog-close="segregation-merge-dialog" aria-label="Tutup">×</button></div>
-          <div class="segregation-preview-body"><div class="table-scroll"><table><thead><tr><th>No.</th><th>Warehouse Source</th><th>Warehouse Target</th><th>Brand</th><th>Item Code</th><th>Item Name</th><th>Qty</th><th>SN Merge</th></tr></thead><tbody>${renderMergedRows()}</tbody></table></div></div>
+          <div class="segregation-preview-body"><div class="table-scroll"><table><thead><tr><th>No.</th><th>Warehouse Source</th><th>Brand</th><th>Item Code</th><th>Item Name</th><th>Qty</th><th>SN Merge</th></tr></thead><tbody>${renderMergedRows()}</tbody></table></div></div>
           <div class="dialog-actions"><button class="button button-secondary" type="button" data-segregation-dialog-close="segregation-merge-dialog">Tutup</button></div>
         </dialog>
         <dialog class="feature-dialog segregation-preview-dialog" id="segregation-template-dialog" aria-labelledby="segregation-template-title">
-          <div class="dialog-head"><div><div class="dialog-title" id="segregation-template-title">Stock Entry Template</div><div class="dialog-subtitle">${hasUnassignedTarget ? "Isi Warehouse Target untuk setiap SN cocok sebelum ekspor." : `${formatNumber(mergedRows.length)} baris siap diekspor.`}</div></div><button class="dialog-close" type="button" data-segregation-dialog-close="segregation-template-dialog" aria-label="Tutup">×</button></div>
-          <div class="segregation-preview-body"><section class="table-section"><div class="table-toolbar"><div class="table-title">Data untuk diekspor</div><div class="segregation-actions"><button class="button button-primary" id="export-segregation-workbook" type="button" ${foundScans.length && !hasUnassignedTarget ? "" : "disabled"}>Unduh Excel</button><button class="button button-secondary" id="export-segregation-csv" type="button" ${foundScans.length && !hasUnassignedTarget ? "" : "disabled"}>Unduh CSV</button></div></div><div class="table-scroll"><table><thead><tr><th>Source Warehouse</th><th>Target Warehouse</th><th>Item Code</th><th>Qty</th><th>Serial No</th></tr></thead><tbody>${mergedRows.length ? mergedRows.map((group) => `<tr><td>${escapeHtml(group.sourceWarehouse || "-")}</td><td>${escapeHtml(group.targetWarehouse || "-")}</td><td>${escapeHtml(group.itemCode || "-")}</td><td class="number-cell">${formatNumber(group.serials.length)}</td><td><div class="segregation-serial-list">${escapeHtml(group.serials.join("\n"))}</div></td></tr>`).join("") : `<tr><td class="segregation-empty" colspan="5">Hasil scan Found akan disiapkan di sini.</td></tr>`}</tbody></table></div></section></div>
+          <div class="dialog-head"><div><div class="dialog-title" id="segregation-template-title">Stock Entry Template</div><div class="dialog-subtitle">${formatNumber(mergedRows.length)} baris siap diekspor; Warehouse Target dibiarkan kosong.</div></div><button class="dialog-close" type="button" data-segregation-dialog-close="segregation-template-dialog" aria-label="Tutup">×</button></div>
+          <div class="segregation-preview-body"><section class="table-section"><div class="table-toolbar"><div class="table-title">Data untuk diekspor</div><div class="segregation-actions"><button class="button button-primary" id="export-segregation-workbook" type="button" ${foundScans.length ? "" : "disabled"}>Unduh Excel</button><button class="button button-secondary" id="export-segregation-csv" type="button" ${foundScans.length ? "" : "disabled"}>Unduh CSV</button></div></div><div class="table-scroll"><table><thead><tr><th>Source Warehouse</th><th>Item Code</th><th>Qty</th><th>Serial No</th></tr></thead><tbody>${mergedRows.length ? mergedRows.map((group) => `<tr><td>${escapeHtml(group.sourceWarehouse || "-")}</td><td>${escapeHtml(group.itemCode || "-")}</td><td class="number-cell">${formatNumber(group.serials.length)}</td><td><div class="segregation-serial-list">${escapeHtml(group.serials.join("\n"))}</div></td></tr>`).join("") : `<tr><td class="segregation-empty" colspan="4">Hasil scan Found akan disiapkan di sini.</td></tr>`}</tbody></table></div></section></div>
           <div class="dialog-actions"><button class="button button-secondary" type="button" data-segregation-dialog-close="segregation-template-dialog">Tutup</button></div>
         </dialog>`;
     }
@@ -7998,23 +7996,10 @@
       document.getElementById("segregation-scan-input")?.focus();
     }
 
-    async function setSegregationTarget(event) {
-      const input = event.currentTarget;
-      const scan = segregationScans.find((item) => item.found && item.normalizedSerial === input.dataset.segregationTarget);
-      if (!scan) {
-        notify("SN tidak ditemukan pada hasil Segregasi.");
-        return;
-      }
-      scan.targetWarehouse = input.value.trim();
-      await persistSegregationData();
-      render();
-      document.getElementById("segregation-scan-input")?.focus();
-    }
-
     function getSegregationStockEntryRows() {
       return buildSegregationMergeRows().map((group) => [
         group.sourceWarehouse,
-        group.targetWarehouse,
+        "",
         group.itemCode,
         group.serials.length,
         "",
@@ -8030,33 +8015,27 @@
         notify("Belum ada SN cocok untuk diekspor.");
         return;
       }
-      if (foundScans.some((scan) => !scan.targetWarehouse)) {
-        notify("Isi Warehouse Target untuk setiap SN cocok sebelum ekspor.");
-        return;
-      }
       if (typeof XLSX === "undefined") {
         notify("Fitur ekspor Excel tidak termuat. Periksa koneksi internet lalu muat ulang aplikasi.");
         return;
       }
       const workbook = XLSX.utils.book_new();
       const getSnRows = [
-        ["No.", "Brand", "Item Code", "Item Name", "Serial", "Warehouse Source", "Warehouse Target"],
+        ["No.", "Brand", "Item Code", "Item Name", "Serial", "Warehouse Source"],
         ...segregationScans.map((scan, index) => [
           index + 1,
           scan.brand,
           scan.itemCode,
           scan.itemName,
           scan.serial,
-          scan.sourceWarehouse,
-          scan.targetWarehouse
+          scan.sourceWarehouse
         ])
       ];
       const mergeRows = [
-        ["No.", "Warehouse", "Warehouse Target", "Brand", "Item", "Item Name", "Qty", "SN Merge"],
+        ["No.", "Warehouse", "Brand", "Item", "Item Name", "Qty", "SN Merge"],
         ...buildSegregationMergeRows().map((group, index) => [
           index + 1,
           group.sourceWarehouse,
-          group.targetWarehouse,
           group.brand,
           group.itemCode,
           group.itemName,
@@ -8089,10 +8068,6 @@
       const foundScans = segregationScans.filter((scan) => scan.found);
       if (!foundScans.length) {
         notify("Belum ada SN cocok untuk diekspor.");
-        return;
-      }
-      if (foundScans.some((scan) => !scan.targetWarehouse)) {
-        notify("Isi Warehouse Target untuk setiap SN cocok sebelum ekspor.");
         return;
       }
       const rows = [
@@ -9845,7 +9820,7 @@
           ${guide("Langkah 3", "▦", "Scan Layout", "Buat rack dan isi label rack (angka atau keterangan teks) serta target scan. Pindai serial number pada rack yang sesuai atau gunakan tombol kamera untuk membaca barcode. Hasil cocok, duplikat, bukan laptop, atau tidak ditemukan tampil pada catatan scan; serial cocok juga menampilkan item code, nama item, serial number, dan waktu saat rinciannya dibuka. Rack dengan SN duplikat diberi tanda peringatan. Untuk barang tanpa serial, cari item dari VEF, pilih hasil yang benar, masukkan quantity, lalu Catat Manual. Catatan manual terbaru akan ditandai dan difokuskan.", "layouts", "Scan Layout")}
           ${guide("Langkah 4", "⌗", "Result SO", "Lembar ini menghitung SCAN + MANUAL + PJ dan membandingkan hasilnya dengan VEF. Untuk PJ, klik quantity pada item, lalu isi tanggal/waktu dan nomor invoice. Input hanya diterima jika waktu invoice lebih baru daripada timestamp file VEF yang tercatat di Master VEF. Tekan SO SELESAI setelah pemeriksaan selesai untuk mengunci dan mengarsipkan hasil.", "opname", "Result SO")}
           ${guide("Langkah 5", "↕", "Rekap Selisih", "Tinjau hanya item yang belum sesuai; kolom selisih membandingkan jumlah SCAN + MANUAL + PJ dengan quantity VEF. Tambahkan catatan untuk menjelaskan kekurangan atau kelebihan. Periksa kembali data sebelum sesi diselesaikan karena hasil yang diarsipkan menjadi rekaman baca-saja.", "recap", "Rekap Selisih")}
-          ${guide("Tool", "⌕", "Segregasi", "Unggah file Excel/CSV VEF, scan SN dengan scanner fisik, isi Warehouse Target, lalu periksa ringkasan Data Merge & Sort. Unduh workbook yang berisi Get SN, Data Merge & Sort, dan Stock Entry Template, atau ekspor CSV template. Halaman ini mandiri dan tidak mengubah sesi stock opname.", "segregation", "Segregasi")}
+          ${guide("Tool", "⌕", "Segregasi", "Unggah file Excel/CSV VEF, scan SN dengan scanner fisik, lalu periksa ringkasan Data Merge & Sort. Unduh workbook yang berisi Get SN, Data Merge & Sort, dan Stock Entry Template (kolom Warehouse Target dikosongkan), atau ekspor CSV template. Halaman ini mandiri dan tidak mengubah sesi stock opname.", "segregation", "Segregasi")}
           ${guide("Arsip", "▣", "Sesi Stock Opname", "Gunakan Buka sesi untuk meninjau workbook sumber, rincian setiap rack, input manual, seluruh item Result SO, daftar invoice PJ, dan Rekap Selisih. Ekspor XLSX berisi worksheet arsip beserta detail input, sedangkan Print menyusun laporan untuk dicetak atau disimpan sebagai PDF. Arsip lama tetap tersedia walaupun kartu jadwal sudah direset.", "completed-sessions", "Sesi Stock Opname")}
           ${guide("Aktivitas", "◷", "Riwayat Perubahan", "Lihat aktivitas berdasarkan waktu dan sesi, seperti mulai/selesai opname, scan ditambahkan, input manual, dan perubahan catatan atau quantity. Gunakan riwayat untuk membantu audit dan menelusuri perubahan data.", "history", "Riwayat Perubahan")}
           ${canManageDataResources() ? guide("Admin", "▧", "Data Resource", "Tambahkan, ubah, atau hapus pilihan Nama Brand dan Nama PIC, serta unggah atau ganti APK yang tersedia untuk diunduh dari halaman login. Daftar dan informasi APK dibagikan kepada seluruh akun.", "data-resources", "Data Resource") : ""}
@@ -10674,7 +10649,6 @@
         if (input) void openCameraScannerForInput(input);
       });
       document.getElementById("clear-segregation-scans")?.addEventListener("click", clearSegregationScans);
-      document.querySelectorAll("[data-segregation-target]").forEach((input) => input.addEventListener("change", setSegregationTarget));
       document.getElementById("export-segregation-workbook")?.addEventListener("click", exportSegregationWorkbook);
       document.getElementById("export-segregation-csv")?.addEventListener("click", exportSegregationCsv);
       document.getElementById("copy-reset-password")?.addEventListener("click", async () => {
