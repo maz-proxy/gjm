@@ -472,6 +472,12 @@
     .segregation-preview-button span { font-size: 10px; font-weight: 400; opacity: .8; }
     .segregation-preview-dialog { display: none; max-width: min(1120px, calc(100vw - 28px)); overflow: hidden; padding: 0; width: 100%; }
     .segregation-preview-dialog[open] { display: block; }
+    .segregation-duplicate-dialog { max-width: min(390px, calc(100vw - 32px)); overflow: hidden; padding: 0; width: 100%; }
+    .segregation-duplicate-dialog[open] { display: block; }
+    .segregation-duplicate-dialog .dialog-copy { color: var(--muted); font-size: 12px; overflow-wrap: anywhere; padding: 18px 20px; }
+    .segregation-duplicate-dialog .dialog-copy strong { color: var(--ink); }
+    .segregation-scan-row-highlight { animation: segregation-scan-highlight 2.8s ease-out; }
+    @keyframes segregation-scan-highlight { 0%, 35% { background: color-mix(in srgb, var(--amber) 24%, var(--paper)); } 100% { background: transparent; } }
     .segregation-preview-dialog .dialog-head { align-items: center; background: linear-gradient(115deg, color-mix(in srgb, var(--green) 9%, var(--paper)), var(--paper) 78%); border-bottom-color: var(--line); border-top: 3px solid var(--green); padding: 13px 17px; }
     .segregation-preview-dialog .dialog-actions { margin: 0; padding: 10px 16px 14px; }
     .segregation-preview-body { max-height: min(65vh, 620px); overflow: auto; padding: 14px 16px; }
@@ -4056,6 +4062,7 @@
     let segregationSelectedItemCode = "";
     let segregationFileLoading = false;
     let segregationStatus = { message: "", type: "" };
+    let segregationDuplicateScanIndex = null;
     let segregationPersistenceQueue = Promise.resolve();
     let lastManualEntryId = "";
     let searchTerm = "";
@@ -7791,10 +7798,10 @@
         ? `${selectedItem.itemCode}${selectedItem.itemName ? ` · ${selectedItem.itemName}` : ""}`
         : "";
       const renderFoundRows = () => foundScans.length
-        ? foundScans.slice().reverse().map((scan, index) => `<tr><td class="number-cell">${foundScans.length - index}</td><td>${escapeHtml(scan.brand || "-")}</td><td>${escapeHtml(scan.itemCode || "-")}</td><td>${escapeHtml(scan.itemName || "-")}</td><td class="quantity-cell">${escapeHtml(scan.serial)}</td><td>${escapeHtml(scan.sourceWarehouse || "-")}</td></tr>`).join("")
+        ? foundScans.slice().reverse().map((scan, index) => `<tr id="segregation-scan-row-${segregationScans.indexOf(scan)}"><td class="number-cell">${foundScans.length - index}</td><td>${escapeHtml(scan.brand || "-")}</td><td>${escapeHtml(scan.itemCode || "-")}</td><td>${escapeHtml(scan.itemName || "-")}</td><td class="quantity-cell">${escapeHtml(scan.serial)}</td><td>${escapeHtml(scan.sourceWarehouse || "-")}</td></tr>`).join("")
         : `<tr><td class="segregation-empty" colspan="6">Belum ada SN yang cocok.</td></tr>`;
       const renderNotFoundRows = () => notFoundScans.length
-        ? notFoundScans.slice().reverse().map((scan, index) => `<tr><td class="number-cell">${notFoundScans.length - index}</td><td class="quantity-cell">${escapeHtml(scan.serial)}</td></tr>`).join("")
+        ? notFoundScans.slice().reverse().map((scan, index) => `<tr id="segregation-scan-row-${segregationScans.indexOf(scan)}"><td class="number-cell">${notFoundScans.length - index}</td><td class="quantity-cell">${escapeHtml(scan.serial)}</td></tr>`).join("")
         : `<tr><td class="segregation-empty" colspan="2">Belum ada SN yang tidak ditemukan.</td></tr>`;
       const renderMergedRows = () => mergedRows.length
         ? mergedRows.map((group, index) => `<tr><td class="number-cell">${index + 1}</td><td>${escapeHtml(group.sourceWarehouse || "-")}</td><td>${escapeHtml(group.brand || "-")}</td><td>${escapeHtml(group.itemCode || "-")}</td><td>${escapeHtml(group.itemName || "-")}</td><td class="number-cell">${formatNumber(group.serials.length)}</td><td><div class="segregation-serial-list">${escapeHtml(group.serials.join("\n"))}</div></td></tr>`).join("")
@@ -7802,6 +7809,9 @@
       const sourceDescription = segregationSource
         ? `${escapeHtml(segregationSource.fileName)} · Sheet: ${escapeHtml(segregationSource.sheetName)} · ${formatNumber(segregationSource.serials.size)} SN unik`
         : "Belum ada daftar SN. Unggah file Excel atau CSV terlebih dahulu.";
+      const duplicateScan = segregationDuplicateScanIndex === null
+        ? null
+        : segregationScans[segregationDuplicateScanIndex];
       return `${navMarkup()}
         <section class="page-head archive-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Tools mandiri</div><h1>Segregasi</h1><p class="subtitle">Unggah file VEF, scan SN yang akan dipindahkan, lalu unduh hasil dalam format Stock Entry Template.</p></div></section>
         <section class="table-section segregation-source-card">
@@ -7842,7 +7852,12 @@
           <div class="dialog-head"><div><div class="dialog-title" id="segregation-template-title">Stock Entry Template</div><div class="dialog-subtitle">${formatNumber(mergedRows.length)} baris siap diekspor; Warehouse Target dibiarkan kosong.</div></div><button class="dialog-close" type="button" data-segregation-dialog-close="segregation-template-dialog" aria-label="Tutup">×</button></div>
           <div class="segregation-preview-body"><section class="table-section"><div class="table-toolbar"><div class="table-title">Data untuk diekspor</div><div class="segregation-actions"><button class="button button-primary" id="export-segregation-workbook" type="button" ${foundScans.length ? "" : "disabled"}>Unduh Excel</button><button class="button button-secondary" id="export-segregation-csv" type="button" ${foundScans.length ? "" : "disabled"}>Unduh CSV</button></div></div><div class="table-scroll"><table><thead><tr><th>Source Warehouse</th><th>Item Code</th><th>Qty</th><th>Serial No</th></tr></thead><tbody>${mergedRows.length ? mergedRows.map((group) => `<tr><td>${escapeHtml(group.sourceWarehouse || "-")}</td><td>${escapeHtml(group.itemCode || "-")}</td><td class="number-cell">${formatNumber(group.serials.length)}</td><td><div class="segregation-serial-list">${escapeHtml(group.serials.join("\n"))}</div></td></tr>`).join("") : `<tr><td class="segregation-empty" colspan="4">Hasil scan Found akan disiapkan di sini.</td></tr>`}</tbody></table></div></section></div>
           <div class="dialog-actions"><button class="button button-secondary" type="button" data-segregation-dialog-close="segregation-template-dialog">Tutup</button></div>
-        </dialog>`;
+        </dialog>
+        ${duplicateScan ? `<dialog class="feature-dialog segregation-duplicate-dialog" id="segregation-duplicate-dialog" aria-labelledby="segregation-duplicate-title" aria-describedby="segregation-duplicate-copy" data-scan-index="${segregationDuplicateScanIndex}">
+          <div class="dialog-head"><div class="dialog-title" id="segregation-duplicate-title">SN Duplikat</div><button class="dialog-close" type="button" data-segregation-dialog-close="segregation-duplicate-dialog" aria-label="Tutup">×</button></div>
+          <div class="dialog-copy" id="segregation-duplicate-copy">SN <strong>${escapeHtml(duplicateScan.serial)}</strong> sudah pernah masuk hasil scan.</div>
+          <div class="dialog-actions"><button class="button button-secondary" type="button" data-segregation-dialog-close="segregation-duplicate-dialog">Tutup</button><button class="button button-primary" id="view-segregation-duplicate-scan" type="button">Lihat SN yang sudah masuk</button></div>
+        </dialog>` : ""}`;
     }
 
     async function importSegregationFile(event) {
@@ -7909,6 +7924,7 @@
         if (!uploadUserId || authSession?.user?.id !== uploadUserId) throw new Error("Akun berubah saat file diproses. Unggahan dibatalkan.");
         segregationSource = { fileName: file.name, ...importedList };
         segregationScans = [];
+        segregationDuplicateScanIndex = null;
         segregationSelectedItemCode = "";
         await persistSegregationData();
         segregationStatus = { message: `Daftar berhasil dimuat: ${formatNumber(segregationSource.serials.size)} SN unik. Hasil scan sebelumnya telah dikosongkan.`, type: "success" };
@@ -7933,15 +7949,19 @@
         return;
       }
       const normalizedSerial = normalizeSerial(serial);
-      if (segregationScans.some((scan) => scan.normalizedSerial === normalizedSerial)) {
+      const duplicateIndex = segregationScans.findIndex((scan) => scan.normalizedSerial === normalizedSerial);
+      if (duplicateIndex >= 0) {
+        playScanBeep("duplicate");
+        segregationDuplicateScanIndex = duplicateIndex;
         segregationStatus = { message: `SN ${serial} sudah pernah diperiksa.`, type: "error" };
         render();
-        if (!cameraSegregationScanInProgress) document.getElementById("segregation-scan-input")?.focus();
+        document.getElementById("segregation-duplicate-dialog")?.showModal();
         return;
       }
       const sourceRecord = segregationSource.recordsBySerial.get(normalizedSerial);
       const found = Boolean(sourceRecord && (!segregationSelectedItemCode
         || sourceRecord.itemCode.trim().toLocaleUpperCase("id-ID") === segregationSelectedItemCode));
+      playScanBeep(found ? "match" : "not-found");
       segregationScans.push({
         serial,
         normalizedSerial,
@@ -8172,10 +8192,32 @@
 
     async function clearSegregationScans() {
       segregationScans = [];
+      segregationDuplicateScanIndex = null;
       segregationStatus = { message: "Hasil scan telah dikosongkan.", type: "success" };
       await persistSegregationData();
       render();
       document.getElementById("segregation-scan-input")?.focus();
+    }
+
+    function viewSegregationDuplicateScan() {
+      const dialog = document.getElementById("segregation-duplicate-dialog");
+      const scanIndex = Number(dialog?.dataset.scanIndex);
+      if (!Number.isInteger(scanIndex) || !segregationScans[scanIndex]) {
+        notify("Data SN duplikat tidak lagi tersedia.");
+        return;
+      }
+      dialog?.close();
+      segregationDuplicateScanIndex = null;
+      render();
+      requestAnimationFrame(() => {
+        const row = document.getElementById(`segregation-scan-row-${scanIndex}`);
+        if (!row) {
+          notify("Baris SN tidak ditemukan pada hasil scan.");
+          return;
+        }
+        row.scrollIntoView({ behavior: "smooth", block: "center" });
+        row.classList.add("segregation-scan-row-highlight");
+      });
     }
 
     function renderCompletedSessions() {
@@ -9775,6 +9817,7 @@
     function render() {
       if ((currentPage === "admin-users" && !isSuperAdmin())
         || (currentPage === "data-resources" && !canManageDataResources())) currentPage = "opname";
+      if (currentPage !== "segregation") segregationDuplicateScanIndex = null;
       if (authSession) {
         if (RESTORABLE_PAGES.has(currentPage)) {
           const nextUrl = new URL(location.href);
@@ -10722,6 +10765,9 @@
       document.querySelectorAll("[data-segregation-dialog-close]").forEach((button) => {
         button.addEventListener("click", () => document.getElementById(button.dataset.segregationDialogClose)?.close());
       });
+      const duplicateDialog = document.getElementById("segregation-duplicate-dialog");
+      duplicateDialog?.addEventListener("close", () => { segregationDuplicateScanIndex = null; });
+      document.getElementById("view-segregation-duplicate-scan")?.addEventListener("click", viewSegregationDuplicateScan);
       document.getElementById("segregation-camera-button")?.addEventListener("click", () => {
         const input = document.getElementById("segregation-scan-input");
         if (input) void openCameraScannerForInput(input);
