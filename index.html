@@ -464,9 +464,13 @@
     .segregation-scan-results .segregation-found-table th:nth-child(5),
     .segregation-scan-results .segregation-found-table td:nth-child(5) { text-align: center; }
     .segregation-scan-results .segregation-found-table th:first-child,
-    .segregation-scan-results .segregation-found-table td:first-child { padding-left: 4px; padding-right: 4px; width: 52px; }
+    .segregation-scan-results .segregation-found-table td:first-child { padding-left: 4px; padding-right: 4px; text-align: center; width: 52px; }
     .segregation-scan-results .segregation-row-delete { align-items: center; background: transparent; border: 1px solid transparent; border-radius: 4px; color: var(--red); display: inline-flex; font-size: 15px; height: 25px; justify-content: center; line-height: 1; padding: 0; width: 25px; }
     .segregation-scan-results .segregation-row-delete:hover { background: var(--red-soft); border-color: color-mix(in srgb, var(--red) 24%, var(--line)); }
+    .segregation-scan-results .segregation-found-table th:last-child,
+    .segregation-scan-results .segregation-found-table td:last-child,
+    .segregation-scan-results .segregation-not-found-table th:last-child,
+    .segregation-scan-results .segregation-not-found-table td:last-child { padding-left: 2px; padding-right: 2px; text-align: center; width: 30px; }
     @media (max-width: 900px) { .segregation-scan-results { grid-template-columns: minmax(0, 1fr); } }
     @media (max-width: 700px) { .segregation-source-top { grid-template-columns: minmax(0, 1fr); gap: 0; } }
     .segregation-preview-actions { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); margin-bottom: 16px; }
