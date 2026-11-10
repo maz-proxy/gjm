@@ -449,13 +449,16 @@
     .segregation-camera-button svg { fill: none; height: 17px; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; width: 17px; }
     .segregation-serial-list { font: 10px/1.5 ui-monospace, Consolas, monospace; max-width: 320px; overflow-wrap: anywhere; white-space: pre-wrap; }
     .segregation-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-    .segregation-scan-results { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 12px; }
+    .segregation-scan-results { display: grid; gap: 12px; grid-template-columns: minmax(0, 2.5fr) minmax(190px, .8fr); margin-bottom: 12px; }
     .segregation-scan-results .table-section { min-width: 0; }
     .segregation-scan-results .table-toolbar { min-height: 52px; padding: 9px 13px; }
     .segregation-scan-results .table-title { font-size: 12px; }
     .segregation-scan-results table { min-width: 560px; }
     .segregation-scan-results th,
     .segregation-scan-results td { white-space: nowrap; }
+    .segregation-scan-results .segregation-not-found-table { min-width: 0; table-layout: fixed; }
+    .segregation-scan-results .segregation-not-found-table th,
+    .segregation-scan-results .segregation-not-found-table td { text-align: center; }
     @media (max-width: 900px) { .segregation-scan-results { grid-template-columns: minmax(0, 1fr); } }
     @media (max-width: 700px) { .segregation-source-top { grid-template-columns: minmax(0, 1fr); gap: 0; } }
     .segregation-preview-actions { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); margin-bottom: 16px; }
@@ -7787,8 +7790,8 @@
         ? foundScans.slice().reverse().map((scan, index) => `<tr><td class="number-cell">${foundScans.length - index}</td><td>${escapeHtml(scan.brand || "-")}</td><td>${escapeHtml(scan.itemCode || "-")}</td><td>${escapeHtml(scan.itemName || "-")}</td><td class="quantity-cell">${escapeHtml(scan.serial)}</td><td>${escapeHtml(scan.sourceWarehouse || "-")}</td></tr>`).join("")
         : `<tr><td class="segregation-empty" colspan="6">Belum ada SN yang cocok.</td></tr>`;
       const renderNotFoundRows = () => notFoundScans.length
-        ? notFoundScans.slice().reverse().map((scan, index) => `<tr><td class="number-cell">${notFoundScans.length - index}</td><td>-</td><td>-</td><td class="quantity-cell">${escapeHtml(scan.serial)}</td></tr>`).join("")
-        : `<tr><td class="segregation-empty" colspan="4">Belum ada SN yang tidak ditemukan.</td></tr>`;
+        ? notFoundScans.slice().reverse().map((scan, index) => `<tr><td class="number-cell">${notFoundScans.length - index}</td><td class="quantity-cell">${escapeHtml(scan.serial)}</td></tr>`).join("")
+        : `<tr><td class="segregation-empty" colspan="2">Belum ada SN yang tidak ditemukan.</td></tr>`;
       const renderMergedRows = () => mergedRows.length
         ? mergedRows.map((group, index) => `<tr><td class="number-cell">${index + 1}</td><td>${escapeHtml(group.sourceWarehouse || "-")}</td><td>${escapeHtml(group.brand || "-")}</td><td>${escapeHtml(group.itemCode || "-")}</td><td>${escapeHtml(group.itemName || "-")}</td><td class="number-cell">${formatNumber(group.serials.length)}</td><td><div class="segregation-serial-list">${escapeHtml(group.serials.join("\n"))}</div></td></tr>`).join("")
         : `<tr><td class="segregation-empty" colspan="7">Data hasil scan akan dikelompokkan di sini.</td></tr>`;
@@ -7820,7 +7823,7 @@
         </section>
         <div class="segregation-scan-results">
           <section class="table-section"><div class="table-toolbar"><div class="table-title">Get SN · Hasil pencarian</div><div class="segregation-actions"><button class="button button-secondary" id="export-segregation-found-workbook" type="button" ${foundScans.length ? "" : "disabled"}>Unduh Excel</button><button class="button button-secondary" id="clear-segregation-scans" type="button" ${segregationScans.length ? "" : "disabled"}>Kosongkan hasil scan</button></div></div><div class="table-scroll"><table><thead><tr><th>No.</th><th>Brand</th><th>Item Code</th><th>Item Name</th><th>Serial</th><th>Warehouse Source</th></tr></thead><tbody>${renderFoundRows()}</tbody></table></div></section>
-          <section class="table-section"><div class="table-toolbar"><div class="table-title">SN not Found <span class="table-count">${formatNumber(notFoundScans.length)} tidak ditemukan</span></div><button class="button button-secondary" id="export-segregation-not-found-workbook" type="button" ${notFoundScans.length ? "" : "disabled"}>Unduh Excel</button></div><div class="table-scroll"><table><thead><tr><th>No.</th><th>Item Code/SKU</th><th>Item Name</th><th>Serial Number</th></tr></thead><tbody>${renderNotFoundRows()}</tbody></table></div></section>
+          <section class="table-section"><div class="table-toolbar"><div class="table-title">SN not Found <span class="table-count">${formatNumber(notFoundScans.length)} tidak ditemukan</span></div><button class="button button-secondary" id="export-segregation-not-found-workbook" type="button" ${notFoundScans.length ? "" : "disabled"}>Unduh Excel</button></div><div class="table-scroll"><table class="segregation-not-found-table"><thead><tr><th>No.</th><th>Serial Number</th></tr></thead><tbody>${renderNotFoundRows()}</tbody></table></div></section>
         </div>
         <section class="segregation-preview-actions" aria-label="Laporan Segregasi">
           <button class="button segregation-preview-button" id="open-segregation-merge" type="button"><strong>Data Merge &amp; Sort</strong><span>${formatNumber(mergedRows.length)} kelompok · ${formatNumber(foundScans.length)} SN Found</span></button>
@@ -8066,8 +8069,8 @@
           ])
         ]
         : [
-          ["No.", "Item Code/SKU", "Item Name", "Serial Number"],
-          ...scans.map((scan, index) => [index + 1, "-", "-", scan.serial])
+          ["No.", "Serial Number"],
+          ...scans.map((scan, index) => [index + 1, scan.serial])
         ];
       try {
         const workbook = XLSX.utils.book_new();
