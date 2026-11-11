@@ -360,7 +360,7 @@
     .archive-page-head h1 { color: #fff; font-size: clamp(25px, 2.6vw, 32px); letter-spacing: -.35px; }
     .archive-page-head .subtitle { color: #d5e9df; font-size: 12px; line-height: 1.6; margin-top: 6px; max-width: 720px; }
     .archive-page-head .category-chip { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.2); color: #fff; flex: 0 0 auto; position: relative; z-index: 1; }
-    .master-page-head { border-radius: 12px; box-shadow: 0 5px 14px rgba(23,76,62,.1); margin-bottom: 12px; min-height: 154px; padding: 16px 20px; }
+    .master-page-head { border-radius: 12px; box-shadow: 0 5px 14px rgba(23,76,62,.1); margin-bottom: 12px; min-height: 0; padding: 10px 16px; }
     .master-quantity-metrics { grid-template-columns: repeat(5, minmax(0, 1fr)); margin-top: 0; }
     .metric-grid.compact-metrics { gap: 8px; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); margin-bottom: 12px; }
     .compact-metrics .metric { border-radius: 9px; box-shadow: 0 2px 7px rgba(35,59,38,.025); min-height: 70px; padding: 10px 12px; }
@@ -373,6 +373,11 @@
     .result-session-strip { border-radius: 10px; box-shadow: 0 4px 10px rgba(29,74,50,.1); margin-bottom: 12px; min-height: 66px; padding: 11px 16px; }
     .recap-page-head { border-radius: 12px; box-shadow: 0 5px 14px rgba(23,76,62,.1); margin-bottom: 12px; min-height: 104px; padding: 16px 20px; }
     .master-page-head .archive-page-heading { align-self: flex-start; max-width: calc(100% - 215px); }
+    .master-page-head .archive-page-eyebrow { margin-bottom: 4px; }
+    .master-page-head .workspace-page-title { gap: 7px; }
+    .master-page-head .workspace-brand-icon { flex: 0 0 76px; height: 62px; width: 76px; }
+    .master-page-head .workspace-brand-icon img { height: 62px; max-width: 76px; width: 76px; }
+    .master-page-head .subtitle { line-height: 1.35; margin-top: 4px; }
     .master-page-head .head-buttons { display: contents; }
     .master-page-head .master-delete-button,
     .master-page-head .master-view-button,
@@ -1689,7 +1694,7 @@
     }
     .vef-timestamps { border-left: 3px solid var(--green); color: var(--muted); display: grid; font-size: 11px; gap: 3px; margin-top: 12px; padding: 4px 0 4px 10px; }
     .vef-timestamps strong { color: var(--ink); font-weight: 700; }
-    .master-page-head .vef-timestamps { border-left-color: #a7dfc7; color: #e2f3ec; }
+    .master-page-head .vef-timestamps { border-left-color: #a7dfc7; color: #e2f3ec; gap: 2px; margin-top: 6px; padding-bottom: 2px; padding-top: 2px; }
     .master-page-head .vef-timestamps strong { color: #fff; }
     .recorded-archive-page { display: grid; gap: 17px; }
     .recorded-archive-head { align-items: center; background: linear-gradient(112deg, #174b42 0%, #176b5b 62%, #398b73 100%); border: 1px solid rgba(255,255,255,.16); border-radius: 15px; box-shadow: 0 12px 28px rgba(23,76,62,.14); color: #fff; display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; min-height: 142px; overflow: hidden; padding: 20px 26px; position: relative; }
