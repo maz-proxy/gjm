@@ -4099,6 +4099,7 @@
     let lastRenderedWorkspaceId = "";
     const BACK_NAVIGATION_PAGES = ["dashboard", "workspaces", "products", "layouts", "opname", "recap", "history", "completed-sessions", "segregation", "about", "about-info"];
     let appBackNavigationInitialized = false;
+    let activeArchivePrintWindow = null;
     let selectedCompletedSessionId = "";
     let selectedRecordedBrand = "";
     let selectedRecordedSessionId = "";
@@ -4163,6 +4164,21 @@
       history.pushState(backState, "", location.href);
       history.pushState(backState, "", location.href);
       appBackNavigationInitialized = true;
+      const nativeAppPlugin = window.Capacitor?.Plugins?.App;
+      if (window.Capacitor?.getPlatform?.() === "android" && nativeAppPlugin?.addListener) {
+        nativeAppPlugin.addListener("backButton", ({ canGoBack }) => {
+          if (activeArchivePrintWindow && !activeArchivePrintWindow.closed) {
+            activeArchivePrintWindow.close();
+            activeArchivePrintWindow = null;
+            return;
+          }
+          if (canGoBack) {
+            history.back();
+          } else {
+            nativeAppPlugin.exitApp().catch((error) => console.error("Tidak dapat menutup aplikasi:", error));
+          }
+        }).catch((error) => console.error("Tidak dapat mengaktifkan tombol kembali Android:", error));
+      }
     }
     window.addEventListener("popstate", (event) => {
       if (!authSession || !event.state?.stockOpnameBackNavigation) return;
@@ -9410,11 +9426,16 @@
       return fileName || "Stock Opname";
     }
     function openArchivePrintWindow(title, subtitle, content, brandName = "", picNames = [], session = null) {
+      if (activeArchivePrintWindow && !activeArchivePrintWindow.closed) activeArchivePrintWindow.close();
       const printWindow = window.open("", "_blank");
       if (!printWindow) {
         notify("Jendela cetak diblokir browser. Izinkan pop-up untuk mencetak.");
         return null;
       }
+      activeArchivePrintWindow = printWindow;
+      printWindow.addEventListener("pagehide", () => {
+        if (activeArchivePrintWindow === printWindow) activeArchivePrintWindow = null;
+      }, { once: true });
       const styles = [...document.querySelectorAll("style")].map((style) => style.textContent || "").join("\n").replace(/<\/style/gi, "<\\/style");
       printWindow.addEventListener("load", async () => {
         const logoImages = [...printWindow.document.querySelectorAll(".print-document-heading img, .print-session-heading .workspace-brand-logo")];
@@ -9619,7 +9640,10 @@
       returnButton.className = "secondary";
       returnButton.type = "button";
       returnButton.textContent = currentLanguage === "en" ? "Back to app" : "Kembali ke aplikasi";
-      const returnToApp = () => printWindow.close();
+      const returnToApp = () => {
+        if (activeArchivePrintWindow === printWindow) activeArchivePrintWindow = null;
+        printWindow.close();
+      };
       printWindow.document.querySelector(".print-action-toolbar")?.prepend(returnButton);
       returnButton.addEventListener("click", returnToApp);
       printWindow.addEventListener("popstate", returnToApp);
