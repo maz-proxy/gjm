@@ -803,6 +803,7 @@
     .completed-session-brand, .completed-session-title { align-items: center; display: flex; gap: 9px; min-width: 0; }
     .completed-session-brand .workspace-brand-icon { flex: 0 0 34px; height: 34px; width: 34px; }
     .completed-session-brand .workspace-brand-icon img { height: 32px; width: 32px; }
+    .completed-session-period { font-weight: 700; }
     .completed-session-actions .head-buttons { justify-content: flex-end; }
     .completed-session-actions { white-space: nowrap; }
     .completed-session-title .workspace-brand-icon { flex: 0 0 54px; height: 54px; width: 54px; }
@@ -8604,7 +8605,7 @@
                 return `<tr>
                   <td>
                     <div class="completed-session-brand">${renderWorkspaceBrandIcon(sessionName)}<span data-user-content>${escapeHtml(sessionName)}</span></div>
-                    <div class="product-sku">${escapeHtml(archivedSessionMonth(session))} · ${escapeHtml(archivedSessionWeek(session))} · ${(session.workbooks || []).length} file sumber</div>
+                    <div class="product-sku completed-session-period">${escapeHtml(archivedSessionMonth(session))} · ${escapeHtml(archivedSessionWeek(session))}</div>
                   </td>
                   <td>${escapeHtml(sessionOwnerName(session))}</td>
                   <td><div class="product-name">PIC 1: ${escapeHtml(pics[0] || "Belum diisi")}</div><div class="product-name">PIC 2: ${escapeHtml(pics[1] || "Belum diisi")}</div></td>
