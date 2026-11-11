@@ -3684,6 +3684,13 @@
       "admin-users": "Account Manager"
     });
     const PAGE_NAME_IDS = new Map(Object.entries(PAGE_URL_NAMES).map(([id, name]) => [name.toLowerCase(), id]));
+    const LOGIN_PATH = "/Login";
+    const isLoginPath = () => location.pathname.replace(/\/+$/, "").toLowerCase() === LOGIN_PATH.toLowerCase();
+    const setLoginUrl = () => {
+      if (!isLoginPath() || location.pathname !== LOGIN_PATH || location.search || location.hash) {
+        history.replaceState(history.state, "", LOGIN_PATH);
+      }
+    };
     const pageFromUrl = () => {
       const requestedPage = new URLSearchParams(location.search).get("page");
       if (RESTORABLE_PAGES.has(requestedPage)) return requestedPage;
@@ -10089,6 +10096,11 @@
       if (authSession) {
         if (RESTORABLE_PAGES.has(currentPage)) {
           const nextUrl = new URL(location.href);
+          if (isLoginPath()) {
+            nextUrl.pathname = "/";
+            nextUrl.search = "";
+            nextUrl.hash = "";
+          }
           nextUrl.searchParams.set("page", PAGE_URL_NAMES[currentPage] || currentPage);
           const nextLocation = `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`;
           if (nextLocation !== `${location.pathname}${location.search}${location.hash}`) {
@@ -12733,6 +12745,7 @@
         document.body.classList.remove("auth-checking");
         const message = idleLogoutMessage;
         lockApp();
+        setLoginUrl();
         pendingPasswordChange = null;
         document.getElementById("login-form").hidden = false;
         document.getElementById("password-setup-form").hidden = true;
@@ -12745,6 +12758,7 @@
     });
     supabaseClient.auth.getSession().then(({ data, error }) => {
       if (error) {
+        if (!isPasswordSetupLink()) setLoginUrl();
         document.body.classList.remove("auth-checking");
         showAuthMessage(`Gagal memeriksa sesi login: ${error.message}`);
         return;
@@ -12753,9 +12767,11 @@
         if (isPasswordSetupLink()) showPasswordSetup(data.session);
         else startAuthenticatedSession(data.session);
       } else {
+        if (!isPasswordSetupLink()) setLoginUrl();
         document.body.classList.remove("auth-checking");
       }
     }).catch((error) => {
+      if (!isPasswordSetupLink()) setLoginUrl();
       document.body.classList.remove("auth-checking");
       showAuthMessage(`Gagal menghubungi layanan login: ${error.message}`);
     });
