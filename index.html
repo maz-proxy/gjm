@@ -429,6 +429,9 @@
     .scan-input:focus { background: #fff; border-color: #739b7c; box-shadow: 0 0 0 3px rgba(40, 93, 69, .1); }
     .segregation-source-actions { align-items: center; display: flex; flex-wrap: wrap; gap: 10px; }
     .segregation-source-name { color: var(--muted); font-size: 11px; }
+    .segregation-remove-file-button { align-items: center; border-color: var(--red); color: var(--red); display: inline-flex; height: 36px; justify-content: center; padding: 0; width: 36px; }
+    .segregation-remove-file-button svg { fill: none; height: 17px; stroke: currentColor; stroke-linecap: round; stroke-width: 2; width: 17px; }
+    .segregation-remove-file-button:hover { background: var(--red); color: #fff; }
     .segregation-status { border-radius: 7px; font-size: 12px; margin: 0 16px 14px; padding: 9px 11px; }
     .segregation-status:empty { display: none; }
     .segregation-status.success { background: rgba(36, 124, 76, .1); color: var(--green); }
@@ -4935,6 +4938,16 @@
         transaction.onabort = () => reject(transaction.error || new Error("Penyimpanan data Segregasi dibatalkan."));
       });
     }
+    async function removeSegregationCacheRecord(userId) {
+      const database = await openOfflineCacheDatabase();
+      return new Promise((resolve, reject) => {
+        const transaction = database.transaction(OFFLINE_CACHE_STORE_NAME, "readwrite");
+        transaction.objectStore(OFFLINE_CACHE_STORE_NAME).delete(`segregation:${userId}`);
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error || new Error("Data Segregasi gagal dihapus."));
+        transaction.onabort = () => reject(transaction.error || new Error("Penghapusan data Segregasi dibatalkan."));
+      });
+    }
     function createSegregationCacheRecord() {
       return {
         format: "stock-opname-segregation",
@@ -7993,7 +8006,7 @@
         <section class="page-head archive-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Tools mandiri</div><h1>Segregasi</h1><p class="subtitle">Unggah file VEF, scan SN yang akan dipindahkan, lalu unduh hasil dalam format Stock Entry Template.</p></div></section>
         <section class="table-section segregation-source-card">
           <div class="segregation-source-top">
-            <div class="table-toolbar"><div><div class="table-title">Data VEF sumber</div><span class="table-count">${sourceDescription}</span></div><div class="segregation-source-actions"><input class="upload-input" id="segregation-file-input" type="file" accept=".xlsx,.xls,.csv" aria-label="Pilih workbook Excel atau CSV VEF"><button class="button button-secondary" id="segregation-file-button" type="button" ${segregationFileLoading ? "disabled" : ""}>${segregationFileLoading ? "Memproses file..." : segregationSource ? "Ganti file VEF" : "Unggah file VEF"}</button></div></div>
+            <div class="table-toolbar"><div><div class="table-title">Data VEF sumber</div><span class="table-count">${sourceDescription}</span></div><div class="segregation-source-actions"><input class="upload-input" id="segregation-file-input" type="file" accept=".xlsx,.xls,.csv" aria-label="Pilih workbook Excel atau CSV VEF"><button class="button button-secondary" id="segregation-file-button" type="button" ${segregationFileLoading ? "disabled" : ""}>${segregationFileLoading ? "Memproses file..." : segregationSource ? "Ganti file VEF" : "Unggah file VEF"}</button>${segregationSource ? `<button class="button button-secondary segregation-remove-file-button" id="segregation-remove-file" type="button" title="${currentLanguage === "en" ? "Remove uploaded file and scan results" : "Hapus file yang diunggah dan seluruh hasil scan"}" aria-label="${currentLanguage === "en" ? "Remove uploaded file and scan results" : "Hapus file yang diunggah dan seluruh hasil scan"}" ${segregationFileLoading ? "disabled" : ""}><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg></button>` : ""}</div></div>
             ${segregationSource ? `<label class="segregation-scan-form segregation-filter-form" for="segregation-item-select"><strong>Cari Item/SKU</strong><span class="table-count">Ketik SKU atau pilih dari daftar. Kosongkan untuk semua item.</span><input class="segregation-item-select" id="segregation-item-select" type="text" list="segregation-item-options" value="${escapeHtml(selectedItemLabel)}" placeholder="Cari SKU atau nama item..." autocomplete="off"><datalist id="segregation-item-options">${itemChoices.map(([code, item]) => `<option value="${escapeHtml(`${item.itemCode}${item.itemName ? ` · ${item.itemName}` : ""}`)}" label="${escapeHtml(code)}"></option>`).join("")}</datalist></label>` : ""}
           </div>
           <div class="segregation-status ${escapeHtml(segregationStatus.type)}" role="status" aria-live="polite">${escapeHtml(segregationStatus.message)}</div>
@@ -8117,6 +8130,48 @@
         segregationFileLoading = false;
         render();
         document.getElementById("segregation-scan-input")?.focus();
+      }
+    }
+
+    async function removeSegregationFile() {
+      if (!segregationSource || segregationFileLoading) return;
+      const confirmed = await showConfirmDialog(
+        currentLanguage === "en"
+          ? "Remove the uploaded VEF file and all scan results for this source?"
+          : "Hapus file VEF yang diunggah beserta seluruh hasil scan dari file ini?",
+        {
+          title: currentLanguage === "en" ? "Remove segregation file" : "Hapus file segregasi",
+          subtitle: currentLanguage === "en" ? "This only affects your saved segregation data." : "Hanya menghapus data segregasi tersimpan di akun ini.",
+          confirmLabel: currentLanguage === "en" ? "Remove file" : "Hapus file",
+          destructive: true
+        }
+      );
+      if (!confirmed || !segregationSource) return;
+      const userId = authSession?.user?.id;
+      if (!userId) {
+        notify("Sesi akun tidak tersedia. File Segregasi tidak dapat dihapus.");
+        return;
+      }
+      try {
+        const removal = segregationPersistenceQueue.catch(() => {}).then(() => {
+          if (authSession?.user?.id !== userId) throw new Error("Akun berubah sebelum data Segregasi dihapus.");
+          return removeSegregationCacheRecord(userId);
+        });
+        segregationPersistenceQueue = removal;
+        await removal;
+        if (authSession?.user?.id !== userId) return;
+        segregationSource = null;
+        segregationScans = [];
+        segregationSelectedItemCode = "";
+        segregationDuplicateScanIndex = null;
+        segregationStatus = {
+          message: currentLanguage === "en" ? "Uploaded VEF file and its scan results were removed." : "File VEF dan seluruh hasil scan berhasil dihapus.",
+          type: "success"
+        };
+        render();
+      } catch (error) {
+        console.error("File Segregasi gagal dihapus:", error);
+        notify(`File Segregasi gagal dihapus: ${error instanceof Error ? error.message : "kesalahan tidak diketahui"}`);
       }
     }
 
@@ -11087,6 +11142,7 @@
       document.getElementById("admin-refresh-storage")?.addEventListener("click", () => void loadAdminStorage());
       document.getElementById("segregation-file-button")?.addEventListener("click", () => document.getElementById("segregation-file-input")?.click());
       document.getElementById("segregation-file-input")?.addEventListener("change", (event) => void importSegregationFile(event));
+      document.getElementById("segregation-remove-file")?.addEventListener("click", () => void removeSegregationFile());
       document.getElementById("segregation-item-select")?.addEventListener("change", setSegregationItemFilter);
       document.getElementById("segregation-scan-form")?.addEventListener("submit", submitSegregationScan);
       document.getElementById("open-segregation-merge")?.addEventListener("click", () => document.getElementById("segregation-merge-dialog")?.showModal());
