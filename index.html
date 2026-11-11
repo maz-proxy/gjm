@@ -71,8 +71,8 @@
     .nav-label { color: #b3cbb7; font-size: 10px; font-weight: 800; letter-spacing: 1.2px; margin: 40px 12px 10px; text-transform: uppercase; }
     .nav-list + .nav-label { margin-top: 24px; }
     .nav-list { display: grid; gap: 6px; }
-    .workspace-nav-list { gap: 3px; }
-    .workspace-nav-list .nav-item { min-height: 40px; }
+    .compact-sidebar-nav { gap: 3px; }
+    .compact-sidebar-nav .nav-item { min-height: 40px; }
     .nav-item { align-items: center; background: transparent; border: 0; border-radius: 9px; color: #e0ebe0; display: flex; gap: 12px; min-height: 44px; padding: 0 12px; text-align: left; text-decoration: none; transition: background .16s ease, color .16s ease, transform .16s ease; width: 100%; }
     .nav-item[hidden], .nav-list[hidden] { display: none !important; }
     .nav-item:hover { background: rgba(255,255,255,.1); color: #fff; transform: translateX(2px); }
@@ -2730,7 +2730,7 @@
         <button class="sidebar-toggle" type="button" aria-label="Ciutkan menu" aria-expanded="true" title="Ciutkan menu">«</button>
       </div>
       <div class="nav-label">Workspace</div>
-      <nav class="nav-list workspace-nav-list" aria-label="Navigasi utama">
+      <nav class="nav-list compact-sidebar-nav" aria-label="Navigasi utama">
         <a class="nav-item" href="?page=Dashboard" data-page="dashboard"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 5.5a1.5 1.5 0 0 1 1.5-1.5h13A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5v-13Z"/><path d="M7 16.5h2v-3H7v3Zm4 0h2v-7h-2v7Zm4 0h2v-5h-2v5Zm-8-6 3-2 3 1 4-3"/></svg></span><span>Dashboard</span></a>
         <a class="nav-item" href="?page=Schedule" data-page="workspaces"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 5h14v14H5z"/><path d="M8 3v4m8-4v4M5 9h14"/><path d="M8 13h2l1.5 2 2-3 1.5 2H17"/><circle cx="8" cy="16.5" r=".7"/><circle cx="16" cy="12.5" r=".7"/></svg></span><span>Schedule</span></a>
         <a class="nav-item" href="?page=Master%20VEF" data-page="products"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m12 3 8 4.2v9.6L12 21l-8-4.2V7.2L12 3Z"/><path d="m4.5 7.5 7.5 4 7.5-4M12 12v8.5"/><path d="M8 5.1 16 9m-6 5v4m3-5v5m3-7v4"/></svg></span><span>Master VEF</span></a>
@@ -2739,7 +2739,7 @@
         <a class="nav-item" href="?page=Recap" data-page="recap"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 4.5h8l4 4V20H6z"/><path d="M14 4.5v4h4m-9 7h2v2H9zm4-3h2v5h-2zm4-2h2v7h-2z"/><path d="M4 8v11a2 2 0 0 0 2 2"/></svg></span><span>Recap</span></a>
       </nav>
       <div class="nav-label">Arsip</div>
-      <nav class="nav-list" aria-label="Arsip stock opname">
+      <nav class="nav-list compact-sidebar-nav" aria-label="Arsip stock opname">
         <a class="nav-item" href="?page=History%20Changes" data-page="history"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 7.5A8 8 0 1 1 4 13"/><path d="M5 3.5v4h4M12 7v5l3.5 2"/><circle cx="12" cy="12" r="1"/></svg></span><span>History Changes</span></a>
         <a class="nav-item" href="?page=Session%20SO" data-page="completed-sessions"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m4 8 8-4 8 4v10l-8 4-8-4V8Z"/><path d="m4.5 8.5 7.5 4 7.5-4M12 12.5V21"/><path d="m9 7 6 3m-3 4v3m-2-2 2 2 4-4"/></svg></span><span>Session SO</span></a>
         <a class="nav-item" href="?page=Segregasi" data-page="segregation"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5M8 10.5h5m-2.5-2.5v5"/></svg></span><span>Segregation</span></a>
@@ -2749,7 +2749,7 @@
         <a class="nav-item" href="?page=About" data-page="about-info"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m12 3 2.4 4.1 4.8-.5-.5 4.8 4.1 2.6-4.1 2.5.5 4.9-4.8-.6L12 25l-2.4-4.2-4.8.6.5-4.9-4.1-2.5 4.1-2.6-.5-4.8 4.8.5L12 3Z" transform="translate(0 -2)"/><path d="M12 10v5m0-8h.01"/></svg></span><span>About</span></a>
       </nav>
       <div class="nav-label" id="admin-nav-label" hidden>Owner</div>
-      <nav class="nav-list" id="admin-navigation" aria-label="Administrasi" hidden>
+      <nav class="nav-list compact-sidebar-nav" id="admin-navigation" aria-label="Administrasi" hidden>
         <a class="nav-item" href="?page=Data%20Resource" data-page="data-resources" id="data-resources-nav" hidden><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 4h10l4 4v12H5z"/><path d="M15 4v4h4M8 12h8m-8 3h5"/><path d="M8 9h.01m3 0h.01m3 0h.01"/><path d="M3 7v13a2 2 0 0 0 2 2"/></svg></span><span>Data Resource</span></a>
         <a class="nav-item" href="?page=Account%20Manager" data-page="admin-users" id="admin-users-nav" hidden><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3"/><path d="M3 20v-1a6 6 0 0 1 12 0v1H3Zm12-10 5 5m-2-7 2 2-5 5-2-2 5-5Z"/><circle cx="17.5" cy="17.5" r="1"/></svg></span><span>Account Manager</span></a>
       </nav>
