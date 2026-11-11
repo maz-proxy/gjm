@@ -8607,7 +8607,7 @@
                     <div class="product-sku">${escapeHtml(archivedSessionMonth(session))} · ${escapeHtml(archivedSessionWeek(session))} · ${(session.workbooks || []).length} file sumber</div>
                   </td>
                   <td>${escapeHtml(sessionOwnerName(session))}</td>
-                  <td><div class="product-name">PIC 1: ${escapeHtml(pics[0] || "Belum diisi")}</div><div class="product-sku">PIC 2: ${escapeHtml(pics[1] || "Belum diisi")}</div></td>
+                  <td><div class="product-name">PIC 1: ${escapeHtml(pics[0] || "Belum diisi")}</div><div class="product-name">PIC 2: ${escapeHtml(pics[1] || "Belum diisi")}</div></td>
                   <td><div class="product-name">${escapeHtml(formatDate(session.finishedAt, { day: "numeric", month: "long", year: "numeric" }))}</div><div class="product-sku">${escapeHtml(new Intl.DateTimeFormat(currentLanguage === "en" ? "en-US" : "id-ID", { hour: "2-digit", minute: "2-digit" }).format(new Date(session.finishedAt)))}</div></td>
                   <td class="completed-session-actions"><div class="head-buttons">${session.snapshot ? `<button class="button button-secondary" type="button" data-open-completed-session="${escapeHtml(session.id)}">Buka sesi</button>` : `<span class="product-sku">Data detail tidak tersedia</span>`}${canDelete ? `<button class="button button-danger" type="button" data-delete-completed-session="${escapeHtml(session.id)}">Hapus</button>` : ""}</div></td>
                 </tr>`;
