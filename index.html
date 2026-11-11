@@ -8284,6 +8284,7 @@
       const normalizedSerial = normalizeSerial(serial);
       const duplicateIndex = segregationScans.findIndex((scan) => scan.normalizedSerial === normalizedSerial);
       if (duplicateIndex >= 0) {
+        vibrateForEntry();
         playScanBeep("duplicate");
         segregationDuplicateScanIndex = duplicateIndex;
         segregationStatus = { message: `SN ${serial} sudah pernah diperiksa.`, type: "error" };
@@ -8294,6 +8295,7 @@
       const sourceRecord = segregationSource.recordsBySerial.get(normalizedSerial);
       const found = Boolean(sourceRecord && (!segregationSelectedItemCode
         || sourceRecord.itemCode.trim().toLocaleUpperCase("id-ID") === segregationSelectedItemCode));
+      vibrateForEntry();
       playScanBeep(found ? "match" : "not-found");
       segregationScans.push({
         serial,
