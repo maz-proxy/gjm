@@ -3768,8 +3768,11 @@
       "admin-users": "Account Manager"
     });
     const PAGE_NAME_IDS = new Map(Object.entries(PAGE_URL_NAMES).map(([id, name]) => [name.toLowerCase(), id]));
-    const LOGIN_PATH = "/Login";
-    const isLoginPath = () => location.pathname.replace(/\/+$/, "").toLowerCase() === LOGIN_PATH.toLowerCase();
+    const LOGIN_PATH = "/";
+    const isLoginPath = () => {
+      const pathname = location.pathname.replace(/\/+$/, "") || "/";
+      return pathname.toLowerCase() === LOGIN_PATH || pathname.toLowerCase() === "/login";
+    };
     const setLoginUrl = () => {
       if (!isLoginPath() || location.pathname !== LOGIN_PATH || location.search || location.hash) {
         history.replaceState(history.state, "", LOGIN_PATH);
