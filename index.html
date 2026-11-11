@@ -6377,6 +6377,7 @@
           if (readError) throw readError;
           if (!row) throw new Error("Data workspace bersama tidak ditemukan saat menggabungkan perubahan.");
           const previousActiveData = stableSerialize(activeWorkspace()?.data || {});
+          const previousNonChatState = serializeStateWithoutChat(state);
           const previousChatState = stableSerialize({ chatMessages: state.chatMessages, chatArchiveMessages: state.chatArchiveMessages, chatReadAt: state.chatReadAt });
           const remoteState = normalizeSharedState(row.data);
           const localState = normalizeSharedState(JSON.parse(stableSerialize(state)));
@@ -6387,6 +6388,7 @@
           archiveExpiredChatMessages();
           showIncomingChatPreview(incomingMessages);
           applyLocalWorkspacePreference(state, savingUserId);
+          reconcileMergedCountEntries();
           persistLocalState();
           pendingState = normalizeSharedState(JSON.parse(stableSerialize(serializeSharedState(state))));
           remoteUpdatedAt = row.updated_at;
@@ -6394,7 +6396,10 @@
           lastSyncedState = stableSerialize(remoteState);
           const nonChatStateChanged = stableSerialize(activeWorkspace()?.data || {}) !== previousActiveData;
           const chatStateChanged = serializeChatState(state) !== previousChatState;
-          if (nonChatStateChanged) renderPreservingActiveInput();
+          if (nonChatStateChanged) {
+            if (isCountEntryOnlyChange(previousNonChatState, serializeStateWithoutChat(state))) refreshCountEntryView();
+            else renderPreservingActiveInput();
+          }
           if (chatStateChanged) {
             refreshChatWidget();
           }
@@ -6405,6 +6410,8 @@
         if (authSession?.user?.id !== savingUserId || !sharedStateReady) return;
         if (error?.code === "42501" || /row-level security|permission denied/i.test(error?.message || "")) {
           try {
+            const previousActiveData = stableSerialize(activeWorkspace()?.data || {});
+            const previousNonChatState = serializeStateWithoutChat(state);
             const { data: row, error: readError } = await readSharedState();
             if (readError) throw readError;
             if (!row) throw new Error("Data workspace bersama tidak ditemukan setelah penolakan perubahan.");
@@ -6414,7 +6421,10 @@
             lastSyncedState = stableSerialize(state);
             applyLocalWorkspacePreference(state, savingUserId);
             persistLocalState();
-            renderPreservingActiveInput();
+            if (stableSerialize(activeWorkspace()?.data || {}) !== previousActiveData) {
+              if (isCountEntryOnlyChange(previousNonChatState, serializeStateWithoutChat(state))) refreshCountEntryView();
+              else renderPreservingActiveInput();
+            }
           } catch (reloadError) {
             console.error("Gagal memuat ulang data setelah akses sesi ditolak:", reloadError);
             notify(`Perubahan sesi ditolak. Gagal memuat data terbaru: ${reloadError.message || "kesalahan tidak diketahui"}`);
@@ -6464,12 +6474,16 @@
           const archivedExpiredMessages = archiveExpiredChatMessages();
           showIncomingChatPreview(incomingMessages);
           applyLocalWorkspacePreference(state, refreshingUserId);
+          reconcileMergedCountEntries();
           remoteUpdatedAt = row.updated_at;
           remoteVersion = row.version;
           lastSyncedState = stableSerialize(remoteState);
           persistLocalState();
           if (stableSerialize(state) !== previousState) {
-            if (serializeStateWithoutChat(state) !== previousNonChatState) renderPreservingActiveInput();
+            if (serializeStateWithoutChat(state) !== previousNonChatState) {
+              if (isCountEntryOnlyChange(previousNonChatState, serializeStateWithoutChat(state))) refreshCountEntryView();
+              else renderPreservingActiveInput();
+            }
             if (serializeChatState(state) !== previousChatState) refreshChatWidget();
           }
           if (archivedExpiredMessages || stableSerialize(serializeSharedState(state)) !== lastSyncedState) {
@@ -6645,6 +6659,12 @@
     const scannedFor = (productId) => state.scanEvents.filter((event) => event.status === "match" && event.productId === productId).length;
     const manualQuantityFor = (productId) => state.manualEntries.filter((entry) => entry.productId === productId).reduce((sum, entry) => sum + Number(entry.quantity || 0), 0);
     const syncManualBoxTotals = () => state.products.forEach((product) => { product.box = manualQuantityFor(product.id); });
+    function reconcileMergedCountEntries() {
+      state.scanEvents.sort((a, b) => String(a.scannedAt || "").localeCompare(String(b.scannedAt || "")) || String(a.id).localeCompare(String(b.id)));
+      reclassifyScanEvents(state.scanEvents, state.serialMaster, state.countMode);
+      state.products.forEach((product) => { product.count = scannedFor(product.id); });
+      syncManualBoxTotals();
+    }
     const reconciledQty = (product) => Number(product.count || 0) + Number(product.box || 0) + Number(product.pj || 0);
     const inboundQuantityFor = (productId, entries = state.inboundEntries) => (entries || [])
       .filter((entry) => entry.productId === productId)
@@ -7405,6 +7425,27 @@
       const { chatMessages, chatArchiveMessages, chatReadAt, ...rest } = source;
       return stableSerialize(rest);
     }
+    function isCountEntryOnlyChange(previousState, currentState) {
+      if (!previousState || !currentState || previousState === currentState) return false;
+      const stripCountEntries = (source) => {
+        const copy = JSON.parse(source);
+        const stripWorkspaceData = (data) => {
+          if (!data || typeof data !== "object") return;
+          delete data.scanEvents;
+          delete data.manualEntries;
+          data.historyEvents = (data.historyEvents || []).filter((event) =>
+            !["Scan ditambahkan", "Input manual ditambahkan", "Scan dihapus", "Input manual dihapus"].includes(event.type));
+          data.products = (data.products || []).map((product) => {
+            const { count, box, ...master } = product;
+            return master;
+          });
+        };
+        stripWorkspaceData(copy);
+        copy.workspaces?.forEach((workspace) => stripWorkspaceData(workspace.data));
+        return stableSerialize(copy);
+      };
+      return stripCountEntries(previousState) === stripCountEntries(currentState);
+    }
     function serializeChatState(source) {
       return stableSerialize({
         chatMessages: source.chatMessages,
@@ -7710,7 +7751,7 @@
           quantityStatus.className === "different" ? "quantity-over" : "",
           modeScans.some((scan) => scan.status === "duplicate" || scan.status === "not-found") ? "duplicate-warning" : ""
         ].filter(Boolean).join(" ");
-        const scanRows = visibleScans.length ? visibleScans.slice().reverse().map((scan) => `<div class="layout-scan-row">${renderScanDetail(scan)}${canUseRack ? `<button class="layout-delete" type="button" data-delete-scan="${escapeHtml(scan.id)}" aria-label="Hapus scan ${escapeHtml(scan.serial)}" title="Hapus scan">×</button>` : ""}</div>`).join("") : `<div class="layout-record-empty">${searchQuery ? "Tidak ada scan yang cocok dengan pencarian." : "Belum ada scan."}</div>`;
+        const scanRows = visibleScans.length ? visibleScans.slice().reverse().map((scan) => `<div class="layout-scan-row" data-layout-scan-row="${escapeHtml(scan.id)}">${renderScanDetail(scan)}${canUseRack ? `<button class="layout-delete" type="button" data-delete-scan="${escapeHtml(scan.id)}" aria-label="Hapus scan ${escapeHtml(scan.serial)}" title="Hapus scan">×</button>` : ""}</div>`).join("") : `<div class="layout-record-empty">${searchQuery ? "Tidak ada scan yang cocok dengan pencarian." : "Belum ada scan."}</div>`;
         const manualRows = visibleManualEntries.length
           ? renderManualEntryCards(visibleManualEntries, { products: state.products, canDelete: canUseRack, latestEntryId: lastManualEntryId })
           : `<div class="layout-record-empty">${searchQuery ? "Tidak ada input manual yang cocok dengan pencarian." : "Belum ada input manual."}</div>`;
@@ -10021,7 +10062,7 @@
       if (currentPage !== "layouts") closeLayoutDetails();
       lastRenderedPage = currentPage;
       lastRenderedWorkspaceId = state.currentWorkspaceId;
-      main.innerHTML = currentPage === "dashboard" ? renderDashboard() : currentPage === "recorded-archive" ? renderRecordedSessionPage() : currentPage === "opname" ? renderOpname() : currentPage === "layouts" ? renderLayouts() : currentPage === "workspaces" ? renderWorkspaceSchedule() : currentPage === "products" ? renderProducts() : currentPage === "recap" ? renderRecap() : currentPage === "about-info" ? renderAboutWorkspace() : currentPage === "about" ? renderAbout() : currentPage === "admin-users" ? renderAdminUsers() : currentPage === "data-resources" ? renderDataResources() : currentPage === "completed-session-detail" ? renderCompletedSessionView() : currentPage === "completed-sessions" ? renderCompletedSessions() : currentPage === "segregation" ? renderSegregation() : renderHistory();
+      main.innerHTML = renderCurrentPageMarkup();
       if (preserveLayoutScanner) {
         if (currentPage === "layouts") {
           document.querySelector(".layout-page-head")?.after(cameraDialog);
@@ -10036,6 +10077,122 @@
       if (window.matchMedia("(max-width: 650px)").matches && !document.documentElement.classList.contains("web-camera-scanner-active")) {
         document.querySelector(".nav-item.active")?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
       }
+    }
+
+    function renderCurrentPageMarkup() {
+      return currentPage === "dashboard" ? renderDashboard() : currentPage === "recorded-archive" ? renderRecordedSessionPage() : currentPage === "opname" ? renderOpname() : currentPage === "layouts" ? renderLayouts() : currentPage === "workspaces" ? renderWorkspaceSchedule() : currentPage === "products" ? renderProducts() : currentPage === "recap" ? renderRecap() : currentPage === "about-info" ? renderAboutWorkspace() : currentPage === "about" ? renderAbout() : currentPage === "admin-users" ? renderAdminUsers() : currentPage === "data-resources" ? renderDataResources() : currentPage === "completed-session-detail" ? renderCompletedSessionView() : currentPage === "completed-sessions" ? renderCompletedSessions() : currentPage === "segregation" ? renderSegregation() : renderHistory();
+    }
+
+    function domMorphKey(node) {
+      if (node.nodeType !== Node.ELEMENT_NODE) return "";
+      for (const attribute of ["id", "data-layout-card", "data-layout-form", "data-manual-form", "data-manual-product-entry", "data-layout-scan-row", "data-manual-entry", "data-delete-scan", "data-delete-manual"]) {
+        if (node.hasAttribute(attribute)) return `${attribute}:${node.getAttribute(attribute)}`;
+      }
+      return "";
+    }
+
+    function domMorphCompatible(current, next) {
+      return current.nodeType === next.nodeType
+        && (current.nodeType !== Node.ELEMENT_NODE || current.tagName === next.tagName);
+    }
+
+    function morphDomChildren(currentParent, nextParent) {
+      const available = [...currentParent.childNodes];
+      const used = new Set();
+      let cursor = currentParent.firstChild;
+      for (const nextChild of nextParent.childNodes) {
+        const key = domMorphKey(nextChild);
+        let currentChild = key
+          ? available.find((node) => !used.has(node) && domMorphKey(node) === key && domMorphCompatible(node, nextChild))
+          : null;
+        if (!currentChild && !key) {
+          currentChild = available.find((node) =>
+            !used.has(node) && !domMorphKey(node) && domMorphCompatible(node, nextChild));
+        }
+        if (currentChild) {
+          used.add(currentChild);
+          if (currentChild !== cursor) currentParent.insertBefore(currentChild, cursor);
+          morphDomNode(currentChild, nextChild);
+          cursor = currentChild.nextSibling;
+        } else {
+          const inserted = nextChild.cloneNode(true);
+          currentParent.insertBefore(inserted, cursor);
+          cursor = inserted.nextSibling;
+        }
+      }
+      for (const node of available) {
+        if (!used.has(node) && node.parentNode === currentParent) node.remove();
+      }
+    }
+
+    function morphDomNode(current, next) {
+      if (!domMorphCompatible(current, next)) {
+        current.replaceWith(next.cloneNode(true));
+        return;
+      }
+      if (current instanceof HTMLElement
+        && current.matches(".manual-product-options")
+        && current.childElementCount) return;
+      if (current.nodeType === Node.TEXT_NODE) {
+        if (current.nodeValue !== next.nodeValue) current.nodeValue = next.nodeValue;
+        return;
+      }
+      const preserveInputValue = current === document.activeElement
+        && current instanceof HTMLInputElement;
+      for (const attribute of [...current.attributes]) {
+        if (next.hasAttribute(attribute.name)
+          || attribute.name === "data-entry-action-bound"
+          || attribute.name.startsWith("data-")
+          || (preserveInputValue && attribute.name === "value")
+          || (current instanceof HTMLDetailsElement && attribute.name === "open")) continue;
+        current.removeAttribute(attribute.name);
+      }
+      for (const attribute of [...next.attributes]) {
+        if (preserveInputValue && attribute.name === "value") continue;
+        if (!current.hasAttribute(attribute.name) || current.getAttribute(attribute.name) !== attribute.value) {
+          current.setAttribute(attribute.name, attribute.value);
+        }
+      }
+      if (current instanceof HTMLInputElement) {
+        if (!preserveInputValue) current.value = next.value;
+        if (current.type === "checkbox" || current.type === "radio") current.checked = next.checked;
+        return;
+      }
+      if (current instanceof HTMLTextAreaElement) {
+        if (current !== document.activeElement) current.value = next.value;
+        return;
+      }
+      if (current instanceof HTMLSelectElement) {
+        morphDomChildren(current, next);
+        if (current !== document.activeElement) current.value = next.value;
+        return;
+      }
+      morphDomChildren(current, next);
+    }
+
+    function refreshCountEntryView() {
+      const main = document.getElementById("main-content");
+      const retainedChatWidget = main.querySelector("#top-date-chat");
+      const template = document.createElement("template");
+      template.innerHTML = renderCurrentPageMarkup();
+      const renderedChatWidget = template.content.querySelector("#top-date-chat");
+      if (retainedChatWidget && renderedChatWidget) renderedChatWidget.replaceWith(retainedChatWidget);
+      morphDomChildren(main, template.content);
+      bindLayoutEntryActions(main);
+      translateDocument(main);
+    }
+
+    function bindLayoutEntryActions(root = document) {
+      root.querySelectorAll("[data-delete-scan]").forEach((button) => {
+        if (button.dataset.entryActionBound) return;
+        button.dataset.entryActionBound = "true";
+        button.addEventListener("click", () => deleteScanEvent(button.dataset.deleteScan));
+      });
+      root.querySelectorAll("[data-delete-manual]").forEach((button) => {
+        if (button.dataset.entryActionBound) return;
+        button.dataset.entryActionBound = "true";
+        button.addEventListener("click", () => deleteManualEntry(button.dataset.deleteManual));
+      });
     }
 
     function closeLayoutDetails() {
@@ -11338,8 +11495,7 @@
         input.addEventListener("input", () => { input.size = Math.min(40, Math.max(10, input.value.length + 1)); });
         bindAuditedInput(input, () => updateLayoutNumber(input), "Nama Rack", (previous, current) => `${current || previous || "Rack"}: nama Rack ${previous || "belum diisi"} → ${current || "dihapus"}.`);
       });
-      document.querySelectorAll("[data-delete-scan]").forEach((button) => button.addEventListener("click", () => deleteScanEvent(button.dataset.deleteScan)));
-      document.querySelectorAll("[data-delete-manual]").forEach((button) => button.addEventListener("click", () => deleteManualEntry(button.dataset.deleteManual)));
+      bindLayoutEntryActions();
       document.querySelectorAll("[data-qty-id]").forEach((input) => bindAuditedInput(input, () => updateQuantity(input), "Jumlah item", (previous, current) => {
         const field = input.dataset.qtyField === "count" ? "SO" : input.dataset.qtyField.toUpperCase();
         const product = state.products.find((item) => item.id === input.dataset.qtyId);
@@ -11607,8 +11763,9 @@
       const soAfter = productBefore ? scannedFor(productBefore.id) : soBefore;
       recordActivity("Scan ditambahkan", `${serial} ditambahkan ke ${rackLabel(layout)}${scan.sku ? ` · ${scan.sku}` : ""} (${scan.status === "match" ? "cocok" : scan.status === "duplicate" ? "duplikat" : scan.status === "non-laptop" ? "bukan laptop" : "tidak ditemukan"}).${productBefore && soBefore !== soAfter ? ` SO ${scan.sku}: ${soBefore} → ${soAfter}.` : ""}`);
       persist();
-      render();
-      document.querySelector(`[data-layout-form="${CSS.escape(layout)}"] .layout-input`)?.focus();
+      input.value = "";
+      refreshCountEntryView();
+      document.querySelector(`[data-layout-form="${CSS.escape(layout)}"] .layout-input`)?.focus({ preventScroll: true });
       if (scan.status === "not-found") notify(`SN ${serial} tidak sesuai dengan Master VEF.`);
       else if (scan.status === "duplicate") notify(`SN ${serial} terdeteksi duplikat.`);
     }
@@ -11659,7 +11816,10 @@
       syncManualBoxTotals();
       recordActivity("Input manual ditambahkan", `${product.sku} · ${product.name} sebanyak ${quantity} dicatat manual di ${rackLabel(layout)}.`);
       persist();
-      render();
+      productInput.value = "";
+      delete productInput.dataset.selectedProductId;
+      quantityInput.value = "";
+      refreshCountEntryView();
       const latestEntry = document.querySelector(`[data-manual-entry="${CSS.escape(entry.id)}"]`);
       const latestProduct = latestEntry?.closest(".manual-item-details");
       if (latestProduct) {
@@ -11680,7 +11840,7 @@
       syncManualBoxTotals();
       recordActivity("Input manual dihapus", `${removed.sku} sebanyak ${removed.quantity} dihapus dari ${rackLabel(removed.layout)}.`);
       persist();
-      render();
+      refreshCountEntryView();
       notify(`Input manual ${removed.sku} di ${rackLabel(removed.layout)} dihapus.`);
     }
 
@@ -11697,7 +11857,7 @@
       const soAfter = productBefore ? scannedFor(productBefore.id) : soBefore;
       recordActivity("Scan dihapus", `${removed.serial} dihapus dari ${rackLabel(removed.layout)}${removed.sku ? ` · ${removed.sku}` : ""}.${productBefore && soBefore !== soAfter ? ` SO ${removed.sku}: ${soBefore} → ${soAfter}.` : ""}`);
       persist();
-      render();
+      refreshCountEntryView();
       notify(`Scan ${removed.serial} di ${removed.layout} dihapus.`);
     }
 
