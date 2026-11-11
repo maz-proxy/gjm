@@ -807,6 +807,8 @@
     .completed-session-brand-row { align-items: center; display: flex; gap: 12px; justify-content: space-between; }
     .completed-session-date-actions { align-items: center; display: flex; gap: 16px; justify-content: space-between; min-width: 430px; }
     .completed-session-date-actions > .head-buttons { flex: 0 0 auto; justify-content: flex-end; }
+    .completed-sessions-table td { padding: 7px 12px; }
+    .completed-sessions-table .completed-session-date-actions .button { font-size: 11px; min-height: 32px; padding: 0 11px; }
     .completed-session-title .workspace-brand-icon { flex: 0 0 54px; height: 54px; width: 54px; }
     .completed-session-title .workspace-brand-icon img { height: 52px; width: 52px; }
     .recorded-archive-title { align-items: center; display: flex; gap: 10px; }
@@ -8597,7 +8599,7 @@
             <div class="table-title">Sesi sebelumnya <span class="table-count">${completed.length} sesi selesai · terbaru di atas</span></div>
           </div>
           <div class="table-scroll">
-            <table>
+            <table class="completed-sessions-table">
               <thead><tr><th>Nama sesi</th><th>Pemilik</th><th>Nama PIC</th><th>Tanggal sesi</th></tr></thead>
               <tbody>${completed.length ? completed.map((session) => {
                 const pics = session.picNames || state.workspaces.find((workspace) => workspace.id === session.workspaceId)?.picNames || [];
