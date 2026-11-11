@@ -4263,18 +4263,22 @@
       appBackNavigationInitialized = true;
       const nativeAppPlugin = window.Capacitor?.Plugins?.App;
       if (window.Capacitor?.getPlatform?.() === "android" && nativeAppPlugin?.addListener) {
-        nativeAppPlugin.addListener("backButton", ({ canGoBack }) => {
-          if (activeArchivePrintWindow && !activeArchivePrintWindow.closed) {
-            activeArchivePrintWindow.close();
-            activeArchivePrintWindow = null;
-            return;
-          }
-          if (canGoBack) {
-            history.back();
-          } else {
-            nativeAppPlugin.exitApp().catch((error) => console.error("Tidak dapat menutup aplikasi:", error));
-          }
-        }).catch((error) => console.error("Tidak dapat mengaktifkan tombol kembali Android:", error));
+        try {
+          Promise.resolve(nativeAppPlugin.addListener("backButton", ({ canGoBack }) => {
+            if (activeArchivePrintWindow && !activeArchivePrintWindow.closed) {
+              activeArchivePrintWindow.close();
+              activeArchivePrintWindow = null;
+              return;
+            }
+            if (canGoBack) {
+              history.back();
+            } else {
+              Promise.resolve(nativeAppPlugin.exitApp()).catch((error) => console.error("Tidak dapat menutup aplikasi:", error));
+            }
+          })).catch((error) => console.error("Tidak dapat mengaktifkan tombol kembali Android:", error));
+        } catch (error) {
+          console.error("Tidak dapat mengaktifkan tombol kembali Android:", error);
+        }
       }
     }
     window.addEventListener("popstate", (event) => {
