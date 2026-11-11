@@ -2724,7 +2724,7 @@
       <nav class="nav-list" aria-label="Arsip stock opname">
         <a class="nav-item" href="?page=History%20Changes" data-page="history"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 7.5A8 8 0 1 1 4 13"/><path d="M5 3.5v4h4M12 7v5l3.5 2"/><circle cx="12" cy="12" r="1"/></svg></span><span>History Changes</span></a>
         <a class="nav-item" href="?page=Session%20SO" data-page="completed-sessions"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m4 8 8-4 8 4v10l-8 4-8-4V8Z"/><path d="m4.5 8.5 7.5 4 7.5-4M12 12.5V21"/><path d="m9 7 6 3m-3 4v3m-2-2 2 2 4-4"/></svg></span><span>Session SO</span></a>
-        <a class="nav-item" href="?page=Segregasi" data-page="segregation"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5M8 10.5h5m-2.5-2.5v5"/></svg></span><span>Segregasi</span></a>
+        <a class="nav-item" href="?page=Segregasi" data-page="segregation"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5M8 10.5h5m-2.5-2.5v5"/></svg></span><span>Segregation</span></a>
       </nav>
       <nav class="nav-list" aria-label="Bantuan" style="margin-top: 18px">
         <a class="nav-item" href="?page=Guide" data-page="about"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m4 6 5-2 6 2 5-2v14l-5 2-6-2-5 2V6Z"/><path d="m9 4v14m6-12v14"/><path d="m11 12 2-2 2 2m-2-2v4"/></svg></span><span>Guide</span></a>
@@ -3680,7 +3680,7 @@
       recap: "Recap",
       history: "History Changes",
       "completed-sessions": "Session SO",
-      segregation: "Segregasi",
+      segregation: "Segregation",
       about: "Guide",
       "about-info": "About",
       "data-resources": "Data Resource",
@@ -7507,7 +7507,7 @@
         history: "History Changes",
         "completed-sessions": "Session SO",
         "completed-session-detail": "Session SO",
-        segregation: "Segregasi",
+        segregation: "Segregation",
         about: "Guide",
         "about-info": "About",
         "recorded-archive": "Stock Opname Recorded",
@@ -8013,7 +8013,7 @@
         ? null
         : segregationScans[segregationDuplicateScanIndex];
       return `${navMarkup()}
-        <section class="page-head archive-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Tools mandiri</div><h1>Segregasi</h1><p class="subtitle">Unggah file VEF, scan SN yang akan dipindahkan, lalu unduh hasil dalam format Stock Entry Template.</p></div></section>
+        <section class="page-head archive-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Tools mandiri</div><h1>Segregation</h1><p class="subtitle">Unggah file VEF, scan SN yang akan dipindahkan, lalu unduh hasil dalam format Stock Entry Template.</p></div></section>
         <section class="table-section segregation-source-card">
           <div class="segregation-source-layout">
             <div class="segregation-source-top">
@@ -8032,7 +8032,7 @@
           <div class="metric"><div class="metric-top">Total Item/SKU</div><div class="metric-value">${formatNumber(totalSkus)}</div></div>
           <div class="metric"><div class="metric-top">Total SN</div><div class="metric-value">${formatNumber(totalSourceSerials)}</div></div>
         </section>` : ""}
-        <section class="metric-grid compact-metrics" aria-label="Ringkasan hasil segregasi">
+        <section class="metric-grid compact-metrics" aria-label="Ringkasan hasil Segregation">
           <div class="metric"><div class="metric-top">Total SN diperiksa</div><div class="metric-value">${formatNumber(segregationScans.length)}</div></div>
           <div class="metric"><div class="metric-top">SN Found</div><div class="metric-value">${formatNumber(foundScans.length)}</div></div>
           <div class="metric"><div class="metric-top">SN not Found</div><div class="metric-value">${formatNumber(notFoundScans.length)}</div></div>
@@ -8041,7 +8041,7 @@
           <section class="table-section"><div class="table-toolbar"><div class="table-title">Get SN · Hasil pencarian</div><div class="segregation-actions"><button class="button button-secondary" id="export-segregation-found-workbook" type="button" ${foundScans.length ? "" : "disabled"}>Unduh Excel</button><button class="button button-secondary" id="clear-segregation-scans" type="button" ${segregationScans.length ? "" : "disabled"}>Kosongkan hasil scan</button></div></div><div class="table-scroll"><table class="segregation-found-table"><thead><tr><th>No.</th><th>Brand</th><th>Item Code</th><th>Item Name</th><th>Serial Number</th><th>Warehouse Source</th><th></th></tr></thead><tbody>${renderFoundRows()}</tbody></table></div></section>
           <section class="table-section"><div class="table-toolbar"><div class="table-title">SN not Found <span class="table-count">${formatNumber(notFoundScans.length)} tidak ditemukan</span></div><button class="button button-secondary" id="export-segregation-not-found-workbook" type="button" ${notFoundScans.length ? "" : "disabled"}>Unduh Excel</button></div><div class="table-scroll"><table class="segregation-not-found-table"><thead><tr><th>No.</th><th>Serial Number</th><th></th></tr></thead><tbody>${renderNotFoundRows()}</tbody></table></div></section>
         </div>
-        <section class="segregation-preview-actions" aria-label="Laporan Segregasi">
+        <section class="segregation-preview-actions" aria-label="Laporan Segregation">
           <button class="button segregation-preview-button" id="open-segregation-merge" type="button"><strong>Data Merge &amp; Sort</strong><span>${formatNumber(mergedRows.length)} kelompok · ${formatNumber(foundScans.length)} SN Found</span></button>
           <button class="button segregation-preview-button" id="open-segregation-template" type="button"><strong>Stock Entry Template</strong><span>${formatNumber(mergedRows.length)} baris siap diekspor</span></button>
         </section>
@@ -10342,7 +10342,7 @@
           ${guide("Langkah 3", "▦", "Scan Layout", "Buat rack dan isi label rack (angka atau keterangan teks) serta target scan. Pindai serial number pada rack yang sesuai atau gunakan tombol kamera untuk membaca barcode. Hasil cocok, duplikat, bukan laptop, atau tidak ditemukan tampil pada catatan scan; serial cocok juga menampilkan item code, nama item, serial number, dan waktu saat rinciannya dibuka. Rack dengan SN duplikat diberi tanda peringatan. Untuk barang tanpa serial, cari item dari VEF, pilih hasil yang benar, masukkan quantity, lalu Catat Manual. Catatan manual terbaru akan ditandai dan difokuskan.", "layouts", "Scan Layout")}
           ${guide("Langkah 4", "⌗", "Result SO", "Lembar ini menghitung SCAN + MANUAL + PJ dan membandingkan hasilnya dengan VEF. Untuk PJ, klik quantity pada item, lalu isi tanggal/waktu dan nomor invoice. Input hanya diterima jika waktu invoice lebih baru daripada timestamp file VEF yang tercatat di Master VEF. Tekan SO SELESAI setelah pemeriksaan selesai untuk mengunci dan mengarsipkan hasil.", "opname", "Result SO")}
           ${guide("Langkah 5", "↕", "Rekap Selisih", "Tinjau hanya item yang belum sesuai; kolom selisih membandingkan jumlah SCAN + MANUAL + PJ dengan quantity VEF. Tambahkan catatan untuk menjelaskan kekurangan atau kelebihan. Periksa kembali data sebelum sesi diselesaikan karena hasil yang diarsipkan menjadi rekaman baca-saja.", "recap", "Rekap Selisih")}
-          ${guide("Tool", "⌕", "Segregasi", "Unggah file Excel/CSV VEF, scan SN dengan scanner fisik, lalu periksa ringkasan Data Merge & Sort. Unduh workbook yang berisi Get SN, Data Merge & Sort, dan Stock Entry Template (kolom Warehouse Target dikosongkan), atau ekspor CSV template. Halaman ini mandiri dan tidak mengubah sesi stock opname.", "segregation", "Segregasi")}
+          ${guide("Tool", "⌕", "Segregation", "Unggah file Excel/CSV VEF, scan SN dengan scanner fisik, lalu periksa ringkasan Data Merge & Sort. Unduh workbook yang berisi Get SN, Data Merge & Sort, dan Stock Entry Template (kolom Warehouse Target dikosongkan), atau ekspor CSV template. Halaman ini mandiri dan tidak mengubah sesi stock opname.", "segregation", "Segregation")}
           ${guide("Arsip", "▣", "Sesi Stock Opname", "Gunakan Buka sesi untuk meninjau workbook sumber, rincian setiap rack, input manual, seluruh item Result SO, daftar invoice PJ, dan Rekap Selisih. Ekspor XLSX berisi worksheet arsip beserta detail input, sedangkan Print menyusun laporan untuk dicetak atau disimpan sebagai PDF. Arsip lama tetap tersedia walaupun kartu jadwal sudah direset.", "completed-sessions", "Sesi Stock Opname")}
           ${guide("Aktivitas", "◷", "Riwayat Perubahan", "Lihat aktivitas berdasarkan waktu dan sesi, seperti mulai/selesai opname, scan ditambahkan, input manual, dan perubahan catatan atau quantity. Gunakan riwayat untuk membantu audit dan menelusuri perubahan data.", "history", "Riwayat Perubahan")}
           ${canManageDataResources() ? guide("Admin", "▧", "Data Resource", "Tambahkan, ubah, atau hapus pilihan Nama Brand dan Nama PIC, serta unggah atau ganti APK yang tersedia untuk diunduh dari halaman login. Daftar dan informasi APK dibagikan kepada seluruh akun.", "data-resources", "Data Resource") : ""}
