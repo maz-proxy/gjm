@@ -803,8 +803,8 @@
     .completed-session-brand, .completed-session-title { align-items: center; display: flex; gap: 9px; min-width: 0; }
     .completed-session-brand .workspace-brand-icon { flex: 0 0 34px; height: 34px; width: 34px; }
     .completed-session-brand .workspace-brand-icon img { height: 32px; width: 32px; }
-    .completed-session-row-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-    .completed-session-row-actions .button { font-size: 10px; min-height: 30px; padding: 0 9px; }
+    .completed-session-actions .head-buttons { justify-content: flex-end; }
+    .completed-session-actions { white-space: nowrap; }
     .completed-session-title .workspace-brand-icon { flex: 0 0 54px; height: 54px; width: 54px; }
     .completed-session-title .workspace-brand-icon img { height: 52px; width: 52px; }
     .recorded-archive-title { align-items: center; display: flex; gap: 10px; }
@@ -8596,7 +8596,7 @@
           </div>
           <div class="table-scroll">
             <table>
-              <thead><tr><th>Nama sesi</th><th>Pemilik</th><th>Nama PIC</th><th>Tanggal sesi</th></tr></thead>
+              <thead><tr><th>Nama sesi</th><th>Pemilik</th><th>Nama PIC</th><th>Tanggal sesi</th><th>Aksi</th></tr></thead>
               <tbody>${completed.length ? completed.map((session) => {
                 const pics = session.picNames || state.workspaces.find((workspace) => workspace.id === session.workspaceId)?.picNames || [];
                 const canDelete = canDeleteCompletedSession();
@@ -8605,16 +8605,13 @@
                   <td>
                     <div class="completed-session-brand">${renderWorkspaceBrandIcon(sessionName)}<span data-user-content>${escapeHtml(sessionName)}</span></div>
                     <div class="product-sku">${escapeHtml(archivedSessionMonth(session))} · ${escapeHtml(archivedSessionWeek(session))} · ${(session.workbooks || []).length} file sumber</div>
-                    <div class="completed-session-row-actions">
-                      ${session.snapshot ? `<button class="button button-secondary" type="button" data-open-completed-session="${escapeHtml(session.id)}">Buka sesi</button>` : `<span class="product-sku">Data detail tidak tersedia</span>`}
-                      ${canDelete ? `<button class="button button-danger" type="button" data-delete-completed-session="${escapeHtml(session.id)}">Hapus</button>` : ""}
-                    </div>
                   </td>
                   <td>${escapeHtml(sessionOwnerName(session))}</td>
                   <td><div class="product-name">PIC 1: ${escapeHtml(pics[0] || "Belum diisi")}</div><div class="product-sku">PIC 2: ${escapeHtml(pics[1] || "Belum diisi")}</div></td>
                   <td><div class="product-name">${escapeHtml(formatDate(session.finishedAt, { day: "numeric", month: "long", year: "numeric" }))}</div><div class="product-sku">${escapeHtml(new Intl.DateTimeFormat(currentLanguage === "en" ? "en-US" : "id-ID", { hour: "2-digit", minute: "2-digit" }).format(new Date(session.finishedAt)))}</div></td>
+                  <td class="completed-session-actions"><div class="head-buttons">${session.snapshot ? `<button class="button button-secondary" type="button" data-open-completed-session="${escapeHtml(session.id)}">Buka sesi</button>` : `<span class="product-sku">Data detail tidak tersedia</span>`}${canDelete ? `<button class="button button-danger" type="button" data-delete-completed-session="${escapeHtml(session.id)}">Hapus</button>` : ""}</div></td>
                 </tr>`;
-              }).join("") : `<tr><td class="empty-row" colspan="4">Belum ada sesi opname yang selesai.</td></tr>`}</tbody>
+              }).join("") : `<tr><td class="empty-row" colspan="5">Belum ada sesi opname yang selesai.</td></tr>`}</tbody>
             </table>
           </div>
         </section>`;
