@@ -803,6 +803,8 @@
     .completed-session-brand, .completed-session-title { align-items: center; display: flex; gap: 9px; min-width: 0; }
     .completed-session-brand .workspace-brand-icon { flex: 0 0 34px; height: 34px; width: 34px; }
     .completed-session-brand .workspace-brand-icon img { height: 32px; width: 32px; }
+    .completed-session-row-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .completed-session-row-actions .button { font-size: 10px; min-height: 30px; padding: 0 9px; }
     .completed-session-title .workspace-brand-icon { flex: 0 0 54px; height: 54px; width: 54px; }
     .completed-session-title .workspace-brand-icon img { height: 52px; width: 52px; }
     .recorded-archive-title { align-items: center; display: flex; gap: 10px; }
@@ -8579,7 +8581,43 @@
 
     function renderCompletedSessions() {
       const completed = [...state.sessions].sort((a, b) => new Date(b.finishedAt) - new Date(a.finishedAt));
-      return `${navMarkup()}<section class="page-head archive-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Arsip stock opname</div><h1>Sesi Stock Opname</h1><p class="subtitle">Arsip sesi yang sudah selesai, termasuk file VEF asli, nama akun, PIC, detail Scan Layout, input manual, Result SO, invoice PJ, dan Rekap Selisih.</p></div><span class="category-chip">${completed.length} sesi selesai</span></section><section class="table-section"><div class="table-toolbar"><div class="table-title">Sesi sebelumnya <span class="table-count">${completed.length} sesi selesai · terbaru di atas</span></div></div><div class="table-scroll"><table><thead><tr><th>Nama sesi</th><th>Pemilik</th><th>Nama PIC</th><th>Tanggal sesi</th><th>Item dihitung</th><th>Unit VEF dihitung</th><th>SN cocok</th><th>Item sesuai</th><th>Selisih</th><th>SN bukan laptop</th><th>SN bermasalah</th><th>Data</th></tr></thead><tbody>${completed.length ? completed.map((session) => { const pics = session.picNames || state.workspaces.find((workspace) => workspace.id === session.workspaceId)?.picNames || []; const canDelete = canDeleteCompletedSession(); const countMode = session.countMode === "all" ? "all" : "laptops"; const sessionName = session.workspaceName || "Sesi opname"; return `<tr><td><div class="completed-session-brand">${renderWorkspaceBrandIcon(sessionName)}<span data-user-content>${escapeHtml(sessionName)}</span></div><div class="product-sku">${escapeHtml(archivedSessionMonth(session))} · ${escapeHtml(archivedSessionWeek(session))} · ${(session.workbooks || []).length} file sumber</div></td><td>${escapeHtml(sessionOwnerName(session))}</td><td><div class="product-name">PIC 1: ${escapeHtml(pics[0] || "Belum diisi")}</div><div class="product-sku">PIC 2: ${escapeHtml(pics[1] || "Belum diisi")}</div></td><td><div class="product-name">${escapeHtml(formatDate(session.finishedAt, { day: "numeric", month: "long", year: "numeric" }))}</div><div class="product-sku">${escapeHtml(new Intl.DateTimeFormat(currentLanguage === "en" ? "en-US" : "id-ID", { hour: "2-digit", minute: "2-digit" }).format(new Date(session.finishedAt)))}</div></td><td>${session.total} SKU <div class="product-sku">${countModeLabel(countMode)}</div></td><td>${formatNumber(session.expected)}</td><td>${formatNumber(session.scanned)}</td><td><span class="variance zero">${session.matching}</span></td><td>${session.shortages + session.surpluses}</td><td>${formatNumber(session.nonLaptopScans || 0)}</td><td><span class="row-status ${session.issues ? "shortage" : "match"}">${session.issues}</span></td><td><div class="head-buttons">${session.snapshot ? `<button class="button button-secondary" type="button" data-open-completed-session="${escapeHtml(session.id)}">Buka sesi</button>` : `<span class="product-sku">Data detail tidak tersedia</span>`}${canDelete ? `<button class="button button-danger" type="button" data-delete-completed-session="${escapeHtml(session.id)}">Hapus</button>` : ""}</div></td></tr>`; }).join("") : `<tr><td class="empty-row" colspan="12">Belum ada sesi opname yang selesai.</td></tr>`}</tbody></table></div></section>`;
+      return `${navMarkup()}
+        <section class="page-head archive-page-head">
+          <div class="archive-page-heading">
+            <div class="archive-page-eyebrow">Arsip stock opname</div>
+            <h1>Sesi Stock Opname</h1>
+            <p class="subtitle">Arsip sesi yang sudah selesai, termasuk file VEF asli, nama akun, PIC, detail Scan Layout, input manual, Result SO, invoice PJ, dan Rekap Selisih.</p>
+          </div>
+          <span class="category-chip">${completed.length} sesi selesai</span>
+        </section>
+        <section class="table-section">
+          <div class="table-toolbar">
+            <div class="table-title">Sesi sebelumnya <span class="table-count">${completed.length} sesi selesai · terbaru di atas</span></div>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead><tr><th>Nama sesi</th><th>Pemilik</th><th>Nama PIC</th><th>Tanggal sesi</th></tr></thead>
+              <tbody>${completed.length ? completed.map((session) => {
+                const pics = session.picNames || state.workspaces.find((workspace) => workspace.id === session.workspaceId)?.picNames || [];
+                const canDelete = canDeleteCompletedSession();
+                const sessionName = session.workspaceName || "Sesi opname";
+                return `<tr>
+                  <td>
+                    <div class="completed-session-brand">${renderWorkspaceBrandIcon(sessionName)}<span data-user-content>${escapeHtml(sessionName)}</span></div>
+                    <div class="product-sku">${escapeHtml(archivedSessionMonth(session))} · ${escapeHtml(archivedSessionWeek(session))} · ${(session.workbooks || []).length} file sumber</div>
+                    <div class="completed-session-row-actions">
+                      ${session.snapshot ? `<button class="button button-secondary" type="button" data-open-completed-session="${escapeHtml(session.id)}">Buka sesi</button>` : `<span class="product-sku">Data detail tidak tersedia</span>`}
+                      ${canDelete ? `<button class="button button-danger" type="button" data-delete-completed-session="${escapeHtml(session.id)}">Hapus</button>` : ""}
+                    </div>
+                  </td>
+                  <td>${escapeHtml(sessionOwnerName(session))}</td>
+                  <td><div class="product-name">PIC 1: ${escapeHtml(pics[0] || "Belum diisi")}</div><div class="product-sku">PIC 2: ${escapeHtml(pics[1] || "Belum diisi")}</div></td>
+                  <td><div class="product-name">${escapeHtml(formatDate(session.finishedAt, { day: "numeric", month: "long", year: "numeric" }))}</div><div class="product-sku">${escapeHtml(new Intl.DateTimeFormat(currentLanguage === "en" ? "en-US" : "id-ID", { hour: "2-digit", minute: "2-digit" }).format(new Date(session.finishedAt)))}</div></td>
+                </tr>`;
+              }).join("") : `<tr><td class="empty-row" colspan="4">Belum ada sesi opname yang selesai.</td></tr>`}</tbody>
+            </table>
+          </div>
+        </section>`;
     }
 
     function renderCompletedSessionView() {
