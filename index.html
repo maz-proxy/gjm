@@ -1705,7 +1705,8 @@
     .recorded-archive-head { align-items: center; background: linear-gradient(112deg, #174b42 0%, #176b5b 62%, #398b73 100%); border: 1px solid rgba(255,255,255,.16); border-radius: 15px; box-shadow: 0 12px 28px rgba(23,76,62,.14); color: #fff; display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; min-height: 142px; overflow: hidden; padding: 20px 26px; position: relative; }
     .recorded-archive-head::after { background: rgba(205,236,222,.11); border: 1px solid rgba(255,255,255,.12); border-radius: 50%; content: ""; height: 240px; pointer-events: none; position: absolute; right: 19%; top: -172px; width: 240px; }
     .recorded-archive-heading { min-width: 200px; }
-    .recorded-archive-heading, .recorded-pic-list, .recorded-archive-head > .button { position: relative; z-index: 1; }
+    .recorded-archive-heading, .recorded-pic-list, .recorded-view-actions { position: relative; z-index: 1; }
+    .recorded-view-actions { flex: 1 1 100%; width: 100%; }
     .recorded-archive-heading h1 { color: #fff; font-size: clamp(22px, 2.2vw, 28px); letter-spacing: -.35px; margin: 0; }
     .recorded-archive-heading p { color: #d5e9df; font-size: 11px; line-height: 1.6; margin: 5px 0 0; }
     .recorded-archive-meta { color: #d5e9df; display: flex; flex-wrap: wrap; font-size: 10px; gap: 6px 14px; margin-top: 10px; }
@@ -1749,8 +1750,11 @@
       .recorded-archive-summary .print-session-summary-metric:nth-child(n+3),
       .recorded-archive-summary .print-session-summary-progress { border-top: 1px solid rgba(255,255,255,.2); }
     }
-    .recorded-archive-head > .button-secondary { background: #fff; border-color: rgba(255,255,255,.75); color: #285c4b; }
-    .recorded-archive-head > .button-secondary:hover { background: #eaf5ef; border-color: #fff; }
+    .recorded-archive-head .recorded-view-tabs .button-secondary { background: #fff; border-color: rgba(255,255,255,.75); color: #285c4b; }
+    .recorded-archive-head .recorded-view-tabs .button-secondary:not(.active):hover { background: #eaf5ef; border-color: #fff; }
+    .recorded-archive-head .recorded-view-tabs .active { background: var(--green); border-color: var(--green); color: #fff; }
+    .recorded-archive-head #print-recorded-sheet { background: #fff; border-color: rgba(255,255,255,.75); color: #285c4b; justify-self: end; }
+    .recorded-archive-head #print-recorded-sheet:hover { background: #eaf5ef; border-color: #fff; }
     .recorded-view-actions { align-items: center; display: grid; gap: 12px; grid-template-columns: auto minmax(180px, 1fr) auto; margin: 0; }
     .recorded-view-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
     .recorded-view-tabs .active { background: var(--green); border-color: var(--green); color: #fff; }
@@ -1776,8 +1780,11 @@
       .recorded-view-actions > #print-recorded-sheet { font-size: 10px; min-height: 34px; padding: 0 9px; }
     }
     html[data-theme="dark"] .recorded-archive-head { background: linear-gradient(115deg, #14372f, #1a5243 68%, #28654d); box-shadow: 0 3px 7px rgba(0,0,0,.2), 0 14px 30px rgba(0,0,0,.3), inset 0 1px rgba(255,255,255,.1); }
-    html[data-theme="dark"] .recorded-archive-head > .button-secondary { background: #1a2826; border-color: #344744; color: #e5efed; }
-    html[data-theme="dark"] .recorded-archive-head > .button-secondary:hover { background: #243a34; border-color: #536b62; }
+    html[data-theme="dark"] .recorded-archive-head .recorded-view-tabs .button-secondary { background: #1a2826; border-color: #344744; color: #e5efed; }
+    html[data-theme="dark"] .recorded-archive-head .recorded-view-tabs .button-secondary:not(.active):hover { background: #243a34; border-color: #536b62; }
+    html[data-theme="dark"] .recorded-archive-head .recorded-view-tabs .active { background: var(--green); border-color: var(--green); color: #fff; }
+    html[data-theme="dark"] .recorded-archive-head #print-recorded-sheet { background: #1a2826; border-color: #344744; color: #e5efed; }
+    html[data-theme="dark"] .recorded-archive-head #print-recorded-sheet:hover { background: #243a34; border-color: #536b62; }
     @media print {
       #print-session-root { display: grid !important; padding: 0; }
       #print-session-root .completed-export-actions,
@@ -1864,8 +1871,11 @@
     html[data-accent="burgundy"] .recorded-archive-head { background: linear-gradient(115deg, #4e192e 0%, #76233f 62%, #9a3b5e 100%); box-shadow: 0 12px 28px var(--accent-shadow); }
     html[data-accent="burgundy"] .recorded-archive-head::after { background: rgba(244,223,231,.08); }
     html[data-accent="burgundy"] .recorded-pic-label { color: #f0cbd8; }
-    html[data-accent="burgundy"] .recorded-archive-head > .button-secondary { background: #f4dfe7; border-color: #e6c5d0; color: #531a30; }
-    html[data-accent="burgundy"] .recorded-archive-head > .button-secondary:hover { background: #fbf0f3; border-color: #d9a1b4; }
+    html[data-accent="burgundy"] .recorded-archive-head .recorded-view-tabs .button-secondary { background: #f4dfe7; border-color: #e6c5d0; color: #531a30; }
+    html[data-accent="burgundy"] .recorded-archive-head .recorded-view-tabs .button-secondary:not(.active):hover { background: #fbf0f3; border-color: #d9a1b4; }
+    html[data-accent="burgundy"] .recorded-archive-head .recorded-view-tabs .active { background: #842b4b; border-color: #842b4b; color: #fff; }
+    html[data-accent="burgundy"] .recorded-archive-head #print-recorded-sheet { background: #f4dfe7; border-color: #e6c5d0; color: #531a30; }
+    html[data-accent="burgundy"] .recorded-archive-head #print-recorded-sheet:hover { background: #fbf0f3; border-color: #d9a1b4; }
     html[data-accent="burgundy"] .auth-card { background: #fff5f8; border-color: #e7cbd4; box-shadow: 0 22px 70px rgba(78,25,46,.2); }
     html[data-accent="burgundy"] .auth-input { background: #fffafb; border-color: #e4cbd3; }
     html[data-accent="burgundy"] .auth-input:focus { background: #fff; border-color: #b96a84; box-shadow: 0 0 0 3px rgba(132,43,75,.12); }
@@ -1951,8 +1961,11 @@
     html[data-accent="burgundy"][data-theme="dark"] .recorded-archive-head { background: linear-gradient(115deg, #321421 0%, #572238 62%, #76304d 100%); box-shadow: 0 3px 7px rgba(0,0,0,.2), 0 14px 30px rgba(0,0,0,.3), inset 0 1px rgba(255,255,255,.1); }
     html[data-accent="burgundy"][data-theme="dark"] .recorded-archive-head::after { background: rgba(244,223,231,.06); }
     html[data-accent="burgundy"][data-theme="dark"] .recorded-pic-label { color: #ecc3d0; }
-    html[data-accent="burgundy"][data-theme="dark"] .recorded-archive-head > .button-secondary { background: #482b37; border-color: #634452; color: #f4dce4; }
-    html[data-accent="burgundy"][data-theme="dark"] .recorded-archive-head > .button-secondary:hover { background: #572f40; border-color: #9a5369; }
+    html[data-accent="burgundy"][data-theme="dark"] .recorded-archive-head .recorded-view-tabs .button-secondary { background: #482b37; border-color: #634452; color: #f4dce4; }
+    html[data-accent="burgundy"][data-theme="dark"] .recorded-archive-head .recorded-view-tabs .button-secondary:not(.active):hover { background: #572f40; border-color: #9a5369; }
+    html[data-accent="burgundy"][data-theme="dark"] .recorded-archive-head .recorded-view-tabs .active { background: #9a3b5e; border-color: #9a3b5e; color: #fff; }
+    html[data-accent="burgundy"][data-theme="dark"] .recorded-archive-head #print-recorded-sheet { background: #482b37; border-color: #634452; color: #f4dce4; }
+    html[data-accent="burgundy"][data-theme="dark"] .recorded-archive-head #print-recorded-sheet:hover { background: #572f40; border-color: #9a5369; }
     html[data-accent="burgundy"][data-theme="dark"] .logout-confirm-dialog { background: #302127; border-color: #634452; box-shadow: 0 24px 70px rgba(0,0,0,.52); }
     html[data-accent="burgundy"][data-theme="dark"] .logout-confirm-dialog::backdrop { background: rgba(16, 8, 12, .74); }
     html[data-accent="burgundy"] .logout-confirm-dialog .dialog-head { background: linear-gradient(115deg, #f4dfe7, #fff8fa 82%); border-bottom-color: #ead1d9; border-top-color: #842b4b; }
@@ -9669,17 +9682,16 @@
             </div>
           </div>
           <div class="recorded-archive-summary-wrap">${renderArchivePrintSummary(session, "print-session-summary recorded-archive-summary")}</div>
-          <button class="button button-secondary" type="button" data-recorded-return>← Kembali ke Dashboard</button>
-        </section>
-        <section class="recorded-view-actions" aria-label="Lembar arsip dan cetak">
-          <div class="recorded-view-tabs" role="tablist" aria-label="Lembar kerja arsip">
-            <button class="button button-secondary${selectedRecordedSheet === "master" ? " active" : ""}" type="button" role="tab" aria-selected="${selectedRecordedSheet === "master"}" data-recorded-sheet="master">Master VEF</button>
-            <button class="button button-secondary${selectedRecordedSheet === "layouts" ? " active" : ""}" type="button" role="tab" aria-selected="${selectedRecordedSheet === "layouts"}" data-recorded-sheet="layouts">Scan &amp; Manual</button>
-            <button class="button button-secondary${selectedRecordedSheet === "result" ? " active" : ""}" type="button" role="tab" aria-selected="${selectedRecordedSheet === "result"}" data-recorded-sheet="result">Reconciliation</button>
-            <button class="button button-secondary${selectedRecordedSheet === "recap" ? " active" : ""}" type="button" role="tab" aria-selected="${selectedRecordedSheet === "recap"}" data-recorded-sheet="recap">Recap</button>
-          </div>
-          <div class="recorded-archive-search"><div class="search-wrap"><span class="search-icon" aria-hidden="true">⌕</span><input class="search-input" id="recorded-archive-search" type="search" placeholder="Cari item code, nama, atau SN" value="${escapeHtml(recordedArchiveSearchTerm)}" aria-label="Cari item code, nama, atau Serial Number dalam lembar arsip"></div></div>
-          <button class="button button-primary" id="print-recorded-sheet" type="button"><svg class="print-button-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6z"/><path d="M18 12h.01"/></svg>Cetak</button>
+          <section class="recorded-view-actions" aria-label="Lembar arsip dan cetak">
+            <div class="recorded-view-tabs" role="tablist" aria-label="Lembar kerja arsip">
+              <button class="button button-secondary${selectedRecordedSheet === "master" ? " active" : ""}" type="button" role="tab" aria-selected="${selectedRecordedSheet === "master"}" data-recorded-sheet="master">Master VEF</button>
+              <button class="button button-secondary${selectedRecordedSheet === "layouts" ? " active" : ""}" type="button" role="tab" aria-selected="${selectedRecordedSheet === "layouts"}" data-recorded-sheet="layouts">Scan &amp; Manual</button>
+              <button class="button button-secondary${selectedRecordedSheet === "result" ? " active" : ""}" type="button" role="tab" aria-selected="${selectedRecordedSheet === "result"}" data-recorded-sheet="result">Reconciliation</button>
+              <button class="button button-secondary${selectedRecordedSheet === "recap" ? " active" : ""}" type="button" role="tab" aria-selected="${selectedRecordedSheet === "recap"}" data-recorded-sheet="recap">Recap</button>
+            </div>
+            <div class="recorded-archive-search"><div class="search-wrap"><span class="search-icon" aria-hidden="true">⌕</span><input class="search-input" id="recorded-archive-search" type="search" placeholder="Cari item code, nama, atau SN" value="${escapeHtml(recordedArchiveSearchTerm)}" aria-label="Cari item code, nama, atau Serial Number dalam lembar arsip"></div></div>
+            <button class="button button-primary" id="print-recorded-sheet" type="button"><svg class="print-button-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6z"/><path d="M18 12h.01"/></svg>Cetak</button>
+          </section>
         </section>
         <div id="recorded-sheet-content" class="recorded-sheet-content">${renderRecordedSheet(session, selectedRecordedSheet)}</div>
       </div>`;
@@ -11424,10 +11436,6 @@
         next?.setSelectionRange(cursor, cursor);
       });
       document.getElementById("print-recorded-sheet")?.addEventListener("click", printRecordedSheet);
-      document.querySelector("[data-recorded-return]")?.addEventListener("click", () => {
-        currentPage = "dashboard";
-        render();
-      });
       document.querySelectorAll("[data-pj-product]").forEach((button) => button.addEventListener("click", () => openPjEntryDialog(button.dataset.pjProduct)));
       document.querySelectorAll("[data-inbound-product]").forEach((button) => button.addEventListener("click", () => openInboundEntryDialog(button.dataset.inboundProduct)));
       document.querySelectorAll(".schedule-card-summary").forEach((summary) => summary.addEventListener("click", () => {
@@ -12781,7 +12789,7 @@
     });
     document.addEventListener("click", (event) => {
       if (currentPage !== "layouts" || !(event.target instanceof Element)) return;
-      if (event.target.closest(".nav-item[data-page], [data-page-link], [data-open-workspace], [data-start-workspace], [data-open-completed-session], [data-recorded-return], #back-to-completed-sessions")) {
+      if (event.target.closest(".nav-item[data-page], [data-page-link], [data-open-workspace], [data-start-workspace], [data-open-completed-session], #back-to-completed-sessions")) {
         closeLayoutDetails();
       }
     }, true);
