@@ -81,9 +81,9 @@
     .nav-icon svg { height: 17px; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.7; width: 17px; }
     .nav-item:hover .nav-icon { background: rgba(255,255,255,.16); border-color: rgba(255,255,255,.2); }
     .nav-item.active .nav-icon { background: linear-gradient(145deg, #347a51, #194a32); border-color: rgba(25,74,50,.12); box-shadow: 0 3px 8px rgba(15,48,29,.18), inset 0 1px rgba(255,255,255,.14); color: #d7ef9c; }
-    .sidebar-bottom { border-top: 1px solid rgba(255,255,255,.2); margin-top: auto; padding: 17px 9px 0; }
-    .profile { align-items: center; display: flex; gap: 10px; }
-    .profile-details { align-items: center; display: flex; gap: 8px; min-width: 0; }
+    .sidebar-bottom { border-top: 1px solid rgba(255,255,255,.2); margin-top: auto; padding: 14px 9px 0; }
+    .profile { align-items: center; display: flex; gap: 10px; min-width: 0; }
+    .profile-details { display: grid; gap: 2px; min-width: 0; }
     .profile-name { font-size: 12px; font-weight: 800; letter-spacing: .4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .profile-role { color: #c3d7c5; font-size: 10px; font-weight: 600; text-transform: lowercase; white-space: nowrap; }
     .admin-notice { border-radius: 8px; font-size: 12px; margin: 14px 0; padding: 10px 12px; }
@@ -120,8 +120,8 @@
     .admin-storage-unknown-note { color: var(--muted); font-size: 8px; }
     @media (max-width: 560px) { .admin-storage-grid { grid-template-columns: 1fr; gap: 7px; } .admin-storage-metric { border-bottom: 1px solid var(--line); padding-bottom: 6px; } .admin-storage-metric:last-child { border-bottom: 0; padding-bottom: 0; } }
     .admin-storage-error { color: var(--red); font-size: 11px; margin: 10px 0; }
-    .logout-button { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.17); border-radius: 7px; color: #f4f8f2; font-size: 10px; margin-left: auto; padding: 6px 8px; }
-    .logout-button:hover { background: rgba(255,255,255,.18); }
+    .logout-button { align-items: center; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.22); border-radius: 8px; color: #f4f8f2; display: inline-flex; flex: 0 0 auto; font-size: 10px; font-weight: 700; justify-content: center; margin-left: auto; min-height: 34px; padding: 6px 10px; transition: background .16s ease, border-color .16s ease; white-space: nowrap; }
+    .logout-button:hover { background: rgba(255,255,255,.2); border-color: rgba(255,255,255,.35); }
     .logout-confirm-dialog { background: var(--paper); border: 1px solid var(--line); border-radius: 15px; max-width: min(390px, calc(100vw - 32px)); overflow: hidden; padding: 0; width: 100%; }
     .logout-confirm-dialog::backdrop { background: rgba(17, 27, 26, .52); backdrop-filter: blur(3px); }
     .logout-confirm-dialog .dialog-head { background: linear-gradient(115deg, color-mix(in srgb, var(--green) 11%, var(--paper)), var(--paper) 78%); border-bottom-color: color-mix(in srgb, var(--green) 22%, var(--line)); border-top: 3px solid var(--green); padding-top: 16px; }
@@ -214,13 +214,12 @@
     .auth-help { color: var(--muted); font-size: 10px; line-height: 1.6; margin: 17px 0 0; }
     body.auth-locked .app-shell, body.auth-locked .toast, body.auth-locked > dialog { display: none; }
     body:not(.auth-locked) .auth-screen { display: none; }
-    @media (min-width: 651px) {
+    @media (min-width: 768px) {
       .app-shell.sidebar-collapsed:not(.sidebar-expanded) .sidebar { align-items: center; padding-left: 10px; padding-right: 10px; }
       .app-shell.sidebar-collapsed:not(.sidebar-expanded) .brand { flex-wrap: wrap; justify-content: center; padding: 0; }
       .app-shell.sidebar-collapsed:not(.sidebar-expanded) .brand-copy,
       .app-shell.sidebar-collapsed:not(.sidebar-expanded) .nav-label,
-      .app-shell.sidebar-collapsed:not(.sidebar-expanded) .nav-item > span:last-child,
-      .app-shell.sidebar-collapsed:not(.sidebar-expanded) .profile > div:last-child { display: none; }
+      .app-shell.sidebar-collapsed:not(.sidebar-expanded) .nav-item > span:last-child { display: none; }
       .app-shell.sidebar-collapsed:not(.sidebar-expanded) .brand-mark { flex: 0 0 40px; }
       .app-shell.sidebar-collapsed:not(.sidebar-expanded) .sidebar-toggle { margin: 8px 0 0; }
       .app-shell.sidebar-collapsed:not(.sidebar-expanded) .nav-list { width: 100%; }
@@ -228,7 +227,11 @@
       .app-shell.sidebar-collapsed:not(.sidebar-expanded) .nav-item:hover { transform: none; }
       .app-shell.sidebar-collapsed:not(.sidebar-expanded) .nav-icon { width: auto; }
       .app-shell.sidebar-collapsed:not(.sidebar-expanded) .sidebar-bottom { padding-left: 0; padding-right: 0; }
-      .app-shell.sidebar-collapsed:not(.sidebar-expanded) .profile { justify-content: center; }
+      .app-shell.sidebar-collapsed:not(.sidebar-expanded) .profile { flex-direction: column; gap: 8px; width: 100%; }
+      .app-shell.sidebar-collapsed:not(.sidebar-expanded) .profile-details { gap: 2px; text-align: center; width: 100%; }
+      .app-shell.sidebar-collapsed:not(.sidebar-expanded) .profile-name { font-size: 10px; }
+      .app-shell.sidebar-collapsed:not(.sidebar-expanded) .profile-role { font-size: 9px; }
+      .app-shell.sidebar-collapsed:not(.sidebar-expanded) .logout-button { margin: 0; padding: 5px 2px; width: 100%; }
     }
     main { min-width: 0; padding: 32px clamp(20px, 4vw, 58px) 52px; }
     .topline { align-items: center; display: flex; justify-content: space-between; margin-bottom: 31px; }
@@ -2722,12 +2725,12 @@
     </div>
   </section>
   <div class="auth-footer">© 2026 M-Maz. All rights reserved.</div>
-  <div class="app-shell">
+  <div class="app-shell sidebar-collapsed">
     <aside class="sidebar" id="app-sidebar">
       <div class="brand">
         <div class="brand-mark" aria-hidden="true"><img class="brand-monogram" data-brand-emblem src="./assets/brand-emblem-source.png" alt=""></div>
         <div class="brand-copy"><div class="brand-name">STOCK OPNAME</div></div>
-        <button class="sidebar-toggle" type="button" aria-label="Ciutkan menu" aria-expanded="true" title="Ciutkan menu">«</button>
+        <button class="sidebar-toggle" type="button" aria-label="Lebarkan menu" aria-expanded="false" title="Lebarkan menu">»</button>
       </div>
       <div class="nav-label">Workspace</div>
       <nav class="nav-list compact-sidebar-nav" aria-label="Navigasi utama">
