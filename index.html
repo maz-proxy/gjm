@@ -2510,6 +2510,25 @@
     html[data-accent="burgundy"][data-theme="dark"] .layout-card.quantity-matched .layout-card-head { background: linear-gradient(110deg, #482b37, #392630); }
     html[data-accent="burgundy"][data-theme="dark"] .layout-card:focus-within .layout-card-head { background: #482b37; }
     html[data-accent="burgundy"][data-theme="dark"] .layout-quantity-status.match { color: #f0b6c7; }
+    html .layout-card[data-layout-card]:not(.duplicate-warning) .layout-card-head,
+    html .layout-card[data-recorded-layout] .layout-card-head { background: linear-gradient(112deg, #174b42 0%, #176b5b 62%, #398b73 100%); border-color: rgba(255,255,255,.16); color: #fff; }
+    html[data-theme="dark"] .layout-card[data-recorded-layout] .layout-card-head { background: linear-gradient(115deg, #14372f, #1a5243 68%, #28654d); }
+    html[data-accent="burgundy"] .layout-card[data-layout-card]:not(.duplicate-warning) .layout-card-head,
+    html[data-accent="burgundy"] .layout-card[data-recorded-layout] .layout-card-head { background: linear-gradient(115deg, #4e192e 0%, #76233f 62%, #9a3b5e 100%); }
+    html[data-accent="burgundy"][data-theme="dark"] .layout-card[data-layout-card]:not(.duplicate-warning) .layout-card-head,
+    html[data-accent="burgundy"][data-theme="dark"] .layout-card[data-recorded-layout] .layout-card-head { background: linear-gradient(115deg, #321421 0%, #572238 62%, #76304d 100%); }
+    html .layout-card[data-layout-card]:not(.duplicate-warning) .layout-card-head .layout-location,
+    html .layout-card[data-layout-card]:not(.duplicate-warning) .layout-card-head .layout-quantity-status,
+    html .layout-card[data-recorded-layout] .layout-card-head .layout-location,
+    html .layout-card[data-recorded-layout] .layout-card-head .layout-quantity-status { color: rgba(255,255,255,.82); }
+    html .layout-card[data-layout-card]:not(.duplicate-warning) .layout-card-head .layout-count,
+    html .layout-card[data-layout-card]:not(.duplicate-warning) .layout-card-head .layout-quantity-label,
+    html .layout-card[data-layout-card]:not(.duplicate-warning) .layout-card-head .rack-quantity-summary,
+    html .layout-card[data-layout-card]:not(.duplicate-warning) .layout-card-head .rack-quantity-summary strong,
+    html .layout-card[data-recorded-layout] .layout-card-head .layout-count,
+    html .layout-card[data-recorded-layout] .layout-card-head .layout-quantity-label,
+    html .layout-card[data-recorded-layout] .layout-card-head .rack-quantity-summary,
+    html .layout-card[data-recorded-layout] .layout-card-head .rack-quantity-summary strong { color: #fff; }
     html[data-accent="burgundy"][data-theme="dark"] .schedule-mode-box { background: linear-gradient(110deg, #392630, #302127); border-color: #523a43; }
     html[data-accent="burgundy"][data-theme="dark"] .schedule-stat { background: #281d22; border-color: #523a43; }
     html[data-accent="burgundy"][data-theme="dark"] .schedule-card-number { background: linear-gradient(145deg, #482a36, #38232b); border-color: #634452; color: #f0b6c7; }
