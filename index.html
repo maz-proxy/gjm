@@ -1752,6 +1752,7 @@
       .recorded-archive-summary .print-session-summary-progress { border-top: 1px solid rgba(255,255,255,.2); }
       .layout-card[data-recorded-layout] .layout-count { text-align: left; }
       .recorded-layout-count-manual { display: block; padding-left: 12px; }
+      .completed-rack-count-manual { display: block; padding-left: 8em; }
     }
     .recorded-archive-head .recorded-view-tabs .button-secondary { background: #fff; border-color: rgba(255,255,255,.75); color: #285c4b; }
     .recorded-archive-head .recorded-view-tabs .button-secondary:not(.active):hover { background: #eaf5ef; border-color: #fff; }
@@ -8865,7 +8866,6 @@
         const rackScans = scans.filter((scan) => scan.layout === layout);
         const target = snapshot.layoutQuantities?.[layout];
         const rackNumber = snapshot.layoutNumbers?.[layout];
-        const result = getLayoutQuantityStatus(rackScans.length, target);
         const manualEntries = (snapshot.manualEntries || []).filter((entry) => entry.layout === layout);
         const scanRows = rackScans.length ? rackScans.slice().reverse().map((scan) => {
           const product = productsById.get(scan.productId) || productsBySku.get(normalizeField(scan.sku));
@@ -8873,7 +8873,9 @@
           return `<div class="layout-scan-row">${renderScanDetail(scan, { itemName, printMode })}</div>`;
         }).join("") : `<div class="completed-rack-meta">Belum ada scan.</div>`;
         const manualRows = renderManualEntryCards(manualEntries, { products, printMode });
-        return `<div class="completed-rack"><div class="completed-rack-title">${escapeHtml(rackNumber ? (/^\d+$/.test(String(rackNumber)) ? `Rack ${rackNumber}` : String(rackNumber)) : layout)}</div><div class="completed-rack-meta">${target === undefined ? `${rackScans.length} scan · target belum diisi` : `${escapeHtml(result.label)}`}</div>${scanRows}<div class="layout-scan-list">${manualRows}</div></div>`;
+        const manualQuantity = manualEntries.reduce((sum, entry) => sum + Number(entry.quantity || 0), 0);
+        const targetSummary = target === undefined ? "-" : formatNumber(target);
+        return `<div class="completed-rack"><div class="completed-rack-title">${escapeHtml(rackNumber ? (/^\d+$/.test(String(rackNumber)) ? `Rack ${rackNumber}` : String(rackNumber)) : layout)}</div><div class="completed-rack-meta"><span>Target ${targetSummary} · ${formatNumber(rackScans.length)} Scan</span><span class="completed-rack-count-manual">· ${formatNumber(manualQuantity)} Manual</span></div>${scanRows}<div class="layout-scan-list">${manualRows}</div></div>`;
       }).join("");
       const productRows = products.map((product, index) => {
         const variance = varianceFor(product, inboundEntries);
