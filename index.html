@@ -2046,7 +2046,8 @@
     .schedule-card.schedule-resource-open { overflow: visible; position: relative; z-index: 8; }
     .layout-card.duplicate-warning { border-color: #c44747; box-shadow: 0 0 0 2px rgba(196, 71, 71, .12), var(--shadow); }
     .layout-card.duplicate-warning .layout-card-head { background: #fff1f0; }
-    .layout-number-input { min-width: 90px; width: auto; }
+    .layout-number-input { min-width: 0; width: calc(10ch + 16px); }
+    .layout-quantity-input { width: calc(4ch + 16px); }
     .layout-scan-detail { border: 1px solid var(--line); border-radius: 8px; margin: 6px 0; padding: 7px 9px; }
     .layout-scan-detail[open] { background: var(--paper); }
     .layout-scan-detail summary { cursor: pointer; font-size: 11px; font-weight: 700; }
@@ -2078,13 +2079,13 @@
     .layout-card:is([data-layout-card], [data-recorded-layout]) .manual-item-expanded { padding: 1px 0 3px 12px; }
     .layout-card:is([data-layout-card], [data-recorded-layout]) .manual-item-entry { font-size: 9px; line-height: 1.2; min-height: 19px; }
     @media (max-width: 820px) {
-      .layout-card[data-layout-card] .layout-card-head { display: grid; gap: 6px; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); padding: 8px 42px 8px 10px; }
+      .layout-card[data-layout-card] .layout-card-head { display: grid; gap: 6px; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); padding: 8px 42px 8px 10px; }
       .layout-card[data-layout-card] .layout-card-head > div:first-child { grid-column: 1; grid-row: 1; min-width: 0; }
-      .layout-card[data-layout-card] .layout-number-input { box-sizing: border-box; min-width: 0; padding-left: 4px; padding-right: 4px; width: 52px; }
+      .layout-card[data-layout-card] .layout-number-input { padding-left: 4px; padding-right: 4px; width: calc(10ch + 10px); }
       .layout-card[data-layout-card] .layout-card-summary { align-content: center; gap: 2px; grid-column: 2; grid-row: 1; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); justify-items: stretch; max-width: none; min-width: 0; }
       .layout-card[data-layout-card] .layout-quantity-row { grid-column: 1 / -1; gap: 4px; justify-content: flex-start; }
       .layout-card[data-layout-card] .layout-quantity-label { font-size: 11px; white-space: nowrap; }
-      .layout-card[data-layout-card] .layout-quantity-input { box-sizing: border-box; height: 24px; width: 46px; }
+      .layout-card[data-layout-card] .layout-quantity-input { height: 24px; }
       .layout-card[data-layout-card] .layout-quantity-status { grid-column: 1; min-width: 0; overflow-wrap: anywhere; text-align: left; }
       .layout-card[data-layout-card] .layout-count { grid-column: 2; font-size: 10px; min-width: 0; overflow-wrap: anywhere; text-align: right; }
       .layout-card[data-layout-card] .rack-quantity-summary { grid-column: 1 / -1; justify-content: flex-start; }
@@ -7964,7 +7965,7 @@
         const manualDisabled = !hasCountedProducts || !canUseRack || !rackHasNumber;
         return `<section class="layout-card ${cardClasses}" data-layout-card="${escapeHtml(layout)}">
           <div class="layout-card-head">
-            <div><div class="layout-name"><span>Rack</span><input class="qty-input layout-number-input" id="rack-number-${escapeHtml(layout)}" type="text" maxlength="60" size="${Math.min(40, Math.max(10, String(rackNumber).length + 1))}" aria-label="Nama atau nomor Rack ${escapeHtml(layout)}" data-layout-number="${escapeHtml(layout)}" value="${escapeHtml(rackNumber)}" placeholder="Nomor/Nama" ${!canUseRack ? "disabled" : ""}></div><div class="layout-location">Nomor atau nama Rack</div></div>
+            <div><div class="layout-name"><span>Rack</span><input class="qty-input layout-number-input" id="rack-number-${escapeHtml(layout)}" type="text" maxlength="60" size="10" aria-label="Nama atau nomor Rack ${escapeHtml(layout)}" data-layout-number="${escapeHtml(layout)}" value="${escapeHtml(rackNumber)}" placeholder="Nomor/Nama" ${!canUseRack ? "disabled" : ""}></div><div class="layout-location">Nomor atau nama Rack</div></div>
             <div class="layout-card-summary"><div class="layout-quantity-row"><label class="layout-quantity-label" for="quantity-${escapeHtml(layout)}">Target Scan</label><input class="qty-input layout-quantity-input" id="quantity-${escapeHtml(layout)}" type="number" min="0" step="1" inputmode="numeric" aria-label="Quantity target ${escapeHtml(rackName)}" data-layout-quantity="${escapeHtml(layout)}" value="${target ?? ""}" ${!canUseRack ? "disabled" : ""}></div><span class="layout-quantity-status ${quantityStatus.className}" data-layout-quantity-status="${escapeHtml(layout)}">${quantityStatus.label}</span><span class="layout-count">${warningIcon}${matched} cocok${nonLaptopScans ? ` · ${nonLaptopScans} bukan laptop` : ""}${issues ? ` · ${issues} masalah` : ""}</span><span class="rack-quantity-summary">Scan <strong>${formatNumber(quantities.scan)}</strong> · Manual <strong>${formatNumber(quantities.manual)}</strong> · Total <strong>${formatNumber(quantities.total)}</strong></span></div>
             <button class="rack-delete-button" type="button" data-delete-rack="${escapeHtml(layout)}" aria-label="Hapus ${escapeHtml(rackName)}" title="${!hasUploadedVef ? "Unggah file VEF terlebih dahulu" : hasRackData ? "Kosongkan data rack sebelum menghapus" : "Hapus rack"}" ${!canUseRack ? "disabled" : ""}>−</button>
           </div>
