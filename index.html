@@ -2084,6 +2084,9 @@
       .layout-card[data-recorded-layout] .layout-name { font-size: 10px; }
       .layout-card[data-recorded-layout] .layout-count { column-gap: 4px; font-size: 9px; grid-template-columns: minmax(100px, max-content) max-content; }
     }
+    @media (max-width: 420px) {
+      .layout-card[data-recorded-layout] .layout-count { column-gap: 4px; grid-template-columns: minmax(100px, max-content) max-content; }
+    }
     .layout-card:is([data-layout-card], [data-recorded-layout]) .rack-quantity-summary { line-height: 1.2; }
     .layout-card:is([data-layout-card], [data-recorded-layout]) .layout-card-foot { padding: 7px 10px; }
     .layout-card:is([data-layout-card], [data-recorded-layout]) .layout-record-group + .layout-record-group { margin-top: 6px; padding-top: 5px; }
