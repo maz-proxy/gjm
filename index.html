@@ -1750,8 +1750,10 @@
       .recorded-archive-summary .print-session-summary-metric:nth-child(odd) { border-left: 0; }
       .recorded-archive-summary .print-session-summary-metric:nth-child(n+3),
       .recorded-archive-summary .print-session-summary-progress { border-top: 1px solid rgba(255,255,255,.2); }
+      .layout-card[data-recorded-layout] .layout-card-head { display: grid; grid-template-columns: minmax(0, 1fr); }
+      .layout-card[data-recorded-layout] .layout-card-summary { justify-items: start; max-width: none; }
       .layout-card[data-recorded-layout] .layout-count { text-align: left; }
-      .recorded-layout-count-manual { display: block; padding-left: 12px; }
+      .recorded-layout-count-manual { display: block; padding-left: 7em; white-space: nowrap; }
       .completed-rack-count-manual { display: block; padding-left: 8em; }
     }
     .recorded-archive-head .recorded-view-tabs .button-secondary { background: #fff; border-color: rgba(255,255,255,.75); color: #285c4b; }
@@ -9584,8 +9586,8 @@
             ? renderManualEntryCards(manualEntries, { products, printMode })
             : `<div class="layout-record-empty">${query ? "Tidak ada input manual yang cocok di rack ini." : "Belum ada input manual."}</div>`;
           const targetSummary = `Target ${target === undefined ? "-" : formatNumber(target)}`;
-          const scanSummary = query ? `${scans.length} hasil scan` : `${allScans.length} scan`;
-          const manualSummary = query ? `${manualEntries.length} hasil manual` : `${allManualEntries.reduce((sum, entry) => sum + Number(entry.quantity || 0), 0)} manual`;
+          const scanSummary = query ? `${scans.length} hasil Scan` : `${allScans.length} Scan`;
+          const manualSummary = query ? `${manualEntries.length} hasil Manual` : `${allManualEntries.reduce((sum, entry) => sum + Number(entry.quantity || 0), 0)} Manual`;
           return `<article class="layout-card" data-recorded-layout="${escapeHtml(layout)}"><div class="layout-card-head"><div><div class="layout-name">${escapeHtml(title)}</div><div class="layout-location">Scan Layout · tampilan arsip</div></div><div class="layout-card-summary"><span class="layout-count">${targetSummary} · ${scanSummary}<span class="recorded-layout-count-manual"> · ${manualSummary}</span></span></div></div><div class="layout-card-foot"><div class="layout-record-group"><div class="layout-record-heading">Scan ${query ? `· ${scans.length} hasil` : ""}</div><div class="layout-scan-list">${scanRows}</div></div><div class="layout-record-group"><div class="layout-record-heading">Manual ${query ? `· ${manualEntries.length} hasil` : ""}</div><div class="layout-scan-list">${manualRows}</div></div></div></article>`;
         }).join("");
         const matchingRackCount = (rackMarkup.match(/<article class="layout-card"/g) || []).length;
