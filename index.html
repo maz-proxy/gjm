@@ -1725,7 +1725,7 @@
     .recorded-so-progress-row { color: #e0f0e8; font-size: 9px; gap: 8px; line-height: 1.35; }
     .recorded-so-progress-row strong { color: #fff; font-size: 9px; font-variant-numeric: tabular-nums; text-align: right; }
     .recorded-archive-summary-wrap { flex: 1 1 100%; min-width: 0; position: relative; z-index: 1; }
-    .recorded-archive-summary { align-items: stretch; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.24); border-radius: 10px; display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); max-width: none; overflow: hidden; width: 100%; }
+    .recorded-archive-summary { align-items: stretch; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.24); border-radius: 10px; display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); max-width: none; overflow: hidden; width: 100%; }
     .recorded-archive-summary .print-session-summary-metric,
     .recorded-archive-summary .print-session-summary-progress { align-content: center; background: transparent; display: grid; gap: 4px; justify-items: center; min-width: 0; padding: 8px 6px; text-align: center; }
     .recorded-archive-summary .print-session-summary-metric + .print-session-summary-metric,
@@ -1743,6 +1743,7 @@
       .recorded-archive-summary .print-session-summary-metric:nth-child(5) { border-left: 0; }
       .recorded-archive-summary .print-session-summary-metric:nth-child(n+5),
       .recorded-archive-summary .print-session-summary-progress { border-top: 1px solid rgba(255,255,255,.2); }
+      .recorded-archive-summary .print-session-summary-progress { border-left: 0; }
     }
     @media (max-width: 420px) {
       .recorded-archive-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -9288,6 +9289,7 @@
         <div class="print-session-summary-metric"><span>Total Qty Manual</span><strong>${formatNumber(manualQuantity)} <small>${quantitySummary}</small></strong></div>
         <div class="print-session-summary-metric"><span>Total Qty Inbound/Retur</span><strong>${formatNumber(inboundQuantity)} <small>${quantitySummary}</small></strong></div>
         <div class="print-session-summary-metric"><span>Total Qty PJ</span><strong>${formatNumber(pjQuantity)} <small>${quantitySummary}</small></strong></div>
+        <div class="print-session-summary-metric"><span>Item SO / Item VEF</span><strong>${formatNumber(opnameSkuCount)} <small>/ ${formatNumber(products.length)} ${skuSummary}</small></strong></div>
         <div class="print-session-summary-metric print-session-summary-comparison"><span>${currentLanguage === "en" ? "Stock opname / Master VEF" : "Stock opname / Master VEF"}</span><strong>${formatNumber(progress.completed)} <small>/ ${formatNumber(progress.total)} ${quantitySummary}</small></strong></div>
         <div class="print-session-summary-metric"><span>Selisih Qty</span><strong>${variance > 0 ? "+" : ""}${formatNumber(variance)} <small>${quantitySummary}</small></strong></div>
         <div class="print-session-summary-progress"><span>Progress</span><strong>${formatNumber(progress.completedPercent)}%</strong></div>
