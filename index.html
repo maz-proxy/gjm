@@ -1752,8 +1752,6 @@
       .recorded-archive-summary .print-session-summary-progress { border-top: 1px solid rgba(255,255,255,.2); }
       .layout-card[data-recorded-layout] .layout-card-head { display: grid; grid-template-columns: minmax(0, 1fr); }
       .layout-card[data-recorded-layout] .layout-card-summary { justify-items: start; max-width: none; }
-      .layout-card[data-recorded-layout] .layout-count { text-align: left; }
-      .recorded-layout-count-manual { display: block; padding-left: 7em; white-space: nowrap; }
       .completed-rack-count-manual { display: block; padding-left: 8em; }
     }
     .recorded-archive-head .recorded-view-tabs .button-secondary { background: #fff; border-color: rgba(255,255,255,.75); color: #285c4b; }
@@ -2071,7 +2069,13 @@
     .layout-card:is([data-layout-card], [data-recorded-layout]) .layout-location { line-height: 1.2; margin-top: 2px; }
     .layout-card:is([data-layout-card], [data-recorded-layout]) .layout-card-summary { gap: 3px; }
     .layout-card:is([data-layout-card], [data-recorded-layout]) .layout-count { line-height: 1.2; }
-    .layout-card[data-recorded-layout] .layout-count { font-weight: 400; text-transform: none; }
+    .layout-card[data-recorded-layout] { container: recorded-rack / inline-size; }
+    .layout-card[data-recorded-layout] .layout-count { font-weight: 400; text-align: left; text-transform: none; }
+    .layout-card[data-recorded-layout] .recorded-layout-count-manual { display: block; padding-left: 7em; white-space: nowrap; }
+    @container recorded-rack (max-width: 250px) {
+      .layout-card[data-recorded-layout] .layout-card-head { display: grid; grid-template-columns: minmax(0, 1fr); }
+      .layout-card[data-recorded-layout] .layout-card-summary { justify-items: start; max-width: none; }
+    }
     .layout-card:is([data-layout-card], [data-recorded-layout]) .rack-quantity-summary { line-height: 1.2; }
     .layout-card:is([data-layout-card], [data-recorded-layout]) .layout-card-foot { padding: 7px 10px; }
     .layout-card:is([data-layout-card], [data-recorded-layout]) .layout-record-group + .layout-record-group { margin-top: 6px; padding-top: 5px; }
