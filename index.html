@@ -2047,7 +2047,9 @@
     .layout-card.duplicate-warning { border-color: #c44747; box-shadow: 0 0 0 2px rgba(196, 71, 71, .12), var(--shadow); }
     .layout-card.duplicate-warning .layout-card-head { background: #fff1f0; }
     .layout-number-input { min-width: 0; width: calc(10ch + 16px); }
-    .layout-quantity-input { width: calc(4ch + 16px); }
+    .layout-quantity-input { appearance: textfield; width: calc(4ch + 16px); }
+    .layout-quantity-input::-webkit-inner-spin-button,
+    .layout-quantity-input::-webkit-outer-spin-button { appearance: none; margin: 0; }
     .layout-scan-detail { border: 1px solid var(--line); border-radius: 8px; margin: 6px 0; padding: 7px 9px; }
     .layout-scan-detail[open] { background: var(--paper); }
     .layout-scan-detail summary { cursor: pointer; font-size: 11px; font-weight: 700; }
