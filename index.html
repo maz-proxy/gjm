@@ -9597,7 +9597,7 @@
           const manualRows = manualEntries.length
             ? renderManualEntryCards(manualEntries, { products, printMode })
             : `<div class="layout-record-empty">${query ? "Tidak ada input manual yang cocok di rack ini." : "Belum ada input manual."}</div>`;
-          const targetSummary = `Target ${target === undefined ? "-" : formatNumber(target)}`;
+          const targetSummary = `Target Scan ${target === undefined ? "-" : formatNumber(target)}`;
           const scanSummary = query ? `${scans.length} hasil Scan` : `${allScans.length} Scan`;
           const manualSummary = query ? `${manualEntries.length} hasil Manual` : `${allManualEntries.reduce((sum, entry) => sum + Number(entry.quantity || 0), 0)} Manual`;
           return `<article class="layout-card" data-recorded-layout="${escapeHtml(layout)}"><div class="layout-card-head"><div><div class="layout-name">${escapeHtml(title)}</div><div class="layout-location">Scan Layout · tampilan arsip</div></div><div class="layout-card-summary"><span class="layout-count"><span>${targetSummary}</span><span class="recorded-layout-count-scan">· ${scanSummary}</span><span class="recorded-layout-count-manual">· ${manualSummary}</span></span></div></div><div class="layout-card-foot"><div class="layout-record-group"><div class="layout-record-heading">Scan ${query ? `· ${scans.length} hasil` : ""}</div><div class="layout-scan-list">${scanRows}</div></div><div class="layout-record-group"><div class="layout-record-heading">Manual ${query ? `· ${manualEntries.length} hasil` : ""}</div><div class="layout-scan-list">${manualRows}</div></div></div></article>`;
