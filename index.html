@@ -2058,7 +2058,7 @@
     .layout-card[data-layout-card].quantity-matched::before,
     .layout-card[data-layout-card].quantity-over::before { display: none; }
     .layout-card:is([data-layout-card], [data-recorded-layout]) .layout-card-head { align-items: center; padding: 10px 12px; }
-    .layout-card[data-layout-card] .layout-card-head { padding-right: 46px; }
+    .layout-card[data-layout-card] .layout-card-head { align-items: flex-start; padding-right: 46px; }
     .layout-card[data-layout-card] .rack-delete-button { right: 8px; top: 6px; transform: none; }
     .layout-card:is([data-layout-card], [data-recorded-layout]) .layout-name { line-height: 1.2; }
     .layout-card:is([data-layout-card], [data-recorded-layout]) .layout-location { line-height: 1.2; margin-top: 2px; }
@@ -2081,7 +2081,7 @@
     .layout-card:is([data-layout-card], [data-recorded-layout]) .manual-item-expanded { padding: 1px 0 3px 12px; }
     .layout-card:is([data-layout-card], [data-recorded-layout]) .manual-item-entry { font-size: 9px; line-height: 1.2; min-height: 19px; }
     @media (max-width: 820px) {
-      .layout-card[data-layout-card] .layout-card-head { display: grid; gap: 6px; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); padding: 8px 42px 8px 10px; }
+      .layout-card[data-layout-card] .layout-card-head { align-items: start; display: grid; gap: 6px; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); padding: 8px 42px 8px 10px; }
       .layout-card[data-layout-card] .layout-card-head > div:first-child { grid-column: 1; grid-row: 1; min-width: 0; }
       .layout-card[data-layout-card] .layout-number-input { padding-left: 4px; padding-right: 4px; width: calc(10ch + 10px); }
       .layout-card[data-layout-card] .layout-card-summary { align-content: center; gap: 2px; grid-column: 2; grid-row: 1; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); justify-items: stretch; max-width: none; min-width: 0; }
