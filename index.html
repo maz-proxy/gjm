@@ -9290,7 +9290,7 @@
         <div class="print-session-summary-metric"><span>Total Qty Inbound/Retur</span><strong>${formatNumber(inboundQuantity)} <small>${quantitySummary}</small></strong></div>
         <div class="print-session-summary-metric"><span>Total Qty PJ</span><strong>${formatNumber(pjQuantity)} <small>${quantitySummary}</small></strong></div>
         <div class="print-session-summary-metric"><span>Item SO / Item VEF</span><strong>${formatNumber(opnameSkuCount)} <small>/ ${formatNumber(products.length)} ${skuSummary}</small></strong></div>
-        <div class="print-session-summary-metric print-session-summary-comparison"><span>${currentLanguage === "en" ? "Stock opname / Master VEF" : "Stock opname / Master VEF"}</span><strong>${formatNumber(progress.completed)} <small>/ ${formatNumber(progress.total)} ${quantitySummary}</small></strong></div>
+        <div class="print-session-summary-metric print-session-summary-comparison"><span>QTY SO / Master VEF</span><strong>${formatNumber(progress.completed)} <small>/ ${formatNumber(progress.total)} ${quantitySummary}</small></strong></div>
         <div class="print-session-summary-metric"><span>Selisih Qty</span><strong>${variance > 0 ? "+" : ""}${formatNumber(variance)} <small>${quantitySummary}</small></strong></div>
         <div class="print-session-summary-progress"><span>Progress</span><strong>${formatNumber(progress.completedPercent)}%</strong></div>
       </aside>`;
