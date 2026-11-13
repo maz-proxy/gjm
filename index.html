@@ -1735,7 +1735,6 @@
     .recorded-archive-summary .print-session-summary-metric strong { color: #fff; font-size: 11px; font-variant-numeric: tabular-nums; white-space: nowrap; }
     .recorded-archive-summary .print-session-summary-metric strong small { font-size: 8px; font-weight: 500; }
     .recorded-archive-summary .print-session-summary-progress strong { color: #fff; font-size: 23px; font-variant-numeric: tabular-nums; font-weight: 900; line-height: 1; white-space: nowrap; }
-    .recorded-archive-summary-empty-cell { display: none; }
     @media (max-width: 650px) {
       .recorded-pic-list { flex-wrap: wrap; }
       .recorded-pic-cards { flex: 1 1 100%; }
@@ -1744,15 +1743,13 @@
       .recorded-archive-summary .print-session-summary-metric:nth-child(5) { border-left: 0; }
       .recorded-archive-summary .print-session-summary-metric:nth-child(n+5),
       .recorded-archive-summary .print-session-summary-progress { border-top: 1px solid rgba(255,255,255,.2); }
-      .recorded-archive-summary .print-session-summary-progress { border-left: 0; }
-      .recorded-archive-summary-empty-cell { border-left: 1px solid rgba(255,255,255,.2); border-top: 1px solid rgba(255,255,255,.2); display: block; }
+      .recorded-archive-summary .print-session-summary-progress { border-left: 0; grid-column: 1 / -1; }
     }
     @media (max-width: 420px) {
       .recorded-archive-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .recorded-archive-summary .print-session-summary-metric:nth-child(odd) { border-left: 0; }
       .recorded-archive-summary .print-session-summary-metric:nth-child(n+3),
       .recorded-archive-summary .print-session-summary-progress { border-top: 1px solid rgba(255,255,255,.2); }
-      .recorded-archive-summary-empty-cell:nth-child(n+11) { display: none; }
     }
     .recorded-archive-head .recorded-view-tabs .button-secondary { background: #fff; border-color: rgba(255,255,255,.75); color: #285c4b; }
     .recorded-archive-head .recorded-view-tabs .button-secondary:not(.active):hover { background: #eaf5ef; border-color: #fff; }
@@ -9297,9 +9294,6 @@
         <div class="print-session-summary-metric print-session-summary-comparison"><span>QTY SO / Master VEF</span><strong>${formatNumber(progress.completed)} <small>/ ${formatNumber(progress.total)} ${quantitySummary}</small></strong></div>
         <div class="print-session-summary-metric"><span>Selisih Qty</span><strong>${variance > 0 ? "+" : ""}${formatNumber(variance)} <small>${quantitySummary}</small></strong></div>
         <div class="print-session-summary-progress"><span>Progress</span><strong>${formatNumber(progress.completedPercent)}%</strong></div>
-        <div class="recorded-archive-summary-empty-cell" aria-hidden="true"></div>
-        <div class="recorded-archive-summary-empty-cell" aria-hidden="true"></div>
-        <div class="recorded-archive-summary-empty-cell" aria-hidden="true"></div>
       </aside>`;
     }
     function closeRecordedEntryDetails({ restoreFocus = true } = {}) {
