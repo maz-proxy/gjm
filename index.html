@@ -375,8 +375,11 @@
     .compact-metrics .metric-value { font-size: 20px; margin-top: 7px; }
     .compact-metrics .metric-value small { font-size: 9px; }
     .compact-metrics .metric-note { font-size: 8px; margin-top: 3px; }
-    .result-session-strip { border-radius: 10px; box-shadow: 0 4px 10px rgba(29,74,50,.1); display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); margin-bottom: 12px; min-height: 66px; padding: 11px 16px; }
+    .result-session-frame { container: result-session / inline-size; }
+    .result-session-strip { border-radius: 10px; box-shadow: 0 4px 10px rgba(29,74,50,.1); margin-bottom: 12px; min-height: 66px; padding: 11px 16px; }
     .result-session-strip .session-actions { justify-self: end; }
+    .result-session-strip .session-info { min-width: 0; }
+    .result-session-strip .session-meta { overflow-wrap: anywhere; }
     .result-session-progress { align-items: center; display: flex; gap: 9px; justify-content: center; min-width: 0; position: relative; white-space: nowrap; z-index: 1; }
     .result-session-progress-label { color: #d5e9df; font-size: 10px; font-weight: 700; letter-spacing: .55px; }
     .result-session-progress strong { color: #fff; font-size: 24px; font-variant-numeric: tabular-nums; font-weight: 800; line-height: 1; }
@@ -413,6 +416,7 @@
     .icon-plus { font-size: 18px; font-weight: 400; line-height: 1; }
     .session-strip { align-items: center; background: linear-gradient(115deg, #194a32 0%, #286344 62%, #39754c 100%); border: 1px solid rgba(255,255,255,.14); border-radius: 12px; box-shadow: 0 10px 24px rgba(29, 74, 50, .16); color: #fff; display: flex; justify-content: space-between; margin-bottom: 17px; min-height: 82px; overflow: hidden; padding: 16px 21px; position: relative; }
     .session-strip:after { background: var(--lime); border-radius: 50%; content: ""; height: 210px; opacity: .12; position: absolute; right: 18%; top: -151px; width: 210px; }
+    .result-session-strip { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
     .session-info, .session-actions { position: relative; z-index: 1; }
     .session-kicker { color: #c7ddcd; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
     .session-title { font-size: 15px; font-weight: 700; margin-top: 4px; }
@@ -1196,8 +1200,6 @@
       .head-buttons { width: 100%; }
       .head-buttons .button { flex: 1; }
       .session-strip { align-items: flex-start; flex-direction: column; gap: 12px; padding: 15px; }
-      .result-session-strip { display: flex; }
-      .result-session-progress { align-self: center; }
       .session-actions { justify-content: space-between; width: 100%; }
       .metric-grid { gap: 8px; }
       .metric { min-height: 88px; padding: 12px; }
@@ -1212,6 +1214,19 @@
       .search-wrap { flex: 1; }
       .search-input { width: 100%; }
       .select-input { max-width: 130px; }
+    }
+    @container result-session (max-width: 760px) {
+      .result-session-strip { grid-template-columns: minmax(0, 1fr) auto; }
+      .result-session-strip .session-info { grid-column: 1; min-width: 0; }
+      .result-session-strip .result-session-progress { grid-column: 1 / -1; grid-row: 2; justify-self: center; }
+      .result-session-strip .session-actions { grid-column: 2; grid-row: 1; width: auto; }
+    }
+    @container result-session (max-width: 520px) {
+      .result-session-strip { align-items: stretch; display: flex; flex-direction: column; gap: 12px; }
+      .result-session-strip .session-info { width: 100%; }
+      .result-session-strip .result-session-progress { align-self: center; }
+      .result-session-strip .session-actions { flex-wrap: wrap; justify-content: space-between; width: 100%; }
+      .result-session-strip .status-pill { flex: 0 0 auto; white-space: nowrap; }
     }
     .sidebar { background: linear-gradient(180deg, #194b43 0%, #123832 100%); border-color: #123832; box-shadow: 5px 0 24px rgba(24, 59, 52, .12); }
     @media (max-width: 650px) {
@@ -7821,7 +7836,7 @@
       return `${navMarkup()}
         <section class="page-head result-page-head"><div class="result-page-heading"><div class="result-page-eyebrow">Result SO · Rekonsiliasi inventaris</div>${workspacePageTitle()}<p class="subtitle">SCAN + MANUAL + PJ dibandingkan dengan VEF + Inbound/Retur. Perhitungan: ${countModeLabel(state.countMode).toLocaleLowerCase("id-ID")}.</p></div></section>
         ${renderSessionAccessNotice()}
-        <section class="session-strip result-session-strip"><div class="session-info"><div class="session-kicker">Sesi opname · ${escapeHtml(formatDate(state.activeSession.startedAt, { day: "numeric", month: "short", year: "numeric" }))}</div><div class="session-title">${!reconciliationStarted ? "Stock Reconciliation belum dimulai" : active ? "Rekonsiliasi sedang berjalan" : "Rekonsiliasi selesai"}</div><div class="session-meta">${state.importFile ? `${escapeHtml(state.importFile)}${state.importMessage ? ` · ${escapeHtml(state.importMessage)}` : ""}` : "Unggah workbook di Master VEF untuk memulai sesi."} · Pemilik: ${escapeHtml(sessionOwnerName(state.activeSession))}</div></div><div class="result-session-progress" role="group" aria-label="SO Progress"><span class="result-session-progress-label">SO PROGRESS</span><strong>${soProgress} %</strong></div><div class="session-actions"><span class="status-pill"><span class="status-dot" style="${active ? "" : "background:#fff"}"></span>${active ? "Sedang berjalan" : "Selesai"}</span>${active ? `<button class="button finish-opname-button" id="finish-button" ${!reconciliationStarted ? 'disabled title="Mulai Stock Reconciliation terlebih dahulu"' : !canFinishActiveSession() || !stats.total ? 'disabled title="Hanya pemilik sesi, PIC terdaftar, atau Owner yang dapat menyelesaikan sesi"' : ""}>SO SELESAI</button>` : `<button class="button" id="new-session-button" ${!canManageActiveSession() ? "disabled" : ""}><span class="icon-plus">+</span> Mulai sesi baru</button>`}</div></section>
+        <div class="result-session-frame"><section class="session-strip result-session-strip"><div class="session-info"><div class="session-kicker">Sesi opname · ${escapeHtml(formatDate(state.activeSession.startedAt, { day: "numeric", month: "short", year: "numeric" }))}</div><div class="session-title">${!reconciliationStarted ? "Stock Reconciliation belum dimulai" : active ? "Rekonsiliasi sedang berjalan" : "Rekonsiliasi selesai"}</div><div class="session-meta">${state.importFile ? `${escapeHtml(state.importFile)}${state.importMessage ? ` · ${escapeHtml(state.importMessage)}` : ""}` : "Unggah workbook di Master VEF untuk memulai sesi."} · Pemilik: ${escapeHtml(sessionOwnerName(state.activeSession))}</div></div><div class="result-session-progress" role="group" aria-label="SO Progress"><span class="result-session-progress-label">SO PROGRESS</span><strong>${soProgress} %</strong></div><div class="session-actions"><span class="status-pill"><span class="status-dot" style="${active ? "" : "background:#fff"}"></span>${active ? "Sedang berjalan" : "Selesai"}</span>${active ? `<button class="button finish-opname-button" id="finish-button" ${!reconciliationStarted ? 'disabled title="Mulai Stock Reconciliation terlebih dahulu"' : !canFinishActiveSession() || !stats.total ? 'disabled title="Hanya pemilik sesi, PIC terdaftar, atau Owner yang dapat menyelesaikan sesi"' : ""}>SO SELESAI</button>` : `<button class="button" id="new-session-button" ${!canManageActiveSession() ? "disabled" : ""}><span class="icon-plus">+</span> Mulai sesi baru</button>`}</div></section></div>
         <section class="metric-grid compact-metrics result-metrics" aria-label="Ringkasan stock opname">
           <div class="metric"><div class="metric-top">${state.countMode === "all" ? "Semua item dihitung" : "Laptop dihitung"} <span class="metric-mark">▤</span></div><div class="metric-value" id="metric-skus">${stats.total} <small>SKU</small></div></div>
           <div class="metric"><div class="metric-top">Unit VEF dihitung <span class="metric-mark">#</span></div><div class="metric-value" id="metric-expected">${formatNumber(stats.expected)} <small>unit</small></div></div>
