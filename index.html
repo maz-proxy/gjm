@@ -752,6 +752,17 @@
     .save-dot { background: #80a95d; border-radius: 50%; height: 6px; width: 6px; }
     .history-summary { align-items: center; background: linear-gradient(105deg, #fff, #f9fcf8); border: 1px solid var(--line); border-radius: 11px; box-shadow: 0 4px 14px rgba(35, 59, 38, .035); color: var(--muted); display: flex; justify-content: space-between; margin-bottom: 14px; padding: 16px 18px; }
     .history-summary strong { color: var(--ink); font-size: 12px; }
+    .audit-filter-grid { align-items: end; display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); padding: 13px 15px; }
+    .audit-filter-field { display: grid; gap: 5px; }
+    .audit-filter-field label { color: var(--muted); font-size: 10px; font-weight: 700; }
+    .audit-filter-grid .search-input { padding: 0 9px; width: 100%; }
+    .audit-filter-actions { align-items: center; display: flex; flex-wrap: wrap; gap: 7px; }
+    .audit-change-list { display: grid; gap: 3px; min-width: 180px; }
+    .audit-change { color: var(--ink); font-size: 10px; overflow-wrap: anywhere; }
+    .audit-change del { color: var(--red); text-decoration-thickness: 1px; }
+    .audit-change ins { color: var(--green); text-decoration: none; }
+    .audit-recorded-at { color: var(--muted); display: block; font-size: 9px; margin-top: 3px; }
+    .audit-legacy-note { color: var(--muted); font-size: 10px; padding: 12px 15px; }
     .activity-type { background: #edf4eb; border-radius: 999px; color: #4f6853; display: inline-block; font-size: 9px; font-weight: 700; padding: 4px 8px; white-space: nowrap; }
     .activity-details { color: #59685c; min-width: 220px; }
     .activity-time { color: #66766a; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -4197,6 +4208,8 @@
     const OFFLINE_CACHE_DATABASE_VERSION = 1;
     const OFFLINE_CACHE_STORE_NAME = "workspace-states";
     const OFFLINE_CACHE_WRITE_DELAY_MS = 250;
+    const AUDIT_LOG_TABLE = "stock_opname_audit_log";
+    const AUDIT_LOG_PAGE_SIZE = 50;
     const UNUPLOADED_WORKSPACE_TIMEOUT_MS = 5 * 60 * 1000;
     const WORKSPACE_CLEANUP_INTERVAL_MS = 15 * 1000;
     const initialState = () => ({ products: [], serialMaster: {}, scanEvents: [], manualEntries: [], pjEntries: [], inboundEntries: [], historyEvents: [], sessions: [], workbookFiles: [], chatMessages: [], chatArchiveMessages: [], chatReadAt: {}, resources: { brands: [], picNames: [], androidApp: null }, activeSession: makeSession(), countMode: "all", importFile: "", importMessage: "", importDownloadedAt: "", importUploadedAt: "", layouts: [...DEFAULT_LAYOUTS], layoutQuantities: {}, layoutNumbers: {} });
@@ -4475,6 +4488,14 @@
     let offlineCacheDatabasePromise = null;
     let offlineCacheWriteTimer = null;
     let offlineCacheWriteFailureReported = false;
+    let auditHistoryRows = [];
+    let auditHistoryOffset = 0;
+    let auditHistoryTotal = 0;
+    let auditHistoryLoading = false;
+    let auditHistoryLoadedUserId = "";
+    let auditHistoryError = "";
+    let auditHistoryHasMore = false;
+    let auditHistoryFilters = { search: "", actor: "", workspace: "", type: "", from: "", to: "" };
     const syncFailureCounts = { read: 0, write: 0 };
     const syncErrorKeys = { read: "", write: "" };
 
@@ -5089,18 +5110,33 @@
       if (!dialog.open) dialog.showModal();
       loadUploadedWorkbookPreview(files[0].id);
     }
-    function recordActivity(type, description) {
-      state.historyEvents.push({
+    function recordActivity(type, description, auditDetails = {}) {
+      const workspace = auditDetails.workspace || activeWorkspace();
+      const storageWorkspace = auditDetails.storageWorkspace || workspace;
+      const event = {
         id: crypto.randomUUID(),
         type,
         description,
-        workspaceId: state.currentWorkspaceId,
-        sessionId: state.activeSession.id,
-        createdAt: new Date().toISOString()
-      });
+        auditVersion: 1,
+        workspaceId: auditDetails.workspaceId || workspace?.id || state.currentWorkspaceId,
+        workspaceName: auditDetails.workspaceName ?? workspace?.name ?? "",
+        sessionId: auditDetails.sessionId || workspace?.data?.activeSession?.id || state.activeSession.id,
+        entityType: auditDetails.entityType || "session",
+        entityId: auditDetails.entityId || workspace?.data?.activeSession?.id || state.activeSession.id,
+        changes: Array.isArray(auditDetails.changes) ? auditDetails.changes : [],
+        createdAt: auditDetails.occurredAt || new Date().toISOString()
+      };
+      if (storageWorkspace?.id === state.currentWorkspaceId) {
+        state.historyEvents = [...(state.historyEvents || []), event];
+      } else if (storageWorkspace) {
+        storageWorkspace.data.historyEvents = [...(storageWorkspace.data.historyEvents || []), event];
+      } else {
+        state.historyEvents = [...(state.historyEvents || []), event];
+      }
       persist();
+      return event;
     }
-    function bindAuditedInput(input, onInput, type, describeChange) {
+    function bindAuditedInput(input, onInput, type, describeChange, createAuditDetails = () => ({})) {
       input.dataset.auditPrevious = input.value;
       input.addEventListener("focus", () => { input.dataset.auditPrevious = input.value; });
       input.addEventListener("input", () => {
@@ -5111,7 +5147,9 @@
         const previous = input.dataset.auditPrevious;
         const current = input.value;
         delete input.dataset.auditPrevious;
-        if (previous !== undefined && previous !== current) recordActivity(type, describeChange(previous, current));
+        if (previous !== undefined && previous !== current) {
+          recordActivity(type, describeChange(previous, current), createAuditDetails(previous, current, input));
+        }
       });
     }
     function openOfflineCacheDatabase() {
@@ -7003,6 +7041,11 @@
       const invoiceDate = new Date(form.elements.invoiceDate.value);
       const quantity = Number(form.elements.quantity.value);
       const sourceTimestamp = new Date(state.importDownloadedAt);
+      const previousEntry = existingEntry ? {
+        invoiceNumber: existingEntry.invoiceNumber || "",
+        invoiceAt: existingEntry.invoiceAt || "",
+        quantity: Number(existingEntry.quantity || 0)
+      } : null;
       if (!product || !invoiceNumber || !Number.isFinite(invoiceDate.getTime()) || !Number.isFinite(sourceTimestamp.getTime())) {
         notify("Lengkapi nomor invoice dan tanggal/waktu invoice yang valid.");
         return;
@@ -7025,7 +7068,11 @@
       Object.assign(entry, { invoiceNumber, invoiceAt: invoiceDate.toISOString(), quantity });
       if (!existingEntry) state.pjEntries.push(entry);
       product.pj = nextProductQuantity;
-      recordActivity(existingEntry ? "PJ diperbarui" : "PJ ditambahkan", `${product.sku} · invoice ${invoiceNumber} (${formatDate(entry.invoiceAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}) sebanyak ${formatNumber(quantity)}.`);
+      recordActivity(existingEntry ? "PJ diperbarui" : "PJ ditambahkan", `${product.sku} · invoice ${invoiceNumber} (${formatDate(entry.invoiceAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}) sebanyak ${formatNumber(quantity)}.`, {
+        entityType: "pj_entry",
+        entityId: entry.id,
+        changes: [{ field: "Invoice PJ", before: previousEntry, after: { invoiceNumber, invoiceAt: entry.invoiceAt, quantity } }]
+      });
       persist();
       pendingPjProductId = "";
       pendingPjEntryId = "";
@@ -7062,7 +7109,11 @@
       document.getElementById("pj-delete-confirm-dialog").close();
       state.pjEntries = state.pjEntries.filter((item) => item.id !== entry.id);
       product.pj = nextQuantity;
-      recordActivity("PJ dihapus", `${product.sku} · invoice ${entry.invoiceNumber || "(tanpa nomor)"} dihapus, quantity ${formatNumber(entry.quantity)} dikurangi.`);
+      recordActivity("PJ dihapus", `${product.sku} · invoice ${entry.invoiceNumber || "(tanpa nomor)"} dihapus, quantity ${formatNumber(entry.quantity)} dikurangi.`, {
+        entityType: "pj_entry",
+        entityId: entry.id,
+        changes: [{ field: "Invoice PJ", before: { invoiceNumber: entry.invoiceNumber || "", invoiceAt: entry.invoiceAt || "", quantity: Number(entry.quantity || 0) }, after: null }]
+      });
       persist();
       pendingPjProductId = "";
       pendingPjEntryId = "";
@@ -7127,6 +7178,11 @@
       const entryDate = new Date(form.elements.entryDate.value);
       const quantity = Number(form.elements.quantity.value);
       const sourceTimestamp = new Date(state.importDownloadedAt);
+      const previousEntry = existingEntry ? {
+        referenceNumber: existingEntry.referenceNumber || "",
+        entryAt: existingEntry.entryAt || "",
+        quantity: Number(existingEntry.quantity || 0)
+      } : null;
       if (!product || !referenceNumber || !Number.isFinite(entryDate.getTime()) || !Number.isFinite(sourceTimestamp.getTime())) {
         notify("Lengkapi nomor PREC/RETUR dan tanggal/waktu yang valid.");
         return;
@@ -7148,7 +7204,11 @@
       };
       Object.assign(entry, { referenceNumber, entryAt: entryDate.toISOString(), quantity });
       if (!existingEntry) state.inboundEntries.push(entry);
-      recordActivity(existingEntry ? "Inbound/Retur diperbarui" : "Inbound/Retur ditambahkan", `${product.sku} · PREC/RETUR ${referenceNumber} (${formatDate(entry.entryAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}) sebanyak ${formatNumber(quantity)}.`);
+      recordActivity(existingEntry ? "Inbound/Retur diperbarui" : "Inbound/Retur ditambahkan", `${product.sku} · PREC/RETUR ${referenceNumber} (${formatDate(entry.entryAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}) sebanyak ${formatNumber(quantity)}.`, {
+        entityType: "inbound_entry",
+        entityId: entry.id,
+        changes: [{ field: "Inbound/Retur", before: previousEntry, after: { referenceNumber, entryAt: entry.entryAt, quantity } }]
+      });
       persist();
       pendingInboundProductId = "";
       pendingInboundEntryId = "";
@@ -7184,7 +7244,11 @@
       }
       document.getElementById("inbound-delete-confirm-dialog").close();
       state.inboundEntries = state.inboundEntries.filter((item) => item.id !== entry.id);
-      recordActivity("Inbound/Retur dihapus", `${product.sku} · PREC/RETUR ${entry.referenceNumber || "(tanpa nomor)"} dihapus, quantity pembanding ${formatNumber(entry.quantity)} dikurangi.`);
+      recordActivity("Inbound/Retur dihapus", `${product.sku} · PREC/RETUR ${entry.referenceNumber || "(tanpa nomor)"} dihapus, quantity pembanding ${formatNumber(entry.quantity)} dikurangi.`, {
+        entityType: "inbound_entry",
+        entityId: entry.id,
+        changes: [{ field: "Inbound/Retur", before: { referenceNumber: entry.referenceNumber || "", entryAt: entry.entryAt || "", quantity: Number(entry.quantity || 0) }, after: null }]
+      });
       persist();
       pendingInboundProductId = "";
       pendingInboundEntryId = "";
@@ -7823,7 +7887,14 @@
         notify("Total quantity Scan & Manual harus mencapai minimal 95% dari Master VEF.");
         return;
       }
-      state.activeSession.reconciliationStartedAt = new Date().toISOString();
+      const reconciliationStartedAt = new Date().toISOString();
+      state.activeSession.reconciliationStartedAt = reconciliationStartedAt;
+      recordActivity("Rekonsiliasi dimulai", `Rekonsiliasi sesi ${activeWorkspace()?.name || "Sesi opname"} dimulai.`, {
+        entityType: "session",
+        entityId: state.activeSession.id,
+        changes: [{ field: "Status rekonsiliasi", before: "Belum dimulai", after: "Dimulai" }],
+        occurredAt: reconciliationStartedAt
+      });
       persist();
       currentPage = "opname";
       render();
@@ -8087,7 +8158,11 @@
       while (state.layouts.includes(`Rack ${index}`)) index++;
       const rack = `Rack ${index}`;
       state.layouts.push(rack);
-      recordActivity("Rack ditambahkan", `${rack} ditambahkan ke Scan Layout.`);
+      recordActivity("Rack ditambahkan", `${rack} ditambahkan ke Scan Layout.`, {
+        entityType: "rack",
+        entityId: rack,
+        changes: [{ field: "Rack", before: null, after: { id: rack, name: rack } }]
+      });
       persist();
       render();
       notify(`${rack} berhasil ditambahkan.`);
@@ -8108,7 +8183,11 @@
       state.layouts = state.layouts.filter((item) => item !== layout);
       delete state.layoutNumbers[layout];
       delete state.layoutQuantities[layout];
-      recordActivity("Rack dihapus", `${name} yang kosong dihapus dari Scan Layout.`);
+      recordActivity("Rack dihapus", `${name} yang kosong dihapus dari Scan Layout.`, {
+        entityType: "rack",
+        entityId: layout,
+        changes: [{ field: "Rack", before: { id: layout, name }, after: null }]
+      });
       persist();
       render();
       notify(`${name} berhasil dihapus.`);
@@ -8207,10 +8286,189 @@
         <section class="table-section"><div class="table-toolbar"><div class="table-title">Item belum sesuai <span class="table-count">${exceptions.length} dari ${totals.count} item · Total SO ${formatNumber(totals.total)} / VEF + Inbound/Retur ${formatNumber(totals.expectedWithInbound)}</span></div></div><div class="table-scroll"><table class="print-reconciliation-live-table print-reconciliation-live-notes"><thead>${renderReconciliationTableHead(true)}</thead><tbody>${rows || `<tr><td class="empty-row" colspan="11">Belum ada item bermasalah. Semua item sesuai dengan VEF.</td></tr>`}</tbody></table></div><div class="table-footer"><span class="auto-save"><span class="save-dot"></span> Catatan tersimpan otomatis</span><span>${exceptions.length} item bermasalah dari ${totals.count} item dihitung</span></div></section>`;
     }
 
+    function auditFilterPattern(value) {
+      return `%${String(value || "").trim().replace(/\\/g, "\\\\").replace(/[%_]/g, "\\$&")}%`;
+    }
+
+    function auditDateBoundary(value, endExclusive = false) {
+      if (!value) return "";
+      const date = new Date(`${value}T00:00:00`);
+      if (!Number.isFinite(date.getTime())) return "";
+      if (endExclusive) date.setDate(date.getDate() + 1);
+      return date.toISOString();
+    }
+
+    function buildAuditHistoryQuery(offset, limit, withCount = false) {
+      const fields = "event_id,actor_user_id,actor_username,actor_verified,workspace_id,workspace_name,session_id,event_type,entity_type,entity_id,description,changes,occurred_at,recorded_at";
+      let query = supabaseClient.from(AUDIT_LOG_TABLE).select(fields, withCount ? { count: "exact" } : {});
+      if (auditHistoryFilters.search) query = query.ilike("description", auditFilterPattern(auditHistoryFilters.search));
+      if (auditHistoryFilters.actor) query = query.ilike("actor_username", auditFilterPattern(auditHistoryFilters.actor));
+      if (auditHistoryFilters.workspace) query = query.ilike("workspace_name", auditFilterPattern(auditHistoryFilters.workspace));
+      if (auditHistoryFilters.type) query = query.ilike("event_type", auditFilterPattern(auditHistoryFilters.type));
+      const from = auditDateBoundary(auditHistoryFilters.from);
+      const to = auditDateBoundary(auditHistoryFilters.to, true);
+      if (from) query = query.gte("occurred_at", from);
+      if (to) query = query.lt("occurred_at", to);
+      return query.order("occurred_at", { ascending: false })
+        .order("recorded_at", { ascending: false })
+        .range(offset, offset + limit - 1);
+    }
+
+    async function loadAuditHistory(reset = false) {
+      if (auditHistoryLoading || !authSession || !supabaseClient) return;
+      if (reset) {
+        auditHistoryRows = [];
+        auditHistoryOffset = 0;
+        auditHistoryTotal = 0;
+        auditHistoryHasMore = false;
+      }
+      auditHistoryLoading = true;
+      auditHistoryError = "";
+      const offset = reset ? 0 : auditHistoryOffset;
+      const { data, error, count } = await buildAuditHistoryQuery(offset, AUDIT_LOG_PAGE_SIZE, true);
+      auditHistoryLoading = false;
+      if (error) {
+        console.error("Audit log gagal dimuat:", error);
+        const tableMissing = error.code === "42P01" || error.code === "PGRST205"
+          || /stock_opname_audit_log/i.test(error.message || "");
+        auditHistoryError = tableMissing
+          ? "Audit lengkap belum aktif di database. Jalankan pembaruan supabase-setup.sql di Supabase SQL Editor."
+          : `Audit gagal dimuat: ${error.message || "kesalahan tidak diketahui"}`;
+        if (currentPage === "history") render();
+        return;
+      }
+      const rows = Array.isArray(data) ? data : [];
+      auditHistoryRows = reset ? rows : [...auditHistoryRows, ...rows];
+      auditHistoryOffset = offset + rows.length;
+      auditHistoryTotal = Number.isFinite(count) ? count : auditHistoryRows.length;
+      auditHistoryHasMore = auditHistoryOffset < auditHistoryTotal;
+      auditHistoryLoadedUserId = authSession.user.id;
+      if (currentPage === "history") render();
+    }
+
+    function getLegacyHistoryActivities() {
+      const activities = new Map();
+      const addActivities = (items, workspaceName) => {
+        for (const activity of items || []) {
+          if (!activity || activity.auditVersion === 1) continue;
+          const key = activity.id || `${activity.sessionId}:${activity.createdAt}:${activity.type}:${activity.description}`;
+          if (!activities.has(key)) activities.set(key, { ...activity, workspaceName: activity.workspaceName || workspaceName || "Sesi opname" });
+        }
+      };
+      for (const workspace of state.workspaces || []) {
+        addActivities(workspace.data?.historyEvents, workspace.name);
+      }
+      for (const session of state.sessions || []) {
+        addActivities(session.snapshot?.historyEvents, session.workspaceName);
+      }
+      return [...activities.values()].sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt));
+    }
+
+    function formatAuditValue(value) {
+      if (value === null || value === undefined || value === "") return "—";
+      return typeof value === "object" ? stableSerialize(value) : String(value);
+    }
+
+    function renderAuditChanges(changes) {
+      const rows = Array.isArray(changes) ? changes : [];
+      if (!rows.length) return '<span class="activity-details">—</span>';
+      return `<div class="audit-change-list">${rows.map((change) => `<div class="audit-change"><strong>${escapeHtml(change.label || change.field || "Nilai")}:</strong> <del>${escapeHtml(formatAuditValue(change.before))}</del> → <ins>${escapeHtml(formatAuditValue(change.after))}</ins></div>`).join("")}</div>`;
+    }
+
+    function renderAuditTableRows(rows, legacy = false) {
+      if (!rows.length) return `<tr><td class="empty-row" colspan="7">${legacy ? "Belum ada riwayat lama." : "Belum ada aktivitas yang cocok dengan filter."}</td></tr>`;
+      return rows.map((row) => {
+        const occurredAt = row.occurred_at || row.createdAt || "";
+        const recordedAt = row.recorded_at || "";
+        const actor = legacy ? "Tidak tercatat (riwayat lama)"
+          : row.actor_verified === false ? "Tidak tercatat (audit belum aktif)" : row.actor_username || "Pengguna";
+        const workspaceName = row.workspace_name || row.workspaceName || "Sesi opname";
+        const type = row.event_type || row.type || "Aktivitas";
+        const entity = [row.entity_type, row.entity_id].filter(Boolean).join(" · ") || "—";
+        const description = row.description || "—";
+        const dateLabel = occurredAt && Number.isFinite(new Date(occurredAt).getTime())
+          ? formatDate(occurredAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" })
+          : occurredAt || "—";
+        const recordedLabel = recordedAt && Number.isFinite(new Date(recordedAt).getTime())
+          ? formatDate(recordedAt, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", second: "2-digit" })
+          : "";
+        return `<tr><td class="activity-time">${escapeHtml(dateLabel)}${recordedLabel ? `<span class="audit-recorded-at">Server: ${escapeHtml(recordedLabel)}</span>` : ""}</td><td>${escapeHtml(actor)}</td><td data-user-content>${escapeHtml(workspaceName)}</td><td><span class="activity-type">${escapeHtml(type)}</span></td><td>${escapeHtml(entity)}</td><td>${renderAuditChanges(row.changes)}</td><td class="activity-details">${escapeHtml(description)}</td></tr>`;
+      }).join("");
+    }
+
+    async function exportAuditHistory() {
+      const rows = [];
+      const exportPageSize = 500;
+      for (let offset = 0; offset < 50000; offset += exportPageSize) {
+        const { data, error } = await buildAuditHistoryQuery(offset, exportPageSize);
+        if (error) {
+          console.error("Audit log gagal diekspor:", error);
+          notify(`Audit gagal diekspor: ${error.message || "kesalahan tidak diketahui"}`);
+          return;
+        }
+        const batch = Array.isArray(data) ? data : [];
+        rows.push(...batch);
+        if (batch.length < exportPageSize) break;
+        if (offset + exportPageSize >= 50000) {
+          notify("Ekspor dibatasi 50.000 catatan. Persempit filter tanggal lalu coba lagi.");
+          return;
+        }
+      }
+      const csvCell = (value) => {
+        const text = String(value ?? "");
+        const safeText = /^[=+\-@\t\r]/.test(text) ? `'${text}` : text;
+        return `"${safeText.replace(/"/g, '""')}"`;
+      };
+      const header = ["Waktu kejadian", "Dicatat server", "Pelaku", "Identitas terverifikasi", "User ID", "Sesi", "Session ID", "Aktivitas", "Objek", "Perubahan", "Detail"];
+      const csvRows = rows.map((row) => [
+        row.occurred_at,
+        row.recorded_at,
+        row.actor_username,
+        row.actor_verified,
+        row.actor_user_id,
+        row.workspace_name,
+        row.session_id,
+        row.event_type,
+        [row.entity_type, row.entity_id].filter(Boolean).join(" · "),
+        stableSerialize(row.changes || []),
+        row.description
+      ]);
+      const csv = [header, ...csvRows].map((row) => row.map(csvCell).join(",")).join("\r\n");
+      const url = URL.createObjectURL(new Blob(["\ufeff", csv], { type: "text/csv;charset=utf-8" }));
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `audit-stock-opname-${new Date().toISOString().slice(0, 10)}.csv`;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 0);
+      notify(`${rows.length} catatan audit diekspor.`);
+    }
+
     function renderHistory() {
-      const workspaceNames = new Map(state.workspaces.map((workspace) => [workspace.id, workspace.name]));
-      const activities = state.workspaces.flatMap((workspace) => (workspace.data.historyEvents || []).map((activity) => ({ ...activity, workspaceName: workspaceNames.get(activity.workspaceId) || workspace.name }))).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      return `${navMarkup()}<section class="page-head archive-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Aktivitas dan audit</div><h1>Riwayat Perubahan</h1><p class="subtitle">Catatan perubahan data dan aktivitas sesi, diurutkan dari yang terbaru.</p></div></section><div class="history-summary"><div><strong>${activities.length} aktivitas tercatat</strong><div style="font-size:10px;margin-top:3px">Riwayat perubahan tersimpan per sesi di perangkat ini.</div></div><span class="category-chip">${activities.length ? `Perubahan terakhir: ${escapeHtml(formatDate(activities[0].createdAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }))}` : "Belum ada perubahan"}</span></div><section class="table-section"><div class="table-toolbar"><div class="table-title">Riwayat perubahan <span class="table-count">${activities.length} aktivitas · terbaru di atas</span></div></div><div class="table-scroll"><table><thead><tr><th>Waktu</th><th>Sesi</th><th>Aktivitas</th><th>Detail perubahan</th></tr></thead><tbody>${activities.length ? activities.map((activity) => `<tr><td class="activity-time">${escapeHtml(formatDate(activity.createdAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }))}</td><td data-user-content>${escapeHtml(activity.workspaceName || "Sesi opname")}</td><td><span class="activity-type">${escapeHtml(activity.type)}</span></td><td class="activity-details">${escapeHtml(activity.description)}</td></tr>`).join("") : `<tr><td class="empty-row" colspan="4">Belum ada perubahan data.</td></tr>`}</tbody></table></div></section>`;
+      const legacyActivities = getLegacyHistoryActivities();
+      const latestAudit = auditHistoryRows[0];
+      const lastActivity = latestAudit?.occurred_at
+        ? formatDate(latestAudit.occurred_at, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
+        : "Belum ada audit baru";
+      const auditStatus = auditHistoryError || (auditHistoryLoading
+        ? "Memuat catatan audit..."
+        : `Menampilkan ${auditHistoryRows.length} dari ${auditHistoryTotal} catatan audit${auditHistoryHasMore ? "; pilih Muat lebih banyak untuk melanjutkan." : "."}`);
+      return `${navMarkup()}<section class="page-head archive-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Aktivitas dan audit</div><h1>Riwayat Perubahan</h1><p class="subtitle">Audit baru mencatat pelaku, waktu kejadian dan waktu server, sesi, objek, serta nilai sebelum dan sesudah perubahan.</p></div></section>
+        <div class="history-summary"><div><strong>${formatNumber(auditHistoryTotal)} catatan audit tersimpan</strong><div style="font-size:10px;margin-top:3px">Perubahan baru disimpan permanen bersama transaksi workspace; catatan lama ditampilkan terpisah.</div></div><span class="category-chip">${escapeHtml(lastActivity)}</span></div>
+        <section class="table-section"><div class="table-toolbar"><div class="table-title">Audit lengkap <span class="table-count">Terbaru di atas</span></div><div class="audit-filter-actions"><button class="button button-secondary" id="audit-refresh" type="button" ${auditHistoryLoading ? "disabled" : ""}>Muat ulang</button><button class="button button-secondary" id="audit-export" type="button" ${auditHistoryLoading ? "disabled" : ""}>Ekspor CSV</button></div></div>
+          <form id="audit-history-filters" class="audit-filter-grid">
+            <div class="audit-filter-field"><label for="audit-search">Cari detail</label><input class="search-input" id="audit-search" name="search" type="search" value="${escapeHtml(auditHistoryFilters.search)}" placeholder="Item, SN, atau keterangan"></div>
+            <div class="audit-filter-field"><label for="audit-actor">Pelaku</label><input class="search-input" id="audit-actor" name="actor" type="search" value="${escapeHtml(auditHistoryFilters.actor)}" placeholder="Username"></div>
+            <div class="audit-filter-field"><label for="audit-workspace">Sesi / brand</label><input class="search-input" id="audit-workspace" name="workspace" type="search" value="${escapeHtml(auditHistoryFilters.workspace)}" placeholder="Nama sesi"></div>
+            <div class="audit-filter-field"><label for="audit-type">Aktivitas</label><input class="search-input" id="audit-type" name="type" type="search" value="${escapeHtml(auditHistoryFilters.type)}" placeholder="Jenis perubahan"></div>
+            <div class="audit-filter-field"><label for="audit-from">Dari tanggal</label><input class="search-input" id="audit-from" name="from" type="date" value="${escapeHtml(auditHistoryFilters.from)}"></div>
+            <div class="audit-filter-field"><label for="audit-to">Sampai tanggal</label><input class="search-input" id="audit-to" name="to" type="date" value="${escapeHtml(auditHistoryFilters.to)}"></div>
+            <div class="audit-filter-actions"><button class="button button-primary" type="submit">Terapkan filter</button></div>
+          </form>
+          <div class="audit-legacy-note" role="${auditHistoryError ? "alert" : "status"}" aria-live="polite">${escapeHtml(auditStatus)}</div>
+          <div class="table-scroll"><table><thead><tr><th>Waktu kejadian</th><th>Pelaku</th><th>Sesi / brand</th><th>Aktivitas</th><th>Objek</th><th>Sebelum → sesudah</th><th>Detail</th></tr></thead><tbody>${renderAuditTableRows(auditHistoryRows)}</tbody></table></div>
+          <div class="table-footer"><span>${formatNumber(auditHistoryRows.length)} catatan dimuat</span><button class="button button-secondary" id="audit-load-more" type="button" ${!auditHistoryHasMore || auditHistoryLoading ? "disabled" : ""}>${auditHistoryLoading ? "Memuat..." : "Muat lebih banyak"}</button></div>
+        </section>
+        ${legacyActivities.length ? `<section class="table-section" style="margin-top:14px"><div class="table-toolbar"><div class="table-title">Riwayat sebelum audit lengkap <span class="table-count">${legacyActivities.length} aktivitas · pelaku dan perubahan terstruktur belum tercatat</span></div></div><div class="audit-legacy-note">Catatan lama dipulihkan dari workspace dan arsip sesi. Catatan ini tidak memiliki identitas pelaku yang terverifikasi atau nilai sebelum/sesudah.</div><div class="table-scroll"><table><thead><tr><th>Waktu</th><th>Pelaku</th><th>Sesi / brand</th><th>Aktivitas</th><th>Objek</th><th>Sebelum → sesudah</th><th>Detail</th></tr></thead><tbody>${renderAuditTableRows(legacyActivities, true)}</tbody></table></div></section>` : ""}`;
     }
 
     function buildSegregationMergeRows() {
@@ -8911,6 +9169,23 @@
         return;
       }
       const removedPaths = new Set((session.workbooks || []).map((workbook) => workbook.storagePath));
+      recordActivity("Arsip sesi dihapus", `Arsip stock opname ${session.workspaceName || "Sesi opname"} dihapus beserta ${session.workbooks?.length || 0} file sumber.`, {
+        workspaceId: session.workspaceId,
+        workspaceName: session.workspaceName || "Sesi opname",
+        sessionId: session.id,
+        entityType: "session_archive",
+        entityId: session.id,
+        changes: [{
+          field: "Arsip sesi",
+          before: {
+            workspaceName: session.workspaceName || "",
+            status: "completed",
+            finishedAt: session.snapshot?.activeSession?.finishedAt || "",
+            workbookFiles: (session.workbooks || []).map((workbook) => workbook.name)
+          },
+          after: null
+        }]
+      });
       for (const workspace of state.workspaces) {
         workspace.data.workbookFiles = (workspace.data.workbookFiles || []).filter((workbook) => !removedPaths.has(workbook.storagePath));
       }
@@ -10240,20 +10515,19 @@
         return;
       }
       if (workspace.data.countMode === countMode) return;
+      const previousCountMode = workspace.data.countMode === "laptops" ? "laptops" : "all";
       workspace.data.countMode = countMode;
       reclassifyScanEvents(workspace.data.scanEvents || [], workspace.data.serialMaster, countMode);
       for (const product of workspace.data.products || []) {
         product.count = (workspace.data.scanEvents || []).filter((event) => event.status === "match" && event.productId === product.id).length;
       }
-      workspace.data.historyEvents = [...(workspace.data.historyEvents || []), {
-        id: crypto.randomUUID(),
-        type: "Mode perhitungan diubah",
-        description: `Perhitungan sesi diubah menjadi ${countModeLabel(countMode)}.`,
-        workspaceId: workspace.id,
-        sessionId: workspace.data.activeSession.id,
-        createdAt: new Date().toISOString()
-      }];
       if (workspace.id === state.currentWorkspaceId) Object.assign(state, snapshotWorkspaceData(workspace.data));
+      recordActivity("Mode perhitungan diubah", `Perhitungan sesi diubah menjadi ${countModeLabel(countMode)}.`, {
+        workspace,
+        entityType: "session",
+        entityId: workspace.data.activeSession.id,
+        changes: [{ field: "Mode perhitungan", before: previousCountMode, after: countMode }]
+      });
       persist();
       render();
       if (keepScheduleCardOpen) {
@@ -10275,10 +10549,17 @@
       }
       const value = field === "month" ? normalizeWorkspaceMonth(select.value) : normalizeWorkspacePeriod(select.value);
       if (workspace[field] === value) return;
+      const previousValue = workspace[field];
       workspace[field] = value;
       select.value = value;
       const summary = document.querySelector(`[data-workspace-schedule-summary="${CSS.escape(workspace.id)}"]`);
       if (summary) summary.textContent = `${normalizeWorkspaceMonth(workspace.month)} · ${normalizeWorkspacePeriod(workspace.period)}`;
+      recordActivity("Jadwal sesi diubah", `${workspace.name || "Sesi opname"}: ${field === "month" ? "bulan" : "week"} ${previousValue} → ${value}.`, {
+        workspace,
+        entityType: "workspace",
+        entityId: workspace.id,
+        changes: [{ field: field === "month" ? "Bulan" : "Week", before: previousValue, after: value }]
+      });
       persist();
     }
 
@@ -10307,6 +10588,16 @@
         state.currentWorkspaceId = nextWorkspace.id;
         Object.assign(state, snapshotWorkspaceData(nextWorkspace.data));
       }
+      for (const workspace of expiredWorkspaces) {
+        recordActivity("Jadwal sesi dihapus otomatis", `Jadwal ${workspace.name || "Sesi tanpa nama"} dihapus karena file VEF tidak diunggah selama 5 menit.`, {
+          workspaceId: workspace.id,
+          workspaceName: workspace.name || "Sesi tanpa nama",
+          sessionId: workspace.data.activeSession?.id || "",
+          entityType: "workspace",
+          entityId: workspace.id,
+          changes: [{ field: "Jadwal", before: { name: workspace.name || "", status: "Belum dimulai" }, after: null }]
+        });
+      }
       const expiredNames = expiredWorkspaces.map((workspace) => workspace.name || "Sesi tanpa nama");
       notify(expiredNames.length === 1
         ? `${expiredNames[0]} dihapus otomatis karena file VEF tidak diunggah selama 5 menit.`
@@ -10319,6 +10610,12 @@
       workspace.scheduleCreatedAt = new Date().toISOString();
       workspace.scheduleOwnerUserId = authSession?.user?.id || "";
       state.workspaces.push(workspace);
+      recordActivity("Jadwal sesi ditambahkan", "Jadwal stock opname baru dibuat.", {
+        workspace,
+        entityType: "workspace",
+        entityId: workspace.id,
+        changes: [{ field: "Jadwal", before: null, after: { id: workspace.id, name: workspace.name || "Belum diisi" } }]
+      });
       persist();
       render();
       document.querySelector(`[data-workspace-name="${CSS.escape(workspace.id)}"]`)?.focus();
@@ -10354,15 +10651,14 @@
       workspace.scheduleOwnerUsername = authSession?.user?.user_metadata?.username || authSession?.user?.email || "";
       workspace.uploadActivityAt = "";
       workspace.data.activeSession = { ...makeSession(authSession?.user || null), startedAt };
-      workspace.data.historyEvents = [...(workspace.data.historyEvents || []), {
-        id: crypto.randomUUID(),
-        type: "Stock opname dimulai",
-        description: `Sesi ${workspace.name} dimulai oleh ${authSession?.user?.user_metadata?.username || "Pengguna"}.`,
-        workspaceId: workspace.id,
-        sessionId: workspace.data.activeSession.id,
-        createdAt: startedAt
-      }];
       if (workspace.id === state.currentWorkspaceId) Object.assign(state, snapshotWorkspaceData(workspace.data));
+      recordActivity("Stock opname dimulai", `Sesi ${workspace.name} dimulai.`, {
+        workspace,
+        entityType: "session",
+        entityId: workspace.data.activeSession.id,
+        changes: [{ field: "Status sesi", before: "Belum dimulai", after: "Berjalan" }],
+        occurredAt: startedAt
+      });
       persist();
       if (workspaceId === state.currentWorkspaceId) {
         currentPage = "products";
@@ -10407,6 +10703,9 @@
         return;
       }
       const workspaceId = workspace.id;
+      const workspaceName = workspace.name || "Sesi tanpa nama";
+      const workspaceSessionId = workspace.data.activeSession.id;
+      const workspaceStatus = workspaceHasStarted(workspace) ? "Berjalan" : "Belum dimulai";
       const wasCurrentWorkspace = workspaceId === state.currentWorkspaceId;
       if (workspaceIsOwnedByCurrentUser(workspace) && !workspace.scheduleOwnerUserId) {
         workspace.scheduleOwnerUserId = authSession.user.id;
@@ -10422,6 +10721,14 @@
         state.currentWorkspaceId = nextWorkspace.id;
         Object.assign(state, snapshotWorkspaceData(nextWorkspace.data));
       }
+      recordActivity("Jadwal sesi dihapus", `Jadwal ${workspaceName} dihapus.`, {
+        workspaceId,
+        workspaceName,
+        sessionId: workspaceSessionId,
+        entityType: "workspace",
+        entityId: workspaceId,
+        changes: [{ field: "Jadwal", before: { name: workspaceName, status: workspaceStatus }, after: null }]
+      });
       pendingWorkspaceDeletionId = "";
       document.getElementById("delete-workspace-dialog").close();
       persist();
@@ -10481,6 +10788,11 @@
       if (retainedChatWidget && renderedChatWidget) renderedChatWidget.replaceWith(retainedChatWidget);
       bindPageEvents(Boolean(retainedChatWidget && renderedChatWidget));
       translateDocument(document.body);
+      if (currentPage === "history" && authSession && auditHistoryLoadedUserId !== authSession.user.id && !auditHistoryLoading) {
+        auditHistoryLoadedUserId = authSession.user.id;
+        auditHistoryFilters = { search: "", actor: "", workspace: "", type: "", from: "", to: "" };
+        void loadAuditHistory(true);
+      }
       if (window.matchMedia("(max-width: 650px)").matches && !document.documentElement.classList.contains("web-camera-scanner-active")) {
         document.querySelector(".nav-item.active")?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
       }
@@ -11489,6 +11801,28 @@
     function bindPageEvents(skipChatEvents = false) {
       attachCameraSearchButtons();
       if (!skipChatEvents) bindChatEvents();
+      document.getElementById("audit-history-filters")?.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const from = form.elements.from.value;
+        const to = form.elements.to.value;
+        if (from && to && from > to) {
+          notify("Tanggal awal tidak boleh melewati tanggal akhir.");
+          return;
+        }
+        auditHistoryFilters = {
+          search: form.elements.search.value.trim(),
+          actor: form.elements.actor.value.trim(),
+          workspace: form.elements.workspace.value.trim(),
+          type: form.elements.type.value.trim(),
+          from,
+          to
+        };
+        void loadAuditHistory(true);
+      });
+      document.getElementById("audit-refresh")?.addEventListener("click", () => void loadAuditHistory(true));
+      document.getElementById("audit-load-more")?.addEventListener("click", () => void loadAuditHistory(false));
+      document.getElementById("audit-export")?.addEventListener("click", () => void exportAuditHistory());
       document.getElementById("add-workspace-button")?.addEventListener("click", addWorkspace);
       document.getElementById("admin-refresh-users")?.addEventListener("click", loadAdminUsers);
       document.getElementById("admin-refresh-storage")?.addEventListener("click", () => void loadAdminStorage());
@@ -11657,8 +11991,15 @@
           if (summary) summary.textContent = workspace.name || emptyBrandNameLabel();
           return;
         }
+        const previousBrand = workspace.name;
         workspace.name = brand;
         input.value = workspace.name;
+        recordActivity("Nama brand sesi diubah", `Nama brand diubah dari ${previousBrand || "belum diisi"} menjadi ${workspace.name || "dihapus"}.`, {
+          workspace,
+          entityType: "workspace",
+          entityId: workspace.id,
+          changes: [{ field: "Nama brand", before: previousBrand || null, after: workspace.name || null }]
+        });
         persist();
         const keepOpen = input.closest(".schedule-card")?.open;
         render();
@@ -11681,8 +12022,15 @@
           input.value = workspace.picNames[index];
           return;
         }
+        const previousPic = workspace.picNames[index];
         workspace.picNames[index] = picName;
         input.value = workspace.picNames[index];
+        recordActivity("PIC sesi diubah", `PIC ${index + 1} diubah dari ${previousPic || "belum diisi"} menjadi ${picName || "dihapus"}.`, {
+          workspace,
+          entityType: "workspace",
+          entityId: workspace.id,
+          changes: [{ field: `PIC ${index + 1}`, before: previousPic || null, after: picName || null }]
+        });
         persist();
         const keepOpen = input.closest(".schedule-card")?.open;
         render();
@@ -11894,22 +12242,60 @@
           if (option) selectManualProduct(input, option.dataset.manualProductOption);
         });
       });
-      document.querySelectorAll("[data-layout-quantity]").forEach((input) => bindAuditedInput(input, () => updateLayoutQuantity(input), "Quantity target Rack", (previous, current) => `${rackLabel(input.dataset.layoutQuantity)}: quantity target ${previous || "belum diisi"} → ${current || "dihapus"}.`));
+      document.querySelectorAll("[data-layout-quantity]").forEach((input) => bindAuditedInput(
+        input,
+        () => updateLayoutQuantity(input),
+        "Quantity target Rack",
+        (previous, current) => `${rackLabel(input.dataset.layoutQuantity)}: quantity target ${previous || "belum diisi"} → ${current || "dihapus"}.`,
+        (previous, current) => ({
+          entityType: "rack",
+          entityId: input.dataset.layoutQuantity,
+          changes: [{ field: "Target Scan", before: previous ? Number(previous) : null, after: current ? Number(current) : null }]
+        })
+      ));
       document.querySelectorAll("[data-layout-number]").forEach((input) => {
         input.addEventListener("input", () => { input.size = Math.min(40, Math.max(10, input.value.length + 1)); });
-        bindAuditedInput(input, () => updateLayoutNumber(input), "Nama Rack", (previous, current) => `${current || previous || "Rack"}: nama Rack ${previous || "belum diisi"} → ${current || "dihapus"}.`);
+        bindAuditedInput(
+          input,
+          () => updateLayoutNumber(input),
+          "Nama Rack",
+          (previous, current) => `${current || previous || "Rack"}: nama Rack ${previous || "belum diisi"} → ${current || "dihapus"}.`,
+          (previous, current) => ({
+            entityType: "rack",
+            entityId: input.dataset.layoutNumber,
+            changes: [{ field: "Nama Rack", before: previous || null, after: current || null }]
+          })
+        );
       });
       bindLayoutEntryActions();
-      document.querySelectorAll("[data-qty-id]").forEach((input) => bindAuditedInput(input, () => updateQuantity(input), "Jumlah item", (previous, current) => {
-        const field = input.dataset.qtyField === "count" ? "SO" : input.dataset.qtyField.toUpperCase();
-        const product = state.products.find((item) => item.id === input.dataset.qtyId);
-        return `${field} ${product?.sku || ""}: ${previous || "0"} → ${current || "0"}.`;
-      }));
+      document.querySelectorAll("[data-qty-id]").forEach((input) => bindAuditedInput(
+        input,
+        () => updateQuantity(input),
+        "Jumlah item",
+        (previous, current) => {
+          const field = input.dataset.qtyField === "count" ? "SO" : input.dataset.qtyField.toUpperCase();
+          const product = state.products.find((item) => item.id === input.dataset.qtyId);
+          return `${field} ${product?.sku || ""}: ${previous || "0"} → ${current || "0"}.`;
+        },
+        (previous, current) => ({
+          entityType: "product",
+          entityId: input.dataset.qtyId,
+          changes: [{
+            field: input.dataset.qtyField === "count" ? "SO" : input.dataset.qtyField.toUpperCase(),
+            before: previous ? Number(previous) : 0,
+            after: current ? Number(current) : 0
+          }]
+        })
+      ));
       document.querySelectorAll("[data-note-sku]").forEach((input) => bindAuditedInput(input, () => {
         if (!requireActiveSessionEdit()) return;
         const product = state.products.find((item) => item.sku === input.dataset.noteSku);
         if (product) { product.note = input.value; persist(); }
-      }, "Catatan", (previous, current) => `Catatan ${input.dataset.noteSku}: ${previous || "kosong"} → ${current || "dihapus"}.`));
+      }, "Catatan", (previous, current) => `Catatan ${input.dataset.noteSku}: ${previous || "kosong"} → ${current || "dihapus"}.`, (previous, current) => ({
+        entityType: "product",
+        entityId: state.products.find((item) => item.sku === input.dataset.noteSku)?.id || input.dataset.noteSku,
+        changes: [{ field: "Catatan", before: previous || null, after: current || null }]
+      })));
       const search = document.getElementById("search-input");
       search?.addEventListener("input", () => {
         const cursor = search.selectionStart;
@@ -12165,7 +12551,14 @@
       playScanBeep(scan.status);
       state.products.forEach((product) => { product.count = scannedFor(product.id); });
       const soAfter = productBefore ? scannedFor(productBefore.id) : soBefore;
-      recordActivity("Scan ditambahkan", `${serial} ditambahkan ke ${rackLabel(layout)}${scan.sku ? ` · ${scan.sku}` : ""} (${scan.status === "match" ? "cocok" : scan.status === "duplicate" ? "duplikat" : scan.status === "non-laptop" ? "bukan laptop" : "tidak ditemukan"}).${productBefore && soBefore !== soAfter ? ` SO ${scan.sku}: ${soBefore} → ${soAfter}.` : ""}`);
+      recordActivity("Scan ditambahkan", `${serial} ditambahkan ke ${rackLabel(layout)}${scan.sku ? ` · ${scan.sku}` : ""} (${scan.status === "match" ? "cocok" : scan.status === "duplicate" ? "duplikat" : scan.status === "non-laptop" ? "bukan laptop" : "tidak ditemukan"}).${productBefore && soBefore !== soAfter ? ` SO ${scan.sku}: ${soBefore} → ${soAfter}.` : ""}`, {
+        entityType: "scan",
+        entityId: scan.id,
+        changes: [
+          { field: "Catatan scan", before: null, after: { serial: scan.serial, sku: scan.sku, rack: scan.layout, status: scan.status } },
+          ...(productBefore ? [{ field: `SO ${scan.sku}`, before: soBefore, after: soAfter }] : [])
+        ]
+      });
       persist();
       input.value = "";
       refreshCountEntryView();
@@ -12218,7 +12611,11 @@
       vibrateForEntry();
       playScanBeep("match");
       syncManualBoxTotals();
-      recordActivity("Input manual ditambahkan", `${product.sku} · ${product.name} sebanyak ${quantity} dicatat manual di ${rackLabel(layout)}.`);
+      recordActivity("Input manual ditambahkan", `${product.sku} · ${product.name} sebanyak ${quantity} dicatat manual di ${rackLabel(layout)}.`, {
+        entityType: "manual_entry",
+        entityId: entry.id,
+        changes: [{ field: "Input manual", before: null, after: { sku: entry.sku, name: entry.name, rack: entry.layout, quantity: entry.quantity } }]
+      });
       persist();
       productInput.value = "";
       delete productInput.dataset.selectedProductId;
@@ -12242,7 +12639,11 @@
       if (!removed) return;
       state.manualEntries = state.manualEntries.filter((entry) => entry.id !== id);
       syncManualBoxTotals();
-      recordActivity("Input manual dihapus", `${removed.sku} sebanyak ${removed.quantity} dihapus dari ${rackLabel(removed.layout)}.`);
+      recordActivity("Input manual dihapus", `${removed.sku} sebanyak ${removed.quantity} dihapus dari ${rackLabel(removed.layout)}.`, {
+        entityType: "manual_entry",
+        entityId: removed.id,
+        changes: [{ field: "Input manual", before: { sku: removed.sku, name: removed.name, rack: removed.layout, quantity: removed.quantity }, after: null }]
+      });
       persist();
       refreshCountEntryView();
       notify(`Input manual ${removed.sku} di ${rackLabel(removed.layout)} dihapus.`);
@@ -12259,7 +12660,14 @@
       reclassifyScanEvents(state.scanEvents, state.serialMaster, state.countMode);
       state.products.forEach((product) => { product.count = scannedFor(product.id); });
       const soAfter = productBefore ? scannedFor(productBefore.id) : soBefore;
-      recordActivity("Scan dihapus", `${removed.serial} dihapus dari ${rackLabel(removed.layout)}${removed.sku ? ` · ${removed.sku}` : ""}.${productBefore && soBefore !== soAfter ? ` SO ${removed.sku}: ${soBefore} → ${soAfter}.` : ""}`);
+      recordActivity("Scan dihapus", `${removed.serial} dihapus dari ${rackLabel(removed.layout)}${removed.sku ? ` · ${removed.sku}` : ""}.${productBefore && soBefore !== soAfter ? ` SO ${removed.sku}: ${soBefore} → ${soAfter}.` : ""}`, {
+        entityType: "scan",
+        entityId: removed.id,
+        changes: [
+          { field: "Catatan scan", before: { serial: removed.serial, sku: removed.sku, rack: removed.layout, status: removed.status }, after: null },
+          ...(productBefore ? [{ field: `SO ${removed.sku}`, before: soBefore, after: soAfter }] : [])
+        ]
+      });
       persist();
       refreshCountEntryView();
       notify(`Scan ${removed.serial} di ${removed.layout} dihapus.`);
@@ -12340,6 +12748,7 @@
       }
       const uploadWorkspaceId = uploadWorkspace.id;
       const uploadSessionId = state.activeSession.id;
+      const previousImportFile = state.importFile || "";
       const uploadUserId = authSession?.user?.id;
       if (!uploadUserId) {
         notify("Login tidak ditemukan. File tidak diunggah.");
@@ -12550,6 +12959,13 @@
           activeWorkspace().uploadActivityAt = uploadedAt;
         }
         state.workbookFiles = [...(state.workbookFiles || []), archivedWorkbook];
+        recordActivity("Master VEF diunggah", `Workbook ${file.name} diunggah dengan ${state.products.length} item dan ${Object.keys(state.serialMaster).length} Serial Number.`, {
+          workspace: activeWorkspace(),
+          entityType: "workbook",
+          entityId: uploadSessionId,
+          changes: [{ field: "Master VEF", before: previousImportFile || null, after: { fileName: file.name, products: state.products.length, serials: Object.keys(state.serialMaster).length } }],
+          occurredAt: uploadedAt
+        });
         persist();
         render();
         setWorkbookUploadProgress(100);
@@ -12597,16 +13013,21 @@
         notify("Workspace aktif tidak ditemukan. Sesi tidak diselesaikan.");
         return;
       }
-      const stats = getStats();
-      const finishedAt = new Date().toISOString();
-      const snapshot = JSON.parse(JSON.stringify(snapshotWorkspaceData(state)));
-      snapshot.activeSession = { ...snapshot.activeSession, status: "completed", finishedAt };
       const workspaceName = workspace?.name || "Sesi opname";
       const archivedSessionId = state.activeSession.id;
+      const stats = getStats();
+      const finishedAt = new Date().toISOString();
+      recordActivity("Sesi diselesaikan", `Stock opname ${workspaceName} diselesaikan dan diarsipkan.`, {
+        entityType: "session",
+        entityId: archivedSessionId,
+        changes: [{ field: "Status sesi", before: "Berjalan", after: "Selesai" }],
+        occurredAt: finishedAt
+      });
+      const snapshot = JSON.parse(JSON.stringify(snapshotWorkspaceData(state)));
+      snapshot.activeSession = { ...snapshot.activeSession, status: "completed", finishedAt };
       const workbooks = (state.workbookFiles || []).filter((workbook) => workbook.sessionId === archivedSessionId);
       const unarchivedWorkbooks = (state.workbookFiles || []).filter((workbook) => workbook.sessionId !== archivedSessionId);
       state.sessions.push({ ...stats, id: state.activeSession.id, status: "completed", workspaceId: state.currentWorkspaceId, workspaceName, month: workspace.month, period: workspace.period, picNames: [...(workspace?.picNames || ["", ""])], createdByUserId: state.activeSession.createdByUserId || authSession?.user?.id || "", createdByUsername: state.activeSession.createdByUsername || authSession?.user?.user_metadata?.username || authSession?.user?.email || "", startedAt: state.activeSession.startedAt, finishedAt, snapshot, workbooks });
-      recordActivity("Sesi diselesaikan", `Stock opname ${workspaceName} diselesaikan dan diarsipkan.`);
       state.workspaces = state.workspaces.filter((item) => item !== workspace);
       normalizeWorkspaceScheduleCards(state.workspaces, state.sessions);
       const nextWorkspace = state.workspaces.find((item) => item.schedulePlaceholder) || state.workspaces[0];
@@ -12632,7 +13053,7 @@
         notify("Hanya pemilik sesi atau Owner yang dapat memulai sesi baru.");
         return;
       }
-      recordActivity("Sesi baru", "Sesi opname baru dimulai; quantity SO, BOX, dan PJ direset.");
+      const previousSessionId = state.activeSession.id;
       state.activeSession = makeSession(authSession?.user || null);
       if (activeWorkspace()) {
         activeWorkspace().startedAt = state.activeSession.startedAt;
@@ -12647,6 +13068,11 @@
       state.layoutQuantities = {};
       state.lastScan = null;
       state.products.forEach((product) => { product.count = 0; product.box = 0; product.pj = 0; });
+      recordActivity("Sesi baru", "Sesi opname baru dimulai; quantity SO, BOX, dan PJ direset.", {
+        entityType: "session",
+        entityId: state.activeSession.id,
+        changes: [{ field: "Sesi", before: previousSessionId, after: state.activeSession.id }]
+      });
       persist();
       currentPage = "opname";
       render();
@@ -12658,6 +13084,16 @@
         notify("Hanya pemilik sesi atau Owner yang dapat menghapus data Master VEF.");
         return;
       }
+      const deletedSessionId = state.activeSession.id;
+      const deletedSessionSummary = {
+        workbook: state.importFile || "",
+        products: state.products.length,
+        serials: Object.keys(state.serialMaster || {}).length,
+        scans: state.scanEvents.length,
+        manualEntries: state.manualEntries.length,
+        pjEntries: (state.pjEntries || []).length,
+        inboundEntries: (state.inboundEntries || []).length
+      };
       const currentSessionWorkbooks = (state.workbookFiles || []).filter((workbook) => workbook.sessionId === state.activeSession.id);
       try {
         await removeArchivedWorkbookFiles(currentSessionWorkbooks);
@@ -12681,6 +13117,12 @@
       state.layouts = [...DEFAULT_LAYOUTS];
       state.layoutQuantities = {};
       state.layoutNumbers = {};
+      recordActivity("Data Master VEF dan sesi dihapus", "Workbook Master VEF serta data hitung sesi aktif dihapus.", {
+        entityType: "session",
+        entityId: deletedSessionId,
+        sessionId: deletedSessionId,
+        changes: [{ field: "Data sesi", before: deletedSessionSummary, after: { workbook: "", products: 0, serials: 0, scans: 0, manualEntries: 0, pjEntries: 0, inboundEntries: 0 } }]
+      });
       state.activeSession = makeSession(authSession?.user || null);
       if (activeWorkspace()) {
         const removedAt = new Date().toISOString();
@@ -12772,7 +13214,25 @@
       state.pjEntries = state.pjEntries.filter((item) => !isRelatedItem(item));
       state.inboundEntries = state.inboundEntries.filter((item) => !isRelatedItem(item));
       if (state.lastScan && isRelatedItem(state.lastScan)) state.lastScan = null;
-      recordActivity("Master VEF item deleted", `${product.sku} · ${product.name} dihapus dari Master VEF aktif.`);
+      recordActivity("Master VEF item deleted", `${product.sku} · ${product.name} dihapus dari Master VEF aktif. ${linkedSerials} Serial Number, ${linkedScans} scan, ${linkedManualEntries} input manual, ${linkedPjEntries} PJ, dan ${linkedInboundEntries} Inbound/Retur terkait ikut dihapus.`, {
+        entityType: "master_item",
+        entityId: product.id,
+        changes: [{
+          field: "Item Master VEF dan data terkait",
+          before: {
+            id: product.id,
+            sku: product.sku,
+            name: product.name,
+            stock: Number(product.stock || 0),
+            serials: linkedSerials,
+            scans: linkedScans,
+            manualEntries: linkedManualEntries,
+            pjEntries: linkedPjEntries,
+            inboundEntries: linkedInboundEntries
+          },
+          after: null
+        }]
+      });
       render();
       notify(`Item ${product.sku} berhasil dihapus dari Master VEF sesi aktif.`);
     }

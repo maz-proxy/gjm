@@ -498,10 +498,24 @@ begin
   if activity ->> 'type' is distinct from 'Master VEF item deleted'
     or activity ->> 'workspaceId' is distinct from p_workspace_id
     or activity ->> 'sessionId' is distinct from old_workspace_data -> 'activeSession' ->> 'id'
+    or activity ->> 'auditVersion' is distinct from '1'
+    or activity ->> 'entityType' is distinct from 'master_item'
+    or activity ->> 'entityId' is distinct from product_id
+    or jsonb_typeof(activity -> 'changes') is distinct from 'array'
+    or case when jsonb_typeof(activity -> 'changes') = 'array'
+      then jsonb_array_length(activity -> 'changes') <> 1
+      else true
+    end
+    or activity -> 'changes' -> 0 ->> 'field' is distinct from 'Item Master VEF dan data terkait'
+    or activity -> 'changes' -> 0 -> 'before' ->> 'id' is distinct from product_id
+    or activity -> 'changes' -> 0 -> 'after' is distinct from 'null'::jsonb
     or coalesce(activity ->> 'id', '') = ''
     or coalesce(activity ->> 'createdAt', '') = ''
     or coalesce(activity ->> 'description', '') = ''
-    or (activity - array['id', 'type', 'description', 'workspaceId', 'sessionId', 'createdAt']) <> '{}'::jsonb then
+    or (activity - array[
+      'id', 'type', 'description', 'workspaceId', 'workspaceName', 'sessionId',
+      'auditVersion', 'entityType', 'entityId', 'changes', 'createdAt'
+    ]) <> '{}'::jsonb then
     return false;
   end if;
   return true;
@@ -1146,3 +1160,209 @@ create policy "Workspace owner can delete the Android app"
       or coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'resource_admin'
     )
   );
+
+create table if not exists public.stock_opname_audit_log (
+  event_id text primary key check (length(event_id) between 1 and 100),
+  actor_user_id uuid references auth.users(id),
+  actor_username text not null,
+  actor_verified boolean not null default true,
+  workspace_id text not null default '',
+  workspace_name text not null default '',
+  session_id text not null default '',
+  event_type text not null,
+  entity_type text not null,
+  entity_id text not null,
+  description text not null,
+  changes jsonb not null default '[]'::jsonb check (jsonb_typeof(changes) = 'array'),
+  occurred_at timestamptz not null,
+  recorded_at timestamptz default statement_timestamp()
+);
+
+create index if not exists stock_opname_audit_log_occurred_at_idx
+  on public.stock_opname_audit_log (occurred_at desc, recorded_at desc);
+create index if not exists stock_opname_audit_log_actor_idx
+  on public.stock_opname_audit_log (actor_username, occurred_at desc);
+create index if not exists stock_opname_audit_log_workspace_idx
+  on public.stock_opname_audit_log (workspace_name, occurred_at desc);
+
+alter table public.stock_opname_audit_log enable row level security;
+revoke all on public.stock_opname_audit_log from public, anon, authenticated;
+grant select on public.stock_opname_audit_log to authenticated;
+
+drop policy if exists "Authenticated users can read stock opname audit log" on public.stock_opname_audit_log;
+create policy "Authenticated users can read stock opname audit log"
+  on public.stock_opname_audit_log for select to authenticated
+  using (auth.uid() is not null);
+
+create or replace function public.stock_opname_history_events(p_data jsonb)
+returns table (event jsonb)
+language sql
+immutable
+set search_path = ''
+as $$
+  select root_event.value
+    from jsonb_array_elements(
+      case when jsonb_typeof(p_data -> 'historyEvents') = 'array'
+        then p_data -> 'historyEvents' else '[]'::jsonb end
+    ) as root_event(value)
+  union all
+  select workspace_event.value
+    from jsonb_array_elements(
+      case when jsonb_typeof(p_data -> 'workspaces') = 'array'
+        then p_data -> 'workspaces' else '[]'::jsonb end
+    ) as workspace(value)
+    cross join lateral jsonb_array_elements(
+      case when jsonb_typeof(workspace.value -> 'data' -> 'historyEvents') = 'array'
+        then workspace.value -> 'data' -> 'historyEvents' else '[]'::jsonb end
+    ) as workspace_event(value)
+  union all
+  select archive_event.value
+    from jsonb_array_elements(
+      case when jsonb_typeof(p_data -> 'sessions') = 'array'
+        then p_data -> 'sessions' else '[]'::jsonb end
+    ) as archive(value)
+    cross join lateral jsonb_array_elements(
+      case when jsonb_typeof(archive.value -> 'snapshot' -> 'historyEvents') = 'array'
+        then archive.value -> 'snapshot' -> 'historyEvents' else '[]'::jsonb end
+    ) as archive_event(value);
+$$;
+
+create or replace function public.capture_stock_opname_audit_events()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  activity jsonb;
+  actor_name text;
+begin
+  select coalesce(
+    nullif(btrim(username.username), ''),
+    nullif(btrim(user_record.raw_user_meta_data ->> 'username'), ''),
+    nullif(btrim(user_record.raw_app_meta_data ->> 'username'), ''),
+    nullif(split_part(user_record.email, '@', 1), ''),
+    'Pengguna'
+  )
+    into actor_name
+    from auth.users as user_record
+    left join public.stock_opname_usernames as username
+      on lower(username.email) = lower(user_record.email)
+   where user_record.id = new.updated_by;
+
+  if actor_name is null then
+    raise exception 'Could not resolve the authenticated audit actor.'
+      using errcode = '42501';
+  end if;
+
+  for activity in
+    select distinct on (new_event.event ->> 'id') new_event.event
+      from public.stock_opname_history_events(new.data) as new_event
+     where new_event.event ->> 'auditVersion' = '1'
+       and not exists (
+         select 1
+           from public.stock_opname_history_events(old.data) as old_event
+          where old_event.event ->> 'id' = new_event.event ->> 'id'
+       )
+     order by new_event.event ->> 'id'
+  loop
+    if coalesce(activity ->> 'id', '') = ''
+      or coalesce(activity ->> 'type', '') = ''
+      or coalesce(activity ->> 'workspaceId', '') = ''
+      or coalesce(activity ->> 'sessionId', '') = ''
+      or coalesce(activity ->> 'entityType', '') = ''
+      or coalesce(activity ->> 'entityId', '') = ''
+      or coalesce(activity ->> 'description', '') = ''
+      or jsonb_typeof(activity -> 'changes') is distinct from 'array'
+      or nullif(activity ->> 'createdAt', '') is null then
+      raise exception 'A new audit event is missing required fields.'
+        using errcode = '22023';
+    end if;
+
+    insert into public.stock_opname_audit_log (
+      event_id,
+      actor_user_id,
+      actor_username,
+      actor_verified,
+      workspace_id,
+      workspace_name,
+      session_id,
+      event_type,
+      entity_type,
+      entity_id,
+      description,
+      changes,
+      occurred_at
+    )
+    values (
+      activity ->> 'id',
+      new.updated_by,
+      actor_name,
+      true,
+      activity ->> 'workspaceId',
+      coalesce(activity ->> 'workspaceName', ''),
+      activity ->> 'sessionId',
+      activity ->> 'type',
+      activity ->> 'entityType',
+      activity ->> 'entityId',
+      activity ->> 'description',
+      activity -> 'changes',
+      (activity ->> 'createdAt')::timestamptz
+    )
+    on conflict (event_id) do nothing;
+  end loop;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists capture_stock_opname_audit_events on public.stock_opname_state;
+create trigger capture_stock_opname_audit_events
+  after update on public.stock_opname_state
+  for each row execute function public.capture_stock_opname_audit_events();
+
+insert into public.stock_opname_audit_log (
+  event_id,
+  actor_user_id,
+  actor_username,
+  actor_verified,
+  workspace_id,
+  workspace_name,
+  session_id,
+  event_type,
+  entity_type,
+  entity_id,
+  description,
+  changes,
+  occurred_at,
+  recorded_at
+)
+select distinct on (stored_event.event ->> 'id')
+  stored_event.event ->> 'id',
+  null,
+  'Tidak tercatat (audit belum aktif)',
+  false,
+  stored_event.event ->> 'workspaceId',
+  coalesce(stored_event.event ->> 'workspaceName', ''),
+  stored_event.event ->> 'sessionId',
+  stored_event.event ->> 'type',
+  stored_event.event ->> 'entityType',
+  stored_event.event ->> 'entityId',
+  stored_event.event ->> 'description',
+  stored_event.event -> 'changes',
+  (stored_event.event ->> 'createdAt')::timestamptz,
+  null
+from public.stock_opname_state as state_record
+cross join lateral public.stock_opname_history_events(state_record.data) as stored_event
+where stored_event.event ->> 'auditVersion' = '1'
+  and coalesce(stored_event.event ->> 'id', '') <> ''
+  and coalesce(stored_event.event ->> 'type', '') <> ''
+  and coalesce(stored_event.event ->> 'workspaceId', '') <> ''
+  and coalesce(stored_event.event ->> 'sessionId', '') <> ''
+  and coalesce(stored_event.event ->> 'entityType', '') <> ''
+  and coalesce(stored_event.event ->> 'entityId', '') <> ''
+  and coalesce(stored_event.event ->> 'description', '') <> ''
+  and jsonb_typeof(stored_event.event -> 'changes') = 'array'
+  and nullif(stored_event.event ->> 'createdAt', '') is not null
+order by stored_event.event ->> 'id'
+on conflict (event_id) do nothing;
