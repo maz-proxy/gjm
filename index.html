@@ -8346,24 +8346,6 @@
       if (currentPage === "history") render();
     }
 
-    function getLegacyHistoryActivities() {
-      const activities = new Map();
-      const addActivities = (items, workspaceName) => {
-        for (const activity of items || []) {
-          if (!activity || activity.auditVersion === 1) continue;
-          const key = activity.id || `${activity.sessionId}:${activity.createdAt}:${activity.type}:${activity.description}`;
-          if (!activities.has(key)) activities.set(key, { ...activity, workspaceName: activity.workspaceName || workspaceName || "Sesi opname" });
-        }
-      };
-      for (const workspace of state.workspaces || []) {
-        addActivities(workspace.data?.historyEvents, workspace.name);
-      }
-      for (const session of state.sessions || []) {
-        addActivities(session.snapshot?.historyEvents, session.workspaceName);
-      }
-      return [...activities.values()].sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt));
-    }
-
     function formatAuditValue(value) {
       if (value === null || value === undefined || value === "") return "—";
       return typeof value === "object" ? stableSerialize(value) : String(value);
@@ -8375,13 +8357,12 @@
       return `<div class="audit-change-list">${rows.map((change) => `<div class="audit-change"><strong>${escapeHtml(change.label || change.field || "Nilai")}:</strong> <del>${escapeHtml(formatAuditValue(change.before))}</del> → <ins>${escapeHtml(formatAuditValue(change.after))}</ins></div>`).join("")}</div>`;
     }
 
-    function renderAuditTableRows(rows, legacy = false) {
-      if (!rows.length) return `<tr><td class="empty-row" colspan="7">${legacy ? "Belum ada riwayat lama." : "Belum ada aktivitas yang cocok dengan filter."}</td></tr>`;
+    function renderAuditTableRows(rows) {
+      if (!rows.length) return '<tr><td class="empty-row" colspan="7">Belum ada aktivitas yang cocok dengan filter.</td></tr>';
       return rows.map((row) => {
         const occurredAt = row.occurred_at || row.createdAt || "";
         const recordedAt = row.recorded_at || "";
-        const actor = legacy ? "Tidak tercatat (riwayat lama)"
-          : row.actor_verified === false ? "Tidak tercatat (audit belum aktif)" : row.actor_username || "Pengguna";
+        const actor = row.actor_verified === false ? "Tidak tercatat (audit belum aktif)" : row.actor_username || "Pengguna";
         const workspaceName = row.workspace_name || row.workspaceName || "Sesi opname";
         const type = row.event_type || row.type || "Aktivitas";
         const entity = [row.entity_type, row.entity_id].filter(Boolean).join(" · ") || "—";
@@ -8444,7 +8425,6 @@
     }
 
     function renderHistory() {
-      const legacyActivities = getLegacyHistoryActivities();
       const latestAudit = auditHistoryRows[0];
       const lastActivity = latestAudit?.occurred_at
         ? formatDate(latestAudit.occurred_at, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
@@ -8453,7 +8433,7 @@
         ? "Memuat catatan audit..."
         : `Menampilkan ${auditHistoryRows.length} dari ${auditHistoryTotal} catatan audit${auditHistoryHasMore ? "; pilih Muat lebih banyak untuk melanjutkan." : "."}`);
       return `${navMarkup()}<section class="page-head archive-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Aktivitas dan audit</div><h1>Riwayat Perubahan</h1><p class="subtitle">Audit baru mencatat pelaku, waktu kejadian dan waktu server, sesi, objek, serta nilai sebelum dan sesudah perubahan.</p></div></section>
-        <div class="history-summary"><div><strong>${formatNumber(auditHistoryTotal)} catatan audit tersimpan</strong><div style="font-size:10px;margin-top:3px">Perubahan baru disimpan permanen bersama transaksi workspace; catatan lama ditampilkan terpisah.</div></div><span class="category-chip">${escapeHtml(lastActivity)}</span></div>
+        <div class="history-summary"><div><strong>${formatNumber(auditHistoryTotal)} catatan audit tersimpan</strong><div style="font-size:10px;margin-top:3px">Audit terstruktur tersimpan permanen; riwayat legacy lama tidak ditampilkan.</div></div><span class="category-chip">${escapeHtml(lastActivity)}</span></div>
         <section class="table-section"><div class="table-toolbar"><div class="table-title">Audit lengkap <span class="table-count">Terbaru di atas</span></div><div class="audit-filter-actions"><button class="button button-secondary" id="audit-refresh" type="button" ${auditHistoryLoading ? "disabled" : ""}>Muat ulang</button><button class="button button-secondary" id="audit-export" type="button" ${auditHistoryLoading ? "disabled" : ""}>Ekspor CSV</button></div></div>
           <form id="audit-history-filters" class="audit-filter-grid">
             <div class="audit-filter-field"><label for="audit-search">Cari detail</label><input class="search-input" id="audit-search" name="search" type="search" value="${escapeHtml(auditHistoryFilters.search)}" placeholder="Item, SN, atau keterangan"></div>
@@ -8467,8 +8447,7 @@
           <div class="audit-legacy-note" role="${auditHistoryError ? "alert" : "status"}" aria-live="polite">${escapeHtml(auditStatus)}</div>
           <div class="table-scroll"><table><thead><tr><th>Waktu kejadian</th><th>Pelaku</th><th>Sesi / brand</th><th>Aktivitas</th><th>Objek</th><th>Sebelum → sesudah</th><th>Detail</th></tr></thead><tbody>${renderAuditTableRows(auditHistoryRows)}</tbody></table></div>
           <div class="table-footer"><span>${formatNumber(auditHistoryRows.length)} catatan dimuat</span><button class="button button-secondary" id="audit-load-more" type="button" ${!auditHistoryHasMore || auditHistoryLoading ? "disabled" : ""}>${auditHistoryLoading ? "Memuat..." : "Muat lebih banyak"}</button></div>
-        </section>
-        ${legacyActivities.length ? `<section class="table-section" style="margin-top:14px"><div class="table-toolbar"><div class="table-title">Riwayat sebelum audit lengkap <span class="table-count">${legacyActivities.length} aktivitas · pelaku dan perubahan terstruktur belum tercatat</span></div></div><div class="audit-legacy-note">Catatan lama dipulihkan dari workspace dan arsip sesi. Catatan ini tidak memiliki identitas pelaku yang terverifikasi atau nilai sebelum/sesudah.</div><div class="table-scroll"><table><thead><tr><th>Waktu</th><th>Pelaku</th><th>Sesi / brand</th><th>Aktivitas</th><th>Objek</th><th>Sebelum → sesudah</th><th>Detail</th></tr></thead><tbody>${renderAuditTableRows(legacyActivities, true)}</tbody></table></div></section>` : ""}`;
+        </section>`;
     }
 
     function buildSegregationMergeRows() {
