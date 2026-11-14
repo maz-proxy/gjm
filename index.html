@@ -375,7 +375,11 @@
     .compact-metrics .metric-value { font-size: 20px; margin-top: 7px; }
     .compact-metrics .metric-value small { font-size: 9px; }
     .compact-metrics .metric-note { font-size: 8px; margin-top: 3px; }
-    .result-session-strip { border-radius: 10px; box-shadow: 0 4px 10px rgba(29,74,50,.1); margin-bottom: 12px; min-height: 66px; padding: 11px 16px; }
+    .result-session-strip { border-radius: 10px; box-shadow: 0 4px 10px rgba(29,74,50,.1); display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); margin-bottom: 12px; min-height: 66px; padding: 11px 16px; }
+    .result-session-strip .session-actions { justify-self: end; }
+    .result-session-progress { align-items: center; display: flex; gap: 9px; justify-content: center; min-width: 0; position: relative; white-space: nowrap; z-index: 1; }
+    .result-session-progress-label { color: #d5e9df; font-size: 10px; font-weight: 700; letter-spacing: .55px; }
+    .result-session-progress strong { color: #fff; font-size: 24px; font-variant-numeric: tabular-nums; font-weight: 800; line-height: 1; }
     .recap-page-head { border-radius: 12px; box-shadow: 0 5px 14px rgba(23,76,62,.1); margin-bottom: 12px; min-height: 104px; padding: 16px 20px; }
     .master-page-head .archive-page-heading { align-self: flex-start; max-width: calc(100% - 215px); }
     .master-page-head .archive-page-eyebrow { margin-bottom: 4px; }
@@ -1192,6 +1196,8 @@
       .head-buttons { width: 100%; }
       .head-buttons .button { flex: 1; }
       .session-strip { align-items: flex-start; flex-direction: column; gap: 12px; padding: 15px; }
+      .result-session-strip { display: flex; }
+      .result-session-progress { align-self: center; }
       .session-actions { justify-content: space-between; width: 100%; }
       .metric-grid { gap: 8px; }
       .metric { min-height: 88px; padding: 12px; }
@@ -7803,6 +7809,7 @@
       if (!reconciliationStarted && !canManageActiveSession()) return renderReconciliationPending();
       const stats = getStats();
       const totals = getReconciliationTotals();
+      const soProgress = getScanManualQuantityProgress();
       const active = state.activeSession.status === "active";
       const canEdit = canEditActiveSession();
       const reconciliationProducts = state.products.filter((product) => isCountedProduct(product));
@@ -7814,7 +7821,7 @@
       return `${navMarkup()}
         <section class="page-head result-page-head"><div class="result-page-heading"><div class="result-page-eyebrow">Result SO · Rekonsiliasi inventaris</div>${workspacePageTitle()}<p class="subtitle">SCAN + MANUAL + PJ dibandingkan dengan VEF + Inbound/Retur. Perhitungan: ${countModeLabel(state.countMode).toLocaleLowerCase("id-ID")}.</p></div></section>
         ${renderSessionAccessNotice()}
-        <section class="session-strip result-session-strip"><div class="session-info"><div class="session-kicker">Sesi opname · ${escapeHtml(formatDate(state.activeSession.startedAt, { day: "numeric", month: "short", year: "numeric" }))}</div><div class="session-title">${!reconciliationStarted ? "Stock Reconciliation belum dimulai" : active ? "Rekonsiliasi sedang berjalan" : "Rekonsiliasi selesai"}</div><div class="session-meta">${state.importFile ? `${escapeHtml(state.importFile)}${state.importMessage ? ` · ${escapeHtml(state.importMessage)}` : ""}` : "Unggah workbook di Master VEF untuk memulai sesi."} · Pemilik: ${escapeHtml(sessionOwnerName(state.activeSession))}</div></div><div class="session-actions"><span class="status-pill"><span class="status-dot" style="${active ? "" : "background:#fff"}"></span>${active ? "Sedang berjalan" : "Selesai"}</span>${active ? `<button class="button finish-opname-button" id="finish-button" ${!reconciliationStarted ? 'disabled title="Mulai Stock Reconciliation terlebih dahulu"' : !canFinishActiveSession() || !stats.total ? 'disabled title="Hanya pemilik sesi, PIC terdaftar, atau Owner yang dapat menyelesaikan sesi"' : ""}>SO SELESAI</button>` : `<button class="button" id="new-session-button" ${!canManageActiveSession() ? "disabled" : ""}><span class="icon-plus">+</span> Mulai sesi baru</button>`}</div></section>
+        <section class="session-strip result-session-strip"><div class="session-info"><div class="session-kicker">Sesi opname · ${escapeHtml(formatDate(state.activeSession.startedAt, { day: "numeric", month: "short", year: "numeric" }))}</div><div class="session-title">${!reconciliationStarted ? "Stock Reconciliation belum dimulai" : active ? "Rekonsiliasi sedang berjalan" : "Rekonsiliasi selesai"}</div><div class="session-meta">${state.importFile ? `${escapeHtml(state.importFile)}${state.importMessage ? ` · ${escapeHtml(state.importMessage)}` : ""}` : "Unggah workbook di Master VEF untuk memulai sesi."} · Pemilik: ${escapeHtml(sessionOwnerName(state.activeSession))}</div></div><div class="result-session-progress" role="group" aria-label="SO Progress"><span class="result-session-progress-label">SO PROGRESS</span><strong>${soProgress} %</strong></div><div class="session-actions"><span class="status-pill"><span class="status-dot" style="${active ? "" : "background:#fff"}"></span>${active ? "Sedang berjalan" : "Selesai"}</span>${active ? `<button class="button finish-opname-button" id="finish-button" ${!reconciliationStarted ? 'disabled title="Mulai Stock Reconciliation terlebih dahulu"' : !canFinishActiveSession() || !stats.total ? 'disabled title="Hanya pemilik sesi, PIC terdaftar, atau Owner yang dapat menyelesaikan sesi"' : ""}>SO SELESAI</button>` : `<button class="button" id="new-session-button" ${!canManageActiveSession() ? "disabled" : ""}><span class="icon-plus">+</span> Mulai sesi baru</button>`}</div></section>
         <section class="metric-grid compact-metrics result-metrics" aria-label="Ringkasan stock opname">
           <div class="metric"><div class="metric-top">${state.countMode === "all" ? "Semua item dihitung" : "Laptop dihitung"} <span class="metric-mark">▤</span></div><div class="metric-value" id="metric-skus">${stats.total} <small>SKU</small></div></div>
           <div class="metric"><div class="metric-top">Unit VEF dihitung <span class="metric-mark">#</span></div><div class="metric-value" id="metric-expected">${formatNumber(stats.expected)} <small>unit</small></div></div>
