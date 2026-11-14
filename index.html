@@ -4823,6 +4823,14 @@
         || workspaceIsOwnedByCurrentUser(workspace)
         || (workspaceHasStarted(workspace) && workspaceIsAssignedPIC(workspace))));
     }
+    function canManageWorkspaceSession(workspace) {
+      return Boolean(workspace && (isSuperAdmin() || workspaceIsOwnedByCurrentUser(workspace)));
+    }
+    function canEditWorkspaceSchedule(workspace) {
+      return Boolean(canEditWorkspaceSession(workspace)
+        && workspace?.data?.activeSession?.status !== "completed"
+        && (!workspaceHasStarted(workspace) || canManageWorkspaceSession(workspace)));
+    }
     function canEditActiveSession() {
       return canEditWorkspaceSession(activeWorkspace());
     }
@@ -4830,7 +4838,7 @@
       return Boolean(session?.reconciliationStartedAt || session?.status === "completed");
     }
     function canManageActiveSession() {
-      return Boolean(isSuperAdmin() || workspaceIsOwnedByCurrentUser(activeWorkspace()));
+      return canManageWorkspaceSession(activeWorkspace());
     }
     function canFinishActiveSession() {
       return canEditWorkspaceSession(activeWorkspace());
@@ -7759,8 +7767,8 @@
         notify("Sesi aktif dengan data VEF diperlukan untuk memulai rekonsiliasi.");
         return;
       }
-      if (getScanManualQuantityProgress() < 90) {
-        notify("Total quantity Scan & Manual harus mencapai minimal 90% dari Master VEF.");
+      if (!canManageActiveSession() && getScanManualQuantityProgress() < 95) {
+        notify("Total quantity Scan & Manual harus mencapai minimal 95% dari Master VEF.");
         return;
       }
       const confirmed = await showConfirmDialog(
@@ -7779,8 +7787,8 @@
         notify("Sesi aktif dengan data VEF diperlukan untuk memulai rekonsiliasi.");
         return;
       }
-      if (getScanManualQuantityProgress() < 90) {
-        notify("Total quantity Scan & Manual harus mencapai minimal 90% dari Master VEF.");
+      if (!canManageActiveSession() && getScanManualQuantityProgress() < 95) {
+        notify("Total quantity Scan & Manual harus mencapai minimal 95% dari Master VEF.");
         return;
       }
       state.activeSession.reconciliationStartedAt = new Date().toISOString();
@@ -7791,7 +7799,8 @@
     }
 
     function renderOpname() {
-      if (!reconciliationHasStarted()) return renderReconciliationPending();
+      const reconciliationStarted = reconciliationHasStarted();
+      if (!reconciliationStarted && !canManageActiveSession()) return renderReconciliationPending();
       const stats = getStats();
       const totals = getReconciliationTotals();
       const active = state.activeSession.status === "active";
@@ -7805,7 +7814,7 @@
       return `${navMarkup()}
         <section class="page-head result-page-head"><div class="result-page-heading"><div class="result-page-eyebrow">Result SO · Rekonsiliasi inventaris</div>${workspacePageTitle()}<p class="subtitle">SCAN + MANUAL + PJ dibandingkan dengan VEF + Inbound/Retur. Perhitungan: ${countModeLabel(state.countMode).toLocaleLowerCase("id-ID")}.</p></div></section>
         ${renderSessionAccessNotice()}
-        <section class="session-strip result-session-strip"><div class="session-info"><div class="session-kicker">Sesi opname · ${escapeHtml(formatDate(state.activeSession.startedAt, { day: "numeric", month: "short", year: "numeric" }))}</div><div class="session-title">${active ? "Rekonsiliasi sedang berjalan" : "Rekonsiliasi selesai"}</div><div class="session-meta">${state.importFile ? `${escapeHtml(state.importFile)}${state.importMessage ? ` · ${escapeHtml(state.importMessage)}` : ""}` : "Unggah workbook di Master VEF untuk memulai sesi."} · Pemilik: ${escapeHtml(sessionOwnerName(state.activeSession))}</div></div><div class="session-actions"><span class="status-pill"><span class="status-dot" style="${active ? "" : "background:#fff"}"></span>${active ? "Sedang berjalan" : "Selesai"}</span>${active ? `<button class="button finish-opname-button" id="finish-button" ${!canFinishActiveSession() || !stats.total ? 'disabled title="Hanya pemilik sesi, PIC terdaftar, atau Owner yang dapat menyelesaikan sesi"' : ""}>SO SELESAI</button>` : `<button class="button" id="new-session-button" ${!canManageActiveSession() ? "disabled" : ""}><span class="icon-plus">+</span> Mulai sesi baru</button>`}</div></section>
+        <section class="session-strip result-session-strip"><div class="session-info"><div class="session-kicker">Sesi opname · ${escapeHtml(formatDate(state.activeSession.startedAt, { day: "numeric", month: "short", year: "numeric" }))}</div><div class="session-title">${!reconciliationStarted ? "Stock Reconciliation belum dimulai" : active ? "Rekonsiliasi sedang berjalan" : "Rekonsiliasi selesai"}</div><div class="session-meta">${state.importFile ? `${escapeHtml(state.importFile)}${state.importMessage ? ` · ${escapeHtml(state.importMessage)}` : ""}` : "Unggah workbook di Master VEF untuk memulai sesi."} · Pemilik: ${escapeHtml(sessionOwnerName(state.activeSession))}</div></div><div class="session-actions"><span class="status-pill"><span class="status-dot" style="${active ? "" : "background:#fff"}"></span>${active ? "Sedang berjalan" : "Selesai"}</span>${active ? `<button class="button finish-opname-button" id="finish-button" ${!reconciliationStarted ? 'disabled title="Mulai Stock Reconciliation terlebih dahulu"' : !canFinishActiveSession() || !stats.total ? 'disabled title="Hanya pemilik sesi, PIC terdaftar, atau Owner yang dapat menyelesaikan sesi"' : ""}>SO SELESAI</button>` : `<button class="button" id="new-session-button" ${!canManageActiveSession() ? "disabled" : ""}><span class="icon-plus">+</span> Mulai sesi baru</button>`}</div></section>
         <section class="metric-grid compact-metrics result-metrics" aria-label="Ringkasan stock opname">
           <div class="metric"><div class="metric-top">${state.countMode === "all" ? "Semua item dihitung" : "Laptop dihitung"} <span class="metric-mark">▤</span></div><div class="metric-value" id="metric-skus">${stats.total} <small>SKU</small></div></div>
           <div class="metric"><div class="metric-top">Unit VEF dihitung <span class="metric-mark">#</span></div><div class="metric-value" id="metric-expected">${formatNumber(stats.expected)} <small>unit</small></div></div>
@@ -8021,7 +8030,7 @@
         ? `<section class="layout-grid">${cards || `<div class="schedule-empty">${searchQuery ? "Tidak ada hasil untuk pencarian ini." : "Belum ada Rack. Klik Tambah Rack untuk membuat Rack pertama."}</div>`}</section>`
         : "";
       const reconciliationStarted = reconciliationHasStarted();
-      const showReconciliationButton = reconciliationStarted || reconciliationProgress >= 90;
+      const showReconciliationButton = reconciliationStarted || canManageActiveSession() || reconciliationProgress >= 95;
       const canStartReconciliation = active && canEdit && hasUploadedVef && state.products.length > 0;
       const reconciliationButtonTitle = reconciliationStarted
         ? "Rekonsiliasi sudah dimulai"
@@ -8146,7 +8155,7 @@
     }
 
     function renderRecap() {
-      if (!reconciliationHasStarted()) return renderReconciliationPending();
+      if (!reconciliationHasStarted() && !canManageActiveSession()) return renderReconciliationPending();
       const totals = getReconciliationTotals();
       const exceptions = state.products.filter((product) => isCountedProduct(product) && varianceFor(product) !== 0);
       const canEdit = canEditActiveSession();
@@ -10095,9 +10104,15 @@
         const data = workspace.data;
         const isCurrent = workspace.id === state.currentWorkspaceId;
         const canEdit = canEditWorkspaceSession(workspace);
+        const canEditSchedule = canEditWorkspaceSchedule(workspace);
         const stats = getWorkspaceDashboardStats(workspace);
         const isCompleted = data.activeSession.status === "completed";
         const hasStarted = workspaceHasStarted(workspace);
+        const scheduleEditDisabledTitle = isCompleted
+          ? "Sesi selesai tidak dapat diubah"
+          : hasStarted
+            ? "Hanya Owner sesi atau Super Admin yang dapat mengubah sesi berjalan"
+            : "Hanya Owner sesi atau Super Admin yang dapat mengubah jadwal";
         const hasUploadedVef = workspaceHasActiveWorkbook(workspace);
         const status = isCompleted ? "Selesai" : hasStarted ? "Berjalan" : "Belum dimulai";
         const statusClass = isCompleted ? "match" : hasStarted ? "different" : "pending";
@@ -10131,9 +10146,9 @@
           <header class="schedule-card-head">
             <div class="schedule-card-title">
               <div class="schedule-brand-fields">
-                <div class="schedule-brand-field"><label for="workspace-brand-${escapeHtml(workspace.id)}">Nama Brand</label><div class="schedule-resource-picker"><input class="workspace-name-input schedule-picker" id="workspace-brand-${escapeHtml(workspace.id)}" data-workspace-name="${escapeHtml(workspace.id)}" data-workspace-resource="brands" data-workspace-id="${escapeHtml(workspace.id)}" aria-label="Nama Brand" placeholder="${state.resources.brands.length ? "Cari dan pilih" : "Nama Brand belum tersedia"}" value="${escapeHtml(workspace.name)}" autocomplete="off" aria-autocomplete="list" aria-expanded="false" ${canEdit && !hasStarted && !isCompleted ? "" : 'disabled title="Brand sesi berjalan atau selesai tidak dapat diubah"'}><div class="schedule-resource-options" role="listbox" aria-label="Pilihan Nama Brand"></div></div></div>
-                <div class="schedule-brand-field"><label for="workspace-month-trigger-${escapeHtml(workspace.id)}">Bulan</label>${renderScheduleDropdown(`workspace-month-trigger-${workspace.id}`, `Bulan stock opname untuk ${workspace.name || emptyBrandNameLabel()}`, "schedule-period-select", `id="workspace-month-${escapeHtml(workspace.id)}" data-workspace-schedule-field="month" data-workspace-id="${escapeHtml(workspace.id)}"`, WORKSPACE_MONTHS.map((option) => [option, option]), month, !canEdit || hasStarted || isCompleted)}</div>
-                <div class="schedule-brand-field"><label for="workspace-period-trigger-${escapeHtml(workspace.id)}">Week</label>${renderScheduleDropdown(`workspace-period-trigger-${workspace.id}`, `Week stock opname untuk ${workspace.name || emptyBrandNameLabel()}`, "schedule-period-select", `id="workspace-period-${escapeHtml(workspace.id)}" data-workspace-schedule-field="period" data-workspace-id="${escapeHtml(workspace.id)}"`, WORKSPACE_PERIODS.map((option) => [option, option]), period, !canEdit || hasStarted || isCompleted)}</div>
+                <div class="schedule-brand-field"><label for="workspace-brand-${escapeHtml(workspace.id)}">Nama Brand</label><div class="schedule-resource-picker"><input class="workspace-name-input schedule-picker" id="workspace-brand-${escapeHtml(workspace.id)}" data-workspace-name="${escapeHtml(workspace.id)}" data-workspace-resource="brands" data-workspace-id="${escapeHtml(workspace.id)}" aria-label="Nama Brand" placeholder="${state.resources.brands.length ? "Cari dan pilih" : "Nama Brand belum tersedia"}" value="${escapeHtml(workspace.name)}" autocomplete="off" aria-autocomplete="list" aria-expanded="false" ${canEditSchedule ? "" : `disabled title="${scheduleEditDisabledTitle}"`}><div class="schedule-resource-options" role="listbox" aria-label="Pilihan Nama Brand"></div></div></div>
+                <div class="schedule-brand-field"><label for="workspace-month-trigger-${escapeHtml(workspace.id)}">Bulan</label>${renderScheduleDropdown(`workspace-month-trigger-${workspace.id}`, `Bulan stock opname untuk ${workspace.name || emptyBrandNameLabel()}`, "schedule-period-select", `id="workspace-month-${escapeHtml(workspace.id)}" data-workspace-schedule-field="month" data-workspace-id="${escapeHtml(workspace.id)}"`, WORKSPACE_MONTHS.map((option) => [option, option]), month, !canEditSchedule)}</div>
+                <div class="schedule-brand-field"><label for="workspace-period-trigger-${escapeHtml(workspace.id)}">Week</label>${renderScheduleDropdown(`workspace-period-trigger-${workspace.id}`, `Week stock opname untuk ${workspace.name || emptyBrandNameLabel()}`, "schedule-period-select", `id="workspace-period-${escapeHtml(workspace.id)}" data-workspace-schedule-field="period" data-workspace-id="${escapeHtml(workspace.id)}"`, WORKSPACE_PERIODS.map((option) => [option, option]), period, !canEditSchedule)}</div>
               </div>
               ${hasUploadedVef ? `<div class="schedule-card-subtitle">${formatNumber(stats.countedSkus)} item masuk perhitungan</div>` : ""}
             </div>
@@ -10148,8 +10163,8 @@
               <div class="schedule-mode-control"><label for="count-mode-trigger-${escapeHtml(workspace.id)}">Pilih mode</label>${renderScheduleDropdown(`count-mode-trigger-${workspace.id}`, `Pilihan perhitungan untuk ${workspace.name || emptyBrandNameLabel()}`, "workspace-count-mode", `id="count-mode-${escapeHtml(workspace.id)}" data-workspace-count-mode="${escapeHtml(workspace.id)}"`, [["all", "Semua item"], ["laptops", "Laptop saja"]], countMode, modeDisabled)}</div>
             </div>
             <div class="schedule-pics">
-              <div class="schedule-pic-field"><label for="pic-${escapeHtml(workspace.id)}-1">PIC 1</label><div class="schedule-resource-picker"><input class="workspace-name-input schedule-picker" id="pic-${escapeHtml(workspace.id)}-1" data-workspace-pic="${escapeHtml(workspace.id)}" data-workspace-resource="picNames" data-workspace-id="${escapeHtml(workspace.id)}" data-pic-index="0" aria-label="PIC 1 ${escapeHtml(workspace.name || emptyBrandNameLabel())}" placeholder="${state.resources.picNames.length ? "Cari dan pilih PIC 1" : "Nama PIC belum tersedia"}" value="${escapeHtml(workspace.picNames[0])}" autocomplete="off" aria-autocomplete="list" aria-expanded="false" ${canEdit && !hasStarted && !isCompleted ? "" : 'disabled title="PIC sesi berjalan atau selesai tidak dapat diubah"'}><div class="schedule-resource-options" role="listbox" aria-label="Pilihan PIC 1"></div></div></div>
-              <div class="schedule-pic-field"><label for="pic-${escapeHtml(workspace.id)}-2">PIC 2</label><div class="schedule-resource-picker"><input class="workspace-name-input schedule-picker" id="pic-${escapeHtml(workspace.id)}-2" data-workspace-pic="${escapeHtml(workspace.id)}" data-workspace-resource="picNames" data-workspace-id="${escapeHtml(workspace.id)}" data-pic-index="1" aria-label="PIC 2 ${escapeHtml(workspace.name || emptyBrandNameLabel())}" placeholder="${state.resources.picNames.length ? "Cari dan pilih PIC 2" : "Nama PIC belum tersedia"}" value="${escapeHtml(workspace.picNames[1])}" autocomplete="off" aria-autocomplete="list" aria-expanded="false" ${canEdit && !hasStarted && !isCompleted ? "" : 'disabled title="PIC sesi berjalan atau selesai tidak dapat diubah"'}><div class="schedule-resource-options" role="listbox" aria-label="Pilihan PIC 2"></div></div></div>
+              <div class="schedule-pic-field"><label for="pic-${escapeHtml(workspace.id)}-1">PIC 1</label><div class="schedule-resource-picker"><input class="workspace-name-input schedule-picker" id="pic-${escapeHtml(workspace.id)}-1" data-workspace-pic="${escapeHtml(workspace.id)}" data-workspace-resource="picNames" data-workspace-id="${escapeHtml(workspace.id)}" data-pic-index="0" aria-label="PIC 1 ${escapeHtml(workspace.name || emptyBrandNameLabel())}" placeholder="${state.resources.picNames.length ? "Cari dan pilih PIC 1" : "Nama PIC belum tersedia"}" value="${escapeHtml(workspace.picNames[0])}" autocomplete="off" aria-autocomplete="list" aria-expanded="false" ${canEditSchedule ? "" : `disabled title="${scheduleEditDisabledTitle}"`}><div class="schedule-resource-options" role="listbox" aria-label="Pilihan PIC 1"></div></div></div>
+              <div class="schedule-pic-field"><label for="pic-${escapeHtml(workspace.id)}-2">PIC 2</label><div class="schedule-resource-picker"><input class="workspace-name-input schedule-picker" id="pic-${escapeHtml(workspace.id)}-2" data-workspace-pic="${escapeHtml(workspace.id)}" data-workspace-resource="picNames" data-workspace-id="${escapeHtml(workspace.id)}" data-pic-index="1" aria-label="PIC 2 ${escapeHtml(workspace.name || emptyBrandNameLabel())}" placeholder="${state.resources.picNames.length ? "Cari dan pilih PIC 2" : "Nama PIC belum tersedia"}" value="${escapeHtml(workspace.picNames[1])}" autocomplete="off" aria-autocomplete="list" aria-expanded="false" ${canEditSchedule ? "" : `disabled title="${scheduleEditDisabledTitle}"`}><div class="schedule-resource-options" role="listbox" aria-label="Pilihan PIC 2"></div></div></div>
             </div>
             ${statsPanel}
           </div>
@@ -10200,8 +10215,8 @@
       const workspace = state.workspaces.find((item) => item.id === select.dataset.workspaceId);
       const field = select.dataset.workspaceScheduleField;
       if (!workspace || (field !== "month" && field !== "period")) return;
-      if (!canEditWorkspaceSession(workspace) || workspaceHasStarted(workspace) || workspace.data.activeSession.status === "completed") {
-        notify(`Jadwal sesi hanya dapat diubah oleh ${sessionOwnerName(workspace.data.activeSession)} atau Owner.`);
+      if (!canEditWorkspaceSchedule(workspace)) {
+        notify(`Jadwal sesi hanya dapat diubah oleh ${sessionOwnerName(workspace.data.activeSession)} atau Super Admin.`);
         select.value = field === "month" ? normalizeWorkspaceMonth(workspace.month) : normalizeWorkspacePeriod(workspace.period);
         return;
       }
@@ -11574,8 +11589,8 @@
         input.addEventListener("change", () => {
         const workspace = state.workspaces.find((item) => item.id === input.dataset.workspaceName);
         if (!workspace) return;
-        if (!canEditWorkspaceSession(workspace) || workspaceHasStarted(workspace) || workspace.data.activeSession.status === "completed") {
-          notify(`Sesi hanya dapat diubah oleh ${sessionOwnerName(workspace.data.activeSession)} atau Owner.`);
+        if (!canEditWorkspaceSchedule(workspace)) {
+          notify(`Sesi hanya dapat diubah oleh ${sessionOwnerName(workspace.data.activeSession)} atau Super Admin.`);
           input.value = workspace.name;
           const summary = input.closest(".schedule-card")?.querySelector(".schedule-summary-title");
           if (summary) summary.textContent = workspace.name || emptyBrandNameLabel();
@@ -11602,8 +11617,8 @@
         const workspace = state.workspaces.find((item) => item.id === input.dataset.workspacePic);
         const index = Number(input.dataset.picIndex);
         if (!workspace || !Number.isInteger(index) || index < 0 || index > 1) return;
-        if (!canEditWorkspaceSession(workspace) || workspaceHasStarted(workspace) || workspace.data.activeSession.status === "completed") {
-          notify(`Sesi hanya dapat diubah oleh ${sessionOwnerName(workspace.data.activeSession)} atau Owner.`);
+        if (!canEditWorkspaceSchedule(workspace)) {
+          notify(`Sesi hanya dapat diubah oleh ${sessionOwnerName(workspace.data.activeSession)} atau Super Admin.`);
           input.value = workspace.picNames[index];
           return;
         }
@@ -12502,6 +12517,10 @@
     }
 
     function openFinishDialog() {
+      if (!reconciliationHasStarted()) {
+        notify("Mulai Stock Reconciliation terlebih dahulu.");
+        return;
+      }
       if (!canFinishActiveSession()) {
         notify("Hanya pemilik sesi, PIC terdaftar, atau Owner yang dapat menyelesaikan sesi.");
         return;
@@ -12512,6 +12531,10 @@
     }
 
     function finishSession() {
+      if (!reconciliationHasStarted()) {
+        notify("Mulai Stock Reconciliation terlebih dahulu.");
+        return;
+      }
       if (!canFinishActiveSession()) {
         notify("Hanya pemilik sesi, PIC terdaftar, atau Owner yang dapat menyelesaikan sesi.");
         return;
