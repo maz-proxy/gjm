@@ -4496,6 +4496,8 @@
     let auditHistoryError = "";
     let auditHistoryHasMore = false;
     let auditHistoryFilters = { search: "", actor: "", workspace: "", type: "", from: "", to: "" };
+    let auditPurgeSessionId = "";
+    let auditPurgeLoading = false;
     const syncFailureCounts = { read: 0, write: 0 };
     const syncErrorKeys = { read: "", write: "" };
 
@@ -8346,6 +8348,60 @@
       if (currentPage === "history") render();
     }
 
+    async function purgeAuditHistoryBySessionId(sessionId) {
+      if (!(isSuperAdmin() || isResourceAdmin())) {
+        notify("Hanya Owner dan Super Adm yang dapat menghapus riwayat sesi.");
+        return;
+      }
+      const sessionKey = String(sessionId || "").trim();
+      if (!sessionKey) {
+        notify("Isi Session ID yang riwayatnya ingin dihapus.");
+        return;
+      }
+      if (auditPurgeLoading || auditHistoryLoading) return;
+      if (!await showConfirmDialog(
+        `Semua riwayat audit dengan Session ID ${sessionKey} akan dihapus permanen. Data stock opname dan arsip Session SO tidak ikut dihapus.`,
+        {
+          title: "Hapus riwayat sesi?",
+          subtitle: "Tindakan ini tidak dapat dibatalkan.",
+          confirmLabel: "Hapus riwayat",
+          destructive: true
+        }
+      )) return;
+
+      auditPurgeLoading = true;
+      if (currentPage === "history") render();
+      const { data, error } = await supabaseClient.rpc("purge_stock_opname_session_audit", {
+        p_session_id: sessionKey
+      });
+      auditPurgeLoading = false;
+      if (error) {
+        console.error("Riwayat audit sesi gagal dihapus:", error);
+        const functionMissing = error.code === "PGRST202"
+          || /purge_stock_opname_session_audit/i.test(error.message || "");
+        notify(functionMissing
+          ? "Fitur hapus riwayat belum aktif. Jalankan supabase-setup.sql terbaru di Supabase SQL Editor."
+          : `Riwayat audit gagal dihapus: ${error.message || "kesalahan tidak diketahui"}`);
+        if (currentPage === "history") render();
+        return;
+      }
+      const deletedCount = Number(data);
+      if (!Number.isSafeInteger(deletedCount) || deletedCount < 0) {
+        console.error("Jumlah riwayat yang dihapus tidak valid:", data);
+        notify("Penghapusan selesai tetapi jumlah catatan dari server tidak valid. Muat ulang riwayat untuk memeriksa hasilnya.");
+        if (currentPage === "history") render();
+        return;
+      }
+      auditPurgeSessionId = "";
+      auditHistoryRows = [];
+      auditHistoryOffset = 0;
+      auditHistoryTotal = 0;
+      auditHistoryHasMore = false;
+      auditHistoryLoadedUserId = "";
+      notify(`${deletedCount} catatan riwayat untuk sesi ${sessionKey} dihapus.`);
+      if (currentPage === "history") await loadAuditHistory(true);
+    }
+
     function formatAuditValue(value) {
       if (value === null || value === undefined || value === "") return "—";
       return typeof value === "object" ? stableSerialize(value) : String(value);
@@ -8373,7 +8429,8 @@
         const recordedLabel = recordedAt && Number.isFinite(new Date(recordedAt).getTime())
           ? formatDate(recordedAt, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", second: "2-digit" })
           : "";
-        return `<tr><td class="activity-time">${escapeHtml(dateLabel)}${recordedLabel ? `<span class="audit-recorded-at">Server: ${escapeHtml(recordedLabel)}</span>` : ""}</td><td>${escapeHtml(actor)}</td><td data-user-content>${escapeHtml(workspaceName)}</td><td><span class="activity-type">${escapeHtml(type)}</span></td><td>${escapeHtml(entity)}</td><td>${renderAuditChanges(row.changes)}</td><td class="activity-details">${escapeHtml(description)}</td></tr>`;
+        const sessionId = row.session_id || row.sessionId || "";
+        return `<tr><td class="activity-time">${escapeHtml(dateLabel)}${recordedLabel ? `<span class="audit-recorded-at">Server: ${escapeHtml(recordedLabel)}</span>` : ""}</td><td>${escapeHtml(actor)}</td><td data-user-content>${escapeHtml(workspaceName)}${sessionId ? `<span class="audit-recorded-at">Session ID: ${escapeHtml(sessionId)}</span>` : ""}</td><td><span class="activity-type">${escapeHtml(type)}</span></td><td>${escapeHtml(entity)}</td><td>${renderAuditChanges(row.changes)}</td><td class="activity-details">${escapeHtml(description)}</td></tr>`;
       }).join("");
     }
 
@@ -8425,6 +8482,7 @@
     }
 
     function renderHistory() {
+      const canPurgeAuditHistory = isSuperAdmin() || isResourceAdmin();
       const latestAudit = auditHistoryRows[0];
       const lastActivity = latestAudit?.occurred_at
         ? formatDate(latestAudit.occurred_at, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
@@ -8434,6 +8492,7 @@
         : `Menampilkan ${auditHistoryRows.length} dari ${auditHistoryTotal} catatan audit${auditHistoryHasMore ? "; pilih Muat lebih banyak untuk melanjutkan." : "."}`);
       return `${navMarkup()}<section class="page-head archive-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Aktivitas dan audit</div><h1>Riwayat Perubahan</h1><p class="subtitle">Audit baru mencatat pelaku, waktu kejadian dan waktu server, sesi, objek, serta nilai sebelum dan sesudah perubahan.</p></div></section>
         <div class="history-summary"><div><strong>${formatNumber(auditHistoryTotal)} catatan audit tersimpan</strong><div style="font-size:10px;margin-top:3px">Audit terstruktur tersimpan permanen; riwayat legacy lama tidak ditampilkan.</div></div><span class="category-chip">${escapeHtml(lastActivity)}</span></div>
+        ${canPurgeAuditHistory ? `<section class="table-section"><div class="table-toolbar"><div class="table-title">Hapus riwayat berdasarkan Session ID</div></div><div class="audit-legacy-note">Owner dan Super Adm dapat menghapus seluruh catatan audit untuk satu sesi. Data stock opname dan arsip Session SO tidak ikut dihapus.</div><form id="audit-purge-session-form" class="audit-filter-grid"><div class="audit-filter-field"><label for="audit-purge-session-id">Session ID</label><input class="search-input" id="audit-purge-session-id" name="sessionId" type="text" maxlength="200" autocomplete="off" placeholder="Tempel Session ID dari tabel riwayat" value="${escapeHtml(auditPurgeSessionId)}" ${auditPurgeLoading || auditHistoryLoading ? "disabled" : ""} required></div><div class="audit-filter-actions"><button class="button button-danger" id="audit-purge-session-submit" type="submit" ${auditPurgeLoading || auditHistoryLoading || !auditPurgeSessionId.trim() ? "disabled" : ""}>${auditPurgeLoading ? "Menghapus..." : "Hapus riwayat sesi"}</button></div></form></section>` : ""}
         <section class="table-section"><div class="table-toolbar"><div class="table-title">Audit lengkap <span class="table-count">Terbaru di atas</span></div><div class="audit-filter-actions"><button class="button button-secondary" id="audit-refresh" type="button" ${auditHistoryLoading ? "disabled" : ""}>Muat ulang</button><button class="button button-secondary" id="audit-export" type="button" ${auditHistoryLoading ? "disabled" : ""}>Ekspor CSV</button></div></div>
           <form id="audit-history-filters" class="audit-filter-grid">
             <div class="audit-filter-field"><label for="audit-search">Cari detail</label><input class="search-input" id="audit-search" name="search" type="search" value="${escapeHtml(auditHistoryFilters.search)}" placeholder="Item, SN, atau keterangan"></div>
@@ -11802,6 +11861,16 @@
       document.getElementById("audit-refresh")?.addEventListener("click", () => void loadAuditHistory(true));
       document.getElementById("audit-load-more")?.addEventListener("click", () => void loadAuditHistory(false));
       document.getElementById("audit-export")?.addEventListener("click", () => void exportAuditHistory());
+      const auditPurgeSessionInput = document.getElementById("audit-purge-session-id");
+      auditPurgeSessionInput?.addEventListener("input", () => {
+        auditPurgeSessionId = auditPurgeSessionInput.value;
+        const submitButton = document.getElementById("audit-purge-session-submit");
+        if (submitButton) submitButton.disabled = auditPurgeLoading || auditHistoryLoading || !auditPurgeSessionId.trim();
+      });
+      document.getElementById("audit-purge-session-form")?.addEventListener("submit", (event) => {
+        event.preventDefault();
+        void purgeAuditHistoryBySessionId(auditPurgeSessionId);
+      });
       document.getElementById("add-workspace-button")?.addEventListener("click", addWorkspace);
       document.getElementById("admin-refresh-users")?.addEventListener("click", loadAdminUsers);
       document.getElementById("admin-refresh-storage")?.addEventListener("click", () => void loadAdminStorage());

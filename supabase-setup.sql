@@ -1178,6 +1178,12 @@ create table if not exists public.stock_opname_audit_log (
   recorded_at timestamptz default statement_timestamp()
 );
 
+create table if not exists public.stock_opname_audit_session_purges (
+  session_id text primary key check (length(session_id) between 1 and 200),
+  purged_by uuid not null references auth.users(id),
+  purged_at timestamptz not null default statement_timestamp()
+);
+
 create index if not exists stock_opname_audit_log_occurred_at_idx
   on public.stock_opname_audit_log (occurred_at desc, recorded_at desc);
 create index if not exists stock_opname_audit_log_actor_idx
@@ -1189,10 +1195,55 @@ alter table public.stock_opname_audit_log enable row level security;
 revoke all on public.stock_opname_audit_log from public, anon, authenticated;
 grant select on public.stock_opname_audit_log to authenticated;
 
+alter table public.stock_opname_audit_session_purges enable row level security;
+revoke all on public.stock_opname_audit_session_purges from public, anon, authenticated;
+
 drop policy if exists "Authenticated users can read stock opname audit log" on public.stock_opname_audit_log;
 create policy "Authenticated users can read stock opname audit log"
   on public.stock_opname_audit_log for select to authenticated
   using (auth.uid() is not null);
+
+create or replace function public.purge_stock_opname_session_audit(p_session_id text)
+returns integer
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  current_user_id uuid := auth.uid();
+  user_role text := coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '');
+  owner_username text := coalesce(auth.jwt() -> 'app_metadata' ->> 'owner_username', '');
+  session_key text := nullif(pg_catalog.btrim(p_session_id), '');
+  deleted_count integer := 0;
+begin
+  if current_user_id is null
+    or not (
+      user_role = 'resource_admin'
+      or (user_role = 'super_admin' and owner_username = 'indra')
+    ) then
+    raise exception 'Only the workspace owner or Super Adm can purge session audit history.'
+      using errcode = '42501';
+  end if;
+  if session_key is null or pg_catalog.char_length(session_key) > 200 then
+    raise exception 'A valid session ID is required.'
+      using errcode = '22023';
+  end if;
+
+  insert into public.stock_opname_audit_session_purges (session_id, purged_by)
+  values (session_key, current_user_id)
+  on conflict (session_id) do update
+    set purged_by = excluded.purged_by,
+        purged_at = pg_catalog.statement_timestamp();
+
+  delete from public.stock_opname_audit_log
+   where session_id = session_key;
+  get diagnostics deleted_count = row_count;
+  return deleted_count;
+end;
+$$;
+
+revoke all on function public.purge_stock_opname_session_audit(text) from public, anon, authenticated;
+grant execute on function public.purge_stock_opname_session_audit(text) to authenticated;
 
 create or replace function public.stock_opname_history_events(p_data jsonb)
 returns table (event jsonb)
@@ -1364,5 +1415,10 @@ where stored_event.event ->> 'auditVersion' = '1'
   and coalesce(stored_event.event ->> 'description', '') <> ''
   and jsonb_typeof(stored_event.event -> 'changes') = 'array'
   and nullif(stored_event.event ->> 'createdAt', '') is not null
+  and not exists (
+    select 1
+      from public.stock_opname_audit_session_purges as purged_session
+     where purged_session.session_id = (stored_event.event ->> 'sessionId')
+  )
 order by stored_event.event ->> 'id'
 on conflict (event_id) do nothing;
