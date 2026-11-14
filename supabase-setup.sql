@@ -502,10 +502,10 @@ begin
     or activity ->> 'entityType' is distinct from 'master_item'
     or activity ->> 'entityId' is distinct from product_id
     or jsonb_typeof(activity -> 'changes') is distinct from 'array'
-    or case when jsonb_typeof(activity -> 'changes') = 'array'
-      then jsonb_array_length(activity -> 'changes') <> 1
-      else true
-    end
+    or jsonb_array_length(case
+      when jsonb_typeof(activity -> 'changes') = 'array' then activity -> 'changes'
+      else '[]'::jsonb
+    end) <> 1
     or activity -> 'changes' -> 0 ->> 'field' is distinct from 'Item Master VEF dan data terkait'
     or activity -> 'changes' -> 0 -> 'before' ->> 'id' is distinct from product_id
     or activity -> 'changes' -> 0 -> 'after' is distinct from 'null'::jsonb
