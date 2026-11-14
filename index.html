@@ -999,6 +999,15 @@
     .dashboard-panel-head { align-items: center; border-bottom: 1px solid #edf1eb; display: flex; justify-content: space-between; min-height: 59px; padding: 12px 17px; }
     .dashboard-panel-title { font-size: 12px; font-weight: 700; }
     .dashboard-panel-subtitle { color: var(--muted); font-size: 10px; margin-top: 3px; }
+    .dashboard-recorded-list { display: grid; list-style: none; margin: 0; padding: 2px 15px; }
+    .dashboard-recorded-brand { border-bottom: 1px solid var(--line); display: grid; gap: 4px; min-width: 0; padding: 10px 0; }
+    .dashboard-recorded-brand:last-child { border-bottom: 0; }
+    .dashboard-recorded-brand-head { align-items: baseline; display: flex; flex-wrap: wrap; gap: 4px 12px; justify-content: space-between; }
+    .dashboard-recorded-brand-title { color: var(--ink); font-size: 11px; font-weight: 700; min-width: 0; overflow-wrap: anywhere; }
+    .dashboard-recorded-brand-count { color: var(--muted); font-size: 9px; white-space: nowrap; }
+    .dashboard-recorded-warehouse-info { color: var(--muted); font-size: 9px; line-height: 1.5; margin: 0; overflow-wrap: anywhere; }
+    .dashboard-recorded-warehouse-info strong { color: var(--ink); }
+    .dashboard-recorded-empty { color: var(--muted); font-size: 10px; padding: 12px 15px 15px; }
     .dashboard-chart-tag { background: #edf4eb; border-radius: 99px; color: var(--green); font-size: 9px; font-weight: 700; padding: 5px 8px; white-space: nowrap; }
     .dashboard-donut-wrap { align-items: center; display: flex; flex-direction: column; justify-content: center; min-height: 180px; padding: 12px; }
     .dashboard-donut { height: 132px; position: relative; width: 132px; }
@@ -9177,6 +9186,23 @@
       const recordedSessions = state.sessions.filter((session) => session?.snapshot);
       const recordedBrands = [...new Set(recordedSessions.map((session) => session.workspaceName).filter(Boolean))]
         .sort((a, b) => a.localeCompare(b, "id-ID"));
+      const recordedBrandSummaries = new Map();
+      for (const session of recordedSessions) {
+        const name = String(session.workspaceName || "Sesi opname").trim() || "Sesi opname";
+        const summary = recordedBrandSummaries.get(name) || { name, sessions: 0, warehouses: new Set() };
+        summary.sessions += 1;
+        for (const product of Array.isArray(session.snapshot.products) ? session.snapshot.products : []) {
+          if (!product || typeof product !== "object") continue;
+          summary.warehouses.add(String(product.warehouse || "").trim() || "Tanpa Warehouse");
+        }
+        recordedBrandSummaries.set(name, summary);
+      }
+      const recordedBrandRows = [...recordedBrandSummaries.values()]
+        .sort((a, b) => a.name.localeCompare(b.name, "id-ID"))
+        .map(({ name, sessions, warehouses }) => {
+          const warehouseNames = [...warehouses].sort((a, b) => a.localeCompare(b, "id-ID"));
+          return `<li class="dashboard-recorded-brand"><div class="dashboard-recorded-brand-head"><strong class="dashboard-recorded-brand-title" data-user-content>${escapeHtml(name)}</strong><span class="dashboard-recorded-brand-count">${sessions} arsip selesai</span></div><p class="dashboard-recorded-warehouse-info"><strong>Gudang:</strong> ${warehouseNames.length ? warehouseNames.map((warehouse) => escapeHtml(warehouse)).join(", ") : "Belum ada data gudang"}</p></li>`;
+        }).join("");
       const workspaceStats = state.workspaces
         .filter((workspace) => workspace.data.activeSession.status === "active" && workspaceHasStarted(workspace) && reconciliationHasStarted(workspace.data.activeSession))
         .map((workspace) => ({ workspace, stats: getWorkspaceDashboardStats(workspace) }));
@@ -9252,6 +9278,7 @@
             <button class="button button-primary recorded-period-view" id="view-recorded-session" type="button" disabled>View</button>
           </div></div></section>
         </div>
+        <article class="dashboard-panel"><header class="dashboard-panel-head"><div><div class="dashboard-panel-title">Brand / Gudang di SO Record</div><div class="dashboard-panel-subtitle">Brand dan gudang yang sudah tercatat pada sesi stock opname selesai.</div></div><span class="dashboard-chart-tag">${recordedBrandSummaries.size} brand</span></header>${recordedBrandRows ? `<ul class="dashboard-recorded-list">${recordedBrandRows}</ul>` : '<div class="dashboard-recorded-empty">Belum ada brand atau gudang yang masuk ke SO Record.</div>'}</article>
         <article class="dashboard-panel dashboard-brand-progress"><header class="dashboard-panel-head"><div><div class="dashboard-panel-title">Progres per Brand / Gudang</div><div class="dashboard-panel-subtitle">Sesi aktif saja · quantity opname dibanding target VEF + Inbound/Retur</div></div><span class="dashboard-chart-tag">${workspaceStats.length} brand</span></header><div class="dashboard-chart-list">${chartRows}</div>${workspaceStats.length ? "" : '<div class="dashboard-empty">Belum ada sesi berjalan. Unggah workbook pada sesi bernama brand di Master VEF untuk memulai.</div>'}</article>
         <section class="dashboard-summary-charts" aria-label="Grafik quantity dan ringkasan stock opname">
           <article class="dashboard-panel"><header class="dashboard-panel-head"><div><div class="dashboard-panel-title">Komposisi Quantity</div><div class="dashboard-panel-subtitle">Hasil SO dibandingkan dengan VEF + Inbound/Retur</div></div><span class="dashboard-chart-tag">Unit</span></header>
