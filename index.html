@@ -556,13 +556,13 @@
     .layout-card { background: linear-gradient(145deg, #fff, #fcfdfb); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 5px 16px rgba(35, 59, 38, .045); min-width: 0; overflow: hidden; position: relative; transition: background .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease; }
     .layout-card:hover { border-color: #cbd9ca; box-shadow: 0 10px 24px rgba(35, 59, 38, .085); transform: translateY(-2px); }
     .layout-card.quantity-matched { background: linear-gradient(145deg, #f1f8f2, #e7f3e9); border-color: #b8d2bc; }
-    .layout-card[data-layout-card].quantity-matched::before { align-items: center; background: #078b1d; border: 4px solid #fff; border-radius: 50%; box-shadow: 0 2px 8px rgba(32, 37, 30, .32); color: #fff; content: "✓"; display: flex; font-size: 56px; font-weight: 900; height: 82px; justify-content: center; left: 50%; line-height: 1; position: absolute; top: -48px; transform: translateX(-50%); width: 82px; z-index: 4; }
+    .layout-card[data-layout-card].quantity-matched::before { align-items: center; background: #078b1d; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 1px 4px rgba(32, 37, 30, .2); color: #fff; content: "✓"; display: flex; font-size: 19px; font-weight: 800; height: 30px; justify-content: center; left: 50%; line-height: 1; position: absolute; top: -14px; transform: translateX(-50%); width: 30px; z-index: 4; }
     .layout-card.quantity-over { background: linear-gradient(145deg, #fff3f1, #fbe8e5); border-color: #dfaaa5; }
     .layout-card.quantity-over::before { align-items: center; background: var(--red); border: 2px solid #fff; border-radius: 50%; box-shadow: 0 1px 4px rgba(55, 24, 22, .2); color: #fff; content: "!"; display: flex; font-size: 17px; font-weight: 800; height: 30px; justify-content: center; left: 50%; line-height: 1; position: absolute; top: 5px; transform: translateX(-50%); width: 30px; z-index: 1; }
     .layout-card.quantity-over:hover { border-color: #c97972; box-shadow: 0 10px 24px rgba(105, 43, 38, .12); }
     .layout-card.duplicate-warning { background: linear-gradient(145deg, #fff0ef, #ffd8d5) !important; border: 2px solid #ff2929 !important; box-shadow: 0 0 0 3px rgba(255,41,41,.2), 0 8px 22px rgba(160,20,20,.16) !important; }
     .layout-card.duplicate-warning:hover { border-color: #e60000 !important; box-shadow: 0 0 0 4px rgba(255,41,41,.24), 0 10px 24px rgba(160,20,20,.2) !important; }
-    .layout-card[data-layout-card].duplicate-warning::before { align-items: center; background: #e51d2a; border: 4px solid #fff; border-radius: 50%; box-shadow: 0 2px 8px rgba(55, 24, 22, .32); color: #fff; content: "×"; display: flex; font-size: 54px; font-weight: 900; height: 82px; justify-content: center; left: 50%; line-height: 1; position: absolute; top: -48px; transform: translateX(-50%); width: 82px; z-index: 4; }
+    .layout-card[data-layout-card].duplicate-warning::before { align-items: center; background: #e51d2a; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 1px 4px rgba(55, 24, 22, .2); color: #fff; content: "×"; display: flex; font-size: 19px; font-weight: 800; height: 30px; justify-content: center; left: 50%; line-height: 1; position: absolute; top: -14px; transform: translateX(-50%); width: 30px; z-index: 4; }
     .layout-card.duplicate-warning .layout-card-head { background: linear-gradient(110deg, #ffe1df, #fff0ef) !important; border-color: #ffb6b1 !important; }
     .layout-card:focus-within { border-color: var(--green); box-shadow: 0 0 0 3px rgba(40, 93, 69, .12), 0 9px 24px rgba(35, 59, 38, .08); }
     .layout-card:focus-within .layout-card-head { background: var(--green-soft); }
@@ -2063,7 +2063,7 @@
     .layout-card[data-layout-card].quantity-matched,
     .layout-card[data-layout-card].duplicate-warning { overflow: visible; z-index: 1; }
     .layout-card[data-layout-card].quantity-matched .layout-card-head,
-    .layout-card[data-layout-card].duplicate-warning .layout-card-head { border-radius: 11px 11px 0 0; }
+    .layout-card[data-layout-card].duplicate-warning .layout-card-head { border-radius: 11px 11px 0 0; padding-top: 22px; }
     .layout-card[data-layout-card].quantity-over:not(.duplicate-warning)::before { display: none; }
     .layout-card:is([data-layout-card], [data-recorded-layout]) .layout-card-head { align-items: center; padding: 10px 12px; }
     .layout-card[data-layout-card] .layout-card-head { align-items: flex-start; padding-right: 46px; }
