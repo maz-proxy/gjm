@@ -4407,6 +4407,7 @@
       { id: "smartphone", label: "Unit Smartphone" },
       { id: "tablet", label: "Unit Tablet" },
       { id: "monitor", label: "Unit Monitor" },
+      { id: "pc-aio", label: "Unit PC AIO/All In One" },
       { id: "accessories", label: "Unit Accessories" },
       { id: "service", label: "Unit Jasa" },
       { id: "unclassified", label: "Belum diklasifikasi" }
@@ -8770,6 +8771,7 @@
       const groupRules = [
         { category: "service", pattern: /jasa|services?|servis/ },
         { category: "monitor", pattern: /monitor/ },
+        { category: "pc-aio", pattern: /\baio\b|all in one/ },
         { category: "accessories", pattern: /acc|accessor|aksesoris|peripheral|audio|smartwatch|imooz|camera|cctv|networking|ram|storage|ssd|harddisk|gamingacc|electronics|ninebot/ },
         { category: "tablet", pattern: /tablet|matepad|pad|tab/ },
         { category: "laptop", pattern: /laptop|notebook|macbook|vivobook|zenbook|expertbook|chromebook|studiobook|soulmate|workmate|tbook|aigen|heritage|stylus360/ },
@@ -8791,6 +8793,10 @@
         {
           category: "monitor",
           pattern: /\bmonitor\b/i
+        },
+        {
+          category: "pc-aio",
+          pattern: /\b(?:aio|all[\s-]*in[\s-]*one)\b/i
         },
         {
           category: "accessories",
