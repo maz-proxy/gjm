@@ -210,6 +210,78 @@ create trigger set_stock_opname_state_updated_at
   before update on public.stock_opname_state
   for each row execute function public.set_stock_opname_state_updated_at();
 
+create or replace function public.stock_opname_workspace_is_expired(
+  p_workspace jsonb,
+  p_state jsonb,
+  p_now timestamptz
+)
+returns boolean
+language sql
+stable
+set search_path = ''
+as $$
+  with workspace_session as (
+    select
+      p_workspace -> 'data' -> 'activeSession' as active_session,
+      coalesce(
+        nullif(p_workspace ->> 'uploadActivityAt', ''),
+        nullif(p_workspace -> 'data' -> 'activeSession' ->> 'startedAt', ''),
+        nullif(p_workspace ->> 'scheduleCreatedAt', '')
+      ) as activity_text
+  ),
+  parsed_session as (
+    select
+      active_session,
+      case
+        when activity_text ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})?$'
+          then activity_text::timestamptz
+        else null
+      end as activity_at
+    from workspace_session
+  )
+  select coalesce(
+    p_workspace is not null
+    and jsonb_typeof(p_workspace) = 'object'
+    and coalesce(p_workspace ->> 'schedulePlaceholder', 'false') <> 'true'
+    and coalesce(parsed_session.active_session ->> 'status', 'active') = 'active'
+    and nullif(parsed_session.active_session ->> 'id', '') is not null
+    and parsed_session.activity_at <= p_now - interval '5 minutes'
+    and coalesce(p_workspace -> 'data' ->> 'importFile', '') = ''
+    and not exists (
+      select 1
+        from jsonb_array_elements(case
+          when jsonb_typeof(p_workspace -> 'data' -> 'workbookFiles') = 'array'
+            then p_workspace -> 'data' -> 'workbookFiles'
+          else '[]'::jsonb
+        end) as workbook(value)
+       where workbook.value ->> 'sessionId' = parsed_session.active_session ->> 'id'
+    )
+    and not exists (
+      select 1
+        from jsonb_array_elements(case
+          when jsonb_typeof(p_state -> 'workbookFiles') = 'array'
+            then p_state -> 'workbookFiles'
+          else '[]'::jsonb
+        end) as workbook(value)
+       where workbook.value ->> 'sessionId' = parsed_session.active_session ->> 'id'
+    )
+    and not exists (
+      select 1
+        from jsonb_array_elements(case
+          when jsonb_typeof(p_state -> 'sessions') = 'array'
+            then p_state -> 'sessions'
+          else '[]'::jsonb
+        end) as archived(value)
+       where archived.value ->> 'id' = parsed_session.active_session ->> 'id'
+    ),
+    false
+  )
+  from parsed_session;
+$$;
+
+revoke all on function public.stock_opname_workspace_is_expired(jsonb, jsonb, timestamptz) from public, anon;
+grant execute on function public.stock_opname_workspace_is_expired(jsonb, jsonb, timestamptz) to authenticated, service_role;
+
 create or replace function public.guard_stock_opname_workspace_membership()
 returns trigger
 language plpgsql
@@ -345,6 +417,11 @@ begin
                      where archived_workbook.value = source_workbook.value
                   )
                )
+          )
+          or public.stock_opname_workspace_is_expired(
+            removed_workspace,
+            old.data,
+            statement_timestamp()
           )
         )
       ) then
@@ -1422,3 +1499,172 @@ where stored_event.event ->> 'auditVersion' = '1'
   )
 order by stored_event.event ->> 'id'
 on conflict (event_id) do nothing;
+
+create or replace function public.cleanup_expired_stock_opname_workspaces()
+returns integer
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  current_state jsonb;
+  remaining_workspaces jsonb;
+  expired_count integer := 0;
+  next_workspace jsonb;
+  next_state jsonb;
+  cleanup_time timestamptz := pg_catalog.statement_timestamp();
+begin
+  select state_record.data
+    into current_state
+    from public.stock_opname_state as state_record
+   where state_record.id = 'stock-opname-team'
+   for update;
+  if not found then
+    return 0;
+  end if;
+
+  select
+    coalesce(
+      jsonb_agg(workspace.value order by workspace.ordinality)
+        filter (where not public.stock_opname_workspace_is_expired(workspace.value, current_state, cleanup_time)),
+      '[]'::jsonb
+    ),
+    count(*) filter (
+      where public.stock_opname_workspace_is_expired(workspace.value, current_state, cleanup_time)
+    )::integer
+    into remaining_workspaces, expired_count
+    from jsonb_array_elements(case
+      when jsonb_typeof(current_state -> 'workspaces') = 'array'
+        then current_state -> 'workspaces'
+      else '[]'::jsonb
+    end) with ordinality as workspace(value, ordinality);
+
+  if coalesce(expired_count, 0) = 0 then
+    return 0;
+  end if;
+
+  insert into public.stock_opname_audit_log (
+    event_id,
+    actor_user_id,
+    actor_username,
+    actor_verified,
+    workspace_id,
+    workspace_name,
+    session_id,
+    event_type,
+    entity_type,
+    entity_id,
+    description,
+    changes,
+    occurred_at
+  )
+  select
+    pg_catalog.gen_random_uuid()::text,
+    null,
+    'Sistem (otomatis)',
+    false,
+    coalesce(workspace.value ->> 'id', 'unknown'),
+    coalesce(workspace.value ->> 'name', ''),
+    coalesce(workspace.value -> 'data' -> 'activeSession' ->> 'id', ''),
+    'Jadwal sesi dihapus otomatis',
+    'workspace',
+    coalesce(workspace.value ->> 'id', 'unknown'),
+    'Kartu sesi dihapus otomatis karena tidak ada file VEF selama lima menit.',
+    pg_catalog.jsonb_build_array(pg_catalog.jsonb_build_object(
+      'field', 'Jadwal',
+      'before', pg_catalog.jsonb_build_object(
+        'name', coalesce(workspace.value ->> 'name', ''),
+        'status', coalesce(workspace.value -> 'data' -> 'activeSession' ->> 'status', 'active')
+      ),
+      'after', 'null'::jsonb
+    )),
+    cleanup_time
+    from jsonb_array_elements(case
+      when jsonb_typeof(current_state -> 'workspaces') = 'array'
+        then current_state -> 'workspaces'
+      else '[]'::jsonb
+    end) as workspace(value)
+   where public.stock_opname_workspace_is_expired(workspace.value, current_state, cleanup_time)
+     and not exists (
+       select 1
+         from public.stock_opname_audit_session_purges as purged_session
+        where purged_session.session_id = workspace.value -> 'data' -> 'activeSession' ->> 'id'
+     );
+
+  select workspace.value
+    into next_workspace
+    from jsonb_array_elements(remaining_workspaces) with ordinality as workspace(value, ordinality)
+   where workspace.value ->> 'id' = current_state ->> 'currentWorkspaceId'
+   limit 1;
+  if next_workspace is null then
+    select workspace.value
+      into next_workspace
+      from jsonb_array_elements(remaining_workspaces) with ordinality as workspace(value, ordinality)
+     order by case when workspace.value ->> 'schedulePlaceholder' = 'true' then 0 else 1 end,
+              workspace.ordinality
+     limit 1;
+  end if;
+
+  if next_workspace is null then
+    next_state := current_state || pg_catalog.jsonb_build_object(
+      'workspaces', remaining_workspaces,
+      'currentWorkspaceId', null,
+      'products', '[]'::jsonb,
+      'serialMaster', '{}'::jsonb,
+      'scanEvents', '[]'::jsonb,
+      'manualEntries', '[]'::jsonb,
+      'pjEntries', '[]'::jsonb,
+      'inboundEntries', '[]'::jsonb,
+      'historyEvents', '[]'::jsonb,
+      'workbookFiles', '[]'::jsonb,
+      'activeSession', null,
+      'countMode', 'all',
+      'importFile', '',
+      'importMessage', '',
+      'importDownloadedAt', '',
+      'importUploadedAt', '',
+      'layouts', '["Rack 1"]'::jsonb,
+      'layoutQuantities', '{}'::jsonb,
+      'layoutNumbers', '{}'::jsonb,
+      'lastScan', null
+    );
+  else
+    next_state := current_state
+      || coalesce(next_workspace -> 'data', '{}'::jsonb)
+      || pg_catalog.jsonb_build_object(
+        'workspaces', remaining_workspaces,
+        'currentWorkspaceId', next_workspace ->> 'id'
+      );
+  end if;
+
+  update public.stock_opname_state
+     set data = next_state
+   where id = 'stock-opname-team';
+
+  return expired_count;
+end;
+$$;
+
+revoke all on function public.cleanup_expired_stock_opname_workspaces() from public, anon, authenticated, service_role;
+
+create extension if not exists pg_cron;
+
+do $$
+declare
+  existing_job_id bigint;
+begin
+  for existing_job_id in
+    select job.jobid
+      from cron.job as job
+     where job.jobname = 'stock-opname-expired-session-cleanup'
+  loop
+    perform cron.unschedule(existing_job_id);
+  end loop;
+
+  perform cron.schedule(
+    'stock-opname-expired-session-cleanup',
+    '* * * * *',
+    'select public.cleanup_expired_stock_opname_workspaces();'
+  );
+end;
+$$;

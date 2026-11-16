@@ -4850,6 +4850,7 @@
     function workspaceHasActiveWorkbook(workspace) {
       const sessionId = workspace?.data?.activeSession?.id;
       if (!sessionId) return false;
+      if (workspace.data.importFile) return true;
       const workspaceFiles = workspace?.data?.workbookFiles || [];
       const activeFiles = workspace.id === state.currentWorkspaceId ? state.workbookFiles || [] : [];
       return [...workspaceFiles, ...activeFiles].some((workbook) => workbook.sessionId === sessionId);
@@ -11195,15 +11196,13 @@
       const expiredWorkspaces = state.workspaces
         .filter((workspace) => {
           const session = workspace.data?.activeSession;
-          const ownerId = session?.createdByUserId || workspace.scheduleOwnerUserId;
           const activityAt = workspace.uploadActivityAt || session?.startedAt || workspace.scheduleCreatedAt;
           const activityTime = Date.parse(activityAt);
           return !workspace.schedulePlaceholder
             && !pendingWorkbookUploads.has(workspace.id)
-            && ownerId === authSession?.user?.id
             && session?.status === "active"
             && !workspaceHasActiveWorkbook(workspace)
-            && !state.sessions.some((item) => item.workspaceId === workspace.id)
+            && !state.sessions.some((item) => item.id === session.id)
             && Number.isFinite(activityTime)
             && now - activityTime >= UNUPLOADED_WORKSPACE_TIMEOUT_MS;
         });
@@ -11217,7 +11216,7 @@
         Object.assign(state, snapshotWorkspaceData(nextWorkspace.data));
       }
       for (const workspace of expiredWorkspaces) {
-        recordActivity("Jadwal sesi dihapus otomatis", `Jadwal ${workspace.name || "Sesi tanpa nama"} dihapus karena file VEF tidak diunggah selama 5 menit.`, {
+        recordActivity("Jadwal sesi dihapus otomatis", `Jadwal ${workspace.name || "Sesi tanpa nama"} dihapus karena tidak ada file VEF dalam 5 menit.`, {
           workspaceId: workspace.id,
           workspaceName: workspace.name || "Sesi tanpa nama",
           sessionId: workspace.data.activeSession?.id || "",
@@ -11228,8 +11227,8 @@
       }
       const expiredNames = expiredWorkspaces.map((workspace) => workspace.name || "Sesi tanpa nama");
       notify(expiredNames.length === 1
-        ? `${expiredNames[0]} dihapus otomatis karena file VEF tidak diunggah selama 5 menit.`
-        : `${expiredNames.length} sesi dihapus otomatis karena file VEF tidak diunggah selama 5 menit.`);
+        ? `${expiredNames[0]} dihapus otomatis karena tidak ada file VEF dalam 5 menit.`
+        : `${expiredNames.length} sesi dihapus otomatis karena tidak ada file VEF dalam 5 menit.`);
       return true;
     }
 
@@ -13424,6 +13423,16 @@
       }
       const isSessionPIC = !workspaceIsOwnedByCurrentUser(uploadWorkspace) && workspaceIsAssignedPIC(uploadWorkspace);
       pendingWorkbookUploads.add(uploadWorkspaceId);
+      let uploadActivityHeartbeatAt = Date.now();
+      const refreshUploadActivity = () => {
+        const now = Date.now();
+        if (now - uploadActivityHeartbeatAt < 30_000) return;
+        const workspace = state.workspaces.find((item) => item.id === uploadWorkspaceId);
+        if (!workspace || workspace.data?.activeSession?.id !== uploadSessionId) return;
+        workspace.uploadActivityAt = new Date(now).toISOString();
+        uploadActivityHeartbeatAt = now;
+        persist();
+      };
       if (!isSessionPIC) {
         uploadWorkspace.scheduleOwnerUserId ||= uploadWorkspace.data.activeSession.createdByUserId || uploadUserId;
         uploadWorkspace.scheduleOwnerUsername ||= uploadWorkspace.data.activeSession.createdByUsername
@@ -13447,11 +13456,15 @@
         setWorkbookUploadLoadingMessage("Membaca file...");
         uploadLoadingDialog.showModal();
         await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-        const fileBuffer = await readWorkbookFile(file, (progress) => setWorkbookUploadProgress(progress * 15));
+        const fileBuffer = await readWorkbookFile(file, (progress) => {
+          setWorkbookUploadProgress(progress * 15);
+          refreshUploadActivity();
+        });
         setWorkbookUploadProgress(20);
         setWorkbookUploadLoadingMessage("Memproses data workbook...");
         await new Promise((resolve) => requestAnimationFrame(resolve));
         const workbook = XLSX.read(fileBuffer, { type: "array", cellDates: true, codepage: 65001 });
+        refreshUploadActivity();
         setWorkbookUploadProgress(30);
         if (state.currentWorkspaceId !== uploadWorkspaceId
           || state.activeSession.id !== uploadSessionId
@@ -13598,6 +13611,7 @@
         setWorkbookUploadProgress(35);
         const archivedWorkbook = await uploadWorkbookArchive(file, newSession.id, (progress) => {
           setWorkbookUploadProgress(35 + progress * 64);
+          refreshUploadActivity();
         });
         state.products = [...productsByCode.values()].sort((a, b) =>
           a.name.localeCompare(b.name, "id-ID", { sensitivity: "base" })
