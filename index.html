@@ -3592,6 +3592,7 @@
       "SN Segregation": "SN Segregation",
       "Unit Laptop": "Laptop Units",
       "Unit Smartphone": "Smartphone Units",
+      "Unit Tablet": "Tablet Units",
       "Unit Accessories": "Accessories Units",
       "Unit Jasa": "Service Items",
       "Belum diklasifikasi": "Unclassified",
@@ -4402,6 +4403,7 @@
     const BRAND_SEGREGATION_CATEGORIES = [
       { id: "laptop", label: "Unit Laptop" },
       { id: "smartphone", label: "Unit Smartphone" },
+      { id: "tablet", label: "Unit Tablet" },
       { id: "accessories", label: "Unit Accessories" },
       { id: "service", label: "Unit Jasa" },
       { id: "unclassified", label: "Belum diklasifikasi" }
@@ -5329,13 +5331,39 @@
     function restoreBrandSegregationCacheRecord(record) {
       const validRows = (rows) => Array.isArray(rows) && rows.every((row) =>
         Array.isArray(row) && row.every((cell) => typeof cell === "string"));
+      const validHeader = (header) => Array.isArray(header) && header.length > 0
+        && header.every((cell) => typeof cell === "string");
       if (!record || record.format !== "stock-opname-brand-segregation" || record.version !== 1
-        || typeof record.fileName !== "string" || typeof record.sheetName !== "string"
-        || !validRows(record.prefixRows) || !validRows(record.headerRow) || !record.headerRow.length
+        || typeof record.fileName !== "string" || !record.fileName
+        || typeof record.sheetName !== "string" || !record.sheetName
+        || !validRows(record.prefixRows) || !validHeader(record.headerRow)
         || !validRows(record.rows) || !Array.isArray(record.categoryAssignments)
         || record.categoryAssignments.some((entry) => !Array.isArray(entry) || entry.length !== 2
           || typeof entry[0] !== "string" || !BRAND_SEGREGATION_CATEGORY_IDS.has(entry[1]))) {
         throw new Error("Format data Brand Segregation tersimpan tidak dikenal atau rusak.");
+      }
+      const columns = brandSegregationColumns(record);
+      if (columns.itemCode < 0 || !record.rows.length) {
+        throw new Error("File Brand Segregation tersimpan tidak memiliki Item Code/SKU atau baris data.");
+      }
+      const categoryAssignments = new Map(record.categoryAssignments);
+      const migratedAssignments = new Map();
+      for (const [storedKey, category] of categoryAssignments) {
+        let itemCode = "";
+        try {
+          const parsedKey = JSON.parse(storedKey);
+          if (Array.isArray(parsedKey)) {
+            if (parsedKey[0] === "sku") {
+              migratedAssignments.set(storedKey, category);
+              continue;
+            }
+            itemCode = String(parsedKey[0] ?? "");
+          }
+        } catch (error) {
+          console.warn("Kunci klasifikasi Brand Segregation lama tidak dapat dibaca:", error);
+        }
+        const normalizedCode = itemCode.trim().toLocaleUpperCase("id-ID");
+        if (normalizedCode) migratedAssignments.set(JSON.stringify(["sku", normalizedCode]), category);
       }
       brandSegregationSource = {
         fileName: record.fileName,
@@ -5343,7 +5371,7 @@
         prefixRows: record.prefixRows,
         headerRow: record.headerRow,
         rows: record.rows,
-        categoryAssignments: new Map(record.categoryAssignments)
+        categoryAssignments: migratedAssignments
       };
     }
     async function restoreBrandSegregationData(userId) {
@@ -8691,9 +8719,11 @@
     }
 
     function brandSegregationProductKey(row, columns, rowIndex) {
-      const values = [columns.itemCode, columns.itemName, columns.itemGroup, columns.brand, columns.warehouse]
-        .map((index) => index >= 0 ? String(row[index] ?? "").trim().toLocaleUpperCase("id-ID") : "");
-      return values[0] ? JSON.stringify(values) : JSON.stringify(["__source-row__", rowIndex]);
+      const itemCode = columns.itemCode >= 0
+        ? String(row[columns.itemCode] ?? "").trim().toLocaleUpperCase("id-ID")
+        : "";
+      if (itemCode) return JSON.stringify(["sku", itemCode]);
+      return JSON.stringify(["__source-row__", rowIndex]);
     }
 
     function classifyBrandSegregationItem(row, columns) {
@@ -8701,37 +8731,45 @@
       const name = columns.itemName >= 0 ? String(row[columns.itemName] ?? "") : "";
       const sku = columns.itemCode >= 0 ? String(row[columns.itemCode] ?? "") : "";
       const searchableGroup = normalizeField(group);
-      const rules = [
+      const groupRules = [
+        { category: "service", pattern: /jasa|services?|servis/ },
+        { category: "accessories", pattern: /acc|accessor|aksesoris|peripheral|audio|smartwatch|imooz|monitor|camera|cctv|networking|ram|storage|ssd|harddisk|gamingacc|electronics|ninebot/ },
+        { category: "tablet", pattern: /tablet|matepad|pad|tab/ },
+        { category: "laptop", pattern: /laptop|notebook|macbook|vivobook|zenbook|expertbook|chromebook|studiobook|soulmate|workmate|tbook|aigen|heritage|stylus360/ },
+        {
+          category: "smartphone",
+          pattern: /^(?:iphone|samsunga|samsungs|samsungz|infinixsmart|infinixnote|infinixhot|infinixgt|itelseries|oppoa|opporeno|motorolaedge|motorolamoto|nubiaa|nubianeo|nubiav|nubiaredmagic|realmec|realmenote|tecnocamon|tecnopova|tecnospark|vivov|vivox|vivoy|xiaomimi|xiaomipoco|xiaomiredmi|honorx|huaweinova|huaweiseries|huaweimate$|advanx)/
+        }
+      ];
+      for (const rule of groupRules) {
+        if (rule.pattern.test(searchableGroup)) {
+          return { category: rule.category, reason: `Item Group: ${group}` };
+        }
+      }
+      const nameRules = [
         {
           category: "service",
-          group: /(jasa|service|servis|warranty|maintenance|repair)/,
-          name: /\b(jasa|service|servis|warranty|maintenance|repair|installation|support plan|onsite|labor charge)\b/i
+          pattern: /\b(jasa|service|servis|warranty|maintenance|repair|installation|support plan|onsite|labor charge)\b/i
         },
         {
           category: "accessories",
-          group: /(accessor|aksesoris|peripheral)/,
-          name: /\b(accessor(?:y|ies)?|aksesoris|peripheral|mouse|keyboard|headset|earbuds?|earphones?|headphones?|cetra|tws|adapt(?:er|or)|charger|docking|dock station|bag|sleeve|case|cover|screen protector|power ?bank|stylus|pen|cable|kabel|battery|webcam|speaker|hub|monitor|display|projector|router|gamepad|joystick)\b/i
+          pattern: /\b(accessor(?:y|ies)?|aksesoris|peripheral|mouse|keyboard|headset|earbuds?|earphones?|headphones?|cetra|tws|adapt(?:er|or)|charger|docking|dock station|bag|sleeve|backpack|case|cover|screen protector|power ?bank|stylus|pen|cable|kabel|battery|webcam|speaker|hub|monitor|display|projector|router|gamepad|joystick|smartwatch|watch|camera|cctv|ram|ssd|hard ?disk|flash ?disk)\b/i
         },
         {
-          category: "smartphone",
-          group: /(smartphone|mobile|phone|handphone|cellphone|ponsel)/,
-          name: /\b(smart[\s-]*phone|mobile[\s-]*phone|hand[\s-]*phone|cell[\s-]*phone|phone|ponsel|zenfone|rog[\s-]*phone)\b/i
+          category: "tablet",
+          pattern: /\b(tablet|matepad|ipad|redmi pad|xiaomi pad|oppo pad|infinix pad|tecno pad|samsung tab|advan tab|xtab|v-?pad)\b/i
         },
         {
           category: "laptop",
-          group: /(laptop|notebook)/,
-          name: /\b(laptop|notebook|vivobook|zenbook|expertbook|chromebook|studiobook)\b|\brog\s+(?:zephyrus|strix|flow|scar)\b|\btuf\b|\bgaming\s+v\d/i
+          pattern: /\b(laptop|notebook|macbook|vivobook|zenbook|expertbook|chromebook|studiobook|soulmate|workmate|t book)\b|\brog\s+(?:zephyrus|strix|flow|scar)\b|\btuf\b|\bgaming\s+v\d/i
+        },
+        {
+          category: "smartphone",
+          pattern: /\b(iphone|zenfone|smartphone|mobile phone|handphone|cellphone|ponsel|galaxy [asz]|redmi note|redmi [0-9]|poco [a-z0-9]|infinix (?:smart|note|hot|gt)|oppo (?:a\d|reno)|vivo [vxy]\d|realme (?:c\d|note)|tecno (?:spark|camon|pova)|motorola (?:moto|edge)|huawei (?:nova|mate \d|pura)|honor [a-z]\d|nubia (?:neo|v\d|redmagic))\b/i
         }
       ];
-      for (const rule of rules.slice(0, 2)) {
-        const match = name.match(rule.name);
-        if (match) return { category: rule.category, reason: `Nama item: ${match[0]}` };
-      }
-      for (const rule of rules) {
-        if (rule.group.test(searchableGroup)) return { category: rule.category, reason: `Item Group: ${group}` };
-      }
-      for (const rule of rules.slice(2)) {
-        const match = name.match(rule.name);
+      for (const rule of nameRules) {
+        const match = name.match(rule.pattern);
         if (match) return { category: rule.category, reason: `Nama item: ${match[0]}` };
       }
       if (isLaptopProduct({ itemGroup: "", name, sku })) {
@@ -8755,7 +8793,7 @@
             itemName: columns.itemName >= 0 ? String(row[columns.itemName] ?? "").trim() : "",
             itemGroup: columns.itemGroup >= 0 ? String(row[columns.itemGroup] ?? "").trim() : "",
             brand: columns.brand >= 0 ? String(row[columns.brand] ?? "").trim() : "",
-            warehouse: columns.warehouse >= 0 ? String(row[columns.warehouse] ?? "").trim() : "",
+            warehouses: [],
             rowIndexes: [],
             category: hasManualCategory ? source.categoryAssignments.get(key) : suggestion.category,
             classificationReason: hasManualCategory
@@ -8763,19 +8801,21 @@
               : suggestion.reason
           });
         }
-        groups.get(key).rowIndexes.push(rowIndex);
+        const group = groups.get(key);
+        group.rowIndexes.push(rowIndex);
+        const warehouse = columns.warehouse >= 0 ? String(row[columns.warehouse] ?? "").trim() : "";
+        if (warehouse && !group.warehouses.includes(warehouse)) group.warehouses.push(warehouse);
       });
       return [...groups.values()].sort((left, right) =>
-        left.itemCode.localeCompare(right.itemCode, "id-ID") || left.warehouse.localeCompare(right.warehouse, "id-ID")
+        left.itemCode.localeCompare(right.itemCode, "id-ID")
       );
     }
 
     function brandSegregationRowCategories(source = brandSegregationSource) {
-      const columns = brandSegregationColumns(source);
-      const rowCategories = source.rows.map((row, rowIndex) => {
-        const key = brandSegregationProductKey(row, columns, rowIndex);
-        return source.categoryAssignments.get(key) || classifyBrandSegregationItem(row, columns).category;
-      });
+      const rowCategories = Array(source.rows.length).fill("unclassified");
+      for (const group of getBrandSegregationGroups(source)) {
+        for (const rowIndex of group.rowIndexes) rowCategories[rowIndex] = group.category;
+      }
       return rowCategories;
     }
 
@@ -8922,14 +8962,15 @@
     function renderBrandSegregation() {
       const source = brandSegregationSource;
       const groups = getBrandSegregationGroups(source);
-      const rowCategories = source ? brandSegregationRowCategories(source) : [];
       const categoryCounts = Object.fromEntries([
-        ["all", { groups: groups.length, rows: source?.rows.length || 0 }],
+        ["all", { groups: groups.length, rows: groups.reduce((sum, group) => sum + group.rowIndexes.length, 0) }],
         ...BRAND_SEGREGATION_CATEGORIES.map((category) => [
           category.id,
           {
             groups: groups.filter((group) => group.category === category.id).length,
-            rows: rowCategories.filter((item) => item === category.id).length
+            rows: groups
+              .filter((group) => group.category === category.id)
+              .reduce((sum, group) => sum + group.rowIndexes.length, 0)
           }
         ])
       ]);
@@ -8939,7 +8980,7 @@
       const query = normalizeField(brandSegregationSearchTerm);
       const filteredGroups = groups.filter((group) =>
         (!activeCategory || group.category === activeCategory.id)
-        && (!query || normalizeField([group.itemCode, group.itemName, group.itemGroup, group.brand, group.warehouse].join(" ")).includes(query))
+        && (!query || normalizeField([group.itemCode, group.itemName, group.itemGroup, group.brand, ...group.warehouses].join(" ")).includes(query))
       );
       const visibleGroups = filteredGroups.slice(0, 300);
       const categoryOptions = BRAND_SEGREGATION_CATEGORIES.map((category) =>
@@ -8952,7 +8993,7 @@
             <td>${escapeHtml(group.itemName || "-")}</td>
             <td>${escapeHtml(group.itemGroup || "-")}</td>
             <td>${escapeHtml(group.brand || "-")}</td>
-            <td>${escapeHtml(group.warehouse || "-")}</td>
+            <td>${escapeHtml(group.warehouses.join(", ") || "-")}</td>
             <td class="number-cell">${formatNumber(group.rowIndexes.length)}</td>
             <td>${escapeHtml(group.classificationReason)}</td>
             <td><select aria-label="Kategori ${escapeHtml(group.itemCode)}" data-brand-segregation-key="${escapeHtml(encodeURIComponent(group.key))}">${categoryOptions.replace(`value="${group.category}"`, `value="${group.category}" selected`)}</select></td>
