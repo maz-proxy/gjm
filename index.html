@@ -516,6 +516,8 @@
     .brand-segregation-category-card strong { font-size: 12px; }
     .brand-segregation-category-card span { color: var(--muted); font-size: 10px; }
     .brand-segregation-tools { align-items: center; display: flex; flex-wrap: wrap; gap: 9px; }
+    .brand-segregation-file-info { align-items: center; display: flex; gap: 8px; min-width: 0; }
+    .brand-segregation-file-info .table-count { min-width: 0; overflow-wrap: anywhere; }
     .brand-segregation-table { min-width: 900px; }
     .brand-segregation-table select { background: var(--paper); border: 1px solid var(--line); border-radius: 6px; color: var(--ink); font: inherit; min-height: 32px; padding: 4px 8px; }
     .brand-segregation-status { color: var(--muted); font-size: 11px; padding: 0 14px 12px; }
@@ -9074,11 +9076,14 @@
           <strong>${category.label}</strong><span>${formatNumber(count?.groups || 0)} item · ${formatNumber(count?.rows || 0)} baris</span>
         </button>`;
       }).join("");
+      const removeFileButton = source
+        ? `<button class="button button-secondary segregation-remove-file-button" id="remove-brand-segregation-file" type="button" title="${currentLanguage === "en" ? "Remove uploaded Master VEF and saved classifications" : "Hapus unggahan Master VEF dan klasifikasinya"}" aria-label="${currentLanguage === "en" ? "Remove uploaded Master VEF and saved classifications" : "Hapus unggahan Master VEF dan klasifikasinya"}" ${brandSegregationFileLoading || brandSegregationRemoving ? "disabled" : ""}><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg></button>`
+        : "";
       return `${navMarkup()}${renderWorkspaceSegregationTabs()}
         <section class="page-head archive-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Brand Segregation</div><h1>Brand Segregation</h1><p class="subtitle">Unggah Master VEF, periksa klasifikasi item, lalu ekspor workbook per kategori dengan seluruh baris sumber.</p></div></section>
         <section class="table-section">
-          <div class="table-toolbar"><div><div class="table-title">Master VEF</div><span class="table-count">${source ? `${escapeHtml(source.fileName)} · Sheet ${escapeHtml(source.sheetName)} · ${formatNumber(source.rows.length)} baris` : "Pilih file Master VEF Excel atau CSV (maksimal 50 MB)."}</span></div>
-            <div class="brand-segregation-tools"><input class="upload-input" id="brand-segregation-file-input" type="file" accept=".xlsx,.xls,.csv" aria-label="Pilih file Master VEF"><button class="button button-primary" id="brand-segregation-file-button" type="button" ${brandSegregationFileLoading || brandSegregationRemoving ? "disabled" : ""}>${brandSegregationFileLoading ? "Memproses file..." : source ? "Ganti file Master VEF" : "Unggah File Master VEF"}</button>${source ? `<button class="button button-secondary segregation-remove-file-button" id="remove-brand-segregation-file" type="button" title="${currentLanguage === "en" ? "Remove uploaded Master VEF and saved classifications" : "Hapus unggahan Master VEF dan klasifikasinya"}" aria-label="${currentLanguage === "en" ? "Remove uploaded Master VEF and saved classifications" : "Hapus unggahan Master VEF dan klasifikasinya"}" ${brandSegregationFileLoading || brandSegregationRemoving ? "disabled" : ""}><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg></button>` : ""}<button class="button button-secondary" id="export-brand-segregation" type="button" ${source ? "" : "disabled"}>Ekspor Excel</button></div>
+          <div class="table-toolbar"><div><div class="table-title">Master VEF</div><div class="brand-segregation-file-info"><span class="table-count">${source ? `${escapeHtml(source.fileName)} · Sheet ${escapeHtml(source.sheetName)} · ${formatNumber(source.rows.length)} baris` : "Pilih file Master VEF Excel atau CSV (maksimal 50 MB)."}</span>${removeFileButton}</div></div>
+            <div class="brand-segregation-tools"><input class="upload-input" id="brand-segregation-file-input" type="file" accept=".xlsx,.xls,.csv" aria-label="Pilih file Master VEF"><button class="button button-primary" id="brand-segregation-file-button" type="button" ${brandSegregationFileLoading || brandSegregationRemoving ? "disabled" : ""}>${brandSegregationFileLoading ? "Memproses file..." : source ? "Ganti file Master VEF" : "Unggah File Master VEF"}</button><button class="button button-secondary" id="export-brand-segregation" type="button" ${source ? "" : "disabled"}>Ekspor Excel</button></div>
           </div>
           <div class="brand-segregation-status" role="status" aria-live="polite">${escapeHtml(brandSegregationStatus)}</div>
         </section>
