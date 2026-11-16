@@ -513,12 +513,16 @@
     .stock-opname-schedule-note { color: var(--muted); font-size: 11px; line-height: 1.5; margin: 0 0 12px; }
     .stock-opname-schedule-table { min-width: max-content; }
     .stock-opname-schedule-table th,
-    .stock-opname-schedule-table td { min-width: 118px; text-align: center; }
+    .stock-opname-schedule-table td { min-width: 156px; text-align: center; vertical-align: top; }
     .stock-opname-schedule-table th:first-child,
-    .stock-opname-schedule-table td:first-child { min-width: 86px; }
+    .stock-opname-schedule-table td:first-child { min-width: 86px; vertical-align: middle; }
+    .stock-opname-schedule-table th:last-child,
+    .stock-opname-schedule-table td:last-child { min-width: 110px; }
     .stock-opname-schedule-month th { background: color-mix(in srgb, var(--green) 12%, var(--paper)); color: var(--green-dark); font-size: 11px; text-align: left; }
     .stock-opname-schedule-pic { display: block; white-space: nowrap; }
     .stock-opname-schedule-pic + .stock-opname-schedule-pic { border-top: 1px solid var(--line); margin-top: 4px; padding-top: 4px; }
+    .stock-opname-schedule-brands { color: var(--ink); font-size: 10px; line-height: 1.45; margin-top: 8px; overflow-wrap: anywhere; text-align: left; white-space: normal; }
+    .stock-opname-schedule-quantity { color: var(--green-dark); display: block; font-size: 10px; font-weight: 700; margin-top: 5px; text-align: left; white-space: nowrap; }
     .stock-opname-schedule-status { color: var(--amber); font-size: 10px; white-space: nowrap; }
     .brand-segregation-category-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); margin-bottom: 12px; }
     .brand-segregation-category-card { align-items: flex-start; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; color: var(--ink); cursor: pointer; display: flex; flex-direction: column; gap: 7px; justify-content: center; min-height: 82px; padding: 12px 14px; text-align: left; transition: border-color .15s ease, box-shadow .15s ease, background .15s ease; }
@@ -9201,8 +9205,49 @@
       return renderSegregation();
     }
 
-    function getStockOpnameScheduleBrands(scheduleType, source = brandSegregationSource) {
-      if (!source) return [];
+    function parseStockOpnameQuantity(value, brand, rowIndex) {
+      const rawValue = String(value ?? "").trim();
+      if (!rawValue) return 0;
+
+      let normalized = rawValue.replace(/\s+/g, "");
+      const lastDot = normalized.lastIndexOf(".");
+      const lastComma = normalized.lastIndexOf(",");
+      if (lastDot >= 0 && lastComma >= 0) {
+        const decimalSeparator = lastDot > lastComma ? "." : ",";
+        const groupingSeparator = decimalSeparator === "." ? "," : ".";
+        normalized = normalized.split(groupingSeparator).join("");
+        if (decimalSeparator === ",") normalized = normalized.replace(",", ".");
+      } else {
+        const separator = lastComma >= 0 ? "," : lastDot >= 0 ? "." : "";
+        if (separator) {
+          const parts = normalized.split(separator);
+          const isGroupedNumber = parts.length > 2
+            ? parts.slice(1).every((part) => /^\d{3}$/.test(part))
+            : parts.length === 2 && /^\d{1,3}$/.test(parts[0]) && /^\d{3}$/.test(parts[1]);
+          if (isGroupedNumber) {
+            normalized = parts.join("");
+          } else if (parts.length === 2 && /^\d+$/.test(parts[0]) && /^\d+$/.test(parts[1])) {
+            normalized = `${parts[0]}.${parts[1]}`;
+          }
+        }
+      }
+
+      if (!/^\d+(?:\.\d+)?$/.test(normalized)) {
+        throw new Error(`Qty "${rawValue}" tidak valid untuk brand ${brand} pada baris data ${rowIndex + 1}.`);
+      }
+      const quantity = Number(normalized);
+      if (!Number.isFinite(quantity)) {
+        throw new Error(`Qty "${rawValue}" tidak valid untuk brand ${brand} pada baris data ${rowIndex + 1}.`);
+      }
+      return quantity;
+    }
+
+    function getStockOpnameScheduleBuckets(scheduleType, source = brandSegregationSource) {
+      if (!source) return null;
+      const columns = brandSegregationColumns(source);
+      if (columns.quantity < 0 && columns.serial < 0) {
+        throw new Error("Master VEF harus memiliki kolom Quantity/Qty/VEF/Stock atau nomor seri agar total qty bisa dihitung.");
+      }
       const categories = scheduleType === "accessories"
         ? new Set(["accessories"])
         : new Set(["laptop", "smartphone", "tablet", "monitor", "pc-aio"]);
@@ -9211,15 +9256,51 @@
         const brand = group.brand.trim();
         if (!categories.has(group.category) || !brand) continue;
         const normalizedBrand = normalizeField(brand);
-        if (!brands.has(normalizedBrand)) brands.set(normalizedBrand, brand);
+        if (!brands.has(normalizedBrand)) {
+          brands.set(normalizedBrand, { brand, quantity: 0, serials: new Set() });
+        }
+        const aggregate = brands.get(normalizedBrand);
+        for (const rowIndex of group.rowIndexes) {
+          const row = source.rows[rowIndex] || [];
+          if (columns.quantity >= 0) {
+            aggregate.quantity += parseStockOpnameQuantity(row[columns.quantity], brand, rowIndex);
+          } else {
+            const serial = String(row[columns.serial] ?? "").trim().toLocaleUpperCase("id-ID");
+            if (serial) aggregate.serials.add(serial);
+          }
+        }
       }
-      return [...brands.values()].sort((left, right) => left.localeCompare(right, "id-ID"));
+      const brandTotals = [...brands.values()].map((aggregate) => ({
+        brand: aggregate.brand,
+        quantity: columns.quantity >= 0 ? aggregate.quantity : aggregate.serials.size
+      })).sort((left, right) =>
+        right.quantity - left.quantity || left.brand.localeCompare(right.brand, "id-ID")
+      );
+      const buckets = Array.from({ length: 9 }, (_, slot) => ({ slot, brands: [], quantity: 0 }));
+      for (const brandTotal of brandTotals) {
+        let targetSlot = 0;
+        for (let slot = 1; slot < buckets.length; slot += 1) {
+          if (buckets[slot].quantity < buckets[targetSlot].quantity) targetSlot = slot;
+        }
+        buckets[targetSlot].brands.push(brandTotal);
+        buckets[targetSlot].quantity += brandTotal.quantity;
+      }
+      return { buckets, quantityBasis: columns.quantity >= 0 ? "quantity" : "serial" };
     }
 
     function renderStockOpnameSchedule() {
       const scheduleType = selectedStockOpnameScheduleType === "accessories" ? "accessories" : "unit";
       const schedule = STOCK_OPNAME_2026_SCHEDULES[scheduleType];
-      const brands = getStockOpnameScheduleBrands(scheduleType);
+      let scheduleData = null;
+      let scheduleError = "";
+      if (brandSegregationSource) {
+        try {
+          scheduleData = getStockOpnameScheduleBuckets(scheduleType);
+        } catch (error) {
+          scheduleError = error instanceof Error ? error.message : "Qty Master VEF tidak dapat dibaca.";
+          console.error("Gagal menyusun jadwal stock opname dari Master VEF.", error);
+        }
+      }
       const scheduleTypeLabel = scheduleType === "accessories" ? "Accessories" : "Unit";
       const typeTabs = `<div class="recorded-view-tabs stock-opname-schedule-tabs" role="tablist" aria-label="Jenis Jadwal Stock Opname">
         <button class="button button-secondary${scheduleType === "unit" ? " active" : ""}" type="button" role="tab" aria-selected="${scheduleType === "unit"}" data-stock-opname-schedule-type="unit">Unit</button>
@@ -9228,28 +9309,37 @@
       let scheduleContent = "";
       if (!brandSegregationSource) {
         scheduleContent = `<section class="table-section"><div class="brand-segregation-status" role="status">Unggah Master VEF di tab Brand Segregation terlebih dahulu agar daftar brand dapat dimasukkan ke jadwal.</div></section>`;
-      } else if (!brands.length) {
+      } else if (scheduleError) {
+        scheduleContent = `<section class="table-section"><div class="brand-segregation-status" role="alert">${escapeHtml(scheduleError)}</div></section>`;
+      } else if (!scheduleData.buckets.some((bucket) => bucket.brands.length)) {
         scheduleContent = `<section class="table-section"><div class="brand-segregation-status" role="status">Belum ada brand untuk jadwal ${scheduleTypeLabel}. Periksa kategori dan kolom Brand di Master VEF.</div></section>`;
       } else {
-        const brandHeaders = brands.map((brand) => `<th scope="col">${escapeHtml(brand)}</th>`).join("");
+        const brandCount = scheduleData.buckets.reduce((count, bucket) => count + bucket.brands.length, 0);
+        const totalQuantity = scheduleData.buckets.reduce((total, bucket) => total + bucket.quantity, 0);
+        const quantityUnit = scheduleData.quantityBasis === "serial" ? "SN unik" : "unit";
+        const bucketHeaders = scheduleData.buckets.map((_, index) =>
+          `<th scope="col">Pasangan ${index + 1}</th>`
+        ).join("");
         const weekRows = schedule.weeks.map((week) => {
           const monthRow = week.week === 1
-            ? `<tr class="stock-opname-schedule-month"><th colspan="${brands.length + 2}" scope="colgroup">${escapeHtml(week.month)} 2026</th></tr>`
+            ? `<tr class="stock-opname-schedule-month"><th colspan="11" scope="colgroup">${escapeHtml(week.month)} 2026</th></tr>`
             : "";
-          const brandCells = brands.map((brand, brandIndex) => {
-            const slotIndex = brandIndex % schedule.primaryRoster.length;
+          const bucketCells = scheduleData.buckets.map((bucket, slotIndex) => {
             const primaryIndex = Number(week.primary[slotIndex]);
             const secondaryIndex = Number(week.secondary[slotIndex]);
             const primary = schedule.primaryRoster[primaryIndex] || "-";
             const secondary = schedule.secondaryRoster[secondaryIndex] || "-";
-            return `<td><span class="stock-opname-schedule-pic">${escapeHtml(primary)}</span><span class="stock-opname-schedule-pic">${escapeHtml(secondary)}</span></td>`;
+            const brandList = bucket.brands.length
+              ? bucket.brands.map((brand) => escapeHtml(brand.brand)).join(", ")
+              : "Belum ada brand";
+            return `<td><span class="stock-opname-schedule-pic">${escapeHtml(primary)}</span><span class="stock-opname-schedule-pic">${escapeHtml(secondary)}</span><div class="stock-opname-schedule-brands">${brandList}</div><span class="stock-opname-schedule-quantity">${formatNumber(bucket.quantity)} ${quantityUnit}</span></td>`;
           }).join("");
-          return `${monthRow}<tr><th scope="row">WEEK ${week.week}</th>${brandCells}<td class="stock-opname-schedule-status">${escapeHtml(week.note || "-")}</td></tr>`;
+          return `${monthRow}<tr><th scope="row">WEEK ${week.week}</th>${bucketCells}<td class="stock-opname-schedule-status">${escapeHtml(week.note || "-")}</td></tr>`;
         }).join("");
         scheduleContent = `<section class="table-section">
-          <div class="table-toolbar"><div><div class="table-title">Jadwal SO ${scheduleTypeLabel} 2026</div><span class="table-count">${formatNumber(brands.length)} brand</span></div></div>
+          <div class="table-toolbar"><div><div class="table-title">Jadwal SO ${scheduleTypeLabel} 2026</div><span class="table-count">${formatNumber(brandCount)} brand · ${formatNumber(totalQuantity)} ${quantityUnit}</span></div></div>
           <div class="table-scroll"><table class="stock-opname-schedule-table" aria-label="Jadwal SO ${scheduleTypeLabel} 2026">
-            <thead><tr><th scope="col">Minggu</th>${brandHeaders}<th scope="col">Catatan</th></tr></thead>
+            <thead><tr><th scope="col">Minggu</th>${bucketHeaders}<th scope="col">Catatan</th></tr></thead>
             <tbody>${weekRows}</tbody>
           </table></div>
         </section>`;
@@ -9257,7 +9347,7 @@
       return `${navMarkup()}${renderWorkspaceSegregationTabs()}
         <section class="page-head archive-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Jadwal Stock Opname</div><h1>Jadwal SO 2026</h1><p class="subtitle">Rotasi petugas mengikuti workbook. Daftar brand diambil dari klasifikasi Master VEF.</p></div></section>
         ${typeTabs}
-        <p class="stock-opname-schedule-note">Brand ditampilkan per kolom dan diurutkan alfabetis. PIC mengikuti 9 slot rotasi Excel; bila brand lebih dari 9, urutan PIC berulang dari slot pertama.</p>
+        <p class="stock-opname-schedule-note">Brand utuh dibagi otomatis ke 9 pasangan dengan total qty sedekat mungkin; total per pasangan ditampilkan. Pengelompokan mengikuti klasifikasi Master VEF dan tetap sama saat PIC berotasi tiap minggu.</p>
         ${scheduleContent}`;
     }
 
