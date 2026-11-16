@@ -4415,6 +4415,8 @@
     let brandSegregationSource = null;
     let brandSegregationUserId = "";
     let brandSegregationFileLoading = false;
+    let brandSegregationRemoving = false;
+    let brandSegregationPersistenceQueue = Promise.resolve();
     let brandSegregationStatus = "";
     let recordedArchiveSearchTerm = "";
     let recordedEntryTrigger = null;
@@ -5316,6 +5318,16 @@
         transaction.onabort = () => reject(transaction.error || new Error("Penyimpanan Brand Segregation dibatalkan."));
       });
     }
+    async function removeBrandSegregationCacheRecord(userId) {
+      const database = await openOfflineCacheDatabase();
+      return new Promise((resolve, reject) => {
+        const transaction = database.transaction(OFFLINE_CACHE_STORE_NAME, "readwrite");
+        transaction.objectStore(OFFLINE_CACHE_STORE_NAME).delete(`brand-segregation:${userId}`);
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error || new Error("Data Brand Segregation gagal dihapus."));
+        transaction.onabort = () => reject(transaction.error || new Error("Penghapusan Brand Segregation dibatalkan."));
+      });
+    }
     function createBrandSegregationCacheRecord(source = brandSegregationSource) {
       return {
         format: "stock-opname-brand-segregation",
@@ -5399,7 +5411,13 @@
     async function persistBrandSegregationData(source = brandSegregationSource) {
       const userId = authSession?.user?.id;
       if (!userId || !source) throw new Error("Login atau data Brand Segregation tidak tersedia untuk penyimpanan.");
-      await writeBrandSegregationCacheRecord(userId, createBrandSegregationCacheRecord(source));
+      const record = createBrandSegregationCacheRecord(source);
+      const write = brandSegregationPersistenceQueue.catch(() => {}).then(() => {
+        if (authSession?.user?.id !== userId) throw new Error("Akun berubah sebelum data Brand Segregation disimpan.");
+        return writeBrandSegregationCacheRecord(userId, record);
+      });
+      brandSegregationPersistenceQueue = write;
+      return write;
     }
     function createSegregationCacheRecord() {
       return {
@@ -8896,6 +8914,54 @@
       }
     }
 
+    async function removeBrandSegregationFile() {
+      if (!brandSegregationSource || brandSegregationFileLoading || brandSegregationRemoving) return;
+      const confirmed = await showConfirmDialog(
+        currentLanguage === "en"
+          ? "Delete the uploaded Master VEF file and all saved Brand Segregation classifications?"
+          : "Hapus file Master VEF dan seluruh klasifikasi Brand Segregation yang tersimpan?",
+        {
+          title: currentLanguage === "en" ? "Remove Master VEF" : "Hapus Master VEF",
+          subtitle: currentLanguage === "en"
+            ? "Only this account's local Brand Segregation data will be removed."
+            : "Hanya data Brand Segregation lokal pada akun ini yang dihapus.",
+          confirmLabel: currentLanguage === "en" ? "Delete file" : "Hapus file",
+          destructive: true
+        }
+      );
+      if (!confirmed || !brandSegregationSource) return;
+      const userId = authSession?.user?.id;
+      if (!userId || brandSegregationUserId !== userId) {
+        notify("Sesi akun tidak tersedia. File Master VEF tidak dapat dihapus.");
+        return;
+      }
+      brandSegregationRemoving = true;
+      render();
+      try {
+        const removal = brandSegregationPersistenceQueue.catch(() => {}).then(() => {
+          if (authSession?.user?.id !== userId) throw new Error("Akun berubah sebelum file Master VEF dihapus.");
+          return removeBrandSegregationCacheRecord(userId);
+        });
+        brandSegregationPersistenceQueue = removal;
+        await removal;
+        if (authSession?.user?.id !== userId) return;
+        brandSegregationSource = null;
+        brandSegregationUserId = userId;
+        brandSegregationStatus = currentLanguage === "en"
+          ? "Master VEF and saved classifications were removed from this account."
+          : "File Master VEF dan klasifikasinya berhasil dihapus dari akun ini.";
+        selectedBrandSegregationCategory = "all";
+        brandSegregationSearchTerm = "";
+      } catch (error) {
+        console.error("File Brand Segregation gagal dihapus:", error);
+        brandSegregationStatus = `File Brand Segregation gagal dihapus: ${error instanceof Error ? error.message : "kesalahan tidak diketahui"}`;
+        notify(brandSegregationStatus);
+      } finally {
+        brandSegregationRemoving = false;
+        render();
+      }
+    }
+
     async function setBrandSegregationCategory(select) {
       const source = brandSegregationSource;
       const key = select.dataset.brandSegregationKey ? decodeURIComponent(select.dataset.brandSegregationKey) : "";
@@ -9012,7 +9078,7 @@
         <section class="page-head archive-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Brand Segregation</div><h1>Brand Segregation</h1><p class="subtitle">Unggah Master VEF, periksa klasifikasi item, lalu ekspor workbook per kategori dengan seluruh baris sumber.</p></div></section>
         <section class="table-section">
           <div class="table-toolbar"><div><div class="table-title">Master VEF</div><span class="table-count">${source ? `${escapeHtml(source.fileName)} · Sheet ${escapeHtml(source.sheetName)} · ${formatNumber(source.rows.length)} baris` : "Pilih file Master VEF Excel atau CSV (maksimal 50 MB)."}</span></div>
-            <div class="brand-segregation-tools"><input class="upload-input" id="brand-segregation-file-input" type="file" accept=".xlsx,.xls,.csv" aria-label="Pilih file Master VEF"><button class="button button-primary" id="brand-segregation-file-button" type="button" ${brandSegregationFileLoading ? "disabled" : ""}>${brandSegregationFileLoading ? "Memproses file..." : source ? "Ganti file Master VEF" : "Unggah File Master VEF"}</button><button class="button button-secondary" id="export-brand-segregation" type="button" ${source ? "" : "disabled"}>Ekspor Excel</button></div>
+            <div class="brand-segregation-tools"><input class="upload-input" id="brand-segregation-file-input" type="file" accept=".xlsx,.xls,.csv" aria-label="Pilih file Master VEF"><button class="button button-primary" id="brand-segregation-file-button" type="button" ${brandSegregationFileLoading || brandSegregationRemoving ? "disabled" : ""}>${brandSegregationFileLoading ? "Memproses file..." : source ? "Ganti file Master VEF" : "Unggah File Master VEF"}</button>${source ? `<button class="button button-secondary segregation-remove-file-button" id="remove-brand-segregation-file" type="button" title="${currentLanguage === "en" ? "Remove uploaded Master VEF and saved classifications" : "Hapus unggahan Master VEF dan klasifikasinya"}" aria-label="${currentLanguage === "en" ? "Remove uploaded Master VEF and saved classifications" : "Hapus unggahan Master VEF dan klasifikasinya"}" ${brandSegregationFileLoading || brandSegregationRemoving ? "disabled" : ""}><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg></button>` : ""}<button class="button button-secondary" id="export-brand-segregation" type="button" ${source ? "" : "disabled"}>Ekspor Excel</button></div>
           </div>
           <div class="brand-segregation-status" role="status" aria-live="polite">${escapeHtml(brandSegregationStatus)}</div>
         </section>
@@ -12376,6 +12442,7 @@
       });
       document.getElementById("brand-segregation-file-button")?.addEventListener("click", () => document.getElementById("brand-segregation-file-input")?.click());
       document.getElementById("brand-segregation-file-input")?.addEventListener("change", (event) => void importBrandSegregationFile(event));
+      document.getElementById("remove-brand-segregation-file")?.addEventListener("click", () => void removeBrandSegregationFile());
       document.getElementById("export-brand-segregation")?.addEventListener("click", exportBrandSegregationWorkbook);
       document.querySelectorAll("[data-brand-segregation-category]").forEach((button) => {
         button.addEventListener("click", () => {
