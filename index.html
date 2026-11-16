@@ -4307,14 +4307,25 @@
         workspace.schedulePlaceholder = workspace.schedulePlaceholder === true;
         if (workspace.schedulePlaceholder && !isEmptyScheduleWorkspace(workspace, sessions)) workspace.schedulePlaceholder = false;
       }
+      const isUnownedEmptyWorkspace = (workspace) => (
+        !workspace.scheduleOwnerUserId
+        && !workspace.scheduleOwnerUsername
+        && isEmptyScheduleWorkspace(workspace, sessions)
+      );
       let placeholder = workspaces.find((workspace) => workspace.schedulePlaceholder);
       if (!placeholder) {
-        placeholder = workspaces.find((workspace) => !workspace.scheduleCreatedAt && isEmptyScheduleWorkspace(workspace, sessions));
+        placeholder = workspaces.find(isUnownedEmptyWorkspace);
         if (placeholder) placeholder.schedulePlaceholder = true;
       }
       if (!placeholder) {
         placeholder = createWorkspace("", emptyWorkspaceData(), true);
         workspaces.push(placeholder);
+      }
+      for (let index = workspaces.length - 1; index >= 0; index--) {
+        const workspace = workspaces[index];
+        if (workspace !== placeholder && !workspace.schedulePlaceholder && isUnownedEmptyWorkspace(workspace)) {
+          workspaces.splice(index, 1);
+        }
       }
       for (const workspace of workspaces) {
         if (workspace === placeholder) {
