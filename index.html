@@ -4419,6 +4419,7 @@
       "LV-IDE-132", "LV-IDS-224", "LV-IDS-226", "LV-IDS-205", "LV-IDS-223",
       "LV-THI-011", "LV-IDE-131", "LV-IDE-130", "LV-IDS-215"
     ]);
+    const BRAND_SEGREGATION_TABLET_SKUS = new Set(["LV-LGG-007"]);
     let selectedWorkspaceSegregationTab = "sn";
     let selectedBrandSegregationCategory = "all";
     let brandSegregationSearchTerm = "";
@@ -8758,6 +8759,9 @@
       const group = columns.itemGroup >= 0 ? String(row[columns.itemGroup] ?? "") : "";
       const name = columns.itemName >= 0 ? String(row[columns.itemName] ?? "") : "";
       const sku = columns.itemCode >= 0 ? String(row[columns.itemCode] ?? "") : "";
+      if (BRAND_SEGREGATION_TABLET_SKUS.has(sku.trim().toLocaleUpperCase("id-ID"))) {
+        return { category: "tablet", reason: `SKU tablet terverifikasi: ${sku.trim()}` };
+      }
       if (BRAND_SEGREGATION_LAPTOP_SKUS.has(sku.trim().toLocaleUpperCase("id-ID"))) {
         return { category: "laptop", reason: `SKU laptop terverifikasi: ${sku.trim()}` };
       }
