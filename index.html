@@ -4406,6 +4406,7 @@
       { id: "laptop", label: "Unit Laptop" },
       { id: "smartphone", label: "Unit Smartphone" },
       { id: "tablet", label: "Unit Tablet" },
+      { id: "monitor", label: "Unit Monitor" },
       { id: "accessories", label: "Unit Accessories" },
       { id: "service", label: "Unit Jasa" },
       { id: "unclassified", label: "Belum diklasifikasi" }
@@ -8768,7 +8769,8 @@
       const searchableGroup = normalizeField(group);
       const groupRules = [
         { category: "service", pattern: /jasa|services?|servis/ },
-        { category: "accessories", pattern: /acc|accessor|aksesoris|peripheral|audio|smartwatch|imooz|monitor|camera|cctv|networking|ram|storage|ssd|harddisk|gamingacc|electronics|ninebot/ },
+        { category: "monitor", pattern: /monitor/ },
+        { category: "accessories", pattern: /acc|accessor|aksesoris|peripheral|audio|smartwatch|imooz|camera|cctv|networking|ram|storage|ssd|harddisk|gamingacc|electronics|ninebot/ },
         { category: "tablet", pattern: /tablet|matepad|pad|tab/ },
         { category: "laptop", pattern: /laptop|notebook|macbook|vivobook|zenbook|expertbook|chromebook|studiobook|soulmate|workmate|tbook|aigen|heritage|stylus360/ },
         {
@@ -8787,8 +8789,12 @@
           pattern: /\b(jasa|service|servis|warranty|maintenance|repair|installation|support plan|onsite|labor charge)\b/i
         },
         {
+          category: "monitor",
+          pattern: /\bmonitor\b/i
+        },
+        {
           category: "accessories",
-          pattern: /\b(accessor(?:y|ies)?|aksesoris|peripheral|mouse|keyboard|headset|earbuds?|earphones?|headphones?|cetra|tws|adapt(?:er|or)|charger|docking|dock station|bag|sleeve|backpack|case|cover|screen protector|power ?bank|stylus|pen|cable|kabel|battery|webcam|speaker|hub|monitor|display|projector|router|gamepad|joystick|smartwatch|watch|camera|cctv|ram|ssd|hard ?disk|flash ?disk)\b/i
+          pattern: /\b(accessor(?:y|ies)?|aksesoris|peripheral|mouse|keyboard|headset|earbuds?|earphones?|headphones?|cetra|tws|adapt(?:er|or)|charger|docking|dock station|bag|sleeve|backpack|case|cover|screen protector|power ?bank|stylus|pen|cable|kabel|battery|webcam|speaker|hub|display|projector|router|gamepad|joystick|smartwatch|watch|camera|cctv|ram|ssd|hard ?disk|flash ?disk)\b/i
         },
         {
           category: "tablet",
