@@ -508,6 +508,18 @@
     .segregation-scan-results .segregation-found-table td:last-child,
     .segregation-scan-results .segregation-not-found-table th:last-child,
     .segregation-scan-results .segregation-not-found-table td:last-child { padding-left: 2px; padding-right: 2px; text-align: center; width: 30px; }
+    .workspace-segregation-tabs { margin: 0 0 14px; }
+    .brand-segregation-category-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); margin-bottom: 12px; }
+    .brand-segregation-category-card { align-items: flex-start; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; color: var(--ink); cursor: pointer; display: flex; flex-direction: column; gap: 7px; justify-content: center; min-height: 82px; padding: 12px 14px; text-align: left; transition: border-color .15s ease, box-shadow .15s ease, background .15s ease; }
+    .brand-segregation-category-card:hover { border-color: color-mix(in srgb, var(--green) 48%, var(--line)); box-shadow: 0 4px 12px rgba(35, 59, 38, .08); }
+    .brand-segregation-category-card.active { background: color-mix(in srgb, var(--green) 9%, var(--paper)); border-color: var(--green); box-shadow: inset 0 0 0 1px var(--green); }
+    .brand-segregation-category-card strong { font-size: 12px; }
+    .brand-segregation-category-card span { color: var(--muted); font-size: 10px; }
+    .brand-segregation-tools { align-items: center; display: flex; flex-wrap: wrap; gap: 9px; }
+    .brand-segregation-table { min-width: 760px; }
+    .brand-segregation-table select { background: var(--paper); border: 1px solid var(--line); border-radius: 6px; color: var(--ink); font: inherit; min-height: 32px; padding: 4px 8px; }
+    .brand-segregation-status { color: var(--muted); font-size: 11px; padding: 0 14px 12px; }
+    .brand-segregation-status:empty { display: none; }
     @media (max-width: 900px) { .segregation-scan-results { grid-template-columns: minmax(0, 1fr); } }
     @media (max-width: 760px) { .segregation-source-layout { grid-template-columns: minmax(0, 1fr); } .segregation-source-layout .segregation-source-top { gap: 0; } }
     @media (max-width: 700px) { .segregation-source-top { grid-template-columns: minmax(0, 1fr); gap: 0; } }
@@ -3576,6 +3588,24 @@
       "Laptop + selain laptop": "Laptops + non-laptops",
       "Quantity per Warehouse": "Quantity by Warehouse",
       "Belum ada data Warehouse.": "No warehouse data yet.",
+      "Brand Segregation": "Brand Segregation",
+      "SN Segregation": "SN Segregation",
+      "Unit Laptop": "Laptop Units",
+      "Unit Smartphone": "Smartphone Units",
+      "Unit Accessories": "Accessories Units",
+      "Unit Jasa": "Service Items",
+      "Belum diklasifikasi": "Unclassified",
+      "Semua Master VEF": "All Master VEF",
+      "Unggah File Master VEF": "Upload Master VEF File",
+      "Ganti file Master VEF": "Replace Master VEF File",
+      "Ekspor Excel": "Export Excel",
+      "Unggah file Master VEF untuk mulai memilah data.": "Upload a Master VEF file to start sorting items.",
+      "Pilih file Excel .xlsx/.xls atau CSV.": "Choose an Excel .xlsx/.xls or CSV file.",
+      "Ukuran file melebihi batas 50 MB.": "File size exceeds the 50 MB limit.",
+      "Header Item Code/SKU dan data Master VEF tidak ditemukan.": "Item Code/SKU headers or Master VEF data were not found.",
+      "Klasifikasi otomatis dapat diperiksa dan diubah.": "Automatic classifications can be reviewed and changed.",
+      "Klasifikasi item berhasil disimpan di perangkat ini.": "Item classification was saved on this device.",
+      "Pilih kategori pada setiap item untuk mengoreksi klasifikasi otomatis.": "Choose a category for each item to correct automatic classifications.",
       "⊞ Mulai Scan / Hitung": "⊞ Start Scanning / Counting",
       "Master barang": "Product Master",
       "bukan laptop": "non-laptops",
@@ -4361,6 +4391,21 @@
     let selectedRecordedBrand = "";
     let selectedRecordedSessionId = "";
     let selectedRecordedSheet = "layouts";
+    const BRAND_SEGREGATION_CATEGORIES = [
+      { id: "laptop", label: "Unit Laptop" },
+      { id: "smartphone", label: "Unit Smartphone" },
+      { id: "accessories", label: "Unit Accessories" },
+      { id: "service", label: "Unit Jasa" },
+      { id: "unclassified", label: "Belum diklasifikasi" }
+    ];
+    const BRAND_SEGREGATION_CATEGORY_IDS = new Set(BRAND_SEGREGATION_CATEGORIES.map((category) => category.id));
+    let selectedWorkspaceSegregationTab = "sn";
+    let selectedBrandSegregationCategory = "all";
+    let brandSegregationSearchTerm = "";
+    let brandSegregationSource = null;
+    let brandSegregationUserId = "";
+    let brandSegregationFileLoading = false;
+    let brandSegregationStatus = "";
     let recordedArchiveSearchTerm = "";
     let recordedEntryTrigger = null;
     let pendingPjProductId = "";
@@ -5240,6 +5285,85 @@
         transaction.onerror = () => reject(transaction.error || new Error("Data Segregasi gagal dihapus."));
         transaction.onabort = () => reject(transaction.error || new Error("Penghapusan data Segregasi dibatalkan."));
       });
+    }
+    async function readBrandSegregationCacheRecord(userId) {
+      const database = await openOfflineCacheDatabase();
+      return new Promise((resolve, reject) => {
+        const transaction = database.transaction(OFFLINE_CACHE_STORE_NAME, "readonly");
+        const request = transaction.objectStore(OFFLINE_CACHE_STORE_NAME).get(`brand-segregation:${userId}`);
+        request.onsuccess = () => resolve(request.result || null);
+        request.onerror = () => reject(request.error || new Error("Data Brand Segregation gagal dibaca."));
+        transaction.onabort = () => reject(transaction.error || new Error("Pembacaan Brand Segregation dibatalkan."));
+      });
+    }
+    async function writeBrandSegregationCacheRecord(userId, record) {
+      const database = await openOfflineCacheDatabase();
+      return new Promise((resolve, reject) => {
+        const transaction = database.transaction(OFFLINE_CACHE_STORE_NAME, "readwrite");
+        transaction.objectStore(OFFLINE_CACHE_STORE_NAME).put(record, `brand-segregation:${userId}`);
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error || new Error("Data Brand Segregation gagal disimpan."));
+        transaction.onabort = () => reject(transaction.error || new Error("Penyimpanan Brand Segregation dibatalkan."));
+      });
+    }
+    function createBrandSegregationCacheRecord(source = brandSegregationSource) {
+      return {
+        format: "stock-opname-brand-segregation",
+        version: 1,
+        fileName: source.fileName,
+        sheetName: source.sheetName,
+        prefixRows: source.prefixRows,
+        headerRow: source.headerRow,
+        rows: source.rows,
+        categoryAssignments: [...source.categoryAssignments.entries()]
+      };
+    }
+    function restoreBrandSegregationCacheRecord(record) {
+      const validRows = (rows) => Array.isArray(rows) && rows.every((row) =>
+        Array.isArray(row) && row.every((cell) => typeof cell === "string"));
+      if (!record || record.format !== "stock-opname-brand-segregation" || record.version !== 1
+        || typeof record.fileName !== "string" || typeof record.sheetName !== "string"
+        || !validRows(record.prefixRows) || !validRows(record.headerRow) || !record.headerRow.length
+        || !validRows(record.rows) || !Array.isArray(record.categoryAssignments)
+        || record.categoryAssignments.some((entry) => !Array.isArray(entry) || entry.length !== 2
+          || typeof entry[0] !== "string" || !BRAND_SEGREGATION_CATEGORY_IDS.has(entry[1]))) {
+        throw new Error("Format data Brand Segregation tersimpan tidak dikenal atau rusak.");
+      }
+      brandSegregationSource = {
+        fileName: record.fileName,
+        sheetName: record.sheetName,
+        prefixRows: record.prefixRows,
+        headerRow: record.headerRow,
+        rows: record.rows,
+        categoryAssignments: new Map(record.categoryAssignments)
+      };
+    }
+    async function restoreBrandSegregationData(userId) {
+      brandSegregationSource = null;
+      brandSegregationUserId = "";
+      selectedBrandSegregationCategory = "all";
+      brandSegregationSearchTerm = "";
+      brandSegregationStatus = "";
+      try {
+        const record = await readBrandSegregationCacheRecord(userId);
+        if (authSession?.user?.id !== userId) return;
+        if (!record) {
+          brandSegregationUserId = userId;
+          return;
+        }
+        restoreBrandSegregationCacheRecord(record);
+        brandSegregationUserId = userId;
+      } catch (error) {
+        console.error("Data Brand Segregation tersimpan gagal dipulihkan:", error);
+        brandSegregationUserId = userId;
+        brandSegregationStatus = `Data tersimpan tidak dapat dipulihkan: ${error instanceof Error ? error.message : "kesalahan tidak diketahui"}. Unggah kembali file Master VEF.`;
+        notify("Data Brand Segregation lokal gagal dipulihkan. Unggah kembali file Master VEF.");
+      }
+    }
+    async function persistBrandSegregationData(source = brandSegregationSource) {
+      const userId = authSession?.user?.id;
+      if (!userId || !source) throw new Error("Login atau data Brand Segregation tidak tersedia untuk penyimpanan.");
+      await writeBrandSegregationCacheRecord(userId, createBrandSegregationCacheRecord(source));
     }
     function createSegregationCacheRecord() {
       return {
@@ -6607,6 +6731,7 @@
         resetSharedSyncFailures("write");
         currentPage = pageFromUrl() || (freshLogin ? "dashboard" : restoreLastPage(session));
         await restoreSegregationData(session.user.id);
+        await restoreBrandSegregationData(session.user.id);
         unlockApp(session);
         render();
         startSharedStateChannel();
@@ -8534,6 +8659,292 @@
         .sort((left, right) => left.scannedAt.localeCompare(right.scannedAt));
     }
 
+    function renderWorkspaceSegregationTabs() {
+      return `<div class="recorded-view-tabs workspace-segregation-tabs" role="tablist" aria-label="Jenis Segregation">
+        <button class="button button-secondary${selectedWorkspaceSegregationTab === "brand" ? " active" : ""}" type="button" role="tab" aria-selected="${selectedWorkspaceSegregationTab === "brand"}" data-workspace-segregation-tab="brand">Brand Segregation</button>
+        <button class="button button-secondary${selectedWorkspaceSegregationTab === "sn" ? " active" : ""}" type="button" role="tab" aria-selected="${selectedWorkspaceSegregationTab === "sn"}" data-workspace-segregation-tab="sn">SN Segregation</button>
+      </div>`;
+    }
+
+    function brandSegregationColumns(source = brandSegregationSource) {
+      const headers = source.headerRow.map(normalizeField);
+      const findColumn = (aliases) => headers.findIndex((header) =>
+        aliases.some((alias) => header === normalizeField(alias) || header.includes(normalizeField(alias)))
+      );
+      return {
+        itemCode: findColumn(["item code", "sku", "product code", "item number"]),
+        itemName: findColumn(["item name", "product name", "description"]),
+        itemGroup: findColumn(["item group", "category", "product group"]),
+        brand: findColumn(["brand"]),
+        warehouse: findColumn(["warehouse"]),
+        serial: findColumn(["serial number", "serial no", "serial", "sn"]),
+        quantity: findColumn(["quantity", "qty", "vef", "stock"])
+      };
+    }
+
+    function brandSegregationProductKey(row, columns, rowIndex) {
+      const values = [columns.itemCode, columns.itemName, columns.itemGroup, columns.brand, columns.warehouse]
+        .map((index) => index >= 0 ? String(row[index] ?? "").trim().toLocaleUpperCase("id-ID") : "");
+      return values[0] ? JSON.stringify(values) : JSON.stringify(["__source-row__", rowIndex]);
+    }
+
+    function classifyBrandSegregationItem(row, columns) {
+      const group = columns.itemGroup >= 0 ? String(row[columns.itemGroup] ?? "") : "";
+      const name = columns.itemName >= 0 ? String(row[columns.itemName] ?? "") : "";
+      const sku = columns.itemCode >= 0 ? String(row[columns.itemCode] ?? "") : "";
+      const searchableGroup = normalizeField(group);
+      const searchableText = normalizeField(`${name} ${sku}`);
+      if (/(jasa|service|servis|warranty|installation|repair|maintenance)/.test(searchableGroup)
+        || /\b(jasa|service|servis|warranty|installation|repair|maintenance)\b/i.test(`${name} ${sku}`)) return "service";
+      if (/(accessor|aksesoris|peripheral)/.test(searchableGroup)
+        || /\b(accessor(?:y|ies)?|aksesoris|mouse|keyboard|headset|earphone|earbuds|adapter|charger|docking|bag|sleeve|stylus|pen|cable|kabel)\b/i.test(name)) return "accessories";
+      if (/(smartphone|mobilephone|handphone|cellphone)/.test(searchableGroup)
+        || /\b(smartphone|mobile\s*phone|hand\s*phone|cell\s*phone|zenfone|rog\s*phone)\b/i.test(name)) return "smartphone";
+      if (/(laptop|notebook)/.test(searchableGroup) || isLaptopProduct({ itemGroup: "", name, sku })) return "laptop";
+      if (/(smartphone|mobilephone|handphone|cellphone)/.test(searchableText)) return "smartphone";
+      return "unclassified";
+    }
+
+    function getBrandSegregationGroups(source = brandSegregationSource) {
+      if (!source) return [];
+      const columns = brandSegregationColumns(source);
+      const groups = new Map();
+      source.rows.forEach((row, rowIndex) => {
+        const key = brandSegregationProductKey(row, columns, rowIndex);
+        if (!groups.has(key)) {
+          groups.set(key, {
+            key,
+            itemCode: String(row[columns.itemCode] ?? "").trim(),
+            itemName: columns.itemName >= 0 ? String(row[columns.itemName] ?? "").trim() : "",
+            itemGroup: columns.itemGroup >= 0 ? String(row[columns.itemGroup] ?? "").trim() : "",
+            brand: columns.brand >= 0 ? String(row[columns.brand] ?? "").trim() : "",
+            warehouse: columns.warehouse >= 0 ? String(row[columns.warehouse] ?? "").trim() : "",
+            rowIndexes: [],
+            category: source.categoryAssignments.get(key) || classifyBrandSegregationItem(row, columns)
+          });
+        }
+        groups.get(key).rowIndexes.push(rowIndex);
+      });
+      return [...groups.values()].sort((left, right) =>
+        left.itemCode.localeCompare(right.itemCode, "id-ID") || left.warehouse.localeCompare(right.warehouse, "id-ID")
+      );
+    }
+
+    function brandSegregationRowCategories(source = brandSegregationSource) {
+      const columns = brandSegregationColumns(source);
+      const rowCategories = source.rows.map((row, rowIndex) => {
+        const key = brandSegregationProductKey(row, columns, rowIndex);
+        return source.categoryAssignments.get(key) || classifyBrandSegregationItem(row, columns);
+      });
+      return rowCategories;
+    }
+
+    async function importBrandSegregationFile(event) {
+      const input = event.currentTarget;
+      const file = input.files?.[0];
+      const uploadUserId = authSession?.user?.id;
+      input.value = "";
+      if (!file) return;
+      if (typeof XLSX === "undefined") {
+        brandSegregationStatus = "Parser Excel/CSV tidak termuat. Periksa koneksi internet lalu muat ulang aplikasi.";
+        render();
+        return;
+      }
+      if (!/\.(xlsx|xls|csv)$/i.test(file.name)) {
+        brandSegregationStatus = "Pilih file Excel .xlsx/.xls atau CSV.";
+        render();
+        return;
+      }
+      if (file.size > 50 * 1024 * 1024) {
+        brandSegregationStatus = "Ukuran file melebihi batas 50 MB.";
+        render();
+        return;
+      }
+      if (!uploadUserId) {
+        brandSegregationStatus = "Login tidak ditemukan. File tidak diproses.";
+        render();
+        return;
+      }
+      if (brandSegregationFileLoading) return;
+      if (brandSegregationSource && !await showConfirmDialog(
+        "File Master VEF dan klasifikasi Brand Segregation yang tersimpan akan diganti.",
+        { title: "Ganti Master VEF?", subtitle: "Klasifikasi pada file sebelumnya tidak ikut dipertahankan.", confirmLabel: "Ganti file", destructive: true }
+      )) return;
+      brandSegregationFileLoading = true;
+      brandSegregationStatus = "Membaca file Master VEF...";
+      render();
+      try {
+        const fileBuffer = await readWorkbookFile(file, () => {});
+        const workbook = XLSX.read(fileBuffer, { type: "array", codepage: 65001 });
+        const preferredSheet = workbook.SheetNames.find((name) => normalizeField(name) === "vefmaster");
+        const candidates = [...new Set([preferredSheet, ...workbook.SheetNames].filter(Boolean))];
+        let importedSource = null;
+        for (const sheetName of candidates) {
+          const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, defval: "", raw: false });
+          const header = findHeader(rows, [["item code", "sku", "product code", "item number"]]);
+          if (!header) continue;
+          const normalizeRow = (row) => row.map((cell) => String(cell ?? ""));
+          const dataRows = rows.slice(header.rowIndex + 1)
+            .map(normalizeRow)
+            .filter((row) => row.some((cell) => cell.trim()));
+          if (!dataRows.length) continue;
+          importedSource = {
+            fileName: file.name,
+            sheetName,
+            prefixRows: rows.slice(0, header.rowIndex).map(normalizeRow),
+            headerRow: normalizeRow(rows[header.rowIndex]),
+            rows: dataRows,
+            categoryAssignments: new Map()
+          };
+          break;
+        }
+        if (!importedSource) throw new Error("Header Item Code/SKU dan data Master VEF tidak ditemukan.");
+        if (authSession?.user?.id !== uploadUserId) throw new Error("Akun berubah saat file diproses. Unggahan dibatalkan.");
+        await persistBrandSegregationData(importedSource);
+        if (authSession?.user?.id !== uploadUserId) throw new Error("Akun berubah saat file disimpan. Unggahan dibatalkan.");
+        brandSegregationSource = importedSource;
+        brandSegregationUserId = uploadUserId;
+        selectedBrandSegregationCategory = "all";
+        brandSegregationSearchTerm = "";
+        brandSegregationStatus = `${formatNumber(importedSource.rows.length)} baris dari sheet ${importedSource.sheetName} berhasil dimuat. Klasifikasi otomatis dapat diperiksa dan diubah.`;
+      } catch (error) {
+        console.error("Master VEF Brand Segregation gagal diproses:", error);
+        brandSegregationStatus = `File gagal diproses: ${error instanceof Error ? error.message : "kesalahan tidak diketahui"}`;
+      } finally {
+        brandSegregationFileLoading = false;
+        render();
+      }
+    }
+
+    async function setBrandSegregationCategory(select) {
+      const source = brandSegregationSource;
+      const key = select.dataset.brandSegregationKey ? decodeURIComponent(select.dataset.brandSegregationKey) : "";
+      const category = select.value;
+      if (!source || brandSegregationUserId !== authSession?.user?.id || !key || !BRAND_SEGREGATION_CATEGORY_IDS.has(category)) {
+        notify("Item atau kategori Brand Segregation tidak valid.");
+        return;
+      }
+      const previousCategory = source.categoryAssignments.get(key);
+      const categoryAssignments = new Map(source.categoryAssignments);
+      categoryAssignments.set(key, category);
+      const updatedSource = { ...source, categoryAssignments };
+      select.disabled = true;
+      try {
+        await persistBrandSegregationData(updatedSource);
+        brandSegregationSource = updatedSource;
+        brandSegregationStatus = "Klasifikasi item berhasil disimpan di perangkat ini.";
+      } catch (error) {
+        console.error("Klasifikasi Brand Segregation gagal disimpan:", error);
+        select.value = previousCategory || getBrandSegregationGroups(source).find((group) => group.key === key)?.category || "unclassified";
+        brandSegregationStatus = `Klasifikasi gagal disimpan: ${error instanceof Error ? error.message : "kesalahan tidak diketahui"}`;
+        notify(brandSegregationStatus);
+      }
+      render();
+    }
+
+    function exportBrandSegregationWorkbook() {
+      if (typeof XLSX === "undefined") {
+        notify("Parser Excel tidak termuat. Periksa koneksi internet lalu muat ulang aplikasi.");
+        return;
+      }
+      if (!brandSegregationSource) {
+        notify("Unggah file Master VEF terlebih dahulu.");
+        return;
+      }
+      try {
+        const source = brandSegregationSource;
+        const rowCategories = brandSegregationRowCategories(source);
+        const categoryLabel = new Map(BRAND_SEGREGATION_CATEGORIES.map((category) => [category.id, category.label]));
+        const workbook = XLSX.utils.book_new();
+        const fullRows = [
+          ...source.prefixRows,
+          [...source.headerRow, "Kategori Segregation"],
+          ...source.rows.map((row, index) => [...row, categoryLabel.get(rowCategories[index]) || categoryLabel.get("unclassified")])
+        ];
+        XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(fullRows), "Master VEF Lengkap");
+        for (const category of BRAND_SEGREGATION_CATEGORIES) {
+          const rows = source.rows
+            .filter((row, index) => rowCategories[index] === category.id)
+            .map((row) => [...row, category.label]);
+          XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([
+            [...source.headerRow, "Kategori Segregation"],
+            ...rows
+          ]), category.label.slice(0, 31));
+        }
+        XLSX.writeFile(workbook, `Brand-Segregation-${new Date().toISOString().slice(0, 10)}.xlsx`);
+        notify("Workbook Brand Segregation berhasil diekspor.");
+      } catch (error) {
+        console.error("Workbook Brand Segregation gagal diekspor:", error);
+        notify(`Workbook gagal diekspor: ${error instanceof Error ? error.message : "kesalahan tidak diketahui"}`);
+      }
+    }
+
+    function renderBrandSegregation() {
+      const source = brandSegregationSource;
+      const groups = getBrandSegregationGroups(source);
+      const rowCategories = source ? brandSegregationRowCategories(source) : [];
+      const categoryCounts = Object.fromEntries([
+        ["all", { groups: groups.length, rows: source?.rows.length || 0 }],
+        ...BRAND_SEGREGATION_CATEGORIES.map((category) => [
+          category.id,
+          {
+            groups: groups.filter((group) => group.category === category.id).length,
+            rows: rowCategories.filter((item) => item === category.id).length
+          }
+        ])
+      ]);
+      const activeCategory = selectedBrandSegregationCategory === "all"
+        ? null
+        : BRAND_SEGREGATION_CATEGORIES.find((category) => category.id === selectedBrandSegregationCategory);
+      const query = normalizeField(brandSegregationSearchTerm);
+      const filteredGroups = groups.filter((group) =>
+        (!activeCategory || group.category === activeCategory.id)
+        && (!query || normalizeField([group.itemCode, group.itemName, group.itemGroup, group.brand, group.warehouse].join(" ")).includes(query))
+      );
+      const visibleGroups = filteredGroups.slice(0, 300);
+      const categoryOptions = BRAND_SEGREGATION_CATEGORIES.map((category) =>
+        `<option value="${category.id}">${category.label}</option>`
+      ).join("");
+      const rows = visibleGroups.length
+        ? visibleGroups.map((group, index) => `<tr>
+            <td class="number-cell">${index + 1}</td>
+            <td>${escapeHtml(group.itemCode || "-")}</td>
+            <td>${escapeHtml(group.itemName || "-")}</td>
+            <td>${escapeHtml(group.itemGroup || "-")}</td>
+            <td>${escapeHtml(group.brand || "-")}</td>
+            <td>${escapeHtml(group.warehouse || "-")}</td>
+            <td class="number-cell">${formatNumber(group.rowIndexes.length)}</td>
+            <td><select aria-label="Kategori ${escapeHtml(group.itemCode)}" data-brand-segregation-key="${escapeHtml(encodeURIComponent(group.key))}">${categoryOptions.replace(`value="${group.category}"`, `value="${group.category}" selected`)}</select></td>
+          </tr>`).join("")
+        : `<tr><td class="empty-row" colspan="8">${source ? "Tidak ada item yang cocok dengan kategori atau pencarian." : "Unggah file Master VEF untuk mulai memilah data."}</td></tr>`;
+      const categoryCards = [
+        { id: "all", label: "Semua Master VEF" },
+        ...BRAND_SEGREGATION_CATEGORIES
+      ].map((category) => {
+        const count = categoryCounts[category.id];
+        return `<button class="brand-segregation-category-card${selectedBrandSegregationCategory === category.id ? " active" : ""}" type="button" role="tab" aria-selected="${selectedBrandSegregationCategory === category.id}" data-brand-segregation-category="${category.id}" ${source ? "" : "disabled"}>
+          <strong>${category.label}</strong><span>${formatNumber(count?.groups || 0)} item · ${formatNumber(count?.rows || 0)} baris</span>
+        </button>`;
+      }).join("");
+      return `${navMarkup()}${renderWorkspaceSegregationTabs()}
+        <section class="page-head archive-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Brand Segregation</div><h1>Brand Segregation</h1><p class="subtitle">Unggah Master VEF, periksa klasifikasi item, lalu ekspor workbook per kategori dengan seluruh baris sumber.</p></div></section>
+        <section class="table-section">
+          <div class="table-toolbar"><div><div class="table-title">Master VEF</div><span class="table-count">${source ? `${escapeHtml(source.fileName)} · Sheet ${escapeHtml(source.sheetName)} · ${formatNumber(source.rows.length)} baris` : "Pilih file Master VEF Excel atau CSV (maksimal 50 MB)."}</span></div>
+            <div class="brand-segregation-tools"><input class="upload-input" id="brand-segregation-file-input" type="file" accept=".xlsx,.xls,.csv" aria-label="Pilih file Master VEF"><button class="button button-primary" id="brand-segregation-file-button" type="button" ${brandSegregationFileLoading ? "disabled" : ""}>${brandSegregationFileLoading ? "Memproses file..." : source ? "Ganti file Master VEF" : "Unggah File Master VEF"}</button><button class="button button-secondary" id="export-brand-segregation" type="button" ${source ? "" : "disabled"}>Ekspor Excel</button></div>
+          </div>
+          <div class="brand-segregation-status" role="status" aria-live="polite">${escapeHtml(brandSegregationStatus)}</div>
+        </section>
+        ${source ? `<section class="brand-segregation-category-grid" role="tablist" aria-label="Kategori Master VEF">${categoryCards}</section>
+          <section class="table-section"><div class="table-toolbar"><div class="table-title">${escapeHtml(activeCategory?.label || "Semua item")} <span class="table-count">${formatNumber(filteredGroups.length)} item${filteredGroups.length > 300 ? " · tampil 300 pertama" : ""}</span></div><div class="filters"><div class="search-wrap"><span class="search-icon" aria-hidden="true">⌕</span><input class="search-input" id="brand-segregation-search" type="search" placeholder="Cari item code, nama, grup, atau warehouse" value="${escapeHtml(brandSegregationSearchTerm)}" aria-label="Cari item Brand Segregation"></div></div></div>
+            <div class="table-scroll"><table class="brand-segregation-table"><thead><tr><th>No.</th><th>Item Code</th><th>Item Name</th><th>Item Group</th><th>Brand</th><th>Warehouse</th><th>Baris VEF</th><th>Kategori</th></tr></thead><tbody>${rows}</tbody></table></div>
+          </section>` : ""}
+        ${source && categoryCounts.unclassified.rows ? `<div class="audit-legacy-note">${formatNumber(categoryCounts.unclassified.rows)} baris belum masuk kategori. Pilih kategori pada setiap item untuk mengoreksi klasifikasi otomatis.</div>` : ""}`;
+    }
+
+    function renderWorkspaceSegregation() {
+      return selectedWorkspaceSegregationTab === "brand" ? renderBrandSegregation() : renderSegregation();
+    }
+
     function renderSegregation() {
       const foundScans = getSegregationFoundScans();
       const notFoundScans = getSegregationNotFoundScans();
@@ -8577,7 +8988,7 @@
       const duplicateScan = segregationDuplicateScanIndex === null
         ? null
         : segregationScans[segregationDuplicateScanIndex];
-      return `${navMarkup()}
+      return `${navMarkup()}${renderWorkspaceSegregationTabs()}
         <section class="page-head archive-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Tools mandiri</div><h1>Segregation</h1><p class="subtitle">Unggah file VEF, scan SN yang akan dipindahkan, lalu unduh hasil dalam format Stock Entry Template.</p></div></section>
         <section class="table-section segregation-source-card">
           <div class="segregation-source-layout">
@@ -10837,7 +11248,7 @@
     }
 
     function renderCurrentPageMarkup() {
-      return currentPage === "dashboard" ? renderDashboard() : currentPage === "recorded-archive" ? renderRecordedSessionPage() : currentPage === "opname" ? renderOpname() : currentPage === "layouts" ? renderLayouts() : currentPage === "workspaces" ? renderWorkspaceSchedule() : currentPage === "products" ? renderProducts() : currentPage === "recap" ? renderRecap() : currentPage === "about-info" ? renderAboutWorkspace() : currentPage === "about" ? renderAbout() : currentPage === "admin-users" ? renderAdminUsers() : currentPage === "data-resources" ? renderDataResources() : currentPage === "completed-session-detail" ? renderCompletedSessionView() : currentPage === "completed-sessions" ? renderCompletedSessions() : currentPage === "segregation" ? renderSegregation() : renderHistory();
+      return currentPage === "dashboard" ? renderDashboard() : currentPage === "recorded-archive" ? renderRecordedSessionPage() : currentPage === "opname" ? renderOpname() : currentPage === "layouts" ? renderLayouts() : currentPage === "workspaces" ? renderWorkspaceSchedule() : currentPage === "products" ? renderProducts() : currentPage === "recap" ? renderRecap() : currentPage === "about-info" ? renderAboutWorkspace() : currentPage === "about" ? renderAbout() : currentPage === "admin-users" ? renderAdminUsers() : currentPage === "data-resources" ? renderDataResources() : currentPage === "completed-session-detail" ? renderCompletedSessionView() : currentPage === "completed-sessions" ? renderCompletedSessions() : currentPage === "segregation" ? renderWorkspaceSegregation() : renderHistory();
     }
 
     function domMorphKey(node) {
@@ -11027,7 +11438,7 @@
           ${guide("Langkah 3", "▦", "Scan Layout", "Buat rack dan isi label rack (angka atau keterangan teks) serta target scan. Pindai serial number pada rack yang sesuai atau gunakan tombol kamera untuk membaca barcode. Hasil cocok, duplikat, bukan laptop, atau tidak ditemukan tampil pada catatan scan; serial cocok juga menampilkan item code, nama item, serial number, dan waktu saat rinciannya dibuka. Rack dengan SN duplikat diberi tanda peringatan. Untuk barang tanpa serial, cari item dari VEF, pilih hasil yang benar, masukkan quantity, lalu Catat Manual. Catatan manual terbaru akan ditandai dan difokuskan.", "layouts", "Scan Layout")}
           ${guide("Langkah 4", "⌗", "Result SO", "Lembar ini menghitung SCAN + MANUAL + PJ dan membandingkan hasilnya dengan VEF. Untuk PJ, klik quantity pada item, lalu isi tanggal/waktu dan nomor invoice. Input hanya diterima jika waktu invoice lebih baru daripada timestamp file VEF yang tercatat di Master VEF. Tekan SO SELESAI setelah pemeriksaan selesai untuk mengunci dan mengarsipkan hasil.", "opname", "Result SO")}
           ${guide("Langkah 5", "↕", "Rekap Selisih", "Tinjau hanya item yang belum sesuai; kolom selisih membandingkan jumlah SCAN + MANUAL + PJ dengan quantity VEF. Tambahkan catatan untuk menjelaskan kekurangan atau kelebihan. Periksa kembali data sebelum sesi diselesaikan karena hasil yang diarsipkan menjadi rekaman baca-saja.", "recap", "Rekap Selisih")}
-          ${guide("Tool", "⌕", "Segregation", "Unggah file Excel/CSV VEF, scan SN dengan scanner fisik, lalu periksa ringkasan Data Merge & Sort. Unduh workbook yang berisi Get SN, Data Merge & Sort, dan Stock Entry Template (kolom Warehouse Target dikosongkan), atau ekspor CSV template. Halaman ini mandiri dan tidak mengubah sesi stock opname.", "segregation", "Segregation")}
+          ${guide("Tool", "⌕", "Workspace Segregation", "Workspace Segregation memiliki Brand Segregation untuk mengunggah Master VEF, memeriksa atau mengubah kategori item, dan mengekspor workbook per kategori. SN Segregation mempertahankan alur unggah VEF dan pemindaian SN yang menghasilkan Data Merge & Sort serta Stock Entry Template. Data Brand Segregation tersimpan lokal di perangkat dan tidak mengubah sesi stock opname.", "segregation", "Segregation")}
           ${guide("Arsip", "▣", "Sesi Stock Opname", "Gunakan Buka sesi untuk meninjau workbook sumber, rincian setiap rack, input manual, seluruh item Result SO, daftar invoice PJ, dan Rekap Selisih. Ekspor XLSX berisi worksheet arsip beserta detail input, sedangkan Print menyusun laporan untuk dicetak atau disimpan sebagai PDF. Arsip lama tetap tersedia walaupun kartu jadwal sudah direset.", "completed-sessions", "Sesi Stock Opname")}
           ${guide("Aktivitas", "◷", "Riwayat Perubahan", "Lihat aktivitas berdasarkan waktu dan sesi, seperti mulai/selesai opname, scan ditambahkan, input manual, dan perubahan catatan atau quantity. Gunakan riwayat untuk membantu audit dan menelusuri perubahan data.", "history", "Riwayat Perubahan")}
           ${canManageDataResources() ? guide("Admin", "▧", "Data Resource", "Tambahkan, ubah, atau hapus pilihan Nama Brand dan Nama PIC, serta unggah atau ganti APK yang tersedia untuk diunduh dari halaman login. Daftar dan informasi APK dibagikan kepada seluruh akun.", "data-resources", "Data Resource") : ""}
@@ -11874,6 +12285,34 @@
       document.getElementById("add-workspace-button")?.addEventListener("click", addWorkspace);
       document.getElementById("admin-refresh-users")?.addEventListener("click", loadAdminUsers);
       document.getElementById("admin-refresh-storage")?.addEventListener("click", () => void loadAdminStorage());
+      document.querySelectorAll("[data-workspace-segregation-tab]").forEach((button) => {
+        button.addEventListener("click", () => {
+          selectedWorkspaceSegregationTab = button.dataset.workspaceSegregationTab === "brand" ? "brand" : "sn";
+          render();
+        });
+      });
+      document.getElementById("brand-segregation-file-button")?.addEventListener("click", () => document.getElementById("brand-segregation-file-input")?.click());
+      document.getElementById("brand-segregation-file-input")?.addEventListener("change", (event) => void importBrandSegregationFile(event));
+      document.getElementById("export-brand-segregation")?.addEventListener("click", exportBrandSegregationWorkbook);
+      document.querySelectorAll("[data-brand-segregation-category]").forEach((button) => {
+        button.addEventListener("click", () => {
+          selectedBrandSegregationCategory = BRAND_SEGREGATION_CATEGORY_IDS.has(button.dataset.brandSegregationCategory)
+            ? button.dataset.brandSegregationCategory
+            : "all";
+          render();
+        });
+      });
+      document.getElementById("brand-segregation-search")?.addEventListener("input", (event) => {
+        brandSegregationSearchTerm = event.currentTarget.value;
+        const selectionStart = event.currentTarget.selectionStart;
+        render();
+        const searchInput = document.getElementById("brand-segregation-search");
+        searchInput?.focus();
+        searchInput?.setSelectionRange(selectionStart, selectionStart);
+      });
+      document.querySelectorAll("[data-brand-segregation-key]").forEach((select) => {
+        select.addEventListener("change", () => void setBrandSegregationCategory(select));
+      });
       document.getElementById("segregation-file-button")?.addEventListener("click", () => document.getElementById("segregation-file-input")?.click());
       document.getElementById("segregation-file-input")?.addEventListener("change", (event) => void importSegregationFile(event));
       document.getElementById("segregation-remove-file")?.addEventListener("click", () => void removeSegregationFile());
