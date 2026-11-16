@@ -509,6 +509,17 @@
     .segregation-scan-results .segregation-not-found-table th:last-child,
     .segregation-scan-results .segregation-not-found-table td:last-child { padding-left: 2px; padding-right: 2px; text-align: center; width: 30px; }
     .workspace-segregation-tabs { margin: 0 0 14px; }
+    .stock-opname-schedule-tabs { margin-bottom: 12px; }
+    .stock-opname-schedule-note { color: var(--muted); font-size: 11px; line-height: 1.5; margin: 0 0 12px; }
+    .stock-opname-schedule-table { min-width: max-content; }
+    .stock-opname-schedule-table th,
+    .stock-opname-schedule-table td { min-width: 118px; text-align: center; }
+    .stock-opname-schedule-table th:first-child,
+    .stock-opname-schedule-table td:first-child { min-width: 86px; }
+    .stock-opname-schedule-month th { background: color-mix(in srgb, var(--green) 12%, var(--paper)); color: var(--green-dark); font-size: 11px; text-align: left; }
+    .stock-opname-schedule-pic { display: block; white-space: nowrap; }
+    .stock-opname-schedule-pic + .stock-opname-schedule-pic { border-top: 1px solid var(--line); margin-top: 4px; padding-top: 4px; }
+    .stock-opname-schedule-status { color: var(--amber); font-size: 10px; white-space: nowrap; }
     .brand-segregation-category-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); margin-bottom: 12px; }
     .brand-segregation-category-card { align-items: flex-start; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; color: var(--ink); cursor: pointer; display: flex; flex-direction: column; gap: 7px; justify-content: center; min-height: 82px; padding: 12px 14px; text-align: left; transition: border-color .15s ease, box-shadow .15s ease, background .15s ease; }
     .brand-segregation-category-card:hover { border-color: color-mix(in srgb, var(--green) 48%, var(--line)); box-shadow: 0 4px 12px rgba(35, 59, 38, .08); }
@@ -4423,6 +4434,7 @@
     ]);
     const BRAND_SEGREGATION_TABLET_SKUS = new Set(["LV-LGG-007"]);
     let selectedWorkspaceSegregationTab = "sn";
+    let selectedStockOpnameScheduleType = "unit";
     let selectedBrandSegregationCategory = "all";
     let brandSegregationSearchTerm = "";
     let brandSegregationSource = null;
@@ -4431,6 +4443,69 @@
     let brandSegregationRemoving = false;
     let brandSegregationPersistenceQueue = Promise.resolve();
     let brandSegregationStatus = "";
+    // Rotation strings store zero-based indexes into the corresponding staff rosters.
+    const STOCK_OPNAME_2026_SCHEDULES = {
+      unit: {
+        primaryRoster: ["BARA", "ROSADI", "AHMAD", "DINAR", "IVAN", "BENI", "FADHIL", "INDRA", "RANGGA"],
+        secondaryRoster: ["DIAH", "PUTRI", "ANDRI", "IYANT", "BONIEX", "DIMAS", "RINO", "ARIF", "YUSUF"],
+        weeks: [
+          { month: "Januari", week: 1, primary: "012345678", secondary: "012345678" },
+          { month: "Januari", week: 2, primary: "801234567", secondary: "801234567" },
+          { month: "Februari", week: 1, primary: "780123456", secondary: "780123456" },
+          { month: "Februari", week: 2, primary: "678012345", secondary: "678012345" },
+          { month: "Maret", week: 1, primary: "567801234", secondary: "567801234", note: "SKIP (Crowd Order)" },
+          { month: "Maret", week: 2, primary: "456780123", secondary: "456780123" },
+          { month: "April", week: 1, primary: "345678012", secondary: "345678012" },
+          { month: "April", week: 2, primary: "234567801", secondary: "234567801" },
+          { month: "Mei", week: 1, primary: "123456780", secondary: "123456780" },
+          { month: "Mei", week: 2, primary: "012345678", secondary: "012345678" },
+          { month: "Juni", week: 1, primary: "801234567", secondary: "801234567" },
+          { month: "Juni", week: 2, primary: "780123456", secondary: "780123456" },
+          { month: "Juli", week: 1, primary: "678012345", secondary: "678012345" },
+          { month: "Juli", week: 2, primary: "567801234", secondary: "567801234" },
+          { month: "Agustus", week: 1, primary: "456780123", secondary: "456780123" },
+          { month: "Agustus", week: 2, primary: "348012345", secondary: "348012345" },
+          { month: "September", week: 1, primary: "534801234", secondary: "534801234" },
+          { month: "September", week: 2, primary: "453480123", secondary: "453480123" },
+          { month: "Oktober", week: 1, primary: "345348012", secondary: "345348012" },
+          { month: "Oktober", week: 2, primary: "234534801", secondary: "234534801" },
+          { month: "November", week: 1, primary: "123453480", secondary: "123453480" },
+          { month: "November", week: 2, primary: "012345348", secondary: "012345348" },
+          { month: "Desember", week: 1, primary: "801234534", secondary: "801234534" },
+          { month: "Desember", week: 2, primary: "480123453", secondary: "480123453" }
+        ]
+      },
+      accessories: {
+        primaryRoster: ["RANGGA", "BARA", "ROSADI", "AHMAD", "DINAR", "IVAN", "BENI", "FADHIL", "INDRA"],
+        secondaryRoster: ["YUSUF", "DIAH", "PUTRI", "ANDRI", "IYANT", "BONIEX", "DIMAS", "RINO", "ARIF"],
+        weeks: [
+          { month: "Januari", week: 1, primary: "012345678", secondary: "012345678" },
+          { month: "Januari", week: 2, primary: "801234567", secondary: "801234567" },
+          { month: "Februari", week: 1, primary: "780123456", secondary: "780123456" },
+          { month: "Februari", week: 2, primary: "678012345", secondary: "678012345" },
+          { month: "Maret", week: 1, primary: "567801234", secondary: "567801234", note: "SKIP (Crowd Order)" },
+          { month: "Maret", week: 2, primary: "456780123", secondary: "456780123" },
+          { month: "April", week: 1, primary: "567801234", secondary: "567801234" },
+          { month: "April", week: 2, primary: "456780123", secondary: "456780123", note: "SKIP (Crowd Order)" },
+          { month: "Mei", week: 1, primary: "356780123", secondary: "456780123" },
+          { month: "Mei", week: 2, primary: "335678012", secondary: "345678012" },
+          { month: "Juni", week: 1, primary: "233567801", secondary: "234567801" },
+          { month: "Juni", week: 2, primary: "123356780", secondary: "123456780" },
+          { month: "Juli", week: 1, primary: "012335678", secondary: "012345678" },
+          { month: "Juli", week: 2, primary: "012345678", secondary: "012345678", note: "Skip Pay Day" },
+          { month: "Agustus", week: 1, primary: "801234567", secondary: "801234567" },
+          { month: "Agustus", week: 2, primary: "780123456", secondary: "780123456", note: "Skip Pay Day" },
+          { month: "September", week: 1, primary: "678012345", secondary: "678012345" },
+          { month: "September", week: 2, primary: "567801234", secondary: "567801234" },
+          { month: "Oktober", week: 1, primary: "456780123", secondary: "456780123" },
+          { month: "Oktober", week: 2, primary: "345678012", secondary: "345678012" },
+          { month: "November", week: 1, primary: "234567801", secondary: "234567801" },
+          { month: "November", week: 2, primary: "123456780", secondary: "123456780" },
+          { month: "Desember", week: 1, primary: "012345678", secondary: "012345678" },
+          { month: "Desember", week: 2, primary: "801234567", secondary: "801234567" }
+        ]
+      }
+    };
     let recordedArchiveSearchTerm = "";
     let recordedEntryTrigger = null;
     let pendingPjProductId = "";
@@ -8730,6 +8805,7 @@
       return `<div class="recorded-view-tabs workspace-segregation-tabs" role="tablist" aria-label="Jenis Segregation">
         <button class="button button-secondary${selectedWorkspaceSegregationTab === "brand" ? " active" : ""}" type="button" role="tab" aria-selected="${selectedWorkspaceSegregationTab === "brand"}" data-workspace-segregation-tab="brand">Brand Segregation</button>
         <button class="button button-secondary${selectedWorkspaceSegregationTab === "sn" ? " active" : ""}" type="button" role="tab" aria-selected="${selectedWorkspaceSegregationTab === "sn"}" data-workspace-segregation-tab="sn">SN Segregation</button>
+        <button class="button button-secondary${selectedWorkspaceSegregationTab === "schedule" ? " active" : ""}" type="button" role="tab" aria-selected="${selectedWorkspaceSegregationTab === "schedule"}" data-workspace-segregation-tab="schedule">Jadwal SO</button>
       </div>`;
     }
 
@@ -9120,7 +9196,69 @@
     }
 
     function renderWorkspaceSegregation() {
-      return selectedWorkspaceSegregationTab === "brand" ? renderBrandSegregation() : renderSegregation();
+      if (selectedWorkspaceSegregationTab === "brand") return renderBrandSegregation();
+      if (selectedWorkspaceSegregationTab === "schedule") return renderStockOpnameSchedule();
+      return renderSegregation();
+    }
+
+    function getStockOpnameScheduleBrands(scheduleType, source = brandSegregationSource) {
+      if (!source) return [];
+      const categories = scheduleType === "accessories"
+        ? new Set(["accessories"])
+        : new Set(["laptop", "smartphone", "tablet", "monitor", "pc-aio"]);
+      const brands = new Map();
+      for (const group of getBrandSegregationGroups(source)) {
+        const brand = group.brand.trim();
+        if (!categories.has(group.category) || !brand) continue;
+        const normalizedBrand = normalizeField(brand);
+        if (!brands.has(normalizedBrand)) brands.set(normalizedBrand, brand);
+      }
+      return [...brands.values()].sort((left, right) => left.localeCompare(right, "id-ID"));
+    }
+
+    function renderStockOpnameSchedule() {
+      const scheduleType = selectedStockOpnameScheduleType === "accessories" ? "accessories" : "unit";
+      const schedule = STOCK_OPNAME_2026_SCHEDULES[scheduleType];
+      const brands = getStockOpnameScheduleBrands(scheduleType);
+      const scheduleTypeLabel = scheduleType === "accessories" ? "Accessories" : "Unit";
+      const typeTabs = `<div class="recorded-view-tabs stock-opname-schedule-tabs" role="tablist" aria-label="Jenis Jadwal Stock Opname">
+        <button class="button button-secondary${scheduleType === "unit" ? " active" : ""}" type="button" role="tab" aria-selected="${scheduleType === "unit"}" data-stock-opname-schedule-type="unit">Unit</button>
+        <button class="button button-secondary${scheduleType === "accessories" ? " active" : ""}" type="button" role="tab" aria-selected="${scheduleType === "accessories"}" data-stock-opname-schedule-type="accessories">Accessories</button>
+      </div>`;
+      let scheduleContent = "";
+      if (!brandSegregationSource) {
+        scheduleContent = `<section class="table-section"><div class="brand-segregation-status" role="status">Unggah Master VEF di tab Brand Segregation terlebih dahulu agar daftar brand dapat dimasukkan ke jadwal.</div></section>`;
+      } else if (!brands.length) {
+        scheduleContent = `<section class="table-section"><div class="brand-segregation-status" role="status">Belum ada brand untuk jadwal ${scheduleTypeLabel}. Periksa kategori dan kolom Brand di Master VEF.</div></section>`;
+      } else {
+        const brandHeaders = brands.map((brand) => `<th scope="col">${escapeHtml(brand)}</th>`).join("");
+        const weekRows = schedule.weeks.map((week) => {
+          const monthRow = week.week === 1
+            ? `<tr class="stock-opname-schedule-month"><th colspan="${brands.length + 2}" scope="colgroup">${escapeHtml(week.month)} 2026</th></tr>`
+            : "";
+          const brandCells = brands.map((brand, brandIndex) => {
+            const slotIndex = brandIndex % schedule.primaryRoster.length;
+            const primaryIndex = Number(week.primary[slotIndex]);
+            const secondaryIndex = Number(week.secondary[slotIndex]);
+            const primary = schedule.primaryRoster[primaryIndex] || "-";
+            const secondary = schedule.secondaryRoster[secondaryIndex] || "-";
+            return `<td><span class="stock-opname-schedule-pic">${escapeHtml(primary)}</span><span class="stock-opname-schedule-pic">${escapeHtml(secondary)}</span></td>`;
+          }).join("");
+          return `${monthRow}<tr><th scope="row">WEEK ${week.week}</th>${brandCells}<td class="stock-opname-schedule-status">${escapeHtml(week.note || "-")}</td></tr>`;
+        }).join("");
+        scheduleContent = `<section class="table-section">
+          <div class="table-toolbar"><div><div class="table-title">Jadwal SO ${scheduleTypeLabel} 2026</div><span class="table-count">${formatNumber(brands.length)} brand</span></div></div>
+          <div class="table-scroll"><table class="stock-opname-schedule-table" aria-label="Jadwal SO ${scheduleTypeLabel} 2026">
+            <thead><tr><th scope="col">Minggu</th>${brandHeaders}<th scope="col">Catatan</th></tr></thead>
+            <tbody>${weekRows}</tbody>
+          </table></div>
+        </section>`;
+      }
+      return `${navMarkup()}${renderWorkspaceSegregationTabs()}
+        <section class="page-head archive-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Jadwal Stock Opname</div><h1>Jadwal SO 2026</h1><p class="subtitle">Rotasi petugas mengikuti workbook. Daftar brand diambil dari klasifikasi Master VEF.</p></div></section>
+        ${typeTabs}
+        <p class="stock-opname-schedule-note">Brand ditampilkan per kolom dan diurutkan alfabetis. PIC mengikuti 9 slot rotasi Excel; bila brand lebih dari 9, urutan PIC berulang dari slot pertama.</p>
+        ${scheduleContent}`;
     }
 
     function renderSegregation() {
@@ -12465,7 +12603,14 @@
       document.getElementById("admin-refresh-storage")?.addEventListener("click", () => void loadAdminStorage());
       document.querySelectorAll("[data-workspace-segregation-tab]").forEach((button) => {
         button.addEventListener("click", () => {
-          selectedWorkspaceSegregationTab = button.dataset.workspaceSegregationTab === "brand" ? "brand" : "sn";
+          const tab = button.dataset.workspaceSegregationTab;
+          selectedWorkspaceSegregationTab = tab === "brand" || tab === "schedule" ? tab : "sn";
+          render();
+        });
+      });
+      document.querySelectorAll("[data-stock-opname-schedule-type]").forEach((button) => {
+        button.addEventListener("click", () => {
+          selectedStockOpnameScheduleType = button.dataset.stockOpnameScheduleType === "accessories" ? "accessories" : "unit";
           render();
         });
       });
