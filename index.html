@@ -9002,25 +9002,22 @@
       try {
         const source = brandSegregationSource;
         const rowCategories = brandSegregationRowCategories(source);
+        const activeCategory = BRAND_SEGREGATION_CATEGORIES.find((category) => category.id === selectedBrandSegregationCategory);
         const categoryLabel = new Map(BRAND_SEGREGATION_CATEGORIES.map((category) => [category.id, category.label]));
+        const exportRows = source.rows
+          .map((row, index) => ({ row, categoryId: rowCategories[index] }))
+          .filter(({ categoryId }) => !activeCategory || categoryId === activeCategory.id)
+          .map(({ row, categoryId }) => [...row, categoryLabel.get(categoryId) || categoryLabel.get("unclassified")]);
         const workbook = XLSX.utils.book_new();
-        const fullRows = [
-          ...source.prefixRows,
+        const rows = [
+          ...(!activeCategory ? source.prefixRows : []),
           [...source.headerRow, "Kategori Segregation"],
-          ...source.rows.map((row, index) => [...row, categoryLabel.get(rowCategories[index]) || categoryLabel.get("unclassified")])
+          ...exportRows
         ];
-        XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(fullRows), "Master VEF Lengkap");
-        for (const category of BRAND_SEGREGATION_CATEGORIES) {
-          const rows = source.rows
-            .filter((row, index) => rowCategories[index] === category.id)
-            .map((row) => [...row, category.label]);
-          XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([
-            [...source.headerRow, "Kategori Segregation"],
-            ...rows
-          ]), category.label.slice(0, 31));
-        }
-        XLSX.writeFile(workbook, `Brand-Segregation-${new Date().toISOString().slice(0, 10)}.xlsx`);
-        notify("Workbook Brand Segregation berhasil diekspor.");
+        const sheetName = (activeCategory?.label || "Master VEF Lengkap").slice(0, 31);
+        XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(rows), sheetName);
+        XLSX.writeFile(workbook, `Brand-Segregation-${activeCategory?.id || "all"}-${new Date().toISOString().slice(0, 10)}.xlsx`);
+        notify(`Workbook ${activeCategory?.label || "Semua Master VEF"} berhasil diekspor.`);
       } catch (error) {
         console.error("Workbook Brand Segregation gagal diekspor:", error);
         notify(`Workbook gagal diekspor: ${error instanceof Error ? error.message : "kesalahan tidak diketahui"}`);
