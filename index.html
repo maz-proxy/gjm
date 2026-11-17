@@ -3699,6 +3699,7 @@
       "Cari item dari VEF Master untuk": "Search items from VEF Master for",
       "Item masuk perhitungan": "Items included in calculation",
       "Catatan perubahan data dan aktivitas sesi, diurutkan dari yang terbaru.": "Data changes and session activity, ordered from newest to oldest.",
+      "Riwayat perubahan mulai dicatat setelah file Master VEF berhasil diunggah.": "Change history starts being recorded after the VEF Master file is successfully uploaded.",
       "aktivitas tercatat": "activities recorded",
       "Riwayat perubahan tersimpan per sesi di perangkat ini.": "Change history is stored per session on this device.",
       "Perubahan terakhir:": "Latest change:",
@@ -5239,6 +5240,11 @@
     function recordActivity(type, description, auditDetails = {}) {
       const workspace = auditDetails.workspace || activeWorkspace();
       const storageWorkspace = auditDetails.storageWorkspace || workspace;
+      const activityData = !storageWorkspace || storageWorkspace.id === state.currentWorkspaceId
+        ? state
+        : storageWorkspace.data;
+      const hasUploadedMaster = Boolean(activityData?.importFile && activityData?.importUploadedAt && activityData?.products?.length);
+      if (!hasUploadedMaster && !auditDetails.allowWithoutMaster) return null;
       const event = {
         id: crypto.randomUUID(),
         type,
@@ -8752,7 +8758,7 @@
       const auditStatus = auditHistoryError || (auditHistoryLoading
         ? "Memuat catatan audit..."
         : `Menampilkan ${auditHistoryRows.length} dari ${auditHistoryTotal} catatan audit${auditHistoryHasMore ? "; pilih Muat lebih banyak untuk melanjutkan." : "."}`);
-      return `${navMarkup()}<section class="page-head archive-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Aktivitas dan audit</div><h1>Riwayat Perubahan</h1><p class="subtitle">Audit baru mencatat pelaku, waktu kejadian dan waktu server, sesi, objek, serta nilai sebelum dan sesudah perubahan.</p></div></section>
+      return `${navMarkup()}<section class="page-head archive-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Aktivitas dan audit</div><h1>Riwayat Perubahan</h1><p class="subtitle">Riwayat perubahan mulai dicatat setelah file Master VEF berhasil diunggah. Audit mencatat pelaku, waktu kejadian dan waktu server, sesi, objek, serta nilai sebelum dan sesudah perubahan.</p></div></section>
         <div class="history-summary"><div><strong>${formatNumber(auditHistoryTotal)} catatan audit tersimpan</strong><div style="font-size:10px;margin-top:3px">Audit terstruktur tersimpan permanen; riwayat legacy lama tidak ditampilkan.</div></div><span class="category-chip">${escapeHtml(lastActivity)}</span></div>
         ${canPurgeAuditHistory ? `<section class="table-section"><div class="table-toolbar"><div class="table-title">Hapus riwayat berdasarkan Session ID</div></div><div class="audit-legacy-note">Owner dan Super Adm dapat menghapus seluruh catatan audit untuk satu sesi. Data stock opname dan arsip Session SO tidak ikut dihapus.</div><form id="audit-purge-session-form" class="audit-filter-grid"><div class="audit-filter-field"><label for="audit-purge-session-id">Session ID</label><input class="search-input" id="audit-purge-session-id" name="sessionId" type="text" maxlength="200" autocomplete="off" placeholder="Tempel Session ID dari tabel riwayat" value="${escapeHtml(auditPurgeSessionId)}" ${auditPurgeLoading || auditHistoryLoading ? "disabled" : ""} required></div><div class="audit-filter-actions"><button class="button button-danger" id="audit-purge-session-submit" type="submit" ${auditPurgeLoading || auditHistoryLoading || !auditPurgeSessionId.trim() ? "disabled" : ""}>${auditPurgeLoading ? "Menghapus..." : "Hapus riwayat sesi"}</button></div></form></section>` : ""}
         <section class="table-section"><div class="table-toolbar"><div class="table-title">Audit lengkap <span class="table-count">Terbaru di atas</span></div><div class="audit-filter-actions"><button class="button button-secondary" id="audit-refresh" type="button" ${auditHistoryLoading ? "disabled" : ""}>Muat ulang</button><button class="button button-secondary" id="audit-export" type="button" ${auditHistoryLoading ? "disabled" : ""}>Ekspor CSV</button></div></div>
@@ -13776,7 +13782,8 @@
         recordActivity("Master VEF diunggah", `Workbook ${file.name} diunggah dengan ${state.products.length} item dan ${Object.keys(state.serialMaster).length} Serial Number.`, {
           workspace: activeWorkspace(),
           entityType: "workbook",
-          entityId: uploadSessionId,
+          entityId: newSession.id,
+          sessionId: newSession.id,
           changes: [{ field: "Master VEF", before: previousImportFile || null, after: { fileName: file.name, products: state.products.length, serials: Object.keys(state.serialMaster).length } }],
           occurredAt: uploadedAt
         });
@@ -13908,6 +13915,7 @@
         pjEntries: (state.pjEntries || []).length,
         inboundEntries: (state.inboundEntries || []).length
       };
+      const hadUploadedMaster = Boolean(state.importFile && state.importUploadedAt && state.products.length);
       const currentSessionWorkbooks = (state.workbookFiles || []).filter((workbook) => workbook.sessionId === state.activeSession.id);
       try {
         await removeArchivedWorkbookFiles(currentSessionWorkbooks);
@@ -13935,6 +13943,7 @@
         entityType: "session",
         entityId: deletedSessionId,
         sessionId: deletedSessionId,
+        allowWithoutMaster: hadUploadedMaster,
         changes: [{ field: "Data sesi", before: deletedSessionSummary, after: { workbook: "", products: 0, serials: 0, scans: 0, manualEntries: 0, pjEntries: 0, inboundEntries: 0 } }]
       });
       state.activeSession = makeSession(authSession?.user || null);
