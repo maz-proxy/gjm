@@ -697,6 +697,14 @@
     .manual-item-entry { align-items: center; color: var(--muted); display: flex; font-size: 10px; justify-content: space-between; min-height: 24px; }
     .layout-scan-list { display: grid; gap: 4px; max-height: 230px; overflow-y: auto; }
     .layout-scan-row { align-items: center; border-bottom: 1px solid #e9efeb; display: flex; gap: 8px; justify-content: space-between; min-height: 34px; padding: 3px 0; }
+    .layout-scan-row.scan-issue-highlight { animation: scan-issue-row-pulse .8s ease-in-out infinite; border-bottom-color: transparent; border-radius: 4px; outline: 1px solid rgba(255, 32, 32, .72); outline-offset: -1px; }
+    @keyframes scan-issue-row-pulse {
+      0%, 100% { background-color: transparent; outline-color: rgba(255, 32, 32, .68); }
+      50% { background-color: rgba(255, 32, 32, .08); outline-color: #ff2020; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .layout-scan-row.scan-issue-highlight { animation: none; background-color: rgba(255, 32, 32, .08); outline-color: #ff2020; }
+    }
     .layout-scan-row .layout-scan-detail { flex: 1; min-width: 0; }
     .layout-scan-summary { align-items: center; display: flex; flex-wrap: wrap; gap: 4px 10px; }
     .layout-scan-summary-live { align-items: start; display: grid; gap: 1px 8px; grid-template-columns: minmax(0, 1fr) auto; }
@@ -4489,6 +4497,7 @@
     let segregationDuplicateScanIndex = null;
     let segregationPersistenceQueue = Promise.resolve();
     let lastManualEntryId = "";
+    const scanIssueHighlightIds = new Set();
     let searchTerm = "";
     let layoutSearchTerm = "";
     let toastTimer;
@@ -8347,7 +8356,7 @@
           quantityStatus.className === "different" ? "quantity-over" : "",
           hasInvalidScan ? "duplicate-warning" : ""
         ].filter(Boolean).join(" ");
-        const scanRows = visibleScans.length ? visibleScans.slice().reverse().map((scan) => `<div class="layout-scan-row" data-layout-scan-row="${escapeHtml(scan.id)}">${renderScanDetail(scan)}${canUseRack ? `<button class="layout-delete" type="button" data-delete-scan="${escapeHtml(scan.id)}" aria-label="Hapus scan ${escapeHtml(scan.serial)}" title="Hapus scan">×</button>` : ""}</div>`).join("") : `<div class="layout-record-empty">${searchQuery ? "Tidak ada scan yang cocok dengan pencarian." : "Belum ada scan."}</div>`;
+        const scanRows = visibleScans.length ? visibleScans.slice().reverse().map((scan) => `<div class="layout-scan-row${scanIssueHighlightIds.has(scan.id) ? " scan-issue-highlight" : ""}" data-layout-scan-row="${escapeHtml(scan.id)}">${renderScanDetail(scan)}${canUseRack ? `<button class="layout-delete" type="button" data-delete-scan="${escapeHtml(scan.id)}" aria-label="Hapus scan ${escapeHtml(scan.serial)}" title="Hapus scan">×</button>` : ""}</div>`).join("") : `<div class="layout-record-empty">${searchQuery ? "Tidak ada scan yang cocok dengan pencarian." : "Belum ada scan."}</div>`;
         const manualRows = visibleManualEntries.length
           ? renderManualEntryCards(visibleManualEntries, { products: state.products, canDelete: canUseRack, latestEntryId: lastManualEntryId })
           : `<div class="layout-record-empty">${searchQuery ? "Tidak ada input manual yang cocok dengan pencarian." : "Belum ada input manual."}</div>`;
@@ -13318,6 +13327,7 @@
       const productBefore = state.products.find((product) => product.id === state.serialMaster[normalizeSerial(serial)]?.productId);
       const soBefore = productBefore ? scannedFor(productBefore.id) : 0;
       const scan = addScanEvent(serial, state.scanEvents, layout);
+      if (scan.status === "duplicate" || scan.status === "not-found") scanIssueHighlightIds.add(scan.id);
       vibrateForEntry();
       playScanBeep(scan.status);
       state.products.forEach((product) => { product.count = scannedFor(product.id); });
@@ -14205,6 +14215,10 @@
       appShell.classList.remove("sidebar-expanded");
     });
     document.addEventListener("click", (event) => {
+      if (scanIssueHighlightIds.size) {
+        scanIssueHighlightIds.clear();
+        document.querySelectorAll(".layout-scan-row.scan-issue-highlight").forEach((row) => row.classList.remove("scan-issue-highlight"));
+      }
       if (currentPage !== "layouts" || !(event.target instanceof Element)) return;
       if (event.target.closest(".nav-item[data-page], [data-page-link], [data-open-workspace], [data-start-workspace], [data-open-completed-session], #back-to-completed-sessions")) {
         closeLayoutDetails();
