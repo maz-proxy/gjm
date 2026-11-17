@@ -794,6 +794,12 @@
     .recorded-entry-dialog .dialog-head { background: linear-gradient(115deg, color-mix(in srgb, var(--green) 10%, var(--paper)), var(--paper) 78%); border-bottom-color: var(--line); border-radius: 10px 10px 0 0; border-top: 3px solid var(--green); padding: 9px 11px 8px; position: relative; }
     .recorded-entry-dialog .dialog-head > .dialog-close { align-items: center; background: var(--paper); border: 1px solid var(--line); border-radius: 7px; display: inline-flex; height: 32px; justify-content: center; padding: 0; position: absolute; right: 8px; top: 8px; width: 32px; z-index: 3; }
     .recorded-entry-dialog .dialog-head > .dialog-close:hover { background: color-mix(in srgb, var(--green) 8%, var(--paper)); color: var(--ink); }
+    .recorded-master-navigation-dialog { max-height: none; width: min(320px, calc(100vw - 24px)); }
+    .recorded-master-navigation-dialog .dialog-head { padding: 9px 42px 8px 11px; }
+    .recorded-master-navigation-copy { color: var(--muted); font-size: 10px; line-height: 1.45; overflow-wrap: anywhere; padding: 9px 11px; }
+    .recorded-master-navigation-copy strong { color: var(--ink); }
+    .recorded-master-navigation-actions { align-items: center; background: color-mix(in srgb, var(--green) 5%, var(--canvas)); border-top: 1px solid var(--line); display: flex; gap: 6px; justify-content: flex-end; padding: 7px; }
+    .recorded-master-navigation-actions .button { font-size: 10px; min-height: 28px; padding: 0 9px; }
     .recorded-entry-dialog .dialog-title { font-size: 12px; }
     .recorded-entry-title-row { align-items: center; display: flex; flex-wrap: wrap; gap: 5px 12px; }
     .recorded-entry-total { align-items: baseline; color: var(--muted); display: inline-flex; font-size: 9px; gap: 5px; }
@@ -2981,6 +2987,11 @@
     <div class="dialog-head"><div class="recorded-entry-heading"><div class="recorded-entry-product-name"><div class="recorded-entry-title-row"><div class="dialog-title" id="recorded-entry-title"></div><div class="recorded-entry-total" id="recorded-entry-total" hidden></div></div><div class="dialog-subtitle" id="recorded-entry-product" data-user-content></div></div><div class="recorded-entry-rack-summary" id="recorded-entry-rack-summary" aria-label="Quantity per Rack" hidden></div></div><button class="dialog-close" type="button" data-recorded-entry-close aria-label="Tutup">×</button></div>
     <div class="recorded-entry-content" id="recorded-entry-content"></div>
   </dialog>
+  <dialog id="recorded-master-navigation-dialog" class="recorded-entry-dialog recorded-master-navigation-dialog" aria-labelledby="recorded-master-navigation-title" aria-describedby="recorded-master-navigation-copy">
+    <div class="dialog-head"><div class="recorded-entry-heading"><div class="dialog-title" id="recorded-master-navigation-title">Lihat Master VEF</div><div class="dialog-subtitle">Buka detail item terpilih?</div></div><button class="dialog-close" type="button" data-recorded-master-cancel aria-label="Tutup">×</button></div>
+    <div class="recorded-master-navigation-copy" id="recorded-master-navigation-copy" data-user-content></div>
+    <div class="recorded-master-navigation-actions"><button class="button button-secondary" type="button" data-recorded-master-cancel>Batal</button><button class="button button-primary" type="button" data-confirm-recorded-master>OK</button></div>
+  </dialog>
   <dialog id="inbound-delete-confirm-dialog" class="pj-delete-confirm-dialog" aria-labelledby="inbound-delete-confirm-title" aria-describedby="inbound-delete-confirm-copy">
     <div class="dialog-head"><div><div class="dialog-title" id="inbound-delete-confirm-title">Hapus Inbound/Retur?</div></div><button class="dialog-close" type="button" data-close="inbound-delete-confirm-dialog" aria-label="Tutup">×</button></div>
     <div class="pj-delete-confirm-copy" id="inbound-delete-confirm-copy"></div>
@@ -3204,6 +3215,8 @@
       "Scan Layout": "Scan & Manual",
       "Jadwal": "Schedule",
       "Master VEF": "VEF Master",
+      "Lihat Master VEF": "View VEF Master",
+      "Buka detail item terpilih?": "Open the selected item details?",
       "Lihat file unggahan": "View uploaded file",
       "Unduh file": "Download file",
       "File Master VEF yang diunggah": "Uploaded VEF Master file",
@@ -4460,6 +4473,8 @@
     let brandSegregationStatus = "";
     let recordedArchiveSearchTerm = "";
     let recordedEntryTrigger = null;
+    let recordedMasterNavigationTrigger = null;
+    let pendingRecordedMasterProductId = "";
     let pendingPjProductId = "";
     let pendingPjEntryId = "";
     let pendingInboundProductId = "";
@@ -10340,10 +10355,9 @@
       dialog.close();
       if (restoreFocus && trigger?.isConnected) trigger.focus({ preventScroll: true });
     }
-    function positionRecordedEntryDialog() {
-      const dialog = document.getElementById("recorded-entry-dialog");
-      if (!dialog?.open || !recordedEntryTrigger?.isConnected) return;
-      const triggerRect = recordedEntryTrigger.getBoundingClientRect();
+    function positionRecordedEntryBubble(dialog, trigger) {
+      if (!dialog?.open || !trigger?.isConnected) return;
+      const triggerRect = trigger.getBoundingClientRect();
       const dialogRect = dialog.getBoundingClientRect();
       const viewportWidth = document.documentElement.clientWidth;
       const viewportHeight = document.documentElement.clientHeight;
@@ -10365,6 +10379,10 @@
       dialog.style.top = `${top}px`;
       dialog.style.setProperty("--bubble-arrow-left", `${arrowLeft}px`);
     }
+    function positionRecordedEntryDialog() {
+      positionRecordedEntryBubble(document.getElementById("recorded-entry-dialog"), recordedEntryTrigger);
+      positionRecordedEntryBubble(document.getElementById("recorded-master-navigation-dialog"), recordedMasterNavigationTrigger);
+    }
     function highlightNavigationTarget(target) {
       target.scrollIntoView({ behavior: "smooth", block: "center" });
       target.classList.add("rack-navigation-target");
@@ -10372,7 +10390,16 @@
         target.classList.remove("rack-navigation-target");
       }, { once: true, capture: true });
     }
-    async function openRecordedMasterProduct(productId) {
+    function closeRecordedMasterNavigation({ restoreFocus = false } = {}) {
+      const dialog = document.getElementById("recorded-master-navigation-dialog");
+      const trigger = recordedMasterNavigationTrigger;
+      trigger?.setAttribute("aria-expanded", "false");
+      recordedMasterNavigationTrigger = null;
+      pendingRecordedMasterProductId = "";
+      if (dialog.open) dialog.close();
+      if (restoreFocus && trigger?.isConnected) trigger.focus({ preventScroll: true });
+    }
+    function openRecordedMasterProduct(productId, trigger) {
       const session = state.sessions.find((item) => item.id === selectedRecordedSessionId && item.snapshot);
       const product = session?.snapshot?.products?.find((item) => item.id === productId);
       if (!product) {
@@ -10380,16 +10407,29 @@
         notify("Item tidak ditemukan di arsip Master VEF.");
         return;
       }
-      const confirmed = await showConfirmDialog(
-        `Buka item ${product.sku || product.name || "-"} di Master VEF?`,
-        {
-          title: "Lihat Master VEF",
-          subtitle: "Baris item yang dipilih akan ditampilkan.",
-          confirmLabel: "OK",
-          cancelLabel: "Batal"
-        }
-      );
-      if (!confirmed) return;
+      closeRecordedEntryDetails({ restoreFocus: false });
+      recordedMasterNavigationTrigger?.setAttribute("aria-expanded", "false");
+      pendingRecordedMasterProductId = product.id;
+      recordedMasterNavigationTrigger = trigger;
+      trigger.setAttribute("aria-expanded", "true");
+      const dialog = document.getElementById("recorded-master-navigation-dialog");
+      const itemName = product.sku || product.name || "-";
+      document.getElementById("recorded-master-navigation-copy").textContent = currentLanguage === "en"
+        ? `Open ${itemName} in VEF Master?`
+        : `Buka ${itemName} di Master VEF?`;
+      translateDocument(dialog);
+      if (!dialog.open) dialog.show();
+      positionRecordedEntryDialog();
+      dialog.querySelector("[data-confirm-recorded-master]").focus({ preventScroll: true });
+    }
+    function navigateToRecordedMasterProduct() {
+      const productId = pendingRecordedMasterProductId;
+      if (!productId) {
+        console.error("Navigasi Master VEF tidak memiliki item yang dipilih.");
+        closeRecordedMasterNavigation();
+        return;
+      }
+      closeRecordedMasterNavigation();
       selectedRecordedSheet = "master";
       recordedArchiveSearchTerm = "";
       render();
@@ -10686,7 +10726,7 @@
         const variance = varianceFor(product, inboundEntries);
         const status = statusFor(product, countMode, inboundEntries);
         const vefQuantity = sheet === "result" && !printMode
-          ? `<button class="recorded-quantity-trigger" type="button" data-open-recorded-master="${escapeHtml(product.id)}" aria-label="Lihat ${escapeHtml(product.sku || "item")} di Master VEF">${formatNumber(product.stock || 0)}</button>`
+          ? `<button class="recorded-quantity-trigger" type="button" data-open-recorded-master="${escapeHtml(product.id)}" aria-haspopup="dialog" aria-expanded="false" aria-label="${currentLanguage === "en" ? `View ${escapeHtml(product.sku || "item")} in VEF Master` : `Lihat ${escapeHtml(product.sku || "item")} di Master VEF`}">${formatNumber(product.stock || 0)}</button>`
           : formatNumber(product.stock || 0);
         const scanQuantity = included
           ? !printMode
@@ -14212,7 +14252,7 @@
       }
       const recordedMasterButton = event.target.closest("[data-open-recorded-master]");
       if (recordedMasterButton) {
-        void openRecordedMasterProduct(recordedMasterButton.dataset.openRecordedMaster);
+        openRecordedMasterProduct(recordedMasterButton.dataset.openRecordedMaster, recordedMasterButton);
         return;
       }
       const deleteMasterRowButton = event.target.closest("[data-delete-master-row]");
@@ -14243,6 +14283,20 @@
     document.querySelector("#recorded-entry-dialog [data-recorded-entry-close]")
       .addEventListener("click", closeRecordedEntryDetails);
     document.getElementById("recorded-entry-dialog").addEventListener("cancel", (event) => event.preventDefault());
+    document.querySelectorAll("#recorded-master-navigation-dialog [data-recorded-master-cancel]").forEach((button) => {
+      button.addEventListener("click", () => closeRecordedMasterNavigation({ restoreFocus: true }));
+    });
+    document.querySelector("#recorded-master-navigation-dialog [data-confirm-recorded-master]")
+      .addEventListener("click", navigateToRecordedMasterProduct);
+    document.getElementById("recorded-master-navigation-dialog").addEventListener("cancel", (event) => {
+      event.preventDefault();
+      closeRecordedMasterNavigation({ restoreFocus: true });
+    });
+    document.addEventListener("click", (event) => {
+      const dialog = document.getElementById("recorded-master-navigation-dialog");
+      if (!dialog.open || !(event.target instanceof Node) || dialog.contains(event.target)) return;
+      closeRecordedMasterNavigation();
+    }, true);
     window.addEventListener("resize", positionRecordedEntryDialog);
     window.addEventListener("scroll", positionRecordedEntryDialog, true);
     document.addEventListener("change", (event) => {
