@@ -2257,7 +2257,7 @@
       .recorded-view-tabs > * { flex: 1 1 auto; }
     }
     .android-sidebar-handle, .android-sidebar-backdrop { display: none; }
-    html.mobile-drawer-enabled .app-shell { display: block; min-height: 100vh; padding: 0; }
+    html.mobile-drawer-enabled body:not(.auth-locked):not(.auth-checking) .app-shell { display: block; min-height: 100vh; padding: 0; }
     html.mobile-drawer-enabled .app-shell > .sidebar {
       background: linear-gradient(180deg, #245b3d 0%, #194a32 100%);
       border: 0;
