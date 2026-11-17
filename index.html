@@ -822,12 +822,16 @@
     .recorded-detail-cell { color: var(--ink); font-size: 10px; min-width: 0; overflow-wrap: anywhere; }
     .recorded-entry-rack-link { background: transparent; border: 1px solid transparent; border-radius: 5px; color: var(--green-dark); cursor: pointer; font: inherit; padding: 2px 5px; text-align: left; }
     .layout-card.rack-navigation-target { animation: rack-navigation-pulse .8s ease-in-out infinite; border-color: #ff2020; }
+    .recorded-master-table tr.rack-navigation-target > td { animation: rack-navigation-pulse .8s ease-in-out infinite; border-bottom-color: #ff2020; border-top-color: #ff2020; }
+    .recorded-master-table tr.rack-navigation-target > td:first-child { border-left: 1px solid #ff2020; }
+    .recorded-master-table tr.rack-navigation-target > td:last-child { border-right: 1px solid #ff2020; }
     @keyframes rack-navigation-pulse {
       0%, 100% { background-color: transparent; box-shadow: 0 0 0 2px rgba(255, 0, 0, .72), 0 0 12px 3px rgba(255, 0, 0, .72); }
       50% { background-color: rgba(255, 0, 0, .14); box-shadow: 0 0 0 4px rgba(255, 0, 0, .96), 0 0 18px 6px rgba(255, 0, 0, .9); }
     }
     @media (prefers-reduced-motion: reduce) {
       .layout-card.rack-navigation-target { animation: none; background-color: rgba(255, 0, 0, .14); box-shadow: 0 0 0 2px rgba(255, 0, 0, .9), 0 0 16px 5px rgba(255, 0, 0, .8); }
+      .recorded-master-table tr.rack-navigation-target > td { animation: none; background-color: rgba(255, 0, 0, .14); box-shadow: inset 0 0 0 1px rgba(255, 0, 0, .9), 0 0 12px 3px rgba(255, 0, 0, .7); }
     }
     .recorded-detail-cell:first-child { font-weight: 700; }
     .recorded-detail-cell:last-child { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -10357,12 +10361,43 @@
       dialog.style.top = `${top}px`;
       dialog.style.setProperty("--bubble-arrow-left", `${arrowLeft}px`);
     }
-    function highlightRackNavigationTarget(card) {
-      card.scrollIntoView({ behavior: "smooth", block: "center" });
-      card.classList.add("rack-navigation-target");
+    function highlightNavigationTarget(target) {
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      target.classList.add("rack-navigation-target");
       document.addEventListener("click", () => {
-        card.classList.remove("rack-navigation-target");
+        target.classList.remove("rack-navigation-target");
       }, { once: true, capture: true });
+    }
+    async function openRecordedMasterProduct(productId) {
+      const session = state.sessions.find((item) => item.id === selectedRecordedSessionId && item.snapshot);
+      const product = session?.snapshot?.products?.find((item) => item.id === productId);
+      if (!product) {
+        console.error("Item Master VEF pada arsip tidak ditemukan:", productId);
+        notify("Item tidak ditemukan di arsip Master VEF.");
+        return;
+      }
+      const confirmed = await showConfirmDialog(
+        `Buka item ${product.sku || product.name || "-"} di Master VEF?`,
+        {
+          title: "Lihat Master VEF",
+          subtitle: "Baris item yang dipilih akan ditampilkan.",
+          confirmLabel: "OK",
+          cancelLabel: "Batal"
+        }
+      );
+      if (!confirmed) return;
+      selectedRecordedSheet = "master";
+      recordedArchiveSearchTerm = "";
+      render();
+      requestAnimationFrame(() => {
+        const row = document.querySelector(`[data-recorded-master-product="${CSS.escape(productId)}"]`);
+        if (!row) {
+          console.error("Baris item Master VEF pada arsip tidak dapat dibuka:", productId);
+          notify("Baris item tidak dapat dibuka di Master VEF.");
+          return;
+        }
+        highlightNavigationTarget(row);
+      });
     }
     function openRackFromRecordedEntry(layout) {
       if (currentPage === "recorded-archive") {
@@ -10386,7 +10421,7 @@
             notify("Kartu Rack pada arsip ini tidak dapat dibuka.");
             return;
           }
-          highlightRackNavigationTarget(card);
+          highlightNavigationTarget(card);
         });
         return;
       }
@@ -10405,7 +10440,7 @@
           notify("Kartu Rack untuk detail ini tidak dapat dibuka.");
           return;
         }
-        highlightRackNavigationTarget(card);
+        highlightNavigationTarget(card);
       });
     }
     function showRecordedEntryDetails(kind, productId, trigger) {
@@ -10624,7 +10659,7 @@
           const serialMarkup = serials.length
             ? `<details class="serial-details"${printMode ? " open" : ""}><summary>${formatNumber(serials.length)} SN · tampilkan</summary><div class="serial-list">${serials.map((serial) => `<span class="serial-token">${escapeHtml(serial)}</span>`).join("")}</div></details>`
             : "-";
-          return `<tr><td class="number-cell">${index + 1}</td><td class="print-item-code" data-user-content>${escapeHtml(product.sku || "-")}</td><td class="print-item-name" data-user-content>${escapeHtml(product.name || "-")}</td><td data-user-content>${escapeHtml(product.itemGroup || "-")}</td><td data-user-content>${escapeHtml(product.brand || "-")}</td><td data-user-content>${escapeHtml(product.warehouse || "-")}</td><td class="number-cell quantity-cell">${formatNumber(product.stock || 0)}</td><td>${serialMarkup}</td></tr>`;
+          return `<tr data-recorded-master-product="${escapeHtml(product.id)}"><td class="number-cell">${index + 1}</td><td class="print-item-code" data-user-content>${escapeHtml(product.sku || "-")}</td><td class="print-item-name" data-user-content>${escapeHtml(product.name || "-")}</td><td data-user-content>${escapeHtml(product.itemGroup || "-")}</td><td data-user-content>${escapeHtml(product.brand || "-")}</td><td data-user-content>${escapeHtml(product.warehouse || "-")}</td><td class="number-cell quantity-cell">${formatNumber(product.stock || 0)}</td><td>${serialMarkup}</td></tr>`;
         }).join("");
         const sourceFile = snapshot.importFile || "File sumber tidak tercatat";
         const downloadedAt = snapshot.importDownloadedAt
@@ -10646,6 +10681,9 @@
         const included = isCountedProduct(product, countMode);
         const variance = varianceFor(product, inboundEntries);
         const status = statusFor(product, countMode, inboundEntries);
+        const vefQuantity = sheet === "result" && !printMode
+          ? `<button class="recorded-quantity-trigger" type="button" data-open-recorded-master="${escapeHtml(product.id)}" aria-label="Lihat ${escapeHtml(product.sku || "item")} di Master VEF">${formatNumber(product.stock || 0)}</button>`
+          : formatNumber(product.stock || 0);
         const scanQuantity = included
           ? !printMode
             ? `<button class="recorded-quantity-trigger" type="button" data-recorded-entry="scan" data-product-id="${escapeHtml(product.id)}" aria-label="Lihat detail scan untuk ${escapeHtml(product.sku)}" aria-haspopup="dialog" aria-expanded="false">${formatNumber(product.count || 0)}</button>`
@@ -10661,7 +10699,7 @@
           ? `<button class="recorded-quantity-trigger" type="button" data-recorded-entry="pj" data-product-id="${escapeHtml(product.id)}" aria-label="Lihat detail PJ" aria-haspopup="dialog" aria-expanded="false">${formatNumber(product.pj || 0)}</button>`
           : "-";
         const checkMarkup = `<span class="row-status ${status.className}">${status.label}${printMode && status.className === "match" ? ' <span class="check-success-icon" aria-hidden="true">✓</span>' : ""}</span>`;
-        return `<tr><td class="number-cell">${index + 1}</td><td>${renderProductIdentity(product)}</td><td><span class="category-chip" data-user-content>${escapeHtml(product.brand || "-")}</span></td><td class="number-cell quantity-cell">${formatNumber(product.stock)}</td><td class="number-cell quantity-cell">${scanQuantity}</td><td class="number-cell quantity-cell">${manualQuantity}</td><td class="number-cell quantity-cell">${inboundQuantity}</td><td class="number-cell quantity-cell">${pjQuantity}</td><td class="quantity-cell"><span class="variance ${variance === 0 ? "zero" : variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td><td>${checkMarkup}</td><td data-user-content>${escapeHtml(product.note || "-")}</td></tr>`;
+        return `<tr><td class="number-cell">${index + 1}</td><td>${renderProductIdentity(product)}</td><td><span class="category-chip" data-user-content>${escapeHtml(product.brand || "-")}</span></td><td class="number-cell quantity-cell">${vefQuantity}</td><td class="number-cell quantity-cell">${scanQuantity}</td><td class="number-cell quantity-cell">${manualQuantity}</td><td class="number-cell quantity-cell">${inboundQuantity}</td><td class="number-cell quantity-cell">${pjQuantity}</td><td class="quantity-cell"><span class="variance ${variance === 0 ? "zero" : variance < 0 ? "negative" : "positive"}">${variance > 0 ? "+" : ""}${formatNumber(variance)}</span></td><td>${checkMarkup}</td><td data-user-content>${escapeHtml(product.note || "-")}</td></tr>`;
       }).join("");
       const title = sheet === "recap" ? "Item belum sesuai" : "Rekonsiliasi per item";
       const emptyMessage = query ? `Tidak ada hasil untuk “${escapeHtml(recordedArchiveSearchTerm.trim())}”.` : sheet === "recap" ? "Belum ada item bermasalah. Semua item sesuai dengan VEF." : "Data Result SO tidak tersedia.";
@@ -14166,6 +14204,11 @@
       const rackLink = event.target.closest("[data-open-rack]");
       if (rackLink) {
         openRackFromRecordedEntry(rackLink.dataset.openRack);
+        return;
+      }
+      const recordedMasterButton = event.target.closest("[data-open-recorded-master]");
+      if (recordedMasterButton) {
+        void openRecordedMasterProduct(recordedMasterButton.dataset.openRecordedMaster);
         return;
       }
       const deleteMasterRowButton = event.target.closest("[data-delete-master-row]");
