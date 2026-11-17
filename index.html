@@ -186,6 +186,14 @@
     }
     .auth-brand { align-items: center; display: flex; gap: 12px; margin-bottom: 25px; }
     .auth-brand .brand-mark { color: var(--green); flex: 0 0 64px; height: 64px; width: 64px; }
+    .auth-brand .brand-mark::after { animation: auth-logo-highlight 1.8s ease-in-out infinite; }
+    @keyframes auth-logo-highlight {
+      0%, 38%, 100% { opacity: 0; }
+      50%, 64% { opacity: 1; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .auth-brand .brand-mark::after { animation: none; opacity: .35; }
+    }
     .auth-brand .brand-name { color: var(--ink); font-size: 16px; }
     .auth-brand .brand-caption { color: var(--muted); }
     .auth-copyright { color: #929a91; font-size: 11px; font-weight: 600; margin-left: auto; white-space: nowrap; }
