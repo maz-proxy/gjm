@@ -8571,6 +8571,7 @@
     function buildAuditHistoryQuery(offset, limit, withCount = false) {
       const fields = "event_id,actor_user_id,actor_username,actor_verified,workspace_id,workspace_name,session_id,event_type,entity_type,entity_id,description,changes,occurred_at,recorded_at";
       let query = supabaseClient.from(AUDIT_LOG_TABLE).select(fields, withCount ? { count: "exact" } : {});
+      query = query.neq("event_type", "Jadwal sesi dihapus otomatis");
       if (auditHistoryFilters.search) query = query.ilike("description", auditFilterPattern(auditHistoryFilters.search));
       if (auditHistoryFilters.actor) query = query.ilike("actor_username", auditFilterPattern(auditHistoryFilters.actor));
       if (auditHistoryFilters.workspace) query = query.ilike("workspace_name", auditFilterPattern(auditHistoryFilters.workspace));
