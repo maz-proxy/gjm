@@ -822,16 +822,20 @@
     .recorded-detail-cell { color: var(--ink); font-size: 10px; min-width: 0; overflow-wrap: anywhere; }
     .recorded-entry-rack-link { background: transparent; border: 1px solid transparent; border-radius: 5px; color: var(--green-dark); cursor: pointer; font: inherit; padding: 2px 5px; text-align: left; }
     .layout-card.rack-navigation-target { animation: rack-navigation-pulse .8s ease-in-out infinite; border-color: #ff2020; }
-    .recorded-master-table tr.rack-navigation-target > td { animation: rack-navigation-pulse .8s ease-in-out infinite; border-bottom-color: #ff2020; border-top-color: #ff2020; }
+    .recorded-master-table tr.rack-navigation-target > td { animation: recorded-master-row-pulse .8s ease-in-out infinite; border-bottom: 1px solid #ff2020; border-top: 1px solid #ff2020; }
     .recorded-master-table tr.rack-navigation-target > td:first-child { border-left: 1px solid #ff2020; }
     .recorded-master-table tr.rack-navigation-target > td:last-child { border-right: 1px solid #ff2020; }
     @keyframes rack-navigation-pulse {
       0%, 100% { background-color: transparent; box-shadow: 0 0 0 2px rgba(255, 0, 0, .72), 0 0 12px 3px rgba(255, 0, 0, .72); }
       50% { background-color: rgba(255, 0, 0, .14); box-shadow: 0 0 0 4px rgba(255, 0, 0, .96), 0 0 18px 6px rgba(255, 0, 0, .9); }
     }
+    @keyframes recorded-master-row-pulse {
+      0%, 100% { background-color: transparent; border-color: rgba(255, 0, 0, .72); }
+      50% { background-color: rgba(255, 0, 0, .12); border-color: #ff2020; }
+    }
     @media (prefers-reduced-motion: reduce) {
       .layout-card.rack-navigation-target { animation: none; background-color: rgba(255, 0, 0, .14); box-shadow: 0 0 0 2px rgba(255, 0, 0, .9), 0 0 16px 5px rgba(255, 0, 0, .8); }
-      .recorded-master-table tr.rack-navigation-target > td { animation: none; background-color: rgba(255, 0, 0, .14); box-shadow: inset 0 0 0 1px rgba(255, 0, 0, .9), 0 0 12px 3px rgba(255, 0, 0, .7); }
+      .recorded-master-table tr.rack-navigation-target > td { animation: none; background-color: rgba(255, 0, 0, .12); border-color: #ff2020; }
     }
     .recorded-detail-cell:first-child { font-weight: 700; }
     .recorded-detail-cell:last-child { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
