@@ -52,9 +52,9 @@
     button, input, select { font: inherit; }
     button { cursor: pointer; }
     button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid rgba(61, 132, 83, .23); outline-offset: 2px; }
-    .app-shell { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 100vh; }
-    .app-shell.sidebar-collapsed { grid-template-columns: 76px minmax(0, 1fr); }
-    .app-shell.sidebar-collapsed.sidebar-expanded { grid-template-columns: 240px minmax(0, 1fr); }
+    .app-shell { --sidebar-center-offset: 120px; display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 100vh; }
+    .app-shell.sidebar-collapsed { --sidebar-center-offset: 38px; grid-template-columns: 76px minmax(0, 1fr); }
+    .app-shell.sidebar-collapsed.sidebar-expanded { --sidebar-center-offset: 120px; grid-template-columns: 240px minmax(0, 1fr); }
     .sidebar { background: linear-gradient(180deg, #245b3d 0%, #194a32 100%); border-right: 1px solid #194a32; box-shadow: 5px 0 24px rgba(33, 61, 40, .12); color: #f4f8f2; display: flex; flex-direction: column; height: 100vh; overflow-y: auto; padding: 27px 17px 18px; position: sticky; top: 0; }
     .app-shell, .sidebar { transition: grid-template-columns .22s ease, padding .22s ease; }
     .workspace-main-viewport { grid-column: 2; min-width: 0; overflow-x: clip; }
@@ -210,7 +210,7 @@
     .about-workspace-download-button svg { fill: currentColor; height: 16px; width: 16px; }
     .about-workspace-download-button[hidden] { display: none; }
     html.capacitor-android .about-workspace-download { display: none; }
-    .about-workspace-footer { bottom: 55px; color: var(--muted); font-size: 12px; font-weight: 700; left: calc(50% + 120px); position: fixed; transform: translateX(-50%); z-index: 2; }
+    .about-workspace-footer { bottom: 55px; color: var(--muted); font-size: 12px; font-weight: 700; left: calc(50% + var(--sidebar-center-offset, 0px)); position: fixed; transform: translateX(-50%); transition: left .22s ease; z-index: 2; }
     .about-workspace-footer small { display: block; font-size: 10px; font-weight: 400; margin-top: 4px; }
     .auth-card h1 { font-size: 25px; }
     .auth-description { color: var(--muted); font-size: 12px; margin: 8px 0 22px; }
@@ -1222,7 +1222,7 @@
     html[data-theme="dark"] .reset-password-value code { color: #a9dec9; }
     html[data-theme="dark"] .reset-password-warning { background: #3c3323; border-color: #655332; color: #f0d48e; }
     @media (max-width: 900px) {
-      .app-shell { grid-template-columns: 190px minmax(0, 1fr); }
+      .app-shell { --sidebar-center-offset: 95px; grid-template-columns: 190px minmax(0, 1fr); }
       .sidebar { padding-left: 12px; padding-right: 12px; }
       .brand { gap: 7px; padding: 0 34px 0 0; position: relative; }
       .brand-mark { flex: 0 0 48px; height: 48px; width: 48px; }
@@ -1439,7 +1439,10 @@
       .auth-footer { bottom: 13px; right: 14px; }
     }
     @media (min-width: 651px) and (max-width: 900px) {
-      .about-workspace-footer { left: calc(50% + 95px); }
+      .about-workspace-footer { left: calc(50% + var(--sidebar-center-offset, 0px)); }
+    }
+    @media (min-width: 651px) and (max-width: 767px) {
+      html.mobile-drawer-enabled .about-workspace-footer { left: 50%; }
     }
     .theme-toggle { align-items: center; background: rgba(255,255,255,.76); border: 1px solid var(--line); border-radius: 7px; color: var(--ink); display: inline-flex; flex: 0 0 auto; font-size: 10px; font-weight: 700; gap: 5px; justify-content: center; min-height: 29px; padding: 4px 8px; transition: background .2s ease, border-color .2s ease, color .2s ease; }
     .theme-toggle:hover { background: #fff; border-color: #b8cfc6; }
