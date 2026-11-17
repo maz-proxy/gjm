@@ -8188,7 +8188,7 @@
 
     function renderOpname() {
       const reconciliationStarted = reconciliationHasStarted();
-      if (!reconciliationStarted && !canManageActiveSession()) return renderReconciliationPending();
+      if (!reconciliationStarted && !canManageDataResources()) return renderReconciliationPending();
       const stats = getStats();
       const totals = getReconciliationTotals();
       const soProgress = getScanManualQuantityProgress();
@@ -8559,7 +8559,7 @@
     }
 
     function renderRecap() {
-      if (!reconciliationHasStarted() && !canManageActiveSession()) return renderReconciliationPending();
+      if (!reconciliationHasStarted() && !canManageDataResources()) return renderReconciliationPending();
       const totals = getReconciliationTotals();
       const exceptions = state.products.filter((product) => isCountedProduct(product) && varianceFor(product) !== 0);
       const canEdit = canEditActiveSession();
