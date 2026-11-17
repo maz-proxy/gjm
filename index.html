@@ -1819,8 +1819,8 @@
     .recorded-so-progress-head strong { color: #fff; font-size: 12px; letter-spacing: 0; }
     .recorded-so-progress-track { background: rgba(0,0,0,.2); border-radius: 99px; height: 5px; overflow: hidden; }
     .recorded-so-progress-fill { background: #a9e2c4; border-radius: inherit; height: 100%; }
-    .recorded-so-progress-row { color: #e0f0e8; font-size: 9px; gap: 8px; line-height: 1.35; }
-    .recorded-so-progress-row strong { color: #fff; font-size: 9px; font-variant-numeric: tabular-nums; text-align: right; }
+    .recorded-so-progress-row { color: #e0f0e8; display: grid; font-size: 9px; gap: 8px; grid-template-columns: minmax(0, 1fr) max-content; line-height: 1.35; }
+    .recorded-so-progress-row strong { color: #fff; font-size: 9px; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
     .recorded-archive-summary-wrap { flex: 1 1 100%; min-width: 0; position: relative; z-index: 1; }
     .recorded-archive-summary { align-items: stretch; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.24); border-radius: 10px; display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); max-width: none; overflow: hidden; width: 100%; }
     .recorded-archive-summary .print-session-summary-metric,
@@ -1883,6 +1883,9 @@
       .recorded-archive-search .search-input { font-size: 10px; }
       .recorded-view-actions > #print-recorded-sheet { font-size: 10px; min-height: 34px; padding: 0 9px; }
     }
+    html.capacitor-android .recorded-view-actions { grid-template-columns: minmax(0, 1fr); }
+    html.capacitor-android .recorded-view-tabs { grid-column: 1; }
+    html.capacitor-android .recorded-archive-search { grid-column: 1; grid-row: auto; justify-self: stretch; max-width: none; }
     html[data-theme="dark"] .recorded-archive-head { background: linear-gradient(115deg, #14372f, #1a5243 68%, #28654d); box-shadow: 0 3px 7px rgba(0,0,0,.2), 0 14px 30px rgba(0,0,0,.3), inset 0 1px rgba(255,255,255,.1); }
     html[data-theme="dark"] .recorded-archive-head .recorded-view-tabs .button-secondary { background: #1a2826; border-color: #344744; color: #e5efed; }
     html[data-theme="dark"] .recorded-archive-head .recorded-view-tabs .button-secondary:not(.active):hover { background: #243a34; border-color: #536b62; }
