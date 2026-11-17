@@ -3074,7 +3074,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/umd/zxing-browser.min.js"></script>
   <script>
-    const STORAGE_KEY = "ruangstok-sn-v2";
+    const LEGACY_STORAGE_KEY = "ruangstok-sn-v2";
     const THEME_STORAGE_KEY = "ruangstok-theme";
     const LANGUAGE_STORAGE_KEY = "ruangstok-language";
     const LANGUAGE_TRANSLATIONS = Object.freeze({
@@ -3194,7 +3194,9 @@
       "File sumber": "Source file",
       "Tempel daftar nama di atas untuk menambahkan beberapa sekaligus.": "Paste names above to add multiple entries at once.",
       "Unggah APK terbaru agar tombol Download tersedia di halaman login. Berkas ini dapat diganti oleh Owner kapan saja.": "Upload the latest APK to make the Download button available on the login page. The Owner can replace this file at any time.",
-      "Koneksi ke data bersama sedang bermasalah. Perubahan Anda tetap tersimpan di browser dan akan disinkronkan otomatis saat koneksi pulih.": "The shared-data connection is temporarily unavailable. Your changes remain saved in this browser and will sync automatically when the connection returns.",
+      "Koneksi terputus. Sinkronisasi akan dicoba lagi saat koneksi pulih; ekspor data sebelum menutup aplikasi.": "Connection lost. Sync will be retried when the connection returns; export your data before closing the app.",
+      "Sinkronisasi data bersama belum berhasil. Tetap online dan ekspor data sebagai cadangan sebelum menutup aplikasi.": "Shared-data sync has not completed. Stay online and export a backup before closing the app.",
+      "Cache offline gagal disimpan. Perubahan belum memiliki cadangan lokal; tetap online dan ekspor data sebelum menutup aplikasi.": "The offline cache could not be saved. Changes do not have a local backup; stay online and export data before closing the app.",
       "Login menggunakan username dan password dari admin. Data stock opname dibagikan ke seluruh tim.": "Log in with the username and password provided by your administrator. Stock opname data is shared with the whole team.",
       "Masukkan username": "Enter username",
       "Masukkan password": "Enter password",
@@ -4376,7 +4378,7 @@
     };
     let state;
     try {
-      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      const saved = JSON.parse(localStorage.getItem(LEGACY_STORAGE_KEY));
       state = saved && Array.isArray(saved.products) && saved.activeSession ? saved : initialState();
     } catch { state = initialState(); }
     if (!Array.isArray(state.layouts) || !state.layouts.length) state.layouts = [...DEFAULT_LAYOUTS];
@@ -5615,13 +5617,29 @@
           updatedAt: new Date().toISOString()
         });
         offlineCacheWriteFailureReported = false;
+        if (currentSerialized !== stableSerialize(serializeSharedState())) {
+          persistOfflineSyncCache();
+          return;
+        }
+        try {
+          localStorage.removeItem(LEGACY_STORAGE_KEY);
+        } catch (error) {
+          console.warn("Data workspace lama tidak dapat dihapus setelah dipindahkan ke IndexedDB:", error);
+        }
       } catch (error) {
         console.error("Cache sinkronisasi lokal gagal disimpan:", error);
         if (!offlineCacheWriteFailureReported) {
           offlineCacheWriteFailureReported = true;
-          notify("Cache offline gagal disimpan. Periksa ruang penyimpanan browser dan ekspor data jika memungkinkan.");
+          notify("Cache offline gagal disimpan. Perubahan belum memiliki cadangan lokal; tetap online dan ekspor data sebelum menutup aplikasi.");
         }
       }
+    }
+    function flushOfflineSyncCache() {
+      const userId = authSession?.user?.id;
+      if (!userId || !sharedStateReady || !lastSyncedState) return Promise.resolve();
+      clearTimeout(offlineCacheWriteTimer);
+      offlineCacheWriteTimer = null;
+      return writeCurrentOfflineSyncCache(userId);
     }
     function persistOfflineSyncCache() {
       if (!authSession?.user?.id || !sharedStateReady || !lastSyncedState) return;
@@ -5636,11 +5654,6 @@
       const workspace = activeWorkspace();
       if (workspace) workspace.data = snapshotWorkspaceData(state);
       storeLocalWorkspaceId(state.currentWorkspaceId);
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-      catch (error) {
-        console.error("Data workspace gagal disimpan di browser:", error);
-        notify("Penyimpanan browser penuh. Ekspor hasil agar data tetap aman.");
-      }
       persistOfflineSyncCache();
     }
     const persist = () => {
@@ -6508,6 +6521,7 @@
       return normalized;
     }
     function lockApp() {
+      void flushOfflineSyncCache();
       authSession = null;
       segregationSource = null;
       segregationScans = [];
@@ -6630,6 +6644,7 @@
       if (!authSession || idleLogoutInProgress) return;
       idleLogoutInProgress = true;
       idleLogoutMessage = "Sesi berakhir karena tidak ada aktivitas selama 5 jam. Silakan login kembali.";
+      await flushOfflineSyncCache();
       const { error } = await supabaseClient.auth.signOut({ scope: "local" });
       if (error) {
         console.error("Logout otomatis gagal:", error);
@@ -6725,7 +6740,7 @@
       syncErrorKeys[operation] = errorKey;
       console.error(`Sinkronisasi data bersama gagal (${operation}):`, error);
       notify(transient
-        ? "Koneksi ke data bersama sedang bermasalah. Perubahan Anda tetap tersimpan di browser dan akan disinkronkan otomatis saat koneksi pulih."
+        ? "Sinkronisasi data bersama belum berhasil. Tetap online dan ekspor data sebagai cadangan sebelum menutup aplikasi."
         : databaseSetupHint(error));
     }
     function resetSharedSyncFailures(operation) {
@@ -7068,13 +7083,15 @@
       else void refreshSharedState();
     }
     window.addEventListener("offline", () => {
-      if (authSession && sharedStateReady) notify("Koneksi terputus. Perubahan disimpan di browser ini dan akan dikirim otomatis saat koneksi pulih.");
+      if (authSession && sharedStateReady) notify("Koneksi terputus. Sinkronisasi akan dicoba lagi saat koneksi pulih; ekspor data sebelum menutup aplikasi.");
     });
     window.addEventListener("online", () => resumeSharedStateSync(true));
     window.addEventListener("pageshow", resumeSharedStateSync);
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible") {
         resumeSharedStateSync();
+      } else {
+        void flushOfflineSyncCache();
       }
     });
     async function signIn(event) {
@@ -7177,6 +7194,7 @@
       }
     }
     async function signOut() {
+      await flushOfflineSyncCache();
       const { error } = await supabaseClient.auth.signOut({ scope: "local" });
       if (error) notify(`Gagal keluar: ${error.message}`);
     }
