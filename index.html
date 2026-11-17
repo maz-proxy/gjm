@@ -66,7 +66,6 @@
     .brand-mark { align-items: center; color: var(--lime); display: flex; flex: 0 0 56px; height: 56px; justify-content: center; width: 56px; }
     .brand-mark::after { background: linear-gradient(155deg, rgba(255,255,255,.46), rgba(255,255,255,.13) 34%, transparent 66%); content: ""; inset: 0; -webkit-mask: url("./assets/brand-emblem-source.png") center / contain no-repeat; mask: url("./assets/brand-emblem-source.png") center / contain no-repeat; pointer-events: none; position: absolute; transform: scale(1.18); }
     .brand-monogram { filter: drop-shadow(0 2px 2px rgba(0,0,0,.24)) drop-shadow(0 5px 7px rgba(0,0,0,.17)); display: block; height: 100%; object-fit: contain; transform: scale(1.18); width: 100%; }
-    .auth-loading-mark .brand-monogram { filter: brightness(0) invert(1); }
     .brand-name { font-family: "Space Grotesk", "Segoe UI", sans-serif; font-size: 15px; font-weight: 800; letter-spacing: .25px; }
     .brand-caption { color: #c3d7c5; font-size: 11px; margin-top: 1px; }
     .nav-label { color: #b3cbb7; font-size: 10px; font-weight: 800; letter-spacing: 1.2px; margin: 24px 12px 8px; text-transform: uppercase; }
@@ -170,10 +169,18 @@
     .auth-screen { align-items: center; background: radial-gradient(ellipse at 82% 10%, rgba(218,237,216,.5), transparent 35%), var(--canvas); display: flex; inset: 0; justify-content: center; overflow-y: auto; padding: 20px; position: fixed; z-index: 20; }
     .auth-loading { align-items: center; background: radial-gradient(ellipse at 82% 10%, rgba(218,237,216,.16), transparent 35%), #111b1a; color: #f4f8f2; display: none; inset: 0; justify-content: center; position: fixed; z-index: 30; }
     .auth-loading-card { align-items: center; display: flex; flex-direction: column; gap: 13px; }
-    .auth-loading-mark { color: var(--lime); display: flex; height: 64px; width: 64px; }
+    .auth-loading-mark { background-color: var(--green); display: block; height: 64px; -webkit-mask: url("./assets/Logo.svg") center / contain no-repeat; mask: url("./assets/Logo.svg") center / contain no-repeat; width: 92px; }
+    .auth-loading-mark::after { animation: auth-logo-highlight 1.8s ease-in-out infinite; background: linear-gradient(155deg, rgba(255,255,255,.46), rgba(255,255,255,.13) 34%, transparent 66%); content: ""; inset: 0; -webkit-mask: url("./assets/Logo.svg") center / contain no-repeat; mask: url("./assets/Logo.svg") center / contain no-repeat; pointer-events: none; position: absolute; }
     .auth-loading-text { color: #c3d7d0; font-size: 12px; }
     .auth-loading-spinner { animation: auth-loading-spin .8s linear infinite; border: 2px solid rgba(184,216,201,.22); border-radius: 50%; border-top-color: #9bd4bd; height: 17px; width: 17px; }
     @keyframes auth-loading-spin { to { transform: rotate(360deg); } }
+    @keyframes auth-logo-highlight {
+      0%, 38%, 100% { opacity: 0; }
+      50%, 64% { opacity: 1; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .auth-loading-mark::after { animation: none; opacity: .35; }
+    }
     body.auth-checking .auth-screen, body.auth-checking .app-shell, body.auth-checking .toast, body.auth-checking > dialog { display: none; }
     body.auth-checking .auth-loading { display: flex; }
     .auth-card { animation: dashboard-enter .28s ease both; background: #fff; border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 22px 70px rgba(29,53,36,.13); max-width: 420px; padding: 32px; width: 100%; }
@@ -186,14 +193,6 @@
     }
     .auth-brand { align-items: center; display: flex; gap: 12px; margin-bottom: 25px; }
     .auth-brand .brand-mark { color: var(--green); flex: 0 0 64px; height: 64px; width: 64px; }
-    .auth-brand .brand-mark::after { animation: auth-logo-highlight 1.8s ease-in-out infinite; }
-    @keyframes auth-logo-highlight {
-      0%, 38%, 100% { opacity: 0; }
-      50%, 64% { opacity: 1; }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .auth-brand .brand-mark::after { animation: none; opacity: .35; }
-    }
     .auth-brand .brand-name { color: var(--ink); font-size: 16px; }
     .auth-brand .brand-caption { color: var(--muted); }
     .auth-copyright { color: #929a91; font-size: 11px; font-weight: 600; margin-left: auto; white-space: nowrap; }
@@ -2879,7 +2878,7 @@
 </head>
 <body class="auth-checking auth-locked">
   <section class="auth-loading" aria-label="Memeriksa sesi login" role="status">
-    <div class="auth-loading-card"><div class="auth-loading-mark" aria-hidden="true"><img class="brand-monogram" src="./assets/Logo.svg" alt=""></div><div class="auth-loading-spinner" aria-hidden="true"></div><div class="auth-loading-text">Memeriksa sesi login...</div></div>
+    <div class="auth-loading-card"><div class="auth-loading-mark" aria-hidden="true"></div><div class="auth-loading-spinner" aria-hidden="true"></div><div class="auth-loading-text">Memeriksa sesi login...</div></div>
   </section>
   <section class="auth-screen" id="auth-screen" aria-label="Login">
     <div class="auth-top-left">
