@@ -821,7 +821,14 @@
     .recorded-detail-row:not(.recorded-detail-header):nth-child(even) { background: color-mix(in srgb, var(--green) 3%, var(--paper)); }
     .recorded-detail-cell { color: var(--ink); font-size: 10px; min-width: 0; overflow-wrap: anywhere; }
     .recorded-entry-rack-link { background: transparent; border: 1px solid transparent; border-radius: 5px; color: var(--green-dark); cursor: pointer; font: inherit; padding: 2px 5px; text-align: left; }
-    .layout-card.rack-navigation-target { border-color: var(--green); box-shadow: 0 0 0 4px color-mix(in srgb, var(--green) 25%, transparent), 0 10px 24px rgba(35, 59, 38, .12); }
+    .layout-card.rack-navigation-target { animation: rack-navigation-pulse .8s ease-in-out infinite; border-color: #ff2020; }
+    @keyframes rack-navigation-pulse {
+      0%, 100% { background-color: transparent; box-shadow: 0 0 0 4px rgba(255, 0, 0, .72), 0 0 18px 5px rgba(255, 0, 0, .72); }
+      50% { background-color: rgba(255, 0, 0, .14); box-shadow: 0 0 0 7px rgba(255, 0, 0, .96), 0 0 30px 11px rgba(255, 0, 0, .9); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .layout-card.rack-navigation-target { animation: none; background-color: rgba(255, 0, 0, .14); box-shadow: 0 0 0 5px rgba(255, 0, 0, .9), 0 0 24px 8px rgba(255, 0, 0, .8); }
+    }
     .recorded-detail-cell:first-child { font-weight: 700; }
     .recorded-detail-cell:last-child { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
     .recorded-entry-export { background: var(--paper); flex: 0 0 auto; min-height: 30px; margin: 0; width: 100%; }
@@ -10350,6 +10357,13 @@
       dialog.style.top = `${top}px`;
       dialog.style.setProperty("--bubble-arrow-left", `${arrowLeft}px`);
     }
+    function highlightRackNavigationTarget(card) {
+      card.scrollIntoView({ behavior: "smooth", block: "center" });
+      card.classList.add("rack-navigation-target");
+      document.addEventListener("click", () => {
+        card.classList.remove("rack-navigation-target");
+      }, { once: true, capture: true });
+    }
     function openRackFromRecordedEntry(layout) {
       if (currentPage === "recorded-archive") {
         const session = state.sessions.find((item) => item.id === selectedRecordedSessionId && item.snapshot);
@@ -10372,9 +10386,7 @@
             notify("Kartu Rack pada arsip ini tidak dapat dibuka.");
             return;
           }
-          card.scrollIntoView({ behavior: "smooth", block: "center" });
-          card.classList.add("rack-navigation-target");
-          setTimeout(() => card.classList.remove("rack-navigation-target"), 2200);
+          highlightRackNavigationTarget(card);
         });
         return;
       }
@@ -10393,9 +10405,7 @@
           notify("Kartu Rack untuk detail ini tidak dapat dibuka.");
           return;
         }
-        card.scrollIntoView({ behavior: "smooth", block: "center" });
-        card.classList.add("rack-navigation-target");
-        setTimeout(() => card.classList.remove("rack-navigation-target"), 2200);
+        highlightRackNavigationTarget(card);
       });
     }
     function showRecordedEntryDetails(kind, productId, trigger) {
