@@ -5028,6 +5028,10 @@
     function canManageActiveSession() {
       return canManageWorkspaceSession(activeWorkspace());
     }
+    const RECONCILIATION_START_PROGRESS = 95;
+    function canStartReconciliationAtProgress(progress) {
+      return canManageDataResources() || progress >= RECONCILIATION_START_PROGRESS;
+    }
     function canFinishActiveSession() {
       return canEditWorkspaceSession(activeWorkspace());
     }
@@ -8141,7 +8145,7 @@
         notify("Sesi aktif dengan data VEF diperlukan untuk memulai rekonsiliasi.");
         return;
       }
-      if (!canManageActiveSession() && getScanManualQuantityProgress() < 95) {
+      if (!canStartReconciliationAtProgress(getScanManualQuantityProgress())) {
         notify("Total quantity Scan & Manual harus mencapai minimal 95% dari Master VEF.");
         return;
       }
@@ -8161,7 +8165,7 @@
         notify("Sesi aktif dengan data VEF diperlukan untuk memulai rekonsiliasi.");
         return;
       }
-      if (!canManageActiveSession() && getScanManualQuantityProgress() < 95) {
+      if (!canStartReconciliationAtProgress(getScanManualQuantityProgress())) {
         notify("Total quantity Scan & Manual harus mencapai minimal 95% dari Master VEF.");
         return;
       }
@@ -8412,8 +8416,15 @@
         ? `<section class="layout-grid">${cards || `<div class="schedule-empty">${searchQuery ? "Tidak ada hasil untuk pencarian ini." : "Belum ada Rack. Klik Tambah Rack untuk membuat Rack pertama."}</div>`}</section>`
         : "";
       const reconciliationStarted = reconciliationHasStarted();
-      const showReconciliationButton = reconciliationStarted || canManageActiveSession() || reconciliationProgress >= 95;
-      const canStartReconciliation = active && canEdit && hasUploadedVef && state.products.length > 0;
+      const progressAllowsStart = canStartReconciliationAtProgress(reconciliationProgress);
+      const showReconciliationButton = reconciliationStarted
+        || canManageDataResources()
+        || (active && canEdit && hasUploadedVef && progressAllowsStart);
+      const canStartReconciliation = active
+        && canEdit
+        && hasUploadedVef
+        && state.products.length > 0
+        && progressAllowsStart;
       const reconciliationButtonTitle = reconciliationStarted
         ? "Rekonsiliasi sudah dimulai"
         : !active
