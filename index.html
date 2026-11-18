@@ -339,7 +339,8 @@
     .chat-compose-actions { align-items: center; display: flex; gap: 4px; grid-column: 2; }
     .chat-attach, .chat-emoji, .chat-send, .chat-cancel-edit { align-items: center; background: var(--green); border: 0; border-radius: 9px; color: #fff; cursor: pointer; display: inline-flex; flex: 0 0 34px; height: 38px; justify-content: center; }
     .chat-attach { background: var(--green-soft); color: var(--green-dark); }
-    .chat-emoji { background: var(--green-soft); color: var(--green-dark); font-size: 18px; }
+    .chat-emoji { background: var(--green-soft); color: var(--green-dark); }
+    .chat-emoji-face { animation: chat-emoji-bounce 1.5s ease-in-out infinite; display: inline-block; font-size: 22px; line-height: 1; }
     .chat-attach svg { fill: none; height: 18px; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; width: 18px; }
     .chat-cancel-edit { background: var(--green-soft); color: var(--green-dark); font-size: 10px; }
     .chat-send:disabled, .chat-attach:disabled, .chat-emoji:disabled { cursor: not-allowed; opacity: .48; }
@@ -357,6 +358,7 @@
     .chat-incoming-preview strong { display: block; font-size: 10px; margin-bottom: 3px; }
     .chat-incoming-preview span { display: -webkit-box; font-size: 10px; line-height: 1.4; overflow: hidden; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
     @keyframes chat-panel-enter { from { opacity: 0; transform: translateY(-5px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    @keyframes chat-emoji-bounce { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-2px) scale(1.12); } }
     @media (prefers-reduced-motion: reduce) { .chat-panel { animation: none; } }
     .top-pics { color: var(--muted); font-size: 10px; text-align: right; }
     .page-head { align-items: flex-end; display: flex; gap: 24px; justify-content: space-between; margin-bottom: 25px; }
@@ -8001,7 +8003,7 @@
               <textarea id="chat-message-input" maxlength="1000" aria-label="${editMode ? "Edit pesan chat" : "Tulis pesan chat"}" aria-controls="chat-mention-menu" aria-autocomplete="list" aria-expanded="false" placeholder="${editMode ? "Ubah pesan..." : "Tulis pesan..."}">${editMode ? escapeHtml(editingMessage.text) : ""}</textarea>
               <div class="chat-compose-actions">${editMode
                 ? `<button class="chat-cancel-edit" id="chat-cancel-edit" type="button" aria-label="Batalkan edit">×</button>`
-                : `<button class="chat-emoji" id="chat-emoji-button" type="button" aria-label="${currentLanguage === "en" ? "Choose emoji" : "Pilih emotikon"}" title="${currentLanguage === "en" ? "Choose emoji" : "Pilih emotikon"}" aria-controls="chat-emoji-picker" aria-expanded="false" ${chatUploadInProgress ? "disabled" : ""}>🙂</button><button class="chat-attach" id="chat-attach-button" type="button" aria-label="Lampirkan foto atau dokumen" title="Lampirkan foto atau dokumen" ${chatUploadInProgress ? "disabled" : ""}><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m21.4 11.6-8.5 8.5a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"/></svg></button>`}
+                : `<button class="chat-emoji" id="chat-emoji-button" type="button" aria-label="${currentLanguage === "en" ? "Choose emoji" : "Pilih emotikon"}" title="${currentLanguage === "en" ? "Choose emoji" : "Pilih emotikon"}" aria-controls="chat-emoji-picker" aria-expanded="false" ${chatUploadInProgress ? "disabled" : ""}><span class="chat-emoji-face" aria-hidden="true">🙂</span></button><button class="chat-attach" id="chat-attach-button" type="button" aria-label="Lampirkan foto atau dokumen" title="Lampirkan foto atau dokumen" ${chatUploadInProgress ? "disabled" : ""}><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m21.4 11.6-8.5 8.5a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"/></svg></button>`}
                 <button class="chat-send" type="submit" aria-label="${editMode ? "Simpan perubahan" : "Kirim pesan"}" title="${editMode ? "Simpan perubahan" : chatUploadInProgress ? "Mengunggah lampiran..." : "Kirim pesan"}" ${chatUploadInProgress ? "disabled" : ""}>${editMode ? "✓" : chatUploadInProgress ? "…" : '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4 20-7ZM22 2 11 13"/></svg>'}</button>
               </div>
             </form>`}
