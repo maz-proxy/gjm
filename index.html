@@ -4021,6 +4021,7 @@
       products: "Master VEF",
       layouts: "Scan & Manual",
       opname: "Stock Reconciliation",
+      "recorded-archive": "Stock Opname Recorded",
       recap: "Recap",
       history: "History Changes",
       "completed-sessions": "Session SO",
@@ -4042,9 +4043,17 @@
       }
     };
     const pageFromUrl = () => {
-      const requestedPage = new URLSearchParams(location.search).get("page");
-      if (RESTORABLE_PAGES.has(requestedPage)) return requestedPage;
-      return PAGE_NAME_IDS.get(requestedPage?.toLowerCase()) || "";
+      const params = new URLSearchParams(location.search);
+      const requestedPage = params.get("page");
+      const page = RESTORABLE_PAGES.has(requestedPage)
+        ? requestedPage
+        : PAGE_NAME_IDS.get(requestedPage?.toLowerCase()) || "";
+      if (page !== "recorded-archive") return page;
+      const sessionId = params.get("sessionId");
+      const session = state.sessions.find((item) => item.id === sessionId && item.snapshot);
+      if (!session) return "";
+      selectedRecordedSessionId = session.id;
+      return page;
     };
     const brandEmblemSource = new Image();
     brandEmblemSource.src = "./assets/brand-emblem-source.png";
@@ -11594,9 +11603,11 @@
     function render() {
       if ((currentPage === "admin-users" && !isSuperAdmin())
         || (currentPage === "data-resources" && !canManageDataResources())) currentPage = "opname";
+      if (currentPage === "recorded-archive"
+        && !state.sessions.some((item) => item.id === selectedRecordedSessionId && item.snapshot)) currentPage = "dashboard";
       if (currentPage !== "segregation") segregationDuplicateScanIndex = null;
       if (authSession) {
-        if (RESTORABLE_PAGES.has(currentPage)) {
+        if (RESTORABLE_PAGES.has(currentPage) || currentPage === "recorded-archive") {
           const nextUrl = new URL(location.href);
           if (isLoginPath()) {
             nextUrl.pathname = "/";
@@ -11604,6 +11615,8 @@
             nextUrl.hash = "";
           }
           nextUrl.searchParams.set("page", PAGE_URL_NAMES[currentPage] || currentPage);
+          if (currentPage === "recorded-archive") nextUrl.searchParams.set("sessionId", selectedRecordedSessionId);
+          else nextUrl.searchParams.delete("sessionId");
           const nextLocation = `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`;
           if (nextLocation !== `${location.pathname}${location.search}${location.hash}`) {
             history.replaceState(history.state, "", nextLocation);
