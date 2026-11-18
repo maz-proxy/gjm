@@ -324,6 +324,10 @@
     .chat-mention-option { background: transparent; border: 0; border-radius: 6px; color: var(--ink); font-size: 10px; padding: 6px 8px; text-align: left; }
     .chat-mention-option:hover, .chat-mention-option:focus-visible { background: var(--green-soft); outline: 0; }
     .chat-mention-empty { color: var(--muted); font-size: 9px; padding: 7px 8px; }
+    .chat-emoji-picker { background: var(--paper); border: 1px solid var(--line); border-radius: 9px; bottom: calc(100% + 6px); box-shadow: 0 8px 22px rgba(20,40,35,.2); display: grid; gap: 3px; grid-template-columns: repeat(7, 30px); max-height: 150px; overflow-y: auto; padding: 6px; position: absolute; right: 48px; z-index: 3; }
+    .chat-emoji-picker[hidden] { display: none; }
+    .chat-emoji-option { background: transparent; border: 0; border-radius: 6px; cursor: pointer; font-size: 17px; height: 30px; padding: 0; }
+    .chat-emoji-option:hover, .chat-emoji-option:focus-visible { background: var(--green-soft); outline: 0; }
     .chat-owner-actions, .chat-archive-filters { align-items: center; display: flex; flex-wrap: wrap; gap: 5px; }
     .chat-owner-action { background: transparent; border: 1px solid var(--line); border-radius: 6px; color: #b42332; cursor: pointer; font: inherit; font-size: 9px; font-weight: 700; min-height: 28px; padding: 0 7px; }
     .chat-owner-action:hover, .chat-owner-action:focus-visible { background: color-mix(in srgb, #d83a4b 10%, var(--paper)); outline: 0; }
@@ -333,11 +337,12 @@
     .chat-selected-file span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .chat-selected-file button { background: transparent; border: 0; border-radius: 4px; color: var(--muted); line-height: 1; padding: 2px 4px; }
     .chat-compose-actions { align-items: center; display: flex; gap: 4px; grid-column: 2; }
-    .chat-attach, .chat-send, .chat-cancel-edit { align-items: center; background: var(--green); border: 0; border-radius: 9px; color: #fff; cursor: pointer; display: inline-flex; flex: 0 0 34px; height: 38px; justify-content: center; }
+    .chat-attach, .chat-emoji, .chat-send, .chat-cancel-edit { align-items: center; background: var(--green); border: 0; border-radius: 9px; color: #fff; cursor: pointer; display: inline-flex; flex: 0 0 34px; height: 38px; justify-content: center; }
     .chat-attach { background: var(--green-soft); color: var(--green-dark); }
+    .chat-emoji { background: var(--green-soft); color: var(--green-dark); font-size: 18px; }
     .chat-attach svg { fill: none; height: 18px; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; width: 18px; }
     .chat-cancel-edit { background: var(--green-soft); color: var(--green-dark); font-size: 10px; }
-    .chat-send:disabled, .chat-attach:disabled { cursor: not-allowed; opacity: .48; }
+    .chat-send:disabled, .chat-attach:disabled, .chat-emoji:disabled { cursor: not-allowed; opacity: .48; }
     .chat-send svg { fill: none; height: 17px; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; width: 17px; }
     .chat-message-attachments { display: grid; gap: 6px; margin-top: 6px; }
     .chat-image-link { display: block; max-width: 220px; }
@@ -7805,6 +7810,20 @@
       updateChatMentionMenu(input);
       focusChatInput();
     }
+    const CHAT_EMOJI_CHOICES = ["😀", "😃", "😄", "😁", "😆", "😂", "🙂", "😉", "😊", "😍", "🥰", "😘", "😎", "🤔", "😢", "😭", "😡", "👍", "👎", "🙏", "👏", "🎉", "❤️", "💯", "🔥", "✅", "🤝", "✨"];
+    function insertChatEmoji(emoji) {
+      const input = document.getElementById("chat-message-input");
+      if (!input) return;
+      const start = input.selectionStart ?? input.value.length;
+      const end = input.selectionEnd ?? start;
+      const nextValue = `${input.value.slice(0, start)}${emoji}${input.value.slice(end)}`;
+      if (input.maxLength > 0 && nextValue.length > input.maxLength) return;
+      input.value = nextValue;
+      const caret = start + emoji.length;
+      input.focus({ preventScroll: true });
+      input.setSelectionRange(caret, caret);
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    }
     function canDeleteChatMessage(message, archived = false) {
       if (isSuperAdmin()) return true;
       if (archived || message.senderId !== authSession?.user?.id) return false;
@@ -7966,8 +7985,27 @@
       const ownerActionsMarkup = isSuperAdmin()
         ? `<div class="chat-owner-actions"><button class="chat-owner-action" id="chat-owner-reset" type="button">Reset semua chat</button>${chatArchiveOpen ? `<button class="chat-owner-action" id="chat-owner-clear-archive" type="button">Hapus arsip</button>` : ""}</div>`
         : "";
+      const emojiPickerMarkup = CHAT_EMOJI_CHOICES.map((emoji) =>
+        `<button class="chat-emoji-option" type="button" data-chat-emoji="${emoji}" aria-label="${emoji}">${emoji}</button>`
+      ).join("");
       const panelMarkup = chatPanelOpen
-        ? `<section class="chat-panel${chatArchiveOpen ? " chat-panel-archive" : ""}" data-chat-editing="${escapeHtml(chatEditingMessageId)}" data-chat-reply="${escapeHtml(chatReplyTo?.id || "")}" aria-label="Percakapan antar akun"><header class="chat-panel-head"><nav class="chat-panel-tabs" aria-label="Chat dan arsip"><button class="chat-panel-tab" id="chat-active-tab" type="button" aria-pressed="${!chatArchiveOpen}">Chat</button><button class="chat-panel-tab" id="chat-archive-tab" type="button" aria-pressed="${chatArchiveOpen}">${currentLanguage === "en" ? "Archive" : "Arsip"}<span class="chat-panel-tab-count">${formatNumber((state.chatArchiveMessages || []).length)}</span></button></nav>${ownerActionsMarkup}<button class="chat-close chat-panel-close" id="chat-close" type="button" aria-label="Tutup chat">×</button></header>${archiveFilterMarkup}<div class="chat-message-list" id="chat-message-list" role="log" aria-label="${chatArchiveOpen ? "Arsip chat" : "Chat tim"}" aria-live="polite" aria-relevant="additions text">${messageMarkup}</div>${chatArchiveOpen ? "" : `<form class="chat-compose" id="chat-compose">${replyDraftMarkup}<input id="chat-attachment-input" type="file" accept="*/*" multiple hidden><div class="chat-compose-files" id="chat-compose-files">${renderChatSelectedFilesMarkup()}</div><div class="chat-mention-menu" id="chat-mention-menu" role="listbox" aria-label="Pilih akun untuk di-mention" hidden></div><textarea id="chat-message-input" maxlength="1000" aria-label="${editMode ? "Edit pesan chat" : "Tulis pesan chat"}" aria-controls="chat-mention-menu" aria-autocomplete="list" aria-expanded="false" placeholder="${editMode ? "Ubah pesan..." : "Tulis pesan..."}">${editMode ? escapeHtml(editingMessage.text) : ""}</textarea><div class="chat-compose-actions">${editMode ? `<button class="chat-cancel-edit" id="chat-cancel-edit" type="button" aria-label="Batalkan edit">×</button>` : `<button class="chat-attach" id="chat-attach-button" type="button" aria-label="Lampirkan foto atau dokumen" title="Lampirkan foto atau dokumen" ${chatUploadInProgress ? "disabled" : ""}><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m21.4 11.6-8.5 8.5a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"/></svg></button>`}<button class="chat-send" type="submit" aria-label="${editMode ? "Simpan perubahan" : "Kirim pesan"}" title="${editMode ? "Simpan perubahan" : chatUploadInProgress ? "Mengunggah lampiran..." : "Kirim pesan"}" ${chatUploadInProgress ? "disabled" : ""}>${editMode ? "✓" : chatUploadInProgress ? "…" : '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4 20-7ZM22 2 11 13"/></svg>'}</button></div></form>`}</section>`
+        ? `<section class="chat-panel${chatArchiveOpen ? " chat-panel-archive" : ""}" data-chat-editing="${escapeHtml(chatEditingMessageId)}" data-chat-reply="${escapeHtml(chatReplyTo?.id || "")}" aria-label="Percakapan antar akun">
+            <header class="chat-panel-head"><nav class="chat-panel-tabs" aria-label="Chat dan arsip"><button class="chat-panel-tab" id="chat-active-tab" type="button" aria-pressed="${!chatArchiveOpen}">Chat</button><button class="chat-panel-tab" id="chat-archive-tab" type="button" aria-pressed="${chatArchiveOpen}">${currentLanguage === "en" ? "Archive" : "Arsip"}<span class="chat-panel-tab-count">${formatNumber((state.chatArchiveMessages || []).length)}</span></button></nav>${ownerActionsMarkup}<button class="chat-close chat-panel-close" id="chat-close" type="button" aria-label="Tutup chat">×</button></header>
+            ${archiveFilterMarkup}
+            <div class="chat-message-list" id="chat-message-list" role="log" aria-label="${chatArchiveOpen ? "Arsip chat" : "Chat tim"}" aria-live="polite" aria-relevant="additions text">${messageMarkup}</div>
+            ${chatArchiveOpen ? "" : `<form class="chat-compose" id="chat-compose">${replyDraftMarkup}
+              <input id="chat-attachment-input" type="file" accept="*/*" multiple hidden>
+              <div class="chat-compose-files" id="chat-compose-files">${renderChatSelectedFilesMarkup()}</div>
+              <div class="chat-mention-menu" id="chat-mention-menu" role="listbox" aria-label="Pilih akun untuk di-mention" hidden></div>
+              ${editMode ? "" : `<div class="chat-emoji-picker" id="chat-emoji-picker" role="group" aria-label="${currentLanguage === "en" ? "Choose an emoji" : "Pilih emotikon"}" hidden>${emojiPickerMarkup}</div>`}
+              <textarea id="chat-message-input" maxlength="1000" aria-label="${editMode ? "Edit pesan chat" : "Tulis pesan chat"}" aria-controls="chat-mention-menu" aria-autocomplete="list" aria-expanded="false" placeholder="${editMode ? "Ubah pesan..." : "Tulis pesan..."}">${editMode ? escapeHtml(editingMessage.text) : ""}</textarea>
+              <div class="chat-compose-actions">${editMode
+                ? `<button class="chat-cancel-edit" id="chat-cancel-edit" type="button" aria-label="Batalkan edit">×</button>`
+                : `<button class="chat-emoji" id="chat-emoji-button" type="button" aria-label="${currentLanguage === "en" ? "Choose emoji" : "Pilih emotikon"}" title="${currentLanguage === "en" ? "Choose emoji" : "Pilih emotikon"}" aria-controls="chat-emoji-picker" aria-expanded="false" ${chatUploadInProgress ? "disabled" : ""}>🙂</button><button class="chat-attach" id="chat-attach-button" type="button" aria-label="Lampirkan foto atau dokumen" title="Lampirkan foto atau dokumen" ${chatUploadInProgress ? "disabled" : ""}><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m21.4 11.6-8.5 8.5a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"/></svg></button>`}
+                <button class="chat-send" type="submit" aria-label="${editMode ? "Simpan perubahan" : "Kirim pesan"}" title="${editMode ? "Simpan perubahan" : chatUploadInProgress ? "Mengunggah lampiran..." : "Kirim pesan"}" ${chatUploadInProgress ? "disabled" : ""}>${editMode ? "✓" : chatUploadInProgress ? "…" : '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4 20-7ZM22 2 11 13"/></svg>'}</button>
+              </div>
+            </form>`}
+          </section>`
         : "";
       const incomingMarkup = chatIncomingPreview
         ? `<button class="chat-incoming-preview" id="chat-preview-open" type="button" aria-live="polite" aria-label="Buka pesan chat dari ${escapeHtml(chatIncomingPreview.senderName || "Pengguna")}"><strong data-user-content>${escapeHtml(chatIncomingPreview.senderName || "Pesan baru")}</strong><span data-user-content>${escapeHtml(chatIncomingPreview.text || (chatIncomingPreview.attachments?.length ? `📎 ${chatIncomingPreview.attachments.length} lampiran` : "Lampiran baru"))}</span></button>`
@@ -12405,6 +12443,26 @@
         chatMentionActiveIndex = -1;
         updateChatMentionMenu(event.currentTarget);
       });
+      document.getElementById("chat-emoji-button")?.addEventListener("click", (event) => {
+        const button = event.currentTarget;
+        const picker = document.getElementById("chat-emoji-picker");
+        if (!picker) return;
+        picker.hidden = !picker.hidden;
+        button.setAttribute("aria-expanded", String(!picker.hidden));
+        if (!picker.hidden) {
+          const mentionMenu = document.getElementById("chat-mention-menu");
+          if (mentionMenu) mentionMenu.hidden = true;
+          document.getElementById("chat-message-input")?.setAttribute("aria-expanded", "false");
+        }
+      });
+      document.getElementById("chat-emoji-picker")?.addEventListener("click", (event) => {
+        const option = event.target.closest("[data-chat-emoji]");
+        if (!option) return;
+        const picker = document.getElementById("chat-emoji-picker");
+        if (picker) picker.hidden = true;
+        document.getElementById("chat-emoji-button")?.setAttribute("aria-expanded", "false");
+        insertChatEmoji(option.dataset.chatEmoji);
+      });
       document.getElementById("chat-attach-button")?.addEventListener("click", () => {
         document.getElementById("chat-attachment-input")?.click();
       });
@@ -12430,6 +12488,13 @@
         focusChatInput();
       });
       document.getElementById("chat-message-input")?.addEventListener("keydown", (event) => {
+        const emojiPicker = document.getElementById("chat-emoji-picker");
+        if (event.key === "Escape" && emojiPicker && !emojiPicker.hidden) {
+          emojiPicker.hidden = true;
+          document.getElementById("chat-emoji-button")?.setAttribute("aria-expanded", "false");
+          event.preventDefault();
+          return;
+        }
         const menu = document.getElementById("chat-mention-menu");
         const options = [...(menu?.querySelectorAll("[data-chat-mention-name]") || [])];
         if (menu && !menu.hidden) {
@@ -12501,6 +12566,7 @@
           const uploadedPaths = [];
           const submitButton = event.currentTarget.querySelector(".chat-send");
           const attachButton = document.getElementById("chat-attach-button");
+          const emojiButton = document.getElementById("chat-emoji-button");
           const mentionMenu = document.getElementById("chat-mention-menu");
           const textarea = document.getElementById("chat-message-input");
           chatUploadInProgress = true;
@@ -12512,6 +12578,7 @@
             submitButton.title = "Mengunggah lampiran...";
           }
           if (attachButton) attachButton.disabled = true;
+          if (emojiButton) emojiButton.disabled = true;
           document.querySelectorAll("[data-chat-reply], [data-chat-edit]").forEach((button) => { button.disabled = true; });
           if (textarea) textarea.disabled = true;
           try {
@@ -12536,6 +12603,7 @@
               submitButton.title = "Kirim pesan";
             }
             if (attachButton) attachButton.disabled = false;
+            if (emojiButton) emojiButton.disabled = false;
             document.querySelectorAll("[data-chat-reply], [data-chat-edit]").forEach((button) => { button.disabled = false; });
             if (textarea) textarea.disabled = false;
             console.error("Chat attachments could not be uploaded:", error);
@@ -12548,7 +12616,7 @@
           chatUploadInProgress = false;
         }
         if (authSession?.user?.id !== senderId) {
-          document.querySelectorAll(".chat-send, .chat-attach").forEach((button) => { button.disabled = false; });
+          document.querySelectorAll(".chat-send, .chat-attach, .chat-emoji").forEach((button) => { button.disabled = false; });
           document.querySelectorAll("[data-chat-reply], [data-chat-edit]").forEach((button) => { button.disabled = false; });
           document.getElementById("chat-attachment-input")?.removeAttribute("disabled");
           document.getElementById("chat-message-input")?.removeAttribute("disabled");
@@ -12578,6 +12646,13 @@
           createdAt,
           attachments
         }];
+        if (input) {
+          input.value = "";
+          input.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+        const emojiPicker = document.getElementById("chat-emoji-picker");
+        if (emojiPicker) emojiPicker.hidden = true;
+        document.getElementById("chat-emoji-button")?.setAttribute("aria-expanded", "false");
         chatSelectedFiles = [];
         chatReplyTo = null;
         chatMentionDraftNames = [];
