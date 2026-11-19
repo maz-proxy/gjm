@@ -8301,7 +8301,7 @@
       if (!reconciliationStarted && !canManageDataResources()) return renderReconciliationPending();
       const stats = getStats();
       const totals = getReconciliationTotals();
-      const soProgress = getScanManualQuantityProgress();
+      const soProgress = Math.min(100, quantityPercent(totals.total, totals.expectedWithInbound));
       const active = state.activeSession.status === "active";
       const canEdit = canEditActiveSession();
       const reconciliationProducts = state.products.filter((product) => isCountedProduct(product));
