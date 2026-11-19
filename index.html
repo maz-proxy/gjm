@@ -8312,8 +8312,9 @@
       const totalUnitCount = laptopUnitCount + nonLaptopUnitCount;
       const warehouseTotals = new Map();
       for (const product of state.products) {
-        const warehouse = String(product.warehouse || "").trim() || "Tanpa Warehouse";
-        warehouseTotals.set(warehouse, (warehouseTotals.get(warehouse) || 0) + Number(product.stock || 0));
+        for (const [warehouse, quantity] of productWarehouseStocks(product)) {
+          warehouseTotals.set(warehouse, (warehouseTotals.get(warehouse) || 0) + quantity);
+        }
       }
       const warehouseSummary = [...warehouseTotals.entries()]
         .sort(([a], [b]) => a.localeCompare(b, "id-ID"))
@@ -10222,11 +10223,12 @@
       const expectedUnits = countedProducts.reduce((sum, product) => sum + Number(product.stock || 0), 0);
       const warehouseTotals = new Map();
       for (const product of products) {
-        const warehouse = String(product.warehouse || "").trim() || "Tanpa Warehouse";
-        const current = warehouseTotals.get(warehouse) || { items: 0, quantity: 0 };
-        current.items += 1;
-        current.quantity += Number(product.stock || 0);
-        warehouseTotals.set(warehouse, current);
+        for (const [warehouse, quantity] of productWarehouseStocks(product)) {
+          const current = warehouseTotals.get(warehouse) || { items: 0, quantity: 0 };
+          current.items += 1;
+          current.quantity += quantity;
+          warehouseTotals.set(warehouse, current);
+        }
       }
       const scanQuantity = countedProducts.reduce((sum, product) => sum + Number(product.count || 0), 0);
       const manualQuantity = countedProducts.reduce((sum, product) => sum + Number(product.box || 0), 0);
@@ -13655,6 +13657,54 @@
       return null;
     }
 
+    function mergeImportedProductsBySku(productsByWarehouse, serialMaster) {
+      const productsBySku = new Map();
+      const productIds = new Map();
+      const warehouseStocksBySku = new Map();
+      for (const product of productsByWarehouse.values()) {
+        const skuKey = String(product.sku || "").trim().toLocaleUpperCase("id-ID");
+        if (!skuKey) continue;
+        const id = `vef:${skuKey}`;
+        let merged = productsBySku.get(skuKey);
+        if (!merged) {
+          merged = { ...product, id, warehouse: "", warehouseQuantities: {}, stock: 0, count: 0, box: 0, pj: 0, note: "" };
+          productsBySku.set(skuKey, merged);
+          warehouseStocksBySku.set(skuKey, new Map());
+        }
+        const warehouse = String(product.warehouse || "").trim();
+        const warehouseStocks = warehouseStocksBySku.get(skuKey);
+        warehouseStocks.set(warehouse, (warehouseStocks.get(warehouse) || 0) + Number(product.stock || 0));
+        merged.stock += Number(product.stock || 0);
+        merged.count += Number(product.count || 0);
+        merged.box += Number(product.box || 0);
+        merged.pj += Number(product.pj || 0);
+        merged.name ||= product.name;
+        merged.itemGroup ||= product.itemGroup;
+        merged.brand ||= product.brand;
+        merged.note ||= product.note;
+        productIds.set(product.id, id);
+      }
+      for (const [skuKey, product] of productsBySku) {
+        const warehouseStocks = warehouseStocksBySku.get(skuKey);
+        product.warehouseQuantities = Object.fromEntries(warehouseStocks);
+        product.warehouse = [...warehouseStocks.keys()].filter(Boolean).join(", ");
+      }
+      for (const master of Object.values(serialMaster)) {
+        const productId = productIds.get(master.productId);
+        if (productId) master.productId = productId;
+      }
+      return productsBySku;
+    }
+
+    function productWarehouseStocks(product) {
+      const warehouseQuantities = product.warehouseQuantities;
+      if (warehouseQuantities && typeof warehouseQuantities === "object" && Object.keys(warehouseQuantities).length) {
+        return Object.entries(warehouseQuantities).map(([warehouse, quantity]) =>
+          [warehouse || "Tanpa Warehouse", Number(quantity || 0)]);
+      }
+      return [[String(product.warehouse || "").trim() || "Tanpa Warehouse", Number(product.stock || 0)]];
+    }
+
     async function importWorkbook(event) {
       const file = event.target.files?.[0];
       event.target.value = "";
@@ -13870,6 +13920,9 @@
             for (const product of productsByCode.values()) if (product.sku === sku) product.note = String(row[noteIndex] ?? "").trim();
           }
         }
+        const mergedProductsBySku = mergeImportedProductsBySku(productsByCode, serialMaster);
+        productsByCode.clear();
+        for (const product of mergedProductsBySku.values()) productsByCode.set(product.id, product);
         if (!productsByCode.size) {
           const hasRequiredHeaders = Boolean(vefHeader);
           closeWorkbookUploadLoading();
