@@ -4170,6 +4170,8 @@
     const SHARED_STATE_ROW_ID = "stock-opname-team";
     const SHARED_STATE_TABLE = "stock_opname_state";
     const SHARED_STATE_CHANNEL_NAME = "stock-opname-state:stock-opname-team";
+    const SHARED_STATE_REFRESH_INTERVAL_MS = 10000;
+    const SHARED_STATE_FALLBACK_REFRESH_INTERVAL_MS = 5000;
     const WORKBOOK_ARCHIVE_BUCKET = "stock-opname-workbooks";
     const CHAT_ATTACHMENT_BUCKET = "stock-opname-chat-attachments";
     const CHAT_ATTACHMENT_MAX_SIZE = 50 * 1024 * 1024;
@@ -4627,12 +4629,14 @@
     let adminStorageLoading = false;
     let sharedStateReady = false;
     let sharedStateChannel = null;
+    let sharedStateRealtimeConnected = false;
     let refreshPending = false;
     let remoteUpdatedAt = "";
     let remoteVersion = null;
     let lastSyncedState = "";
     let syncTimer = null;
     let refreshTimer = null;
+    let refreshTimerIntervalMs = 0;
     let refreshRetryTimer = null;
     let refreshRetryAttempt = 0;
     let saveRetryAttempt = 0;
@@ -6591,6 +6595,8 @@
       clearInterval(workspaceCleanupTimer);
       clearInterval(idleCheckTimer);
       refreshTimer = null;
+      refreshTimerIntervalMs = 0;
+      sharedStateRealtimeConnected = false;
       refreshRetryTimer = null;
       refreshRetryAttempt = 0;
       saveRetryAttempt = 0;
@@ -6815,6 +6821,7 @@
       return supabaseClient.from(SHARED_STATE_TABLE).select("data, updated_at, version").eq("id", SHARED_STATE_ROW_ID).maybeSingle();
     }
     function stopSharedStateChannel() {
+      sharedStateRealtimeConnected = false;
       if (!sharedStateChannel) return;
       const channel = sharedStateChannel;
       sharedStateChannel = null;
@@ -6822,24 +6829,50 @@
         if (status !== "ok") console.warn("Channel sinkronisasi realtime tidak berhenti dengan normal:", status);
       }).catch((error) => console.error("Channel sinkronisasi realtime gagal dihentikan:", error));
     }
+    function configureSharedStateRefreshTimer() {
+      if (!authSession || !sharedStateReady) {
+        clearInterval(refreshTimer);
+        refreshTimer = null;
+        refreshTimerIntervalMs = 0;
+        return;
+      }
+      const intervalMs = sharedStateRealtimeConnected
+        ? SHARED_STATE_REFRESH_INTERVAL_MS
+        : SHARED_STATE_FALLBACK_REFRESH_INTERVAL_MS;
+      if (refreshTimer && refreshTimerIntervalMs === intervalMs) return;
+      clearInterval(refreshTimer);
+      refreshTimer = setInterval(() => {
+        if (document.visibilityState !== "hidden") void refreshSharedState();
+      }, intervalMs);
+      refreshTimerIntervalMs = intervalMs;
+    }
     function startSharedStateChannel() {
       stopSharedStateChannel();
-      sharedStateChannel = supabaseClient.channel(SHARED_STATE_CHANNEL_NAME)
+      const channel = supabaseClient.channel(SHARED_STATE_CHANNEL_NAME);
+      sharedStateChannel = channel;
+      channel
         .on("postgres_changes", {
           event: "UPDATE",
           schema: "public",
           table: SHARED_STATE_TABLE,
           filter: `id=eq.${SHARED_STATE_ROW_ID}`
         }, (payload) => {
-          if (payload.new?.id === SHARED_STATE_ROW_ID) void refreshSharedState();
+          if (sharedStateChannel === channel && payload.new?.id === SHARED_STATE_ROW_ID) void refreshSharedState();
         })
         .subscribe((status, error) => {
+          if (sharedStateChannel !== channel) return;
           if (status === "SUBSCRIBED") {
+            sharedStateRealtimeConnected = true;
+            configureSharedStateRefreshTimer();
             void refreshSharedState();
           } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+            sharedStateRealtimeConnected = false;
+            configureSharedStateRefreshTimer();
             console.warn("Sinkronisasi realtime tidak tersedia; polling cadangan tetap aktif.", status, error || "");
+            void refreshSharedState();
           }
         });
+      configureSharedStateRefreshTimer();
     }
     async function startAuthenticatedSession(session, freshLogin = false) {
       if (!session?.user) return;
@@ -6918,7 +6951,6 @@
             refreshChatWidget();
           } else refreshChatDeleteControls();
         }, CHAT_ARCHIVE_INTERVAL_MS);
-        refreshTimer = setInterval(refreshSharedState, 45000);
         workspaceCleanupTimer = setInterval(() => {
           if (refreshInProgress || syncTimer) return;
           if (removeExpiredUnuploadedWorkspaces()) {
