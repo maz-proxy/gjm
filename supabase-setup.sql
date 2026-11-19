@@ -832,7 +832,8 @@ begin
             or new_active_session ->> 'status' is distinct from 'completed'
             or nullif(old_active_session ->> 'finishedAt', '') is not null
             or nullif(new_active_session ->> 'finishedAt', '') is null
-            or (old_active_session - 'status' - 'finishedAt') is distinct from (new_active_session - 'status' - 'finishedAt') then
+            or (old_active_session - 'status'::text - 'finishedAt'::text)
+              is distinct from (new_active_session - 'status'::text - 'finishedAt'::text) then
             raise exception 'Assigned PICs may only finish, not restart or replace, the active session.'
               using errcode = '42501';
           end if;
@@ -897,8 +898,8 @@ begin
         or coalesce(previous_archive_workspace -> 'data' -> 'activeSession' ->> 'status', 'active') <> 'active'
         or previous_archive_workspace -> 'data' -> 'activeSession' ->> 'createdByUserId' is distinct from new_archive ->> 'createdByUserId'
         or nullif(previous_archive_workspace -> 'data' -> 'activeSession' ->> 'finishedAt', '') is not null
-        or (new_archive -> 'snapshot' -> 'activeSession' - 'status' - 'finishedAt')
-          is distinct from (previous_archive_workspace -> 'data' -> 'activeSession' - 'status' - 'finishedAt') then
+        or (new_archive -> 'snapshot' -> 'activeSession' - 'status'::text - 'finishedAt'::text)
+          is distinct from (previous_archive_workspace -> 'data' -> 'activeSession' - 'status'::text - 'finishedAt'::text) then
         raise exception 'A stock opname archive must match an active session completed without changing its ownership.'
           using errcode = '42501';
       end if;
