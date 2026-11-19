@@ -6930,6 +6930,7 @@
           lastSyncedState = stableSerialize(state);
         }
         applyLocalWorkspacePreference(state, session.user.id);
+        mergeActiveVentionProductsBySku();
         const removedExpiredUnuploadedWorkspaces = removeExpiredUnuploadedWorkspaces();
         normalizeWorkspaceClassifications();
         persistLocalState();
@@ -13735,6 +13736,87 @@
           [warehouse || "Tanpa Warehouse", Number(quantity || 0)]);
       }
       return [[String(product.warehouse || "").trim() || "Tanpa Warehouse", Number(product.stock || 0)]];
+    }
+
+    function mergeActiveVentionWorkspaceProducts(workspace) {
+      const data = workspace?.data;
+      if (!data || data.activeSession?.status !== "active" || !Array.isArray(data.products) || !canEditWorkspaceSession(workspace)) return false;
+      const isVentionWorkspace = normalizeField(workspace.name).includes("vention")
+        || data.products.some((product) => normalizeField(product.brand).includes("vention"));
+      if (!isVentionWorkspace) return false;
+
+      const productsBySku = new Map();
+      const productIds = new Map();
+      for (const product of data.products) {
+        const skuKey = String(product.sku || "").trim().toLocaleUpperCase("id-ID");
+        if (!skuKey) continue;
+        const id = `vef:${skuKey}`;
+        let merged = productsBySku.get(skuKey);
+        if (!merged) {
+          merged = { ...product, id, warehouse: "", warehouseQuantities: {}, stock: 0, count: 0, box: 0, pj: 0 };
+          productsBySku.set(skuKey, merged);
+        }
+        if (product.id) productIds.set(product.id, id);
+        const warehouseStocks = product.warehouseQuantities && typeof product.warehouseQuantities === "object"
+          && Object.keys(product.warehouseQuantities).length
+          ? Object.entries(product.warehouseQuantities)
+          : [[String(product.warehouse || "").trim(), product.stock]];
+        for (const [warehouse, quantity] of warehouseStocks) {
+          const warehouseName = String(warehouse || "").trim();
+          const value = Number(quantity);
+          if (Number.isFinite(value)) {
+            merged.warehouseQuantities[warehouseName] = (merged.warehouseQuantities[warehouseName] || 0) + value;
+          }
+        }
+        merged.stock += Number(product.stock) || 0;
+        merged.count += Number(product.count) || 0;
+        merged.box += Number(product.box) || 0;
+        merged.pj += Number(product.pj) || 0;
+        merged.name ||= product.name;
+        merged.itemGroup ||= product.itemGroup;
+        merged.brand ||= product.brand;
+        merged.note ||= product.note;
+      }
+
+      const products = [];
+      const addedSkus = new Set();
+      for (const product of data.products) {
+        const skuKey = String(product.sku || "").trim().toLocaleUpperCase("id-ID");
+        if (!skuKey) {
+          products.push(product);
+          continue;
+        }
+        if (addedSkus.has(skuKey)) continue;
+        addedSkus.add(skuKey);
+        const merged = productsBySku.get(skuKey);
+        merged.warehouse = Object.keys(merged.warehouseQuantities).filter(Boolean).join(", ");
+        products.push(merged);
+      }
+      products.sort((left, right) => String(left.name || "").localeCompare(String(right.name || ""), "id-ID", { sensitivity: "base" })
+        || String(left.sku || "").localeCompare(String(right.sku || ""), "id-ID", { sensitivity: "base" }));
+
+      let changed = stableSerialize(products) !== stableSerialize(data.products);
+      const remapProductId = (record) => {
+        const productId = productIds.get(record?.productId);
+        if (productId && productId !== record.productId) {
+          record.productId = productId;
+          changed = true;
+        }
+      };
+      for (const master of Object.values(data.serialMaster || {})) remapProductId(master);
+      for (const entries of [data.scanEvents, data.manualEntries, data.pjEntries, data.inboundEntries]) {
+        for (const entry of Array.isArray(entries) ? entries : []) remapProductId(entry);
+      }
+      if (changed) data.products = products;
+      return changed;
+    }
+
+    function mergeActiveVentionProductsBySku() {
+      let changed = false;
+      for (const workspace of state.workspaces || []) {
+        changed = mergeActiveVentionWorkspaceProducts(workspace) || changed;
+      }
+      return changed;
     }
 
     async function importWorkbook(event) {
