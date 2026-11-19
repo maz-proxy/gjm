@@ -898,8 +898,8 @@ begin
         or coalesce(previous_archive_workspace -> 'data' -> 'activeSession' ->> 'status', 'active') <> 'active'
         or previous_archive_workspace -> 'data' -> 'activeSession' ->> 'createdByUserId' is distinct from new_archive ->> 'createdByUserId'
         or nullif(previous_archive_workspace -> 'data' -> 'activeSession' ->> 'finishedAt', '') is not null
-        or (new_archive -> 'snapshot' -> 'activeSession' - 'status'::text - 'finishedAt'::text)
-          is distinct from (previous_archive_workspace -> 'data' -> 'activeSession' - 'status'::text - 'finishedAt'::text) then
+        or ((new_archive -> 'snapshot' -> 'activeSession') - 'status'::text - 'finishedAt'::text)
+          is distinct from ((previous_archive_workspace -> 'data' -> 'activeSession') - 'status'::text - 'finishedAt'::text) then
         raise exception 'A stock opname archive must match an active session completed without changing its ownership.'
           using errcode = '42501';
       end if;
