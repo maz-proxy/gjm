@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f4f7f6">
+  <meta name="theme-color" content="#f8eef1">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="STOCK OPNAME">
   <link rel="manifest" href="./site.webmanifest?v=2">
@@ -4163,10 +4163,10 @@
       }
     };
     try {
-      applyAccent(localStorage.getItem(ACCENT_STORAGE_KEY) || "green");
+      applyAccent(localStorage.getItem(ACCENT_STORAGE_KEY) || "burgundy");
     } catch (error) {
       console.warn("Preferensi warna tidak dapat dibaca:", error);
-      applyAccent("green");
+      applyAccent("burgundy");
     }
     const SUPABASE_URL = "https://gyrzbossqkuiawwuqkfo.supabase.co";
     const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_wquuvlF0t0GklKqit4LDCg_KnPG002M";
