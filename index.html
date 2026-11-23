@@ -90,6 +90,14 @@
     .admin-notice.success { background: var(--green-soft); color: var(--green-dark); }
     .admin-notice.error { background: var(--red-soft); color: var(--red); }
     .admin-create-form { align-items: end; display: grid; gap: 10px; grid-template-columns: minmax(180px, 1fr) auto; }
+    .admin-create-section { max-width: 620px; }
+    .admin-create-section .table-toolbar { min-height: 46px; padding: 8px 14px; }
+    .admin-create-section .admin-create-form { gap: 8px; padding: 12px 14px 14px; }
+    .admin-create-section .auth-field { gap: 4px; }
+    .admin-create-section .auth-field > span { color: var(--muted); font-size: 11px; font-weight: 700; }
+    .admin-create-section .auth-input { height: 38px; }
+    .admin-create-section .button { min-height: 38px; padding: 0 14px; }
+    .admin-create-section .admin-notice { margin: 0 14px 12px; }
     .admin-role-select { max-width: 220px; min-width: 175px; }
     .admin-users-list td { padding-bottom: 6px; padding-top: 6px; }
     .admin-users-list .button { min-height: 34px; padding-bottom: 6px; padding-top: 6px; }
@@ -12428,7 +12436,7 @@
       const userColumns = adminUsers.length > 1
         ? [adminUsers.slice(0, splitAt), adminUsers.slice(splitAt)]
         : [adminUsers];
-      return `${navMarkup()}<section class="page-head"><div><h1>Kelola Akun Staf</h1><p class="subtitle">Buat akun username, reset password, dan atur akses masuk workspace.</p></div></section><section class="table-section"><div class="table-toolbar"><div class="table-title">Tambah akun staf</div></div><form class="admin-create-form" id="admin-create-form"><label class="auth-field"><span>Username</span><input class="auth-input" name="username" type="text" minlength="3" maxlength="30" pattern="[a-z0-9][a-z0-9._-]{2,29}" required placeholder="contoh: stafbaru"></label><button class="button button-primary" type="submit">Buat akun</button></form><div class="admin-notice ${adminNoticeType}" id="admin-notice" ${adminNotice ? "" : "hidden"}>${escapeHtml(adminNotice)}</div></section><section class="table-section admin-users-list"><div class="table-toolbar"><div class="table-title">Daftar akun <span class="table-count">${adminUsers.length} staf</span></div><button class="button button-secondary" id="admin-refresh-users" type="button">Muat ulang</button></div><div class="admin-users-columns">${userColumns.map(renderAdminUsersTable).join("")}</div><div class="table-footer"><span>Super Adm hanya dapat mengelola Nama Brand, Nama PIC, dan APK Android.</span></div></section>${renderAdminStoragePanel()}`;
+      return `${navMarkup()}<section class="page-head"><div><h1>Kelola Akun Staf</h1><p class="subtitle">Buat akun username, reset password, dan atur akses masuk workspace.</p></div></section><section class="table-section admin-create-section"><div class="table-toolbar"><div class="table-title">Tambah akun staf</div></div><form class="admin-create-form" id="admin-create-form"><label class="auth-field"><span>Username</span><input class="auth-input" name="username" type="text" minlength="3" maxlength="30" pattern="[a-z0-9][a-z0-9._-]{2,29}" required placeholder="contoh: stafbaru"></label><button class="button button-primary" type="submit">Buat akun</button></form><div class="admin-notice ${adminNoticeType}" id="admin-notice" ${adminNotice ? "" : "hidden"}>${escapeHtml(adminNotice)}</div></section><section class="table-section admin-users-list"><div class="table-toolbar"><div class="table-title">Daftar akun <span class="table-count">${adminUsers.length} staf</span></div><button class="button button-secondary" id="admin-refresh-users" type="button">Muat ulang</button></div><div class="admin-users-columns">${userColumns.map(renderAdminUsersTable).join("")}</div><div class="table-footer"><span>Super Adm hanya dapat mengelola Nama Brand, Nama PIC, dan APK Android.</span></div></section>${renderAdminStoragePanel()}`;
     }
 
     async function loadAdminStorage() {
