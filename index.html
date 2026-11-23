@@ -99,7 +99,8 @@
     .admin-users-column { border: 1px solid var(--line); border-radius: 8px; min-width: 0; overflow: hidden; }
     .admin-users-column table { min-width: 680px; }
     .admin-users-column th, .admin-users-column td { padding-left: 8px; padding-right: 8px; }
-    .admin-users-column .admin-role-select { min-width: 130px; }
+    .admin-users-column th:nth-child(4), .admin-users-column td:nth-child(4) { width: 128px; }
+    .admin-users-column .admin-role-select { max-width: 112px; min-width: 112px; width: 112px; }
     .admin-users-column td:last-child { white-space: nowrap; }
     .admin-users-column td:last-child .button { font-size: 10px; padding-left: 8px; padding-right: 8px; }
     @media (max-width: 1100px) { .admin-users-columns { grid-template-columns: minmax(0, 1fr); } .admin-users-column table { min-width: 760px; } }
