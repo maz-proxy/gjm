@@ -895,6 +895,9 @@
     .recorded-quantity-trigger:hover { background: var(--green-soft); border-bottom-style: solid; }
     .recorded-quantity-trigger:focus-visible { outline: 2px solid color-mix(in srgb, var(--green) 40%, transparent); outline-offset: 2px; }
     .completed-export-actions { display: flex; gap: 8px; margin: 10px 0; }
+    .archive-transfer-actions { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; padding: 14px 18px 18px; }
+    .archive-transfer-actions .form-control { max-width: 190px; }
+    .archive-transfer-note { color: var(--muted); font-size: 11px; line-height: 1.5; margin-top: 4px; max-width: 850px; }
     .completed-detail-panel h3 { font-size: 13px; margin: 0 0 10px; }
     .completed-session-brand, .completed-session-title { align-items: center; display: flex; gap: 9px; min-width: 0; }
     .completed-session-brand .workspace-brand-icon { flex: 0 0 26px; height: 26px; width: 26px; }
@@ -9865,6 +9868,27 @@
           </div>
           <span class="category-chip">${completed.length} sesi selesai</span>
         </section>
+        ${canDeleteCompletedSession() ? `
+        <section class="table-section archive-transfer-panel">
+          <div class="table-toolbar">
+            <div>
+              <div class="table-title">Ekspor / Impor Arsip</div>
+              <div class="archive-transfer-note">Simpan arsip bulanan atau tahunan sebagai file .soarchive.json untuk external storage/cloud. Arsip yang diimpor kembali akan tampil di SO Record dan Session SO.</div>
+            </div>
+          </div>
+          <div class="archive-transfer-actions">
+            <select class="form-control" id="archive-export-scope-type" aria-label="Jenis periode arsip">
+              <option value="month">Bulanan</option>
+              <option value="year">Tahunan</option>
+            </select>
+            <input class="form-control" id="archive-export-month" type="month" aria-label="Periode bulan" value="${new Date().toISOString().slice(0, 7)}">
+            <input class="form-control" id="archive-export-year" type="number" min="2020" max="2100" step="1" aria-label="Periode tahun" value="${new Date().getFullYear()}" hidden>
+            <button class="button button-secondary" id="archive-export-button" type="button">Ekspor Arsip</button>
+            <button class="button button-danger" id="archive-export-remove-button" type="button">Ekspor &amp; Keluarkan</button>
+            <button class="button button-primary" id="archive-import-button" type="button">Impor Arsip</button>
+            <input id="archive-import-file" type="file" accept=".soarchive.json,.json,application/json" hidden>
+          </div>
+        </section>` : ""}
         <section class="table-section">
           <div class="table-toolbar">
             <div class="table-title">Sesi sebelumnya <span class="table-count">${completed.length} sesi selesai · terbaru di atas</span></div>
@@ -10106,6 +10130,218 @@
           <h3>Detail Inbound/Retur · ${inboundEntries.length} catatan</h3><div class="table-scroll"><table class="completed-result-table"><thead><tr><th>No</th><th>Item Code</th><th>Nomor PREC/RETUR</th><th>Tanggal</th><th>Quantity</th></tr></thead><tbody>${inboundRows || `<tr><td class="empty-row" colspan="5">Belum ada data Inbound/Retur.</td></tr>`}</tbody></table></div>
           <h3>Rekap Selisih · ${recapProducts.length} item perlu ditinjau</h3><div class="table-scroll"><table class="completed-result-table print-reconciliation-table"><thead><tr><th>No</th><th>Item code</th><th>Item name</th><th class="quantity-cell">VEF</th><th class="quantity-cell">SCAN</th><th class="quantity-cell">MANUAL</th><th class="quantity-cell">Inbound/Retur</th><th class="quantity-cell">PJ</th><th class="quantity-cell">Selisih</th><th>Check</th><th>Note</th></tr></thead><tbody>${recapRows || `<tr><td class="empty-row" colspan="11">Belum ada selisih. Semua item sesuai dengan VEF.</td></tr>`}</tbody></table></div>
         </div>`;
+    }
+
+    function bytesToBase64(bytes) {
+      const chunkSize = 0x8000;
+      let binary = "";
+      for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+        binary += String.fromCharCode(...bytes.subarray(offset, offset + chunkSize));
+      }
+      return btoa(binary);
+    }
+
+    function base64ToBytes(base64) {
+      const binary = atob(String(base64 || ""));
+      const bytes = new Uint8Array(binary.length);
+      for (let index = 0; index < binary.length; index++) bytes[index] = binary.charCodeAt(index);
+      return bytes;
+    }
+
+    function archiveScopeFromControls() {
+      const scopeType = document.getElementById("archive-export-scope-type")?.value || "month";
+      if (scopeType === "year") {
+        const year = String(document.getElementById("archive-export-year")?.value || "").trim();
+        if (!/^\d{4}$/.test(year)) throw new Error("Pilih tahun arsip yang valid.");
+        return { type: "year", year };
+      }
+      const month = String(document.getElementById("archive-export-month")?.value || "").trim();
+      if (!/^\d{4}-\d{2}$/.test(month)) throw new Error("Pilih bulan arsip yang valid.");
+      return { type: "month", month };
+    }
+
+    function sessionsInArchiveScope(scope) {
+      return [...state.sessions].filter((session) => {
+        if (!session?.snapshot || !session.finishedAt) return false;
+        if (scope.type === "year") return String(session.finishedAt).slice(0, 4) === scope.year;
+        return String(session.finishedAt).slice(0, 7) === scope.month;
+      }).sort((left, right) => new Date(left.finishedAt) - new Date(right.finishedAt));
+    }
+
+    async function readArchivedWorkbookForTransfer(workbook) {
+      const { data, error } = await supabaseClient.storage.from(WORKBOOK_ARCHIVE_BUCKET)
+        .createSignedUrl(workbook.storagePath, 120);
+      if (error) throw error;
+      const response = await fetch(data.signedUrl);
+      if (!response.ok) throw new Error(`File VEF ${workbook.name} tidak dapat dibaca.`);
+      const bytes = new Uint8Array(await response.arrayBuffer());
+      return {
+        name: workbook.name,
+        storagePath: workbook.storagePath,
+        size: bytes.length,
+        uploadedAt: workbook.uploadedAt || "",
+        contentType: workbook.contentType || "application/octet-stream",
+        contentBase64: bytesToBase64(bytes)
+      };
+    }
+
+    async function exportSessionArchive(removeAfterExport = false) {
+      if (!canDeleteCompletedSession()) {
+        notify("Ekspor dan pemindahan arsip hanya dapat dilakukan oleh Owner.");
+        return;
+      }
+      let scope;
+      try {
+        scope = archiveScopeFromControls();
+      } catch (error) {
+        notify(error.message);
+        return;
+      }
+      const sessions = sessionsInArchiveScope(scope);
+      if (!sessions.length) {
+        notify(scope.type === "year"
+          ? `Tidak ada sesi selesai pada tahun ${scope.year}.`
+          : `Tidak ada sesi selesai pada bulan ${scope.month}.`);
+        return;
+      }
+      if (removeAfterExport) {
+        const confirmed = await showConfirmDialog(
+          `${sessions.length} sesi akan diekspor ke file arsip, lalu file sumber dan data arsip akan dikeluarkan dari database aktif.`,
+          {
+            title: "Keluarkan arsip dari database?",
+            subtitle: "Pastikan file .soarchive.json sudah disimpan ke external storage/cloud. Tindakan ini menghapus arsip aktif setelah ekspor berhasil.",
+            confirmLabel: "Ekspor & Keluarkan",
+            destructive: true
+          }
+        );
+        if (!confirmed) return;
+      }
+      const buttonIds = removeAfterExport
+        ? ["archive-export-remove-button", "archive-export-button"]
+        : ["archive-export-button", "archive-export-remove-button"];
+      buttonIds.forEach((id) => { const button = document.getElementById(id); if (button) button.disabled = true; });
+      try {
+        const archiveSessions = [];
+        for (const session of sessions) {
+          const sourceWorkbooks = [];
+          for (const workbook of session.workbooks || []) {
+            if (!workbook?.storagePath) continue;
+            sourceWorkbooks.push(await readArchivedWorkbookForTransfer(workbook));
+          }
+          archiveSessions.push({ ...JSON.parse(JSON.stringify(session)), sourceWorkbooks });
+        }
+        const archive = {
+          format: "maz-stock-opname-archive",
+          formatVersion: 1,
+          exportedAt: new Date().toISOString(),
+          scope,
+          sessionCount: archiveSessions.length,
+          sessions: archiveSessions
+        };
+        const period = scope.type === "year" ? scope.year : scope.month;
+        const blob = new Blob([JSON.stringify(archive)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `stock-opname-${period}.soarchive.json`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+        if (removeAfterExport) {
+          const sessionIds = new Set(sessions.map((session) => session.id));
+          const removedPaths = new Set(sessions.flatMap((session) => (session.workbooks || []).map((workbook) => workbook.storagePath).filter(Boolean)));
+          await removeArchivedWorkbookFiles([...removedPaths].map((storagePath) => ({ storagePath })));
+          for (const workspace of state.workspaces) {
+            workspace.data.workbookFiles = (workspace.data.workbookFiles || []).filter((workbook) => !removedPaths.has(workbook.storagePath));
+          }
+          state.workbookFiles = (state.workbookFiles || []).filter((workbook) => !removedPaths.has(workbook.storagePath));
+          state.sessions = state.sessions.filter((session) => !sessionIds.has(session.id));
+          persist();
+        }
+        notify(removeAfterExport
+          ? `${sessions.length} sesi diekspor dan dikeluarkan dari database aktif.`
+          : `${sessions.length} sesi berhasil diekspor sebagai file arsip.`);
+        if (removeAfterExport) render();
+      } catch (error) {
+        console.error("Ekspor arsip Stock Opname gagal:", error);
+        notify(`Ekspor arsip gagal: ${error instanceof Error ? error.message : "kesalahan tidak diketahui"}`);
+      } finally {
+        buttonIds.forEach((id) => { const button = document.getElementById(id); if (button) button.disabled = false; });
+      }
+    }
+
+    async function importSessionArchive(file) {
+      if (!canDeleteCompletedSession()) {
+        notify("Impor arsip hanya dapat dilakukan oleh Owner.");
+        return;
+      }
+      if (!file || (!/\.soarchive\.json$/i.test(file.name) && !/\.json$/i.test(file.name))) {
+        notify("Pilih file arsip .soarchive.json.");
+        return;
+      }
+      if (file.size > 500 * 1024 * 1024) {
+        notify("Ukuran arsip maksimal 500 MB.");
+        return;
+      }
+      try {
+        const archive = JSON.parse(await file.text());
+        if (archive.format !== "maz-stock-opname-archive" || archive.formatVersion !== 1 || !Array.isArray(archive.sessions)) {
+          throw new Error("Format file arsip tidak dikenali.");
+        }
+        const incoming = archive.sessions.filter((session) => session?.id && session?.snapshot);
+        if (!incoming.length) throw new Error("File arsip tidak berisi sesi Stock Opname yang valid.");
+        const existingIds = new Set(state.sessions.map((session) => session.id));
+        const duplicates = incoming.filter((session) => existingIds.has(session.id)).length;
+        if (duplicates) {
+          const confirmed = await showConfirmDialog(
+            `${duplicates} sesi dengan ID yang sama sudah ada. Sesi lama akan diganti oleh data dari file arsip.`,
+            { title: "Impor dan ganti arsip lama?", confirmLabel: "Impor Arsip", destructive: true }
+          );
+          if (!confirmed) return;
+        }
+
+        const importedSessions = [];
+        for (const session of incoming) {
+          const sourceWorkbooks = Array.isArray(session.sourceWorkbooks) ? session.sourceWorkbooks : [];
+          const workbooks = [];
+          for (const source of sourceWorkbooks) {
+            if (!source?.name || typeof source.contentBase64 !== "string") continue;
+            const bytes = base64ToBytes(source.contentBase64);
+            const storagePath = source.storagePath || `${session.workspaceId || "archived-workspace"}/${session.id}/${source.name}`;
+            const blob = new Blob([bytes], { type: source.contentType || "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+            const { error } = await supabaseClient.storage.from(WORKBOOK_ARCHIVE_BUCKET).upload(storagePath, blob, {
+              cacheControl: "3600",
+              contentType: source.contentType || blob.type,
+              upsert: true
+            });
+            if (error) throw new Error(`File VEF ${source.name} gagal dipulihkan: ${error.message}`);
+            workbooks.push({
+              id: source.storagePath ? String(source.storagePath).split("/").pop() : crypto.randomUUID(),
+              name: source.name,
+              size: bytes.length,
+              uploadedAt: source.uploadedAt || session.finishedAt,
+              storagePath
+            });
+          }
+          const cleanSession = { ...session };
+          delete cleanSession.sourceWorkbooks;
+          cleanSession.status = "completed";
+          cleanSession.workbooks = workbooks;
+          importedSessions.push(cleanSession);
+        }
+
+        const sessionsById = new Map(state.sessions.map((session) => [session.id, session]));
+        for (const session of importedSessions) sessionsById.set(session.id, session);
+        state.sessions = [...sessionsById.values()].sort((left, right) => new Date(right.finishedAt) - new Date(left.finishedAt));
+        persist();
+        render();
+        notify(`${importedSessions.length} sesi berhasil diimpor ke SO Record dan Session SO.`);
+      } catch (error) {
+        console.error("Impor arsip Stock Opname gagal:", error);
+        notify(`Impor arsip gagal: ${error instanceof Error ? error.message : "kesalahan tidak diketahui"}`);
+      }
     }
 
     function exportCompletedSession(sessionId) {
@@ -12945,6 +13181,22 @@
       document.querySelectorAll("[data-export-session]").forEach((button) => button.addEventListener("click", () => exportCompletedSession(button.dataset.exportSession)));
       document.querySelectorAll("[data-print-session]").forEach((button) => button.addEventListener("click", () => printArchivedSession(button)));
       document.querySelectorAll("[data-download-workbook]").forEach((button) => button.addEventListener("click", () => downloadArchivedWorkbook(button.dataset.downloadSession, button.dataset.downloadWorkbook)));
+      document.getElementById("archive-export-scope-type")?.addEventListener("change", (event) => {
+        const monthInput = document.getElementById("archive-export-month");
+        const yearInput = document.getElementById("archive-export-year");
+        const yearly = event.currentTarget.value === "year";
+        if (monthInput) monthInput.hidden = yearly;
+        if (yearInput) yearInput.hidden = !yearly;
+      });
+      document.getElementById("archive-export-button")?.addEventListener("click", () => void exportSessionArchive(false));
+      document.getElementById("archive-export-remove-button")?.addEventListener("click", () => void exportSessionArchive(true));
+      document.getElementById("archive-import-button")?.addEventListener("click", () => document.getElementById("archive-import-file")?.click());
+      document.getElementById("archive-import-file")?.addEventListener("change", (event) => {
+        const input = event.currentTarget;
+        const file = input.files?.[0];
+        input.value = "";
+        if (file) void importSessionArchive(file);
+      });
       document.querySelectorAll("[data-workspace-name]").forEach((input) => {
         input.addEventListener("input", () => {
           const brand = input.value.trim();
