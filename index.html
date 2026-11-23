@@ -98,6 +98,10 @@
     .admin-users-columns { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 0 12px 12px; }
     .admin-users-column { border: 1px solid var(--line); border-radius: 8px; min-width: 0; overflow: hidden; }
     .admin-users-column table { min-width: 680px; }
+    .admin-users-column th, .admin-users-column td { padding-left: 8px; padding-right: 8px; }
+    .admin-users-column .admin-role-select { min-width: 130px; }
+    .admin-users-column td:last-child { white-space: nowrap; }
+    .admin-users-column td:last-child .button { font-size: 10px; padding-left: 8px; padding-right: 8px; }
     @media (max-width: 1100px) { .admin-users-columns { grid-template-columns: minmax(0, 1fr); } .admin-users-column table { min-width: 760px; } }
     .admin-user-status { color: var(--muted); font-size: 11px; }
     .admin-storage-summary-card { background: linear-gradient(145deg, var(--paper), var(--canvas)); border: 1px solid var(--line); border-radius: 10px; min-width: 0; padding: 10px 12px; }
