@@ -4194,8 +4194,7 @@
     const SHARED_STATE_ROW_ID = "stock-opname-team";
     const SHARED_STATE_TABLE = "stock_opname_state";
     const SHARED_STATE_CHANNEL_NAME = "stock-opname-state:stock-opname-team";
-    const SHARED_STATE_REFRESH_INTERVAL_MS = 10000;
-    const SHARED_STATE_FALLBACK_REFRESH_INTERVAL_MS = 5000;
+    const SHARED_STATE_FALLBACK_REFRESH_INTERVAL_MS = 30000;
     const WORKBOOK_ARCHIVE_BUCKET = "stock-opname-workbooks";
     const CHAT_ATTACHMENT_BUCKET = "stock-opname-chat-attachments";
     const CHAT_ATTACHMENT_MAX_SIZE = 50 * 1024 * 1024;
@@ -6860,9 +6859,13 @@
         refreshTimerIntervalMs = 0;
         return;
       }
-      const intervalMs = sharedStateRealtimeConnected
-        ? SHARED_STATE_REFRESH_INTERVAL_MS
-        : SHARED_STATE_FALLBACK_REFRESH_INTERVAL_MS;
+      if (sharedStateRealtimeConnected) {
+        clearInterval(refreshTimer);
+        refreshTimer = null;
+        refreshTimerIntervalMs = 0;
+        return;
+      }
+      const intervalMs = SHARED_STATE_FALLBACK_REFRESH_INTERVAL_MS;
       if (refreshTimer && refreshTimerIntervalMs === intervalMs) return;
       clearInterval(refreshTimer);
       refreshTimer = setInterval(() => {
