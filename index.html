@@ -745,6 +745,8 @@
     .layout-scan-list { display: grid; gap: 4px; max-height: 230px; overflow-y: auto; }
     .layout-scan-row { align-items: center; border-bottom: 1px solid #e9efeb; display: flex; gap: 8px; justify-content: space-between; min-height: 34px; padding: 3px 0; }
     .layout-scan-row.scan-issue-highlight { animation: scan-issue-row-pulse .8s ease-in-out infinite; border-bottom-color: transparent; border-radius: 4px; outline: 1px solid rgba(255, 32, 32, .72); outline-offset: -1px; }
+    .layout-scan-row.scan-over-target-highlight { background: var(--amber-soft); border-bottom-color: color-mix(in srgb, var(--amber) 48%, transparent); border-radius: 4px; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amber) 42%, transparent); }
+    .layout-scan-row.scan-over-target-highlight .layout-scan-detail[open] { background: var(--amber-soft); }
     @keyframes scan-issue-row-pulse {
       0%, 100% { background-color: transparent; outline-color: rgba(255, 32, 32, .68); }
       50% { background-color: rgba(255, 32, 32, .08); outline-color: #ff2020; }
@@ -8530,6 +8532,7 @@
         const hasInvalidScan = modeScans.some((scan) => scan.status === "duplicate" || scan.status === "not-found");
         const quantityStatus = getLayoutQuantityStatus(modeScans.length, target);
         const scanOverTarget = isLayoutScanOverTarget(layout, modeScans.length);
+        const overTargetScanIds = getLayoutOverTargetScanIds(layout, modeScans);
         const quantityMatched = modeScans.length > 0 && quantityStatus.className === "match" && !hasInvalidScan;
         const cardClasses = [
           quantityMatched ? "quantity-matched" : "",
@@ -8537,7 +8540,12 @@
           hasInvalidScan || scanOverTarget ? "duplicate-warning" : "",
           scanOverTarget ? "scan-target-over" : ""
         ].filter(Boolean).join(" ");
-        const scanRows = visibleScans.length ? visibleScans.slice().reverse().map((scan) => `<div class="layout-scan-row${scanIssueHighlightIds.has(scan.id) ? " scan-issue-highlight" : ""}" data-layout-scan-row="${escapeHtml(scan.id)}">${renderScanDetail(scan)}${canUseRack ? `<button class="layout-delete" type="button" data-delete-scan="${escapeHtml(scan.id)}" aria-label="Hapus scan ${escapeHtml(scan.serial)}" title="Hapus scan">×</button>` : ""}</div>`).join("") : `<div class="layout-record-empty">${searchQuery ? "Tidak ada scan yang cocok dengan pencarian." : "Belum ada scan."}</div>`;
+        const scanRows = visibleScans.length ? visibleScans.slice().reverse().map((scan) => {
+          const rowHighlightClass = overTargetScanIds.has(scan.id)
+            ? " scan-over-target-highlight"
+            : scanIssueHighlightIds.has(scan.id) ? " scan-issue-highlight" : "";
+          return `<div class="layout-scan-row${rowHighlightClass}" data-layout-scan-row="${escapeHtml(scan.id)}">${renderScanDetail(scan)}${canUseRack ? `<button class="layout-delete" type="button" data-delete-scan="${escapeHtml(scan.id)}" aria-label="Hapus scan ${escapeHtml(scan.serial)}" title="Hapus scan">×</button>` : ""}</div>`;
+        }).join("") : `<div class="layout-record-empty">${searchQuery ? "Tidak ada scan yang cocok dengan pencarian." : "Belum ada scan."}</div>`;
         const manualRows = visibleManualEntries.length
           ? renderManualEntryCards(visibleManualEntries, { products: state.products, canDelete: canUseRack, latestEntryId: lastManualEntryId })
           : `<div class="layout-record-empty">${searchQuery ? "Tidak ada input manual yang cocok dengan pencarian." : "Belum ada input manual."}</div>`;
@@ -8638,6 +8646,13 @@
       return Number.isSafeInteger(target) && target >= 0 && scanCount > target;
     }
 
+    function getLayoutOverTargetScanIds(layout, scans) {
+      const target = state.layoutQuantities[layout];
+      return Number.isSafeInteger(target) && target >= 0 && scans.length > target
+        ? new Set(scans.slice(target).map((scan) => scan.id))
+        : new Set();
+    }
+
     function updateLayoutQuantity(input) {
       if (!requireActiveSessionEdit()) return;
       if (!requireUploadedVefForRack()) return;
@@ -8653,6 +8668,7 @@
       const scanCount = modeScans.length;
       const status = getLayoutQuantityStatus(scanCount, state.layoutQuantities[layout]);
       const scanOverTarget = isLayoutScanOverTarget(layout, scanCount);
+      const overTargetScanIds = getLayoutOverTargetScanIds(layout, modeScans);
       const hasInvalidScan = modeScans.some((event) => event.status === "duplicate" || event.status === "not-found");
       const quantityMatched = scanCount > 0 && status.className === "match" && !hasInvalidScan;
       const statusElement = document.querySelector(`[data-layout-quantity-status="${CSS.escape(layout)}"]`);
@@ -8661,6 +8677,11 @@
         statusElement.textContent = status.label;
       }
       const card = document.querySelector(`[data-layout-form="${CSS.escape(layout)}"]`)?.closest(".layout-card");
+      card?.querySelectorAll("[data-layout-scan-row]").forEach((row) => {
+        const isOverTarget = overTargetScanIds.has(row.dataset.layoutScanRow);
+        row.classList.toggle("scan-over-target-highlight", isOverTarget);
+        row.classList.toggle("scan-issue-highlight", !isOverTarget && scanIssueHighlightIds.has(row.dataset.layoutScanRow));
+      });
       card?.classList.toggle("quantity-matched", quantityMatched);
       card?.classList.toggle("quantity-over", status.className === "different");
       card?.classList.toggle("duplicate-warning", hasInvalidScan || scanOverTarget);
