@@ -547,6 +547,7 @@
     .segregation-scan-results .segregation-found-table td:nth-child(5) { width: 150px; }
     .segregation-scan-results .segregation-found-table th:nth-child(6),
     .segregation-scan-results .segregation-found-table td:nth-child(6) { width: 128px; }
+    .segregation-brand-name { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .segregation-item-name-button { background: transparent; border: 0; color: inherit; cursor: pointer; display: block; font: inherit; max-width: 100%; overflow: hidden; padding: 0; text-align: left; text-overflow: ellipsis; white-space: nowrap; width: 100%; }
     .segregation-item-name-button:hover { color: var(--green-dark); text-decoration: underline; }
     .segregation-scan-results .segregation-row-delete { align-items: center; background: transparent; border: 1px solid transparent; border-radius: 4px; color: var(--red); display: inline-flex; font-size: 15px; height: 25px; justify-content: center; line-height: 1; padding: 0; width: 25px; }
@@ -9400,7 +9401,10 @@
         ? `${selectedItem.itemCode}${selectedItem.itemName ? ` · ${selectedItem.itemName}` : ""}`
         : "";
       const renderFoundRows = () => foundScans.length
-        ? foundScans.map((scan, index) => `<tr id="segregation-scan-row-${segregationScans.indexOf(scan)}"><td class="number-cell">${index + 1}</td><td>${escapeHtml(scan.brand || "-")}</td><td>${escapeHtml(scan.itemCode || "-")}</td><td><button class="segregation-item-name-button" type="button" data-segregation-item-name="${escapeHtml(scan.itemName || "-")}" aria-label="Lihat nama item lengkap: ${escapeHtml(scan.itemName || "-")}" title="Klik untuk melihat nama lengkap">${escapeHtml(scan.itemName || "-")}</button></td><td class="quantity-cell">${escapeHtml(scan.serial)}</td><td>${escapeHtml(scan.sourceWarehouse || "-")}</td><td><button class="segregation-row-delete" type="button" data-delete-segregation-scan="${segregationScans.indexOf(scan)}" aria-label="Hapus SN ${escapeHtml(scan.serial)}" title="Hapus">×</button></td></tr>`).join("")
+        ? foundScans.map((scan, index) => {
+          const brand = scan.brand || "-";
+          return `<tr id="segregation-scan-row-${segregationScans.indexOf(scan)}"><td class="number-cell">${index + 1}</td><td><span class="segregation-brand-name" title="${escapeHtml(brand)}">${escapeHtml(brand)}</span></td><td>${escapeHtml(scan.itemCode || "-")}</td><td><button class="segregation-item-name-button" type="button" data-segregation-item-name="${escapeHtml(scan.itemName || "-")}" aria-label="Lihat nama item lengkap: ${escapeHtml(scan.itemName || "-")}" title="Klik untuk melihat nama lengkap">${escapeHtml(scan.itemName || "-")}</button></td><td class="quantity-cell">${escapeHtml(scan.serial)}</td><td>${escapeHtml(scan.sourceWarehouse || "-")}</td><td><button class="segregation-row-delete" type="button" data-delete-segregation-scan="${segregationScans.indexOf(scan)}" aria-label="Hapus SN ${escapeHtml(scan.serial)}" title="Hapus">×</button></td></tr>`;
+        }).join("")
         : `<tr><td class="segregation-empty" colspan="7">Belum ada SN yang cocok.</td></tr>`;
       const renderNotFoundRows = () => notFoundScans.length
         ? notFoundScans.map((scan, index) => `<tr id="segregation-scan-row-${segregationScans.indexOf(scan)}"><td class="number-cell">${index + 1}</td><td class="quantity-cell">${escapeHtml(scan.serial)}</td><td><button class="segregation-row-delete" type="button" data-delete-segregation-scan="${segregationScans.indexOf(scan)}" aria-label="Hapus SN ${escapeHtml(scan.serial)}" title="Hapus">×</button></td></tr>`).join("")
