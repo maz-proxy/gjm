@@ -9594,45 +9594,112 @@
       const input = document.getElementById("segregation-scan-input");
       const serial = input?.value.trim() || "";
       if (!serial) return;
+      await processSegregationScans([serial]);
+    }
+
+    function handleSegregationScanPaste(event) {
+      const pastedText = event.clipboardData?.getData("text/plain") || "";
+      if (!/[\r\n\t]/.test(pastedText)) return;
+      const serials = pastedText.split(/[\r\n\t]+/).map((serial) => serial.trim()).filter(Boolean);
+      if (serials.length < 2) return;
+      event.preventDefault();
+      void processSegregationScans(serials);
+    }
+
+    async function processSegregationScans(serials) {
       if (!segregationSource) {
         segregationStatus = { message: "Unggah daftar SN terlebih dahulu.", type: "error" };
         render();
         return;
       }
-      const normalizedSerial = normalizeSerial(serial);
-      const duplicateIndex = segregationScans.findIndex((scan) => scan.normalizedSerial === normalizedSerial);
-      if (duplicateIndex >= 0) {
+
+      const isBatch = serials.length > 1;
+      const indexesBySerial = new Map();
+      segregationScans.forEach((scan, index) => {
+        if (!indexesBySerial.has(scan.normalizedSerial)) indexesBySerial.set(scan.normalizedSerial, index);
+      });
+      let foundCount = 0;
+      let notFoundCount = 0;
+      let duplicateCount = 0;
+      let firstDuplicateIndex = null;
+      let firstDuplicateSerial = "";
+      let firstResultType = "";
+
+      for (const value of serials) {
+        const serial = String(value ?? "").trim();
+        const normalizedSerial = normalizeSerial(serial);
+        if (!normalizedSerial) continue;
+
+        const duplicateIndex = indexesBySerial.get(normalizedSerial);
+        if (duplicateIndex !== undefined) {
+          duplicateCount++;
+          if (firstDuplicateIndex === null) {
+            firstDuplicateIndex = duplicateIndex;
+            firstDuplicateSerial = serial;
+          }
+          continue;
+        }
+
+        const sourceRecord = segregationSource.recordsBySerial.get(normalizedSerial);
+        const found = Boolean(sourceRecord && (!segregationSelectedItemCode
+          || sourceRecord.itemCode.trim().toLocaleUpperCase("id-ID") === segregationSelectedItemCode));
+        if (found) foundCount++;
+        else notFoundCount++;
+        if (!firstResultType) firstResultType = found ? "match" : "not-found";
+        const scanIndex = segregationScans.length;
+        segregationScans.push({
+          serial,
+          normalizedSerial,
+          found,
+          brand: sourceRecord?.brand || "",
+          itemCode: sourceRecord?.itemCode || "",
+          itemName: sourceRecord?.itemName || "",
+          sourceWarehouse: sourceRecord?.sourceWarehouse || "",
+          targetWarehouse: "",
+          scannedAt: new Date().toISOString()
+        });
+        indexesBySerial.set(normalizedSerial, scanIndex);
+      }
+
+      const addedCount = foundCount + notFoundCount;
+      if (!addedCount && !duplicateCount) return;
+
+      if (!isBatch && duplicateCount) {
         vibrateForEntry();
         playScanBeep("duplicate");
-        segregationDuplicateScanIndex = duplicateIndex;
-        segregationStatus = { message: `SN ${serial} sudah pernah diperiksa.`, type: "error" };
+        segregationDuplicateScanIndex = firstDuplicateIndex;
+        segregationStatus = { message: `SN ${firstDuplicateSerial} sudah pernah diperiksa.`, type: "error" };
         render();
         document.getElementById("segregation-duplicate-dialog")?.showModal();
         return;
       }
-      const sourceRecord = segregationSource.recordsBySerial.get(normalizedSerial);
-      const found = Boolean(sourceRecord && (!segregationSelectedItemCode
-        || sourceRecord.itemCode.trim().toLocaleUpperCase("id-ID") === segregationSelectedItemCode));
+
+      if (isBatch) {
+        vibrateForEntry();
+        playScanBeep(duplicateCount ? "duplicate" : firstResultType);
+        const summary = `${formatNumber(addedCount)} SN diproses: ${formatNumber(foundCount)} ditemukan, ${formatNumber(notFoundCount)} tidak ditemukan.${duplicateCount ? ` ${formatNumber(duplicateCount)} duplikat dilewati.` : ""}`;
+        segregationStatus = {
+          message: summary,
+          type: notFoundCount || duplicateCount ? "error" : "success"
+        };
+        segregationDuplicateScanIndex = firstDuplicateIndex;
+        await persistSegregationData();
+        render();
+        if (duplicateCount) document.getElementById("segregation-duplicate-dialog")?.showModal();
+        else document.getElementById("segregation-scan-input")?.focus();
+        return;
+      }
+
+      const addedScan = segregationScans[segregationScans.length - 1];
       vibrateForEntry();
-      playScanBeep(found ? "match" : "not-found");
-      segregationScans.push({
-        serial,
-        normalizedSerial,
-        found,
-        brand: sourceRecord?.brand || "",
-        itemCode: sourceRecord?.itemCode || "",
-        itemName: sourceRecord?.itemName || "",
-        sourceWarehouse: sourceRecord?.sourceWarehouse || "",
-        targetWarehouse: "",
-        scannedAt: new Date().toISOString()
-      });
+      playScanBeep(addedScan.found ? "match" : "not-found");
       segregationStatus = {
-        message: found
-          ? `SN ${serial} ditemukan di daftar sumber.`
-          : sourceRecord && segregationSelectedItemCode
-            ? `SN ${serial} ditemukan, tetapi bukan bagian dari Item/SKU ${segregationSelectedItemCode}.`
-            : `SN ${serial} tidak ditemukan dan ditambahkan ke tabel SN not Found.`,
-        type: found ? "success" : "error"
+        message: addedScan.found
+          ? `SN ${addedScan.serial} ditemukan di daftar sumber.`
+          : segregationSource.recordsBySerial.has(addedScan.normalizedSerial) && segregationSelectedItemCode
+            ? `SN ${addedScan.serial} ditemukan, tetapi bukan bagian dari Item/SKU ${segregationSelectedItemCode}.`
+            : `SN ${addedScan.serial} tidak ditemukan dan ditambahkan ke tabel SN not Found.`,
+        type: addedScan.found ? "success" : "error"
       };
       await persistSegregationData();
       render();
@@ -13089,6 +13156,7 @@
       document.getElementById("segregation-file-input")?.addEventListener("change", (event) => void importSegregationFile(event));
       document.getElementById("segregation-remove-file")?.addEventListener("click", () => void removeSegregationFile());
       document.getElementById("segregation-item-select")?.addEventListener("change", setSegregationItemFilter);
+      document.getElementById("segregation-scan-input")?.addEventListener("paste", handleSegregationScanPaste);
       document.getElementById("segregation-scan-form")?.addEventListener("submit", submitSegregationScan);
       document.getElementById("open-segregation-merge")?.addEventListener("click", () => document.getElementById("segregation-merge-dialog")?.showModal());
       document.getElementById("open-segregation-template")?.addEventListener("click", () => document.getElementById("segregation-template-dialog")?.showModal());
