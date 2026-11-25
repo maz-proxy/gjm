@@ -747,9 +747,15 @@
     .layout-scan-row.scan-issue-highlight { animation: scan-issue-row-pulse .8s ease-in-out infinite; border-bottom-color: transparent; border-radius: 4px; outline: 1px solid rgba(255, 32, 32, .72); outline-offset: -1px; }
     .layout-scan-row.scan-over-target-highlight,
     .layout-scan-row.scan-over-target-highlight .layout-scan-detail[open] { animation: scan-over-target-row-pulse .8s ease-in-out infinite; background: var(--amber-soft); border-bottom-color: color-mix(in srgb, var(--amber) 48%, transparent); border-radius: 4px; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amber) 42%, transparent); }
+    .layout-scan-row.scan-duplicate-match-highlight,
+    .layout-scan-row.scan-duplicate-match-highlight .layout-scan-detail[open] { animation: scan-duplicate-match-row-pulse .8s ease-in-out infinite; background: color-mix(in srgb, var(--green) 14%, var(--paper)); border-bottom-color: color-mix(in srgb, var(--green) 48%, transparent); border-radius: 4px; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--green) 42%, transparent); }
     @keyframes scan-over-target-row-pulse {
       0%, 100% { background-color: transparent; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amber) 28%, transparent); }
       50% { background-color: var(--amber-soft); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amber) 68%, transparent); }
+    }
+    @keyframes scan-duplicate-match-row-pulse {
+      0%, 100% { background-color: transparent; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--green) 28%, transparent); }
+      50% { background-color: color-mix(in srgb, var(--green) 18%, var(--paper)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--green) 68%, transparent); }
     }
     @keyframes scan-issue-row-pulse {
       0%, 100% { background-color: transparent; outline-color: rgba(255, 32, 32, .68); }
@@ -759,6 +765,8 @@
       .layout-scan-row.scan-issue-highlight { animation: none; background-color: rgba(255, 32, 32, .08); outline-color: #ff2020; }
       .layout-scan-row.scan-over-target-highlight,
       .layout-scan-row.scan-over-target-highlight .layout-scan-detail[open] { animation: none; background-color: var(--amber-soft); }
+      .layout-scan-row.scan-duplicate-match-highlight,
+      .layout-scan-row.scan-duplicate-match-highlight .layout-scan-detail[open] { animation: none; background-color: color-mix(in srgb, var(--green) 14%, var(--paper)); }
     }
     .layout-scan-row .layout-scan-detail { flex: 1; min-width: 0; }
     .layout-scan-summary { align-items: center; display: flex; flex-wrap: wrap; gap: 4px 10px; }
@@ -4568,6 +4576,7 @@
     let segregationPersistenceQueue = Promise.resolve();
     let lastManualEntryId = "";
     const scanIssueHighlightIds = new Set();
+    const scanDuplicateMatchHighlightIds = new Set();
     let searchTerm = "";
     let layoutSearchTerm = "";
     let toastTimer;
@@ -8547,9 +8556,11 @@
           scanOverTarget ? "scan-target-over" : ""
         ].filter(Boolean).join(" ");
         const scanRows = visibleScans.length ? visibleScans.slice().reverse().map((scan) => {
-          const rowHighlightClass = overTargetScanIds.has(scan.id)
-            ? " scan-over-target-highlight"
-            : scanIssueHighlightIds.has(scan.id) ? " scan-issue-highlight" : "";
+          const rowHighlightClass = scanDuplicateMatchHighlightIds.has(scan.id)
+            ? " scan-duplicate-match-highlight"
+            : overTargetScanIds.has(scan.id)
+              ? " scan-over-target-highlight"
+              : scanIssueHighlightIds.has(scan.id) ? " scan-issue-highlight" : "";
           return `<div class="layout-scan-row${rowHighlightClass}" data-layout-scan-row="${escapeHtml(scan.id)}">${renderScanDetail(scan)}${canUseRack ? `<button class="layout-delete" type="button" data-delete-scan="${escapeHtml(scan.id)}" aria-label="Hapus scan ${escapeHtml(scan.serial)}" title="Hapus scan">×</button>` : ""}</div>`;
         }).join("") : `<div class="layout-record-empty">${searchQuery ? "Tidak ada scan yang cocok dengan pencarian." : "Belum ada scan."}</div>`;
         const manualRows = visibleManualEntries.length
@@ -8684,9 +8695,12 @@
       }
       const card = document.querySelector(`[data-layout-form="${CSS.escape(layout)}"]`)?.closest(".layout-card");
       card?.querySelectorAll("[data-layout-scan-row]").forEach((row) => {
-        const isOverTarget = overTargetScanIds.has(row.dataset.layoutScanRow);
+        const scanId = row.dataset.layoutScanRow;
+        const isDuplicateMatch = scanDuplicateMatchHighlightIds.has(scanId);
+        const isOverTarget = !isDuplicateMatch && overTargetScanIds.has(scanId);
+        row.classList.toggle("scan-duplicate-match-highlight", isDuplicateMatch);
         row.classList.toggle("scan-over-target-highlight", isOverTarget);
-        row.classList.toggle("scan-issue-highlight", !isOverTarget && scanIssueHighlightIds.has(row.dataset.layoutScanRow));
+        row.classList.toggle("scan-issue-highlight", !isDuplicateMatch && !isOverTarget && scanIssueHighlightIds.has(scanId));
       });
       card?.classList.toggle("quantity-matched", quantityMatched);
       card?.classList.toggle("quantity-over", status.className === "different");
@@ -13921,6 +13935,10 @@
       const productBefore = state.products.find((product) => product.id === state.serialMaster[normalizeSerial(serial)]?.productId);
       const soBefore = productBefore ? scannedFor(productBefore.id) : 0;
       const scan = addScanEvent(serial, state.scanEvents, layout);
+      if (scan.status === "duplicate") {
+        const previousScan = state.scanEvents.find((event) => event.id !== scan.id && event.serialKey === scan.serialKey && event.status === "match");
+        if (previousScan) scanDuplicateMatchHighlightIds.add(previousScan.id);
+      }
       if (scan.status === "duplicate" || scan.status === "not-found") scanIssueHighlightIds.add(scan.id);
       const modeScanCount = state.scanEvents.filter((item) => item.layout === layout && item.status !== "non-laptop").length;
       const scanOverTarget = isLayoutScanOverTarget(layout, modeScanCount);
@@ -14949,6 +14967,10 @@
       if (scanIssueHighlightIds.size) {
         scanIssueHighlightIds.clear();
         document.querySelectorAll(".layout-scan-row.scan-issue-highlight").forEach((row) => row.classList.remove("scan-issue-highlight"));
+      }
+      if (scanDuplicateMatchHighlightIds.size) {
+        scanDuplicateMatchHighlightIds.clear();
+        document.querySelectorAll(".layout-scan-row.scan-duplicate-match-highlight").forEach((row) => row.classList.remove("scan-duplicate-match-highlight"));
       }
       if (currentPage !== "layouts" || !(event.target instanceof Element)) return;
       if (event.target.closest(".nav-item[data-page], [data-page-link], [data-open-workspace], [data-start-workspace], [data-open-completed-session], #back-to-completed-sessions")) {
