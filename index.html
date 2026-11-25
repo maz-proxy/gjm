@@ -745,14 +745,20 @@
     .layout-scan-list { display: grid; gap: 4px; max-height: 230px; overflow-y: auto; }
     .layout-scan-row { align-items: center; border-bottom: 1px solid #e9efeb; display: flex; gap: 8px; justify-content: space-between; min-height: 34px; padding: 3px 0; }
     .layout-scan-row.scan-issue-highlight { animation: scan-issue-row-pulse .8s ease-in-out infinite; border-bottom-color: transparent; border-radius: 4px; outline: 1px solid rgba(255, 32, 32, .72); outline-offset: -1px; }
-    .layout-scan-row.scan-over-target-highlight { background: var(--amber-soft); border-bottom-color: color-mix(in srgb, var(--amber) 48%, transparent); border-radius: 4px; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amber) 42%, transparent); }
-    .layout-scan-row.scan-over-target-highlight .layout-scan-detail[open] { background: var(--amber-soft); }
+    .layout-scan-row.scan-over-target-highlight,
+    .layout-scan-row.scan-over-target-highlight .layout-scan-detail[open] { animation: scan-over-target-row-pulse .8s ease-in-out infinite; background: var(--amber-soft); border-bottom-color: color-mix(in srgb, var(--amber) 48%, transparent); border-radius: 4px; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amber) 42%, transparent); }
+    @keyframes scan-over-target-row-pulse {
+      0%, 100% { background-color: transparent; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amber) 28%, transparent); }
+      50% { background-color: var(--amber-soft); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amber) 68%, transparent); }
+    }
     @keyframes scan-issue-row-pulse {
       0%, 100% { background-color: transparent; outline-color: rgba(255, 32, 32, .68); }
       50% { background-color: rgba(255, 32, 32, .08); outline-color: #ff2020; }
     }
     @media (prefers-reduced-motion: reduce) {
       .layout-scan-row.scan-issue-highlight { animation: none; background-color: rgba(255, 32, 32, .08); outline-color: #ff2020; }
+      .layout-scan-row.scan-over-target-highlight,
+      .layout-scan-row.scan-over-target-highlight .layout-scan-detail[open] { animation: none; background-color: var(--amber-soft); }
     }
     .layout-scan-row .layout-scan-detail { flex: 1; min-width: 0; }
     .layout-scan-summary { align-items: center; display: flex; flex-wrap: wrap; gap: 4px 10px; }
