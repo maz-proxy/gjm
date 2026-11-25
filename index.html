@@ -13935,9 +13935,13 @@
       const productBefore = state.products.find((product) => product.id === state.serialMaster[normalizeSerial(serial)]?.productId);
       const soBefore = productBefore ? scannedFor(productBefore.id) : 0;
       const scan = addScanEvent(serial, state.scanEvents, layout);
+      let previousScanId = "";
       if (scan.status === "duplicate") {
         const previousScan = state.scanEvents.find((event) => event.id !== scan.id && event.serialKey === scan.serialKey && event.status === "match");
-        if (previousScan) scanDuplicateMatchHighlightIds.add(previousScan.id);
+        if (previousScan) {
+          previousScanId = previousScan.id;
+          scanDuplicateMatchHighlightIds.add(previousScanId);
+        }
       }
       if (scan.status === "duplicate" || scan.status === "not-found") scanIssueHighlightIds.add(scan.id);
       const modeScanCount = state.scanEvents.filter((item) => item.layout === layout && item.status !== "non-laptop").length;
@@ -13958,6 +13962,12 @@
       input.value = "";
       refreshCountEntryView();
       document.querySelector(`[data-layout-form="${CSS.escape(layout)}"] .layout-input`)?.focus({ preventScroll: true });
+      if (previousScanId) {
+        requestAnimationFrame(() => {
+          const previousRow = document.querySelector(`[data-layout-scan-row="${CSS.escape(previousScanId)}"]`);
+          previousRow?.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+        });
+      }
       if (scan.status === "not-found") notify(`SN ${serial} tidak sesuai dengan Master VEF.`);
       else if (scan.status === "duplicate") notify(`SN ${serial} terdeteksi duplikat.`);
     }
