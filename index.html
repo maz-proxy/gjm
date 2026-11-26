@@ -556,7 +556,14 @@
     .segregation-scan-results .segregation-found-table td:last-child,
     .segregation-scan-results .segregation-not-found-table th:last-child,
     .segregation-scan-results .segregation-not-found-table td:last-child { padding-left: 2px; padding-right: 2px; text-align: center; width: 30px; }
-    .workspace-segregation-tabs { margin: 0 0 14px; }
+    .workspace-segregation-navigation { align-items: center; display: flex; gap: 12px; justify-content: space-between; margin: 0 0 14px; }
+    .workspace-segregation-tabs { margin: 0; }
+    .workspace-segregation-splitter { flex: 0 1 360px; min-width: 230px; }
+    .workspace-segregation-splitter-button { width: 100%; }
+    @media (max-width: 560px) {
+      .workspace-segregation-navigation { align-items: stretch; flex-direction: column; }
+      .workspace-segregation-splitter { flex: 0 0 auto; min-width: 0; width: 100%; }
+    }
     .brand-segregation-category-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); margin-bottom: 12px; }
     .brand-segregation-category-card { align-items: flex-start; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; color: var(--ink); cursor: pointer; display: flex; flex-direction: column; gap: 7px; justify-content: center; min-height: 82px; padding: 12px 14px; text-align: left; transition: border-color .15s ease, box-shadow .15s ease, background .15s ease; }
     .brand-segregation-category-card:hover { border-color: color-mix(in srgb, var(--green) 48%, var(--line)); box-shadow: 0 4px 12px rgba(35, 59, 38, .08); }
@@ -9028,9 +9035,18 @@
     }
 
     function renderWorkspaceSegregationTabs() {
-      return `<div class="recorded-view-tabs workspace-segregation-tabs" role="tablist" aria-label="Jenis Segregation">
-        <button class="button button-secondary${selectedWorkspaceSegregationTab === "brand" ? " active" : ""}" type="button" role="tab" aria-selected="${selectedWorkspaceSegregationTab === "brand"}" data-workspace-segregation-tab="brand">Brand Segregation</button>
-        <button class="button button-secondary${selectedWorkspaceSegregationTab === "sn" ? " active" : ""}" type="button" role="tab" aria-selected="${selectedWorkspaceSegregationTab === "sn"}" data-workspace-segregation-tab="sn">SN Segregation</button>
+      const splitterAction = selectedWorkspaceSegregationTab === "sn"
+        ? `<div class="workspace-segregation-splitter">
+            <button class="button segregation-preview-button workspace-segregation-splitter-button" id="open-segregation-splitter" type="button" ${segregationSplitLoading ? "disabled" : ""}><strong>Spliter</strong><span>${segregationSplitLoading ? currentLanguage === "en" ? "Processing file..." : "Memproses file..." : "Pisah SN Stock Entry menjadi satu baris per serial number."}</span></button>
+            <input class="upload-input" id="segregation-split-file-input" type="file" accept=".xlsx,.xls" aria-label="Pilih file Stock Entry Excel">
+          </div>`
+        : "";
+      return `<div class="workspace-segregation-navigation">
+        <div class="recorded-view-tabs workspace-segregation-tabs" role="tablist" aria-label="Jenis Segregation">
+          <button class="button button-secondary${selectedWorkspaceSegregationTab === "brand" ? " active" : ""}" type="button" role="tab" aria-selected="${selectedWorkspaceSegregationTab === "brand"}" data-workspace-segregation-tab="brand">Brand Segregation</button>
+          <button class="button button-secondary${selectedWorkspaceSegregationTab === "sn" ? " active" : ""}" type="button" role="tab" aria-selected="${selectedWorkspaceSegregationTab === "sn"}" data-workspace-segregation-tab="sn">SN Segregation</button>
+        </div>
+        ${splitterAction}
       </div>`;
     }
 
@@ -9515,8 +9531,6 @@
         <section class="segregation-preview-actions" aria-label="Laporan Segregation">
           <button class="button segregation-preview-button" id="open-segregation-merge" type="button"><strong>Data Merge &amp; Sort</strong><span>${formatNumber(mergedRows.length)} kelompok · ${formatNumber(foundScans.length)} SN Found</span></button>
           <button class="button segregation-preview-button" id="open-segregation-template" type="button"><strong>Stock Entry Template</strong><span>${formatNumber(mergedRows.length)} baris siap diekspor</span></button>
-          <button class="button segregation-preview-button" id="open-segregation-splitter" type="button" ${segregationSplitLoading ? "disabled" : ""}><strong>Spliter</strong><span>${segregationSplitLoading ? currentLanguage === "en" ? "Processing file..." : "Memproses file..." : "Pisah SN Stock Entry menjadi satu baris per serial number."}</span></button>
-          <input class="upload-input" id="segregation-split-file-input" type="file" accept=".xlsx,.xls" aria-label="Pilih file Stock Entry Excel">
         </section>
         <dialog class="feature-dialog segregation-preview-dialog" id="segregation-merge-dialog" aria-labelledby="segregation-merge-title">
           <div class="dialog-head"><div><div class="dialog-title" id="segregation-merge-title">Data Merge &amp; Sort</div><div class="dialog-subtitle">${formatNumber(mergedRows.length)} kelompok · ${formatNumber(foundScans.length)} SN Found</div></div><button class="dialog-close" type="button" data-segregation-dialog-close="segregation-merge-dialog" aria-label="Tutup">×</button></div>
