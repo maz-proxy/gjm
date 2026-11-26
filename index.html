@@ -3232,6 +3232,16 @@
       "Perbaiki tanggal": "Fix date",
       "Data belum disimpan.": "The data has not been saved.",
       "Periksa SN": "Check serial number",
+      "Spliter": "Splitter",
+      "Pisah SN Stock Entry menjadi satu baris per serial number.": "Split Stock Entry serial numbers into one row per serial number.",
+      "Pratinjau Spliter": "Splitter preview",
+      "baris setelah SN dipisah ·": "rows after splitting serial numbers ·",
+      "Ekspor hasil Spliter": "Export split result",
+      "Pilih file Stock Entry Excel (.xlsx/.xls).": "Choose a Stock Entry Excel file (.xlsx/.xls).",
+      "Kolom ID, Qty, Serial No, atau Default Source Warehouse tidak ditemukan.": "ID, Qty, Serial No, or Default Source Warehouse column was not found.",
+      "Tidak ada baris data pada file Stock Entry.": "No data rows were found in the Stock Entry file.",
+      "File Spliter gagal diproses:": "Splitter file failed to process:",
+      "Hasil Spliter gagal diekspor:": "Splitter result failed to export:",
       "sudah pernah masuk hasil scan.": "was already scanned.",
       "Lihat SN yang sudah masuk": "View serial numbers already scanned",
       "Belum ada SN yang cocok.": "No matching serial numbers yet.",
@@ -4573,6 +4583,8 @@
     let segregationFileLoading = false;
     let segregationStatus = { message: "", type: "" };
     let segregationDuplicateScanIndex = null;
+    let segregationSplitResult = null;
+    let segregationSplitLoading = false;
     let segregationPersistenceQueue = Promise.resolve();
     let lastManualEntryId = "";
     const scanIssueHighlightIds = new Set();
@@ -9417,6 +9429,18 @@
       const foundScans = getSegregationFoundScans();
       const notFoundScans = getSegregationNotFoundScans();
       const mergedRows = buildSegregationMergeRows();
+      const splitPreviewRows = segregationSplitResult?.rows.slice(0, 100) || [];
+      const splitPreviewSubtitle = segregationSplitResult
+        ? currentLanguage === "en"
+          ? `${formatNumber(segregationSplitResult.rows.length)} rows after splitting serial numbers · ${formatNumber(segregationSplitResult.serialCount)} serials · ${escapeHtml(segregationSplitResult.fileName)}`
+          : `${formatNumber(segregationSplitResult.rows.length)} baris setelah SN dipisah · ${formatNumber(segregationSplitResult.serialCount)} SN · ${escapeHtml(segregationSplitResult.fileName)}`
+        : "";
+      const splitPreviewLimitMessage = currentLanguage === "en"
+        ? `Preview shows ${formatNumber(splitPreviewRows.length)} of ${formatNumber(segregationSplitResult?.rows.length || 0)} rows. The export contains all rows.`
+        : `Pratinjau menampilkan ${formatNumber(splitPreviewRows.length)} dari ${formatNumber(segregationSplitResult?.rows.length || 0)} baris. Seluruh hasil tersedia pada file ekspor.`;
+      const splitPreviewMarkup = splitPreviewRows.map((row) =>
+        `<tr>${segregationSplitResult.headers.map((_, index) => `<td>${escapeHtml(formatSegregationSplitCell(row[index]))}</td>`).join("")}</tr>`
+      ).join("");
       const sourceRecords = segregationSource ? [...segregationSource.recordsBySerial.values()] : [];
       const totalSkus = segregationSelectedItemCode
         ? 1
@@ -9491,6 +9515,8 @@
         <section class="segregation-preview-actions" aria-label="Laporan Segregation">
           <button class="button segregation-preview-button" id="open-segregation-merge" type="button"><strong>Data Merge &amp; Sort</strong><span>${formatNumber(mergedRows.length)} kelompok · ${formatNumber(foundScans.length)} SN Found</span></button>
           <button class="button segregation-preview-button" id="open-segregation-template" type="button"><strong>Stock Entry Template</strong><span>${formatNumber(mergedRows.length)} baris siap diekspor</span></button>
+          <button class="button segregation-preview-button" id="open-segregation-splitter" type="button" ${segregationSplitLoading ? "disabled" : ""}><strong>Spliter</strong><span>${segregationSplitLoading ? currentLanguage === "en" ? "Processing file..." : "Memproses file..." : "Pisah SN Stock Entry menjadi satu baris per serial number."}</span></button>
+          <input class="upload-input" id="segregation-split-file-input" type="file" accept=".xlsx,.xls" aria-label="Pilih file Stock Entry Excel">
         </section>
         <dialog class="feature-dialog segregation-preview-dialog" id="segregation-merge-dialog" aria-labelledby="segregation-merge-title">
           <div class="dialog-head"><div><div class="dialog-title" id="segregation-merge-title">Data Merge &amp; Sort</div><div class="dialog-subtitle">${formatNumber(mergedRows.length)} kelompok · ${formatNumber(foundScans.length)} SN Found</div></div><button class="dialog-close" type="button" data-segregation-dialog-close="segregation-merge-dialog" aria-label="Tutup">×</button></div>
@@ -9502,6 +9528,11 @@
           <div class="segregation-preview-body"><section class="table-section"><div class="table-toolbar"><div class="table-title">Data untuk diekspor</div><div class="segregation-actions"><button class="button button-primary" id="export-segregation-workbook" type="button" ${foundScans.length ? "" : "disabled"}>Unduh Excel</button><button class="button button-secondary" id="export-segregation-csv" type="button" ${foundScans.length ? "" : "disabled"}>Unduh CSV</button></div></div><div class="table-scroll"><table><thead><tr><th>Source Warehouse</th><th>Item Code</th><th>Qty</th><th>Serial No</th></tr></thead><tbody>${mergedRows.length ? mergedRows.map((group) => `<tr><td>${escapeHtml(group.sourceWarehouse || "-")}</td><td>${escapeHtml(group.itemCode || "-")}</td><td class="number-cell">${formatNumber(group.serials.length)}</td><td><div class="segregation-serial-list">${escapeHtml(group.serials.join("\n"))}</div></td></tr>`).join("") : `<tr><td class="segregation-empty" colspan="4">Hasil scan Found akan disiapkan di sini.</td></tr>`}</tbody></table></div></section></div>
           <div class="dialog-actions"><button class="button button-secondary" type="button" data-segregation-dialog-close="segregation-template-dialog">Tutup</button></div>
         </dialog>
+        ${segregationSplitResult ? `<dialog class="feature-dialog segregation-preview-dialog" id="segregation-split-dialog" aria-labelledby="segregation-split-title">
+          <div class="dialog-head"><div><div class="dialog-title" id="segregation-split-title">Pratinjau Spliter</div><div class="dialog-subtitle">${splitPreviewSubtitle}</div></div><button class="dialog-close" type="button" data-segregation-dialog-close="segregation-split-dialog" aria-label="Tutup">×</button></div>
+          <div class="segregation-preview-body"><div class="table-scroll"><table><thead><tr>${segregationSplitResult.headers.map((header) => `<th>${escapeHtml(header)}</th>`).join("")}</tr></thead><tbody>${splitPreviewMarkup}</tbody></table></div>${segregationSplitResult.rows.length > splitPreviewRows.length ? `<p class="table-count">${splitPreviewLimitMessage}</p>` : ""}</div>
+          <div class="dialog-actions"><button class="button button-secondary" type="button" data-segregation-dialog-close="segregation-split-dialog">Tutup</button><button class="button button-primary" id="export-segregation-split" type="button">Ekspor hasil Spliter</button></div>
+        </dialog>` : ""}
         ${duplicateScan ? `<dialog class="feature-dialog segregation-duplicate-dialog" id="segregation-duplicate-dialog" aria-labelledby="segregation-duplicate-title" aria-describedby="segregation-duplicate-copy" data-scan-index="${segregationDuplicateScanIndex}">
           <div class="dialog-head"><div class="dialog-title" id="segregation-duplicate-title">SN Duplikat</div><button class="dialog-close" type="button" data-segregation-dialog-close="segregation-duplicate-dialog" aria-label="Tutup">×</button></div>
           <div class="dialog-copy" id="segregation-duplicate-copy">SN <strong>${escapeHtml(duplicateScan.serial)}</strong> sudah pernah masuk hasil scan.</div>
@@ -9512,6 +9543,129 @@
           <div class="dialog-copy" id="segregation-item-name-copy"></div>
           <div class="dialog-actions"><button class="button button-secondary" type="button" data-segregation-dialog-close="segregation-item-name-dialog">Tutup</button></div>
         </dialog>`;
+    }
+
+    function formatSegregationSplitCell(value) {
+      return value instanceof Date
+        ? formatDate(value, { day: "numeric", month: "short", year: "numeric" })
+        : String(value ?? "");
+    }
+
+    function splitStockEntryRows(headers, sourceRows, { quantityIndex, serialIndex, defaultSourceIndex }) {
+      const rows = [];
+      let serialCount = 0;
+      for (const sourceRow of sourceRows) {
+        const row = Array.from({ length: headers.length }, (_, index) => sourceRow[index] ?? "");
+        if (row.every((value) => String(value ?? "").trim() === "")) continue;
+        const serials = String(row[serialIndex] ?? "").split(/\r\n|\r|\n/).map((serial) => serial.trim()).filter(Boolean);
+        row[defaultSourceIndex] = "Default Source Warehouse";
+        if (!serials.length) {
+          rows.push(row);
+          continue;
+        }
+        for (const serial of serials) {
+          const splitRow = row.slice();
+          splitRow[quantityIndex] = 1;
+          splitRow[serialIndex] = serial;
+          rows.push(splitRow);
+          serialCount++;
+        }
+      }
+      return { rows, serialCount };
+    }
+
+    async function importSegregationSplitFile(event) {
+      const input = event.currentTarget;
+      const file = input.files?.[0];
+      input.value = "";
+      if (!file) return;
+      if (typeof XLSX === "undefined") {
+        notify("Fitur ekspor Excel tidak termuat. Periksa koneksi internet lalu muat ulang aplikasi.");
+        return;
+      }
+      if (!/\.(xlsx|xls)$/i.test(file.name)) {
+        notify("Pilih file Stock Entry Excel (.xlsx/.xls).");
+        return;
+      }
+      if (file.size > 50 * 1024 * 1024) {
+        notify("Ukuran file melebihi batas 50 MB.");
+        return;
+      }
+      if (segregationSplitLoading) return;
+      segregationSplitLoading = true;
+      render();
+      let loaded = false;
+      try {
+        const buffer = await readWorkbookFile(file, () => {});
+        const workbook = XLSX.read(buffer, { type: "array", cellDates: true, codepage: 65001 });
+        let imported = null;
+        let hasCompatibleHeader = false;
+        for (const sheetName of workbook.SheetNames) {
+          const worksheet = workbook.Sheets[sheetName];
+          const sourceRows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "", raw: true });
+          const header = findHeader(sourceRows, [["id"], ["qty"], ["serial no", "serial number"]]);
+          if (!header) continue;
+          const range = worksheet["!ref"] ? XLSX.utils.decode_range(worksheet["!ref"]) : null;
+          const columnCount = Math.max(sourceRows[header.rowIndex].length, range ? range.e.c + 1 : 0);
+          const headers = Array.from({ length: columnCount }, (_, index) => sourceRows[header.rowIndex][index] ?? "");
+          const normalizedHeaders = headers.map(normalizeField);
+          const defaultSourceIndex = normalizedHeaders.findIndex((value) =>
+            value === normalizeField("Default Source Warehouse") || value.includes(normalizeField("Default Source Warehouse"))
+          );
+          if (defaultSourceIndex < 0) continue;
+          hasCompatibleHeader = true;
+          const transformed = splitStockEntryRows(headers, sourceRows.slice(header.rowIndex + 1), {
+            quantityIndex: header.indexes[1],
+            serialIndex: header.indexes[2],
+            defaultSourceIndex
+          });
+          if (!transformed.rows.length) continue;
+          imported = { fileName: file.name, sheetName, headers, ...transformed };
+          break;
+        }
+        if (!imported) {
+          throw new Error(hasCompatibleHeader
+            ? "Tidak ada baris data pada file Stock Entry."
+            : "Kolom ID, Qty, Serial No, atau Default Source Warehouse tidak ditemukan.");
+        }
+        segregationSplitResult = imported;
+        loaded = true;
+      } catch (error) {
+        console.error("File Spliter gagal diproses:", error);
+        const detail = error instanceof Error ? error.message : "kesalahan tidak diketahui";
+        notify(currentLanguage === "en"
+          ? `Splitter file failed to process: ${detail}`
+          : `File Spliter gagal diproses: ${detail}`);
+      } finally {
+        segregationSplitLoading = false;
+        render();
+        if (loaded) document.getElementById("segregation-split-dialog")?.showModal();
+      }
+    }
+
+    function exportSegregationSplitWorkbook() {
+      if (!segregationSplitResult) {
+        notify("Tidak ada hasil Spliter untuk diekspor.");
+        return;
+      }
+      if (typeof XLSX === "undefined") {
+        notify("Fitur ekspor Excel tidak termuat. Periksa koneksi internet lalu muat ulang aplikasi.");
+        return;
+      }
+      try {
+        const workbook = XLSX.utils.book_new();
+        const worksheet = XLSX.utils.aoa_to_sheet([segregationSplitResult.headers, ...segregationSplitResult.rows]);
+        const sheetName = segregationSplitResult.sheetName.slice(0, 31) || "Stock Entry";
+        XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+        const outputName = `${segregationSplitResult.fileName.replace(/\.[^.]+$/, "")}_Split.xlsx`;
+        XLSX.writeFile(workbook, outputName, { bookType: "xlsx" });
+      } catch (error) {
+        console.error("Hasil Spliter gagal diekspor:", error);
+        const detail = error instanceof Error ? error.message : "kesalahan tidak diketahui";
+        notify(currentLanguage === "en"
+          ? `Splitter result failed to export: ${detail}`
+          : `Hasil Spliter gagal diekspor: ${detail}`);
+      }
     }
 
     async function importSegregationFile(event) {
@@ -13205,6 +13359,9 @@
       document.getElementById("segregation-scan-form")?.addEventListener("submit", submitSegregationScan);
       document.getElementById("open-segregation-merge")?.addEventListener("click", () => document.getElementById("segregation-merge-dialog")?.showModal());
       document.getElementById("open-segregation-template")?.addEventListener("click", () => document.getElementById("segregation-template-dialog")?.showModal());
+      document.getElementById("open-segregation-splitter")?.addEventListener("click", () => document.getElementById("segregation-split-file-input")?.click());
+      document.getElementById("segregation-split-file-input")?.addEventListener("change", (event) => void importSegregationSplitFile(event));
+      document.getElementById("export-segregation-split")?.addEventListener("click", exportSegregationSplitWorkbook);
       document.querySelectorAll("[data-segregation-dialog-close]").forEach((button) => {
         button.addEventListener("click", () => document.getElementById(button.dataset.segregationDialogClose)?.close());
       });
