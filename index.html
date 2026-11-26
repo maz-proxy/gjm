@@ -9458,6 +9458,52 @@
       }
     }
 
+    function exportBrandSegregationBrandList() {
+      if (typeof XLSX === "undefined") {
+        notify("Parser Excel tidak termuat. Periksa koneksi internet lalu muat ulang aplikasi.");
+        return;
+      }
+      if (!brandSegregationSource) {
+        notify("Unggah file Master VEF terlebih dahulu.");
+        return;
+      }
+      try {
+        const categories = [
+          { id: "laptop", label: "Laptop" },
+          { id: "smartphone", label: "HP" },
+          { id: "tablet", label: "Tablet" },
+          { id: "monitor", label: "Monitor" },
+          { id: "pc-aio", label: "PC AIO" },
+          { id: "accessories", label: "Aksesoris" },
+          { id: "service", label: "Jasa" },
+          { id: "unclassified", label: "Belum diklasifikasi" }
+        ];
+        const brandsByCategory = new Map(categories.map(({ id }) => [id, new Map()]));
+        for (const group of getBrandSegregationGroups()) {
+          const brand = group.brand.trim();
+          const brands = brandsByCategory.get(group.category);
+          const key = brand.toLocaleUpperCase("id-ID");
+          if (brands && brand && !brands.has(key)) brands.set(key, brand);
+        }
+        const sortedBrands = categories.map(({ id }) =>
+          [...brandsByCategory.get(id).values()].sort((left, right) => left.localeCompare(right, "id-ID"))
+        );
+        const rows = [
+          categories.map(({ label }) => label),
+          ...Array.from({ length: Math.max(0, ...sortedBrands.map((brands) => brands.length)) }, (_, index) =>
+            sortedBrands.map((brands) => brands[index] || "")
+          )
+        ];
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(rows), "Daftar Brand");
+        XLSX.writeFile(workbook, `Daftar-Brand-Segregation-${new Date().toISOString().slice(0, 10)}.xlsx`);
+        notify("Daftar nama brand per kategori berhasil diekspor.");
+      } catch (error) {
+        console.error("Daftar brand Brand Segregation gagal diekspor:", error);
+        notify(`Daftar brand gagal diekspor: ${error instanceof Error ? error.message : "kesalahan tidak diketahui"}`);
+      }
+    }
+
     function renderBrandSegregation() {
       const source = brandSegregationSource;
       const groups = getBrandSegregationGroups(source);
@@ -9514,7 +9560,7 @@
         <section class="page-head archive-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Brand Segregation</div><h1>Brand Segregation</h1><p class="subtitle">Unggah Master VEF, periksa klasifikasi item, lalu ekspor workbook per kategori dengan seluruh baris sumber.</p></div></section>
         <section class="table-section">
           <div class="table-toolbar"><div><div class="table-title">Master VEF</div><div class="brand-segregation-file-info"><span class="table-count">${source ? `${escapeHtml(source.fileName)} · Sheet ${escapeHtml(source.sheetName)} · ${formatNumber(source.rows.length)} baris` : "Pilih file Master VEF Excel atau CSV (maksimal 50 MB)."}</span>${removeFileButton}</div></div>
-            <div class="brand-segregation-tools"><input class="upload-input" id="brand-segregation-file-input" type="file" accept=".xlsx,.xls,.csv" aria-label="Pilih file Master VEF"><button class="button button-primary" id="brand-segregation-file-button" type="button" ${brandSegregationFileLoading || brandSegregationRemoving ? "disabled" : ""}>${brandSegregationFileLoading ? "Memproses file..." : source ? "Ganti file Master VEF" : "Unggah File Master VEF"}</button><button class="button button-secondary" id="export-brand-segregation" type="button" ${source ? "" : "disabled"}>Ekspor Excel</button></div>
+            <div class="brand-segregation-tools"><input class="upload-input" id="brand-segregation-file-input" type="file" accept=".xlsx,.xls,.csv" aria-label="Pilih file Master VEF"><button class="button button-primary" id="brand-segregation-file-button" type="button" ${brandSegregationFileLoading || brandSegregationRemoving ? "disabled" : ""}>${brandSegregationFileLoading ? "Memproses file..." : source ? "Ganti file Master VEF" : "Unggah File Master VEF"}</button><button class="button button-secondary" id="export-brand-segregation" type="button" ${source ? "" : "disabled"}>Ekspor Excel</button><button class="button button-secondary" id="export-brand-segregation-brands" type="button" ${source ? "" : "disabled"}>Ekspor Daftar Brand</button></div>
           </div>
           <div class="brand-segregation-status" role="status" aria-live="polite">${escapeHtml(brandSegregationStatus)}</div>
         </section>
@@ -13524,6 +13570,7 @@
       document.getElementById("brand-segregation-file-input")?.addEventListener("change", (event) => void importBrandSegregationFile(event));
       document.getElementById("remove-brand-segregation-file")?.addEventListener("click", () => void removeBrandSegregationFile());
       document.getElementById("export-brand-segregation")?.addEventListener("click", exportBrandSegregationWorkbook);
+      document.getElementById("export-brand-segregation-brands")?.addEventListener("click", exportBrandSegregationBrandList);
       document.querySelectorAll("[data-brand-segregation-category]").forEach((button) => {
         button.addEventListener("click", () => {
           selectedBrandSegregationCategory = BRAND_SEGREGATION_CATEGORY_IDS.has(button.dataset.brandSegregationCategory)
