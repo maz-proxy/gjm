@@ -5728,16 +5728,18 @@
     function createSegregationSplitCacheRecord(result = segregationSplitResult) {
       return {
         format: "stock-opname-segregation-split",
-        version: 1,
+        version: 2,
         fileName: result.fileName,
         sheetName: result.sheetName,
         headers: result.headers.slice(),
+        sourceRows: result.sourceRows.map((row) => row.slice()),
+        sourceRowsAreLegacy: result.sourceRowsAreLegacy === true,
         rows: result.rows.map((row) => row.slice()),
         serialCount: result.serialCount
       };
     }
     function restoreSegregationSplitCacheRecord(record) {
-      if (!record || record.format !== "stock-opname-segregation-split" || record.version !== 1
+      if (!record || record.format !== "stock-opname-segregation-split" || ![1, 2].includes(record.version)
         || typeof record.fileName !== "string" || !record.fileName
         || typeof record.sheetName !== "string" || !record.sheetName
         || !Array.isArray(record.headers) || !record.headers.length
@@ -5745,6 +5747,10 @@
         || !Array.isArray(record.rows) || !record.rows.length
         || !record.rows.every((row) => Array.isArray(row)
           && row.length === record.headers.length && row.every(isSegregationSplitCell))
+        || record.version === 2 && (!Array.isArray(record.sourceRows)
+          || !record.sourceRows.every((row) => Array.isArray(row)
+            && row.length === record.headers.length && row.every(isSegregationSplitCell))
+          || typeof record.sourceRowsAreLegacy !== "boolean")
         || !Number.isInteger(record.serialCount) || record.serialCount < 0
         || record.serialCount > record.rows.length) {
         throw new Error("Format data Spliter tersimpan tidak dikenal atau rusak.");
@@ -5753,6 +5759,8 @@
         fileName: record.fileName,
         sheetName: record.sheetName,
         headers: record.headers.slice(),
+        sourceRows: (record.version === 1 ? record.rows : record.sourceRows).map((row) => row.slice()),
+        sourceRowsAreLegacy: record.version === 1 || record.sourceRowsAreLegacy,
         rows: record.rows.map((row) => row.slice()),
         serialCount: record.serialCount
       };
@@ -9599,19 +9607,33 @@
 
     function renderSegregationSplitter() {
       const result = segregationSplitResult;
-      const previewRows = result?.rows || [];
+      const sourceRows = result?.sourceRows || [];
+      const sourceRowDescription = result?.sourceRowsAreLegacy
+        ? currentLanguage === "en"
+          ? "saved preview rows; upload the source workbook again to view original data"
+          : "baris pratinjau tersimpan lama; unggah ulang workbook sumber untuk melihat data asli"
+        : currentLanguage === "en" ? "original rows" : "baris asli";
       const fileSummary = result
-        ? `${escapeHtml(result.fileName)} · Sheet ${escapeHtml(result.sheetName)} · ${formatNumber(result.rows.length)} ${currentLanguage === "en" ? "rows" : "baris"} · ${formatNumber(result.serialCount)} SN`
+        ? `${escapeHtml(result.fileName)} · Sheet ${escapeHtml(result.sheetName)} · ${formatNumber(sourceRows.length)} ${sourceRowDescription} · ${formatNumber(result.rows.length)} ${currentLanguage === "en" ? "split rows" : "baris hasil"} · ${formatNumber(result.serialCount)} SN`
         : currentLanguage === "en"
           ? "Choose a Stock Entry Excel file (.xlsx/.xls)."
           : "Pilih file Stock Entry Excel (.xlsx/.xls).";
-      const previewMarkup = result
-        ? `<div class="table-scroll segregation-data-scroll"><table><thead><tr>${result.headers.map((header) => `<th>${escapeHtml(header)}</th>`).join("")}</tr></thead><tbody>${previewRows.map((row) =>
+      const sourcePreviewMarkup = result
+        ? `<div class="table-scroll segregation-data-scroll"><table><thead><tr>${result.headers.map((header) => `<th>${escapeHtml(header)}</th>`).join("")}</tr></thead><tbody>${sourceRows.map((row) =>
           `<tr>${result.headers.map((_, index) => `<td>${escapeHtml(formatSegregationSplitCell(row[index]))}</td>`).join("")}</tr>`
         ).join("")}</tbody></table></div>`
         : `<p class="table-count" role="status" aria-live="polite">${currentLanguage === "en"
-          ? "The transformed rows will appear here after you upload a file."
-          : "Hasil pemisahan akan tampil di sini setelah file diunggah."}</p>`;
+          ? "The uploaded source rows will appear here."
+          : "Data asli dari file unggahan akan tampil di sini."}</p>`;
+      const splitResultPreviewMarkup = result
+        ? `<dialog class="feature-dialog segregation-preview-dialog" id="segregation-split-preview-dialog" aria-labelledby="segregation-split-preview-title">
+            <div class="dialog-head"><div><div class="dialog-title" id="segregation-split-preview-title">${currentLanguage === "en" ? "Split result preview" : "Pratinjau hasil Spliter"}</div><div class="dialog-subtitle">${formatNumber(result.rows.length)} ${currentLanguage === "en" ? "rows" : "baris"} · ${formatNumber(result.serialCount)} SN</div></div><button class="dialog-close" type="button" data-close-segregation-split-preview aria-label="${currentLanguage === "en" ? "Close" : "Tutup"}">×</button></div>
+            <div class="segregation-preview-body"><div class="table-scroll segregation-data-scroll"><table><thead><tr>${result.headers.map((header) => `<th>${escapeHtml(formatSegregationSplitCell(header))}</th>`).join("")}</tr></thead><tbody>${result.rows.map((row) =>
+              `<tr>${result.headers.map((_, index) => `<td>${escapeHtml(formatSegregationSplitCell(row[index]))}</td>`).join("")}</tr>`
+            ).join("")}</tbody></table></div></div>
+            <div class="dialog-actions"><button class="button button-secondary" type="button" data-close-segregation-split-preview>${currentLanguage === "en" ? "Cancel" : "Tutup"}</button><button class="button button-primary" id="confirm-export-segregation-split" type="button">${currentLanguage === "en" ? "Export Excel" : "Ekspor Excel"}</button></div>
+          </dialog>`
+        : "";
       const uploadLabel = segregationSplitLoading
         ? currentLanguage === "en" ? "Processing file..." : "Memproses file..."
         : result
@@ -9631,9 +9653,12 @@
           </div>
         </section>
         <section class="table-section">
-          <div class="table-toolbar"><div class="table-title">${currentLanguage === "en" ? "Split preview" : "Pratinjau hasil Spliter"}</div></div>
-          ${previewMarkup}
-        </section>`;
+          <div class="table-toolbar"><div class="table-title">${result?.sourceRowsAreLegacy
+            ? currentLanguage === "en" ? "Legacy saved preview data" : "Data pratinjau lama tersimpan"
+            : currentLanguage === "en" ? "Uploaded source data" : "Data asli unggahan"} <span class="table-count">${result ? formatNumber(sourceRows.length) : ""}</span></div></div>
+          ${sourcePreviewMarkup}
+        </section>
+        ${splitResultPreviewMarkup}`;
     }
 
     async function removeSegregationSplitFile() {
@@ -9847,13 +9872,23 @@
           const defaultSourceIndex = normalizedHeaders.findIndex((value) =>
             value === normalizeField("Default Source Warehouse") || value.includes(normalizeField("Default Source Warehouse"))
           );
-          const transformed = splitStockEntryRows(headers, sourceRows.slice(header.rowIndex + 1), {
+          const originalRows = sourceRows.slice(header.rowIndex + 1)
+            .filter((row) => row.some((value) => String(value ?? "").trim()))
+            .map((row) => Array.from({ length: columnCount }, (_, index) => row[index] ?? ""));
+          const transformed = splitStockEntryRows(headers, originalRows, {
             quantityIndex: header.indexes[1],
             serialIndex: header.indexes[2],
             defaultSourceIndex
           });
           if (!transformed.rows.length) continue;
-          imported = { fileName: file.name, sheetName, headers, ...transformed };
+          imported = {
+            fileName: file.name,
+            sheetName,
+            headers,
+            sourceRows: originalRows,
+            sourceRowsAreLegacy: false,
+            ...transformed
+          };
           break;
         }
         if (!imported) {
@@ -9893,6 +9928,7 @@
         XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
         const outputName = `${segregationSplitResult.fileName.replace(/\.[^.]+$/, "")}_Split.xlsx`;
         XLSX.writeFile(workbook, outputName, { bookType: "xlsx" });
+        document.getElementById("segregation-split-preview-dialog")?.close();
       } catch (error) {
         console.error("Hasil Spliter gagal diekspor:", error);
         const detail = error instanceof Error ? error.message : "kesalahan tidak diketahui";
@@ -13624,7 +13660,11 @@
       document.getElementById("open-segregation-splitter")?.addEventListener("click", () => document.getElementById("segregation-split-file-input")?.click());
       document.getElementById("segregation-split-file-input")?.addEventListener("change", (event) => void importSegregationSplitFile(event));
       document.getElementById("remove-segregation-split-file")?.addEventListener("click", () => void removeSegregationSplitFile());
-      document.getElementById("export-segregation-split")?.addEventListener("click", exportSegregationSplitWorkbook);
+      document.getElementById("export-segregation-split")?.addEventListener("click", () => document.getElementById("segregation-split-preview-dialog")?.showModal());
+      document.getElementById("confirm-export-segregation-split")?.addEventListener("click", exportSegregationSplitWorkbook);
+      document.querySelectorAll("[data-close-segregation-split-preview]").forEach((button) => {
+        button.addEventListener("click", () => document.getElementById("segregation-split-preview-dialog")?.close());
+      });
       document.querySelectorAll("[data-segregation-dialog-close]").forEach((button) => {
         button.addEventListener("click", () => document.getElementById(button.dataset.segregationDialogClose)?.close());
       });
