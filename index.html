@@ -514,7 +514,15 @@
     .segregation-source-layout form.segregation-entry-module { grid-area: scan; justify-self: center; max-width: 860px; width: 100%; }
     .segregation-source-card .segregation-item-select { height: 34px; }
     .segregation-source-card form.segregation-scan-form { background: linear-gradient(135deg, color-mix(in srgb, var(--green) 8%, var(--paper)), var(--paper) 82%); border: 1px solid color-mix(in srgb, var(--green) 24%, var(--line)); border-radius: 11px; box-shadow: inset 3px 0 var(--green), 0 5px 16px rgba(35, 59, 38, .06); gap: 10px; min-width: 0; padding: 14px; transition: border-color .15s ease, box-shadow .15s ease; }
-    .segregation-source-card form.segregation-scan-form:focus-within { border-color: var(--green); box-shadow: inset 3px 0 var(--green), 0 0 0 3px color-mix(in srgb, var(--green) 12%, transparent), 0 7px 18px rgba(35, 59, 38, .08); }
+    .segregation-source-card form.segregation-scan-form:focus-within { animation: segregation-entry-burgundy-pulse 1.3s ease-in-out infinite; border-color: #4e192e; box-shadow: inset 3px 0 #4e192e, 0 0 0 3px rgba(78, 25, 46, .18), 0 7px 18px rgba(78, 25, 46, .12); }
+    .segregation-source-card #segregation-scan-input:focus { border-color: #76233f; box-shadow: 0 0 0 3px rgba(118, 35, 63, .2); }
+    @keyframes segregation-entry-burgundy-pulse {
+      0%, 100% { border-color: #4e192e; box-shadow: inset 3px 0 #4e192e, 0 0 0 3px rgba(78, 25, 46, .18), 0 7px 18px rgba(78, 25, 46, .12); }
+      50% { border-color: #8c3051; box-shadow: inset 3px 0 #4e192e, 0 0 0 5px rgba(140, 48, 81, .3), 0 0 23px rgba(78, 25, 46, .22); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .segregation-source-card form.segregation-scan-form:focus-within { animation: none; border-color: #4e192e; box-shadow: inset 3px 0 #4e192e, 0 0 0 3px rgba(78, 25, 46, .22), 0 7px 18px rgba(78, 25, 46, .12); }
+    }
     .segregation-source-card form.segregation-scan-form label { align-items: baseline; display: flex; flex-wrap: wrap; gap: 4px 8px; }
     .segregation-source-card form.segregation-scan-form label strong { color: var(--green-dark); font-size: 13px; }
     .segregation-source-card form.segregation-scan-form label .table-count { margin-left: 0; }
