@@ -4059,6 +4059,7 @@
       attributeFilter: ["placeholder", "aria-label", "aria-description", "title", "alt"]
     });
     const PAGE_STORAGE_KEY = "ruangstok-last-page:";
+    const WORKSPACE_SEGREGATION_TAB_STORAGE_KEY = "ruangstok-segregation-tab:";
     const WORKSPACE_STORAGE_KEY = "ruangstok-current-workspace:";
     const scanAudioSources = { warning: "./assets/warning-duplicate.mp3", match: "./assets/scan-match.mp3" };
     const scanAudioBuffers = new Map();
@@ -4585,6 +4586,7 @@
     let segregationDuplicateScanIndex = null;
     let segregationSplitResult = null;
     let segregationSplitLoading = false;
+    let segregationSplitPersistenceQueue = Promise.resolve();
     let segregationPersistenceQueue = Promise.resolve();
     let lastManualEntryId = "";
     const scanIssueHighlightIds = new Set();
@@ -5495,6 +5497,36 @@
         transaction.onabort = () => reject(transaction.error || new Error("Penghapusan Brand Segregation dibatalkan."));
       });
     }
+    async function readSegregationSplitCacheRecord(userId) {
+      const database = await openOfflineCacheDatabase();
+      return new Promise((resolve, reject) => {
+        const transaction = database.transaction(OFFLINE_CACHE_STORE_NAME, "readonly");
+        const request = transaction.objectStore(OFFLINE_CACHE_STORE_NAME).get(`segregation-split:${userId}`);
+        request.onsuccess = () => resolve(request.result || null);
+        request.onerror = () => reject(request.error || new Error("Data Spliter gagal dibaca."));
+        transaction.onabort = () => reject(transaction.error || new Error("Pembacaan data Spliter dibatalkan."));
+      });
+    }
+    async function writeSegregationSplitCacheRecord(userId, record) {
+      const database = await openOfflineCacheDatabase();
+      return new Promise((resolve, reject) => {
+        const transaction = database.transaction(OFFLINE_CACHE_STORE_NAME, "readwrite");
+        transaction.objectStore(OFFLINE_CACHE_STORE_NAME).put(record, `segregation-split:${userId}`);
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error || new Error("Data Spliter gagal disimpan."));
+        transaction.onabort = () => reject(transaction.error || new Error("Penyimpanan data Spliter dibatalkan."));
+      });
+    }
+    async function removeSegregationSplitCacheRecord(userId) {
+      const database = await openOfflineCacheDatabase();
+      return new Promise((resolve, reject) => {
+        const transaction = database.transaction(OFFLINE_CACHE_STORE_NAME, "readwrite");
+        transaction.objectStore(OFFLINE_CACHE_STORE_NAME).delete(`segregation-split:${userId}`);
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error || new Error("Data Spliter gagal dihapus."));
+        transaction.onabort = () => reject(transaction.error || new Error("Penghapusan data Spliter dibatalkan."));
+      });
+    }
     function createBrandSegregationCacheRecord(source = brandSegregationSource) {
       return {
         format: "stock-opname-brand-segregation",
@@ -5674,6 +5706,75 @@
         console.error("Data Segregasi lokal gagal disimpan:", error);
         notify("Data Segregasi gagal disimpan di perangkat. Jangan muat ulang sebelum mengekspor atau mengunggah kembali file VEF.");
       });
+    }
+    function isSegregationSplitCell(value) {
+      return typeof value === "string"
+        || typeof value === "number" && Number.isFinite(value)
+        || typeof value === "boolean"
+        || value instanceof Date && Number.isFinite(value.getTime());
+    }
+    function createSegregationSplitCacheRecord(result = segregationSplitResult) {
+      return {
+        format: "stock-opname-segregation-split",
+        version: 1,
+        fileName: result.fileName,
+        sheetName: result.sheetName,
+        headers: result.headers.slice(),
+        rows: result.rows.map((row) => row.slice()),
+        serialCount: result.serialCount
+      };
+    }
+    function restoreSegregationSplitCacheRecord(record) {
+      if (!record || record.format !== "stock-opname-segregation-split" || record.version !== 1
+        || typeof record.fileName !== "string" || !record.fileName
+        || typeof record.sheetName !== "string" || !record.sheetName
+        || !Array.isArray(record.headers) || !record.headers.length
+        || !record.headers.every(isSegregationSplitCell)
+        || !Array.isArray(record.rows) || !record.rows.length
+        || !record.rows.every((row) => Array.isArray(row)
+          && row.length === record.headers.length && row.every(isSegregationSplitCell))
+        || !Number.isInteger(record.serialCount) || record.serialCount < 0
+        || record.serialCount > record.rows.length) {
+        throw new Error("Format data Spliter tersimpan tidak dikenal atau rusak.");
+      }
+      segregationSplitResult = {
+        fileName: record.fileName,
+        sheetName: record.sheetName,
+        headers: record.headers.slice(),
+        rows: record.rows.map((row) => row.slice()),
+        serialCount: record.serialCount
+      };
+    }
+    async function restoreSegregationSplitData(userId) {
+      segregationSplitResult = null;
+      try {
+        const record = await readSegregationSplitCacheRecord(userId);
+        if (!record || authSession?.user?.id !== userId) return;
+        restoreSegregationSplitCacheRecord(record);
+      } catch (error) {
+        console.error("Data Spliter tersimpan gagal dipulihkan:", error);
+        notify(currentLanguage === "en"
+          ? "Saved Splitter data could not be restored. Upload the Stock Entry file again."
+          : "Data Spliter lokal gagal dipulihkan. Unggah kembali file Stock Entry.");
+      }
+    }
+    function persistSegregationSplitData(result = segregationSplitResult, userId = authSession?.user?.id) {
+      if (!userId || !result) return Promise.reject(new Error("Login atau data Spliter tidak tersedia untuk penyimpanan."));
+      const record = createSegregationSplitCacheRecord(result);
+      const write = segregationSplitPersistenceQueue.catch(() => {}).then(() => {
+        if (authSession?.user?.id !== userId) throw new Error("Akun berubah sebelum data Spliter disimpan.");
+        return writeSegregationSplitCacheRecord(userId, record);
+      });
+      segregationSplitPersistenceQueue = write;
+      return write;
+    }
+    function removePersistedSegregationSplitData(userId) {
+      const removal = segregationSplitPersistenceQueue.catch(() => {}).then(() => {
+        if (authSession?.user?.id !== userId) throw new Error("Akun berubah sebelum data Spliter dihapus.");
+        return removeSegregationSplitCacheRecord(userId);
+      });
+      segregationSplitPersistenceQueue = removal;
+      return removal;
     }
     async function loadOfflineSyncCache(userId) {
       let cache;
@@ -6998,8 +7099,10 @@
         resetSharedSyncFailures("read");
         resetSharedSyncFailures("write");
         currentPage = pageFromUrl() || (freshLogin ? "dashboard" : restoreLastPage(session));
+        selectedWorkspaceSegregationTab = restoreWorkspaceSegregationTab(session);
         await restoreSegregationData(session.user.id);
         await restoreBrandSegregationData(session.user.id);
+        await restoreSegregationSplitData(session.user.id);
         unlockApp(session);
         render();
         startSharedStateChannel();
@@ -9472,6 +9575,13 @@
 
     async function removeSegregationSplitFile() {
       if (!segregationSplitResult || segregationSplitLoading) return;
+      const userId = authSession?.user?.id;
+      if (!userId) {
+        notify(currentLanguage === "en"
+          ? "User session is unavailable. The Splitter file cannot be removed."
+          : "Sesi akun tidak tersedia. File Spliter tidak dapat dihapus.");
+        return;
+      }
       const confirmed = await showConfirmDialog(
         currentLanguage === "en"
           ? "Remove the uploaded Stock Entry file and its split result?"
@@ -9485,9 +9595,18 @@
           destructive: true
         }
       );
-      if (!confirmed || !segregationSplitResult || segregationSplitLoading) return;
-      segregationSplitResult = null;
-      render();
+      if (!confirmed || !segregationSplitResult || segregationSplitLoading || authSession?.user?.id !== userId) return;
+      try {
+        await removePersistedSegregationSplitData(userId);
+        if (authSession?.user?.id !== userId) return;
+        segregationSplitResult = null;
+        render();
+      } catch (error) {
+        console.error("Data Spliter tersimpan gagal dihapus:", error);
+        notify(currentLanguage === "en"
+          ? `Splitter data could not be removed: ${error instanceof Error ? error.message : "unknown error"}`
+          : `Data Spliter gagal dihapus: ${error instanceof Error ? error.message : "kesalahan tidak diketahui"}`);
+      }
     }
 
     function renderSegregation() {
@@ -9623,8 +9742,15 @@
     async function importSegregationSplitFile(event) {
       const input = event.currentTarget;
       const file = input.files?.[0];
+      const uploadUserId = authSession?.user?.id;
       input.value = "";
       if (!file) return;
+      if (!uploadUserId) {
+        notify(currentLanguage === "en"
+          ? "User session is unavailable. The Stock Entry file cannot be saved."
+          : "Sesi akun tidak tersedia. File Stock Entry tidak dapat disimpan.");
+        return;
+      }
       if (typeof XLSX === "undefined") {
         notify("Fitur ekspor Excel tidak termuat. Periksa koneksi internet lalu muat ulang aplikasi.");
         return;
@@ -9672,6 +9798,9 @@
             ? "Tidak ada baris data pada file Stock Entry."
             : "Kolom ID, Qty, atau Serial No tidak ditemukan.");
         }
+        if (authSession?.user?.id !== uploadUserId) throw new Error("Akun berubah saat file diproses. Unggahan dibatalkan.");
+        await persistSegregationSplitData(imported, uploadUserId);
+        if (authSession?.user?.id !== uploadUserId) throw new Error("Akun berubah saat file disimpan. Unggahan dibatalkan.");
         segregationSplitResult = imported;
       } catch (error) {
         console.error("File Spliter gagal diproses:", error);
@@ -12447,6 +12576,28 @@
       window.scrollTo(0, scrollY);
     }
 
+    function restoreWorkspaceSegregationTab(session) {
+      try {
+        const savedTab = localStorage.getItem(`${WORKSPACE_SEGREGATION_TAB_STORAGE_KEY}${session.user.id}`);
+        return ["brand", "sn", "splitter"].includes(savedTab) ? savedTab : "sn";
+      } catch (error) {
+        console.error("Tab Segregation terakhir tidak dapat dipulihkan:", error);
+        return "sn";
+      }
+    }
+
+    function persistWorkspaceSegregationTab(userId, tab) {
+      if (!userId || !["brand", "sn", "splitter"].includes(tab)) return;
+      try {
+        localStorage.setItem(`${WORKSPACE_SEGREGATION_TAB_STORAGE_KEY}${userId}`, tab);
+      } catch (error) {
+        console.error("Tab Segregation terakhir tidak dapat disimpan:", error);
+        notify(currentLanguage === "en"
+          ? "The last Segregation tab could not be saved."
+          : "Tab Segregation terakhir tidak dapat disimpan.");
+      }
+    }
+
     function restoreLastPage(session) {
       const requestedPage = pageFromUrl();
       if (requestedPage) return requestedPage;
@@ -13367,6 +13518,7 @@
         button.addEventListener("click", () => {
           const tab = button.dataset.workspaceSegregationTab;
           selectedWorkspaceSegregationTab = tab === "brand" || tab === "splitter" ? tab : "sn";
+          persistWorkspaceSegregationTab(authSession?.user?.id, selectedWorkspaceSegregationTab);
           render();
         });
       });
