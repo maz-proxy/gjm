@@ -9451,13 +9451,16 @@
         : result
           ? currentLanguage === "en" ? "Replace Stock Entry file" : "Ganti file Stock Entry"
           : currentLanguage === "en" ? "Upload Stock Entry file" : "Unggah file Stock Entry";
+      const removeFileButton = result
+        ? `<button class="button button-secondary segregation-remove-file-button" id="remove-segregation-split-file" type="button" title="${currentLanguage === "en" ? "Remove uploaded Stock Entry file and split result" : "Hapus file Stock Entry dan hasil Spliter"}" aria-label="${currentLanguage === "en" ? "Remove uploaded Stock Entry file and split result" : "Hapus file Stock Entry dan hasil Spliter"}" ${segregationSplitLoading ? "disabled" : ""}><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg></button>`
+        : "";
       return `${navMarkup()}${renderWorkspaceSegregationTabs()}
         <section class="page-head archive-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Tools mandiri</div><h1>Spliter</h1><p class="subtitle">${currentLanguage === "en"
           ? "Split each line-break-separated serial number into its own Stock Entry row."
           : "Pisahkan setiap SN dalam satu baris menjadi baris Stock Entry tersendiri."}</p></div></section>
         <section class="table-section">
           <div class="table-toolbar">
-            <div><div class="table-title">Stock Entry</div><div class="table-count">${fileSummary}</div></div>
+            <div><div class="table-title">Stock Entry</div><div class="brand-segregation-file-info"><span class="table-count">${fileSummary}</span>${removeFileButton}</div></div>
             <div class="brand-segregation-tools"><input class="upload-input" id="segregation-split-file-input" type="file" accept=".xlsx,.xls" aria-label="${currentLanguage === "en" ? "Choose Stock Entry Excel file" : "Pilih file Stock Entry Excel"}"><button class="button button-secondary" id="open-segregation-splitter" type="button" ${segregationSplitLoading ? "disabled" : ""}>${uploadLabel}</button><button class="button button-primary" id="export-segregation-split" type="button" ${result ? "" : "disabled"}>${currentLanguage === "en" ? "Export split result" : "Ekspor hasil Spliter"}</button></div>
           </div>
         </section>
@@ -9465,6 +9468,26 @@
           <div class="table-toolbar"><div class="table-title">${currentLanguage === "en" ? "Split preview" : "Pratinjau hasil Spliter"}</div></div>
           ${previewMarkup}
         </section>`;
+    }
+
+    async function removeSegregationSplitFile() {
+      if (!segregationSplitResult || segregationSplitLoading) return;
+      const confirmed = await showConfirmDialog(
+        currentLanguage === "en"
+          ? "Remove the uploaded Stock Entry file and its split result?"
+          : "Hapus file Stock Entry yang diunggah beserta hasil Spliter?",
+        {
+          title: currentLanguage === "en" ? "Remove Stock Entry file" : "Hapus file Stock Entry",
+          subtitle: currentLanguage === "en"
+            ? "The file and preview will be cleared from this page."
+            : "File dan pratinjau akan dihapus dari halaman ini.",
+          confirmLabel: currentLanguage === "en" ? "Remove file" : "Hapus file",
+          destructive: true
+        }
+      );
+      if (!confirmed || !segregationSplitResult || segregationSplitLoading) return;
+      segregationSplitResult = null;
+      render();
     }
 
     function renderSegregation() {
@@ -13380,6 +13403,7 @@
       document.getElementById("open-segregation-template")?.addEventListener("click", () => document.getElementById("segregation-template-dialog")?.showModal());
       document.getElementById("open-segregation-splitter")?.addEventListener("click", () => document.getElementById("segregation-split-file-input")?.click());
       document.getElementById("segregation-split-file-input")?.addEventListener("change", (event) => void importSegregationSplitFile(event));
+      document.getElementById("remove-segregation-split-file")?.addEventListener("click", () => void removeSegregationSplitFile());
       document.getElementById("export-segregation-split")?.addEventListener("click", exportSegregationSplitWorkbook);
       document.querySelectorAll("[data-segregation-dialog-close]").forEach((button) => {
         button.addEventListener("click", () => document.getElementById(button.dataset.segregationDialogClose)?.close());
