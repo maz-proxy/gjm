@@ -502,13 +502,15 @@
     .segregation-status.success { background: rgba(36, 124, 76, .1); color: var(--green); }
     .segregation-status.error { background: rgba(190, 56, 49, .1); color: var(--red); }
     .segregation-scan-form { display: grid; gap: 8px; padding: 14px 16px 16px; }
-    .segregation-source-layout { align-items: center; display: grid; gap: 0 14px; grid-template-columns: minmax(0, 1.1fr) minmax(360px, .9fr); padding: 0 14px; }
+    .segregation-source-layout { align-items: stretch; display: grid; gap: 12px; grid-template-areas: "vef vef" "scan scan"; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 0 14px 14px; }
+    .segregation-source-layout.has-source { grid-template-areas: "vef filter" "scan scan"; }
     .segregation-source-top { align-items: center; display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr) minmax(280px, .8fr); padding: 0 14px; }
-    .segregation-source-layout .segregation-source-top { grid-template-columns: minmax(0, 1fr); padding: 0; }
-    .segregation-source-card .segregation-source-top .table-toolbar { border: 0; min-height: 48px; min-width: 0; padding: 8px 0; }
+    .segregation-source-layout .segregation-source-top { display: contents; }
+    .segregation-source-card .segregation-source-top .table-toolbar { border: 0; grid-area: vef; min-height: 48px; min-width: 0; padding: 8px 0; }
     .segregation-source-card .table-toolbar { min-height: 48px; padding: 8px 14px; }
     .segregation-source-card .segregation-status { margin: 0 14px 7px; padding: 6px 9px; }
-    .segregation-filter-form { gap: 4px; min-width: 0; padding: 8px 0; }
+    .segregation-filter-form { display: grid; gap: 4px; grid-area: filter; min-width: 0; padding: 8px 0; }
+    .segregation-source-layout form.segregation-entry-module { grid-area: scan; justify-self: center; max-width: 860px; width: 100%; }
     .segregation-source-card .segregation-item-select { height: 34px; }
     .segregation-source-card form.segregation-scan-form { background: linear-gradient(135deg, color-mix(in srgb, var(--green) 8%, var(--paper)), var(--paper) 82%); border: 1px solid color-mix(in srgb, var(--green) 24%, var(--line)); border-radius: 11px; box-shadow: inset 3px 0 var(--green), 0 5px 16px rgba(35, 59, 38, .06); gap: 10px; min-width: 0; padding: 14px; transition: border-color .15s ease, box-shadow .15s ease; }
     .segregation-source-card form.segregation-scan-form:focus-within { border-color: var(--green); box-shadow: inset 3px 0 var(--green), 0 0 0 3px color-mix(in srgb, var(--green) 12%, transparent), 0 7px 18px rgba(35, 59, 38, .08); }
@@ -577,8 +579,11 @@
     .brand-segregation-status { color: var(--muted); font-size: 11px; padding: 0 14px 12px; }
     .brand-segregation-status:empty { display: none; }
     @media (max-width: 900px) { .segregation-scan-results { grid-template-columns: minmax(0, 1fr); } }
-    @media (max-width: 760px) { .segregation-source-layout { grid-template-columns: minmax(0, 1fr); } .segregation-source-layout .segregation-source-top { gap: 0; } }
-    @media (max-width: 700px) { .segregation-source-top { grid-template-columns: minmax(0, 1fr); gap: 0; } }
+    @media (max-width: 760px) {
+      .segregation-source-layout { grid-template-areas: "vef" "scan"; grid-template-columns: minmax(0, 1fr); }
+      .segregation-source-layout.has-source { grid-template-areas: "vef" "filter" "scan"; }
+      .segregation-source-layout form.segregation-entry-module { max-width: none; }
+    }
     .segregation-preview-actions { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); margin-bottom: 16px; }
     .segregation-preview-button { align-items: center; background: var(--scan-button-bg); border-color: var(--scan-button-bg); color: #fff; display: flex; flex-direction: column; gap: 4px; justify-content: center; min-height: 66px; padding: 11px 14px; text-align: center; }
     .segregation-preview-button:hover:not(:disabled) { background: var(--scan-button-hover); border-color: var(--scan-button-hover); }
@@ -9750,12 +9755,12 @@
       return `${navMarkup()}${renderWorkspaceSegregationTabs()}
         <section class="page-head archive-page-head"><div class="archive-page-heading"><div class="archive-page-eyebrow">Tools mandiri</div><h1>Segregation</h1><p class="subtitle">Unggah file VEF, scan SN yang akan dipindahkan, lalu unduh hasil dalam format Stock Entry Template.</p></div></section>
         <section class="table-section segregation-source-card">
-          <div class="segregation-source-layout">
+          <div class="segregation-source-layout${segregationSource ? " has-source" : ""}">
             <div class="segregation-source-top">
               <div class="table-toolbar"><div><div class="table-title">Data VEF</div><span class="table-count">${sourceDescription}</span></div><div class="segregation-source-actions"><input class="upload-input" id="segregation-file-input" type="file" accept=".xlsx,.xls,.csv" aria-label="Pilih workbook Excel atau CSV VEF"><button class="button button-secondary" id="segregation-file-button" type="button" ${segregationFileLoading ? "disabled" : ""}>${segregationFileLoading ? "Memproses file..." : segregationSource ? "Ganti file VEF" : "Unggah file VEF"}</button>${segregationSource ? `<button class="button button-secondary segregation-remove-file-button" id="segregation-remove-file" type="button" title="${currentLanguage === "en" ? "Remove uploaded file and scan results" : "Hapus file yang diunggah dan seluruh hasil scan"}" aria-label="${currentLanguage === "en" ? "Remove uploaded file and scan results" : "Hapus file yang diunggah dan seluruh hasil scan"}" ${segregationFileLoading ? "disabled" : ""}><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg></button>` : ""}</div></div>
-              ${segregationSource ? `<label class="segregation-scan-form segregation-filter-form" for="segregation-item-select"><strong>Cari Item/SKU</strong><span class="table-count">Ketik SKU atau pilih dari daftar. Kosongkan untuk semua item.</span><input class="segregation-item-select" id="segregation-item-select" type="text" list="segregation-item-options" value="${escapeHtml(selectedItemLabel)}" placeholder="Cari SKU atau nama item..." autocomplete="off"><datalist id="segregation-item-options">${itemChoices.map(([code, item]) => `<option value="${escapeHtml(`${item.itemCode}${item.itemName ? ` · ${item.itemName}` : ""}`)}" label="${escapeHtml(code)}"></option>`).join("")}</datalist></label>` : ""}
+              ${segregationSource ? `<label class="segregation-filter-form" for="segregation-item-select"><strong>Cari Item/SKU</strong><span class="table-count">Ketik SKU atau pilih dari daftar. Kosongkan untuk semua item.</span><input class="segregation-item-select" id="segregation-item-select" type="text" list="segregation-item-options" value="${escapeHtml(selectedItemLabel)}" placeholder="Cari SKU atau nama item..." autocomplete="off"><datalist id="segregation-item-options">${itemChoices.map(([code, item]) => `<option value="${escapeHtml(`${item.itemCode}${item.itemName ? ` · ${item.itemName}` : ""}`)}" label="${escapeHtml(code)}"></option>`).join("")}</datalist></label>` : ""}
             </div>
-            <form class="segregation-scan-form" id="segregation-scan-form">
+            <form class="segregation-scan-form segregation-entry-module" id="segregation-scan-form">
               <label for="segregation-scan-input"><strong>Get SN</strong><span class="table-count">Scan SN dengan scanner fisik. Item, Brand, dan Warehouse Source diambil dari file VEF.</span></label>
               <div class="segregation-scan-controls"><input class="scan-input segregation-scan-input" id="segregation-scan-input" name="serial" type="text" autocomplete="off" autocapitalize="characters" placeholder="${segregationSource ? "Scan atau ketik SN, lalu tekan Enter" : "Unggah file VEF terlebih dahulu"}" ${segregationSource && !segregationFileLoading ? "" : "disabled"}><button class="button button-secondary segregation-camera-button" id="segregation-camera-button" type="button" aria-label="Scan SN dengan kamera" ${segregationSource && !segregationFileLoading ? "" : "disabled"}><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7V5h3m10 0h3v3M4 17v2h3m10 0h3v-3"/><path d="M7 9v6m3-6v6m3-6v6m3-6v6"/></svg></button><button class="button button-primary" type="submit" ${segregationSource && !segregationFileLoading ? "" : "disabled"}>Periksa SN</button></div>
             </form>
