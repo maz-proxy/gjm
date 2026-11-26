@@ -3238,7 +3238,7 @@
       "baris setelah SN dipisah ·": "rows after splitting serial numbers ·",
       "Ekspor hasil Spliter": "Export split result",
       "Pilih file Stock Entry Excel (.xlsx/.xls).": "Choose a Stock Entry Excel file (.xlsx/.xls).",
-      "Kolom ID, Qty, Serial No, atau Default Source Warehouse tidak ditemukan.": "ID, Qty, Serial No, or Default Source Warehouse column was not found.",
+      "Kolom ID, Qty, atau Serial No tidak ditemukan.": "ID, Qty, or Serial No column was not found.",
       "Tidak ada baris data pada file Stock Entry.": "No data rows were found in the Stock Entry file.",
       "File Spliter gagal diproses:": "Splitter file failed to process:",
       "Hasil Spliter gagal diekspor:": "Splitter result failed to export:",
@@ -9551,14 +9551,14 @@
         : String(value ?? "");
     }
 
-    function splitStockEntryRows(headers, sourceRows, { quantityIndex, serialIndex, defaultSourceIndex }) {
+    function splitStockEntryRows(headers, sourceRows, { quantityIndex, serialIndex, defaultSourceIndex = -1 }) {
       const rows = [];
       let serialCount = 0;
       for (const sourceRow of sourceRows) {
         const row = Array.from({ length: headers.length }, (_, index) => sourceRow[index] ?? "");
         if (row.every((value) => String(value ?? "").trim() === "")) continue;
         const serials = String(row[serialIndex] ?? "").split(/\r\n|\r|\n/).map((serial) => serial.trim()).filter(Boolean);
-        row[defaultSourceIndex] = "Default Source Warehouse";
+        if (defaultSourceIndex >= 0) row[defaultSourceIndex] = "Default Source Warehouse";
         if (!serials.length) {
           rows.push(row);
           continue;
@@ -9599,12 +9599,13 @@
         const buffer = await readWorkbookFile(file, () => {});
         const workbook = XLSX.read(buffer, { type: "array", cellDates: true, codepage: 65001 });
         let imported = null;
-        let hasCompatibleHeader = false;
+        let hasRequiredHeaders = false;
         for (const sheetName of workbook.SheetNames) {
           const worksheet = workbook.Sheets[sheetName];
           const sourceRows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "", raw: true });
           const header = findHeader(sourceRows, [["id"], ["qty"], ["serial no", "serial number"]]);
           if (!header) continue;
+          hasRequiredHeaders = true;
           const range = worksheet["!ref"] ? XLSX.utils.decode_range(worksheet["!ref"]) : null;
           const columnCount = Math.max(sourceRows[header.rowIndex].length, range ? range.e.c + 1 : 0);
           const headers = Array.from({ length: columnCount }, (_, index) => sourceRows[header.rowIndex][index] ?? "");
@@ -9612,8 +9613,6 @@
           const defaultSourceIndex = normalizedHeaders.findIndex((value) =>
             value === normalizeField("Default Source Warehouse") || value.includes(normalizeField("Default Source Warehouse"))
           );
-          if (defaultSourceIndex < 0) continue;
-          hasCompatibleHeader = true;
           const transformed = splitStockEntryRows(headers, sourceRows.slice(header.rowIndex + 1), {
             quantityIndex: header.indexes[1],
             serialIndex: header.indexes[2],
@@ -9624,9 +9623,9 @@
           break;
         }
         if (!imported) {
-          throw new Error(hasCompatibleHeader
+          throw new Error(hasRequiredHeaders
             ? "Tidak ada baris data pada file Stock Entry."
-            : "Kolom ID, Qty, Serial No, atau Default Source Warehouse tidak ditemukan.");
+            : "Kolom ID, Qty, atau Serial No tidak ditemukan.");
         }
         segregationSplitResult = imported;
         loaded = true;
