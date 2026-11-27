@@ -9881,7 +9881,7 @@
         for (const sheetName of workbook.SheetNames) {
           const worksheet = workbook.Sheets[sheetName];
           const sourceRows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "", raw: true });
-          const header = findHeader(sourceRows, [["id"], ["qty"], ["serial no", "serial number"]]);
+          const header = findHeader(sourceRows, [["id", "no."], ["qty"], ["serial no", "serial number", "sn merge"]]);
           if (!header) continue;
           hasRequiredHeaders = true;
           const range = worksheet["!ref"] ? XLSX.utils.decode_range(worksheet["!ref"]) : null;
@@ -9913,7 +9913,7 @@
         if (!imported) {
           throw new Error(hasRequiredHeaders
             ? "Tidak ada baris data pada file Stock Entry."
-            : "Kolom ID, Qty, atau Serial No tidak ditemukan.");
+            : "Kolom ID/No., Qty, atau Serial No/SN Merge tidak ditemukan.");
         }
         if (authSession?.user?.id !== uploadUserId) throw new Error("Akun berubah saat file diproses. Unggahan dibatalkan.");
         await persistSegregationSplitData(imported, uploadUserId);
