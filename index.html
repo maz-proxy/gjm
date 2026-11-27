@@ -2739,6 +2739,7 @@
     .layout-card.rack-card-maximized:hover { transform: none; }
     .layout-card.rack-card-maximized .layout-card-head { flex: 0 0 auto; position: sticky; top: 0; z-index: 5; }
     .layout-card.rack-card-maximized .layout-card-foot { flex: 1 1 auto; min-height: 0; overflow: auto; }
+    .layout-card.rack-card-maximized .layout-scan-list { max-height: none; overflow: visible; }
     .layout-card.rack-card-maximized[data-recorded-layout] .layout-card-foot { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .layout-card:is([data-layout-card], [data-recorded-layout]) .layout-card-foot { --rack-card-data-color: #000; color: var(--rack-card-data-color); }
     html[data-theme="dark"] .layout-card:is([data-layout-card], [data-recorded-layout]) .layout-card-foot { --rack-card-data-color: var(--ink); }
