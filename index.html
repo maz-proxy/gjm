@@ -2740,6 +2740,14 @@
     .layout-card.rack-card-maximized .layout-card-head { flex: 0 0 auto; position: sticky; top: 0; z-index: 5; }
     .layout-card.rack-card-maximized .layout-card-foot { flex: 1 1 auto; min-height: 0; overflow: auto; }
     .layout-card.rack-card-maximized[data-recorded-layout] .layout-card-foot { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .layout-card:is([data-layout-card], [data-recorded-layout]) .layout-card-foot { --rack-card-data-color: #000; color: var(--rack-card-data-color); }
+    html[data-theme="dark"] .layout-card:is([data-layout-card], [data-recorded-layout]) .layout-card-foot { --rack-card-data-color: var(--ink); }
+    .layout-card:is([data-layout-card], [data-recorded-layout]) .layout-card-foot :is(.layout-record-empty, .manual-item-sku, .manual-item-name, .manual-item-total, .manual-item-full-name, .manual-item-entry, .layout-scan-code, .layout-scan-serial, .layout-scan-name, .layout-scan-watermark, .layout-scan-item-code, .layout-scan-type, .layout-scan-info, .layout-scan-status, .layout-scan-detail-body) { color: var(--rack-card-data-color); }
+    .layout-card:is([data-layout-card], [data-recorded-layout]) .layout-card-foot .layout-scan-code.not-found,
+    .layout-card:is([data-layout-card], [data-recorded-layout]) .layout-card-foot .layout-scan-code.duplicate,
+    .layout-card:is([data-layout-card], [data-recorded-layout]) .layout-card-foot .layout-scan-status.duplicate,
+    .layout-card:is([data-layout-card], [data-recorded-layout]) .layout-card-foot .layout-scan-status.not-found { color: var(--red); }
+    .layout-card:is([data-layout-card], [data-recorded-layout]) .layout-card-foot .layout-scan-status.match { color: var(--green); }
     @media (max-width: 600px) {
       .layout-card.rack-card-maximized { height: calc(100vh - 16px); inset: 8px; max-height: calc(100dvh - 16px); }
       .layout-card.rack-card-maximized[data-recorded-layout] .layout-card-foot { display: block; }
