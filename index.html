@@ -660,7 +660,10 @@
     .layout-card:focus-within .layout-card-head { background: var(--green-soft); }
     .layout-card.quantity-over:focus-within { border-color: var(--red); box-shadow: 0 0 0 3px rgba(163, 75, 70, .14), 0 9px 24px rgba(105, 43, 38, .1); }
     .layout-card.quantity-over:focus-within .layout-card-head { background: var(--red-soft); }
-    .layout-card-head { align-items: flex-start; background: linear-gradient(110deg, #f3f8f5, #f9fbfa); border-bottom: 1px solid var(--line); display: flex; gap: 10px; justify-content: space-between; padding: 58px 15px 12px; }
+    .layout-card-head { align-items: flex-start; background: linear-gradient(110deg, #f3f8f5, #f9fbfa); border-bottom: 1px solid var(--line); display: flex; gap: 10px; justify-content: space-between; padding: 58px 15px 12px; position: relative; }
+    .rack-card-restore { align-items: center; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.32); border-radius: 6px; color: #fff; cursor: pointer; display: inline-flex; font: 22px/1 Arial, sans-serif; height: 30px; justify-content: center; padding: 0; position: absolute; right: 10px; top: 6px; width: 30px; z-index: 6; }
+    .rack-card-restore:hover { background: rgba(255,255,255,.28); }
+    .layout-card[data-layout-card].rack-card-maximized .rack-card-restore { right: 42px; }
     .rack-delete-button { align-items: center; background: transparent; border: 0; border-radius: 0; color: #d8322b; display: inline-flex; flex: 0 0 30px; font-family: Arial, sans-serif; font-size: 29px; font-weight: 900; height: 30px; justify-content: center; line-height: 1; margin-left: auto; padding: 0 0 4px; position: absolute; right: 8px; text-shadow: 0 1px currentColor; top: 8px; z-index: 2; }
     .rack-delete-button:hover:not(:disabled) { background: transparent; color: #ad211b; transform: scale(1.12); }
     .rack-delete-button:disabled { cursor: not-allowed; opacity: .45; }
@@ -2240,6 +2243,8 @@
     .layout-card[data-layout-card].duplicate-warning .layout-card-head { border-radius: 11px 11px 0 0; padding-top: 22px; }
     .layout-card[data-layout-card].quantity-over:not(.duplicate-warning)::before { display: none; }
     .layout-card:is([data-layout-card], [data-recorded-layout]) .layout-card-head { align-items: center; padding: 10px 12px; }
+    .layout-card:is([data-layout-card], [data-recorded-layout]) .layout-card-head { cursor: zoom-in; }
+    .layout-card.rack-card-maximized .layout-card-head { cursor: default; }
     .layout-card[data-layout-card] .layout-card-head { align-items: flex-start; padding-right: 46px; }
     .layout-card[data-layout-card] .rack-delete-button { right: 8px; top: 6px; transform: none; }
     .layout-card:is([data-layout-card], [data-recorded-layout]) .layout-name { line-height: 1.2; }
@@ -2727,6 +2732,25 @@
     html .layout-card[data-recorded-layout] .layout-card-head .layout-quantity-label,
     html .layout-card[data-recorded-layout] .layout-card-head .rack-quantity-summary,
     html .layout-card[data-recorded-layout] .layout-card-head .rack-quantity-summary strong { color: #fff; }
+    html.rack-card-maximized,
+    html.rack-card-maximized body { overflow: hidden; }
+    html.rack-card-maximized::before { background: rgba(12, 24, 21, .62); content: ""; inset: 0; position: fixed; z-index: 999; }
+    .layout-card.rack-card-maximized { display: flex; flex-direction: column; height: calc(100vh - 32px); inset: 16px; max-height: calc(100dvh - 32px); overflow: auto; position: fixed; transform: none; width: auto; z-index: 1000; }
+    .layout-card.rack-card-maximized:hover { transform: none; }
+    .layout-card.rack-card-maximized .layout-card-head { flex: 0 0 auto; position: sticky; top: 0; z-index: 5; }
+    .layout-card.rack-card-maximized .layout-card-foot { flex: 1 1 auto; min-height: 0; overflow: auto; }
+    .layout-card.rack-card-maximized[data-recorded-layout] .layout-card-foot { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    @media (max-width: 600px) {
+      .layout-card.rack-card-maximized { height: calc(100vh - 16px); inset: 8px; max-height: calc(100dvh - 16px); }
+      .layout-card.rack-card-maximized[data-recorded-layout] .layout-card-foot { display: block; }
+    }
+    @media print {
+      html.rack-card-maximized,
+      html.rack-card-maximized body { overflow: visible; }
+      html.rack-card-maximized::before { display: none; }
+      .layout-card.rack-card-maximized { display: block; height: auto; inset: auto; max-height: none; overflow: visible; position: static; transform: none; width: auto; }
+      .layout-card.rack-card-maximized .layout-card-head { position: static; }
+    }
     html[data-accent="burgundy"][data-theme="dark"] .schedule-mode-box { background: linear-gradient(110deg, #392630, #302127); border-color: #523a43; }
     html[data-accent="burgundy"][data-theme="dark"] .schedule-stat { background: #281d22; border-color: #523a43; }
     html[data-accent="burgundy"][data-theme="dark"] .schedule-card-number { background: linear-gradient(145deg, #482a36, #38232b); border-color: #634452; color: #f0b6c7; }
@@ -4624,6 +4648,7 @@
     const scanDuplicateMatchHighlightIds = new Set();
     let searchTerm = "";
     let layoutSearchTerm = "";
+    let maximizedRackCard = null;
     let toastTimer;
     let authSession = null;
     let chatPanelOpen = false;
@@ -8659,6 +8684,20 @@
       }).join("");
     }
 
+    function isRackCardMaximized(type, layout) {
+      return maximizedRackCard?.type === type
+        && maximizedRackCard.layout === layout
+        && (type === "workspace"
+          ? maximizedRackCard.workspaceId === state.currentWorkspaceId
+          : maximizedRackCard.sessionId === selectedRecordedSessionId);
+    }
+
+    function renderRackCardRestoreButton(isMaximized) {
+      return isMaximized
+        ? `<button class="rack-card-restore" type="button" data-restore-rack-card aria-label="Kembalikan ukuran kartu Rack" title="Kembalikan ukuran kartu Rack">×</button>`
+        : "";
+    }
+
     function renderLayouts() {
       const active = state.activeSession.status === "active";
       const canEdit = canEditActiveSession();
@@ -8703,7 +8742,9 @@
         const scanOverTarget = isLayoutScanOverTarget(layout, modeScans.length);
         const overTargetScanIds = getLayoutOverTargetScanIds(layout, modeScans);
         const quantityMatched = modeScans.length > 0 && quantityStatus.className === "match" && !hasInvalidScan;
+        const rackIsMaximized = isRackCardMaximized("workspace", layout);
         const cardClasses = [
+          rackIsMaximized ? "rack-card-maximized" : "",
           quantityMatched ? "quantity-matched" : "",
           quantityStatus.className === "different" ? "quantity-over" : "",
           hasInvalidScan || scanOverTarget ? "duplicate-warning" : "",
@@ -8723,9 +8764,10 @@
         const scanDisabled = !hasCountedProducts || !canUseRack || !hasTarget || !rackHasNumber;
         const manualDisabled = !hasCountedProducts || !canUseRack || !rackHasNumber;
         return `<section class="layout-card ${cardClasses}" data-layout-card="${escapeHtml(layout)}">
-          <div class="layout-card-head">
+          <div class="layout-card-head" title="Klik dua kali untuk memperbesar kartu Rack">
             <div><div class="layout-name"><span>Rack</span><input class="qty-input layout-number-input" id="rack-number-${escapeHtml(layout)}" type="text" maxlength="60" size="10" aria-label="Nama atau nomor Rack ${escapeHtml(layout)}" data-layout-number="${escapeHtml(layout)}" value="${escapeHtml(rackNumber)}" placeholder="Nomor/Nama" ${!canUseRack ? "disabled" : ""}></div><div class="layout-location">Nomor atau nama Rack</div></div>
             <div class="layout-card-summary"><div class="layout-quantity-row"><label class="layout-quantity-label" for="quantity-${escapeHtml(layout)}">Target Scan</label><input class="qty-input layout-quantity-input" id="quantity-${escapeHtml(layout)}" type="number" min="0" step="1" inputmode="numeric" aria-label="Quantity target ${escapeHtml(rackName)}" data-layout-quantity="${escapeHtml(layout)}" value="${target ?? ""}" ${!canUseRack ? "disabled" : ""}></div><span class="layout-quantity-status ${quantityStatus.className}" data-layout-quantity-status="${escapeHtml(layout)}">${quantityStatus.label}</span><span class="layout-count">${matched} cocok${nonLaptopScans ? ` · ${nonLaptopScans} bukan laptop` : ""}${issues ? ` · ${issues} masalah` : ""}</span><span class="rack-quantity-summary">Scan <strong>${formatNumber(quantities.scan)}</strong> · Manual <strong>${formatNumber(quantities.manual)}</strong> · Total <strong>${formatNumber(quantities.total)}</strong></span></div>
+            ${renderRackCardRestoreButton(rackIsMaximized)}
             <button class="rack-delete-button" type="button" data-delete-rack="${escapeHtml(layout)}" aria-label="Hapus ${escapeHtml(rackName)}" title="${!hasUploadedVef ? "Unggah file VEF terlebih dahulu" : hasRackData ? "Kosongkan data rack sebelum menghapus" : "Hapus rack"}" ${!canUseRack ? "disabled" : ""}>−</button>
           </div>
           <form class="layout-form" data-layout-form="${escapeHtml(layout)}"><div class="layout-scan-field"><input class="scan-input layout-input" autocomplete="off" placeholder="${rackHasNumber && hasTarget ? `Pindai SN di ${escapeHtml(rackName)}` : !rackHasNumber ? "Isi nama Rack dahulu" : "Isi quantity target dahulu"}" aria-label="Pindai Serial Number di ${escapeHtml(rackName)}" ${scanDisabled ? "disabled" : ""}><button class="layout-camera-button" type="button" data-camera-scan="${escapeHtml(layout)}" aria-label="Pindai barcode dengan kamera untuk ${escapeHtml(rackName)}" title="Pindai barcode dengan kamera" ${scanDisabled ? "disabled" : ""}><svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M4 7V5h3m10 0h3v3M4 17v2h3m10 0h3v-3"/><path d="M7 9v6m3-6v6m3-6v6m3-6v6"/></svg></button></div><button class="button button-primary" type="submit" ${scanDisabled ? "disabled" : ""}>Catat Scan</button></form>
@@ -11683,7 +11725,8 @@
           const targetSummary = `Target Scan ${target === undefined ? "-" : formatNumber(target)}`;
           const scanSummary = query ? `${scans.length} hasil Scan` : `${allScans.length} Scan`;
           const manualSummary = query ? `${manualEntries.length} hasil Manual` : `${allManualEntries.reduce((sum, entry) => sum + Number(entry.quantity || 0), 0)} Manual`;
-          return `<article class="layout-card" data-recorded-layout="${escapeHtml(layout)}"><div class="layout-card-head"><div><div class="layout-name">${escapeHtml(title)}</div><div class="layout-location">Scan Layout · tampilan arsip</div></div><div class="layout-card-summary"><span class="layout-count"><span>${targetSummary}</span><span class="recorded-layout-count-scan">· ${scanSummary}</span><span class="recorded-layout-count-manual">· ${manualSummary}</span></span></div></div><div class="layout-card-foot"><div class="layout-record-group"><div class="layout-record-heading">Scan ${query ? `· ${scans.length} hasil` : ""}</div><div class="layout-scan-list">${scanRows}</div></div><div class="layout-record-group"><div class="layout-record-heading">Manual ${query ? `· ${manualEntries.length} hasil` : ""}</div><div class="layout-scan-list">${manualRows}</div></div></div></article>`;
+          const rackIsMaximized = isRackCardMaximized("recorded", layout);
+          return `<article class="layout-card${rackIsMaximized ? " rack-card-maximized" : ""}" data-recorded-layout="${escapeHtml(layout)}"><div class="layout-card-head" title="Klik dua kali untuk memperbesar kartu Rack"><div><div class="layout-name">${escapeHtml(title)}</div><div class="layout-location">Scan Layout · tampilan arsip</div></div><div class="layout-card-summary"><span class="layout-count"><span>${targetSummary}</span><span class="recorded-layout-count-scan">· ${scanSummary}</span><span class="recorded-layout-count-manual">· ${manualSummary}</span></span></div>${renderRackCardRestoreButton(rackIsMaximized)}</div><div class="layout-card-foot"><div class="layout-record-group"><div class="layout-record-heading">Scan ${query ? `· ${scans.length} hasil` : ""}</div><div class="layout-scan-list">${scanRows}</div></div><div class="layout-record-group"><div class="layout-record-heading">Manual ${query ? `· ${manualEntries.length} hasil` : ""}</div><div class="layout-scan-list">${manualRows}</div></div></div></article>`;
         }).join("");
         const matchingRackCount = (rackMarkup.match(/<article class="layout-card"/g) || []).length;
         const emptyMessage = query ? `Tidak ada item yang cocok dengan “${escapeHtml(recordedArchiveSearchTerm.trim())}”.` : "Tidak ada data Rack.";
@@ -12465,6 +12508,17 @@
         || (currentPage === "data-resources" && !canManageDataResources())) currentPage = "opname";
       if (currentPage === "recorded-archive"
         && !state.sessions.some((item) => item.id === selectedRecordedSessionId && item.snapshot)) currentPage = "dashboard";
+      if (maximizedRackCard
+        && !(maximizedRackCard.type === "workspace"
+          && maximizedRackCard.workspaceId === state.currentWorkspaceId
+          && currentPage === "layouts")
+        && !(maximizedRackCard.type === "recorded"
+          && maximizedRackCard.sessionId === selectedRecordedSessionId
+          && currentPage === "recorded-archive"
+          && selectedRecordedSheet === "layouts")) {
+        maximizedRackCard = null;
+      }
+      document.documentElement.classList.toggle("rack-card-maximized", Boolean(maximizedRackCard));
       if (currentPage !== "segregation") segregationDuplicateScanIndex = null;
       if (authSession) {
         if (RESTORABLE_PAGES.has(currentPage) || currentPage === "recorded-archive") {
@@ -12505,6 +12559,10 @@
       lastRenderedPage = currentPage;
       lastRenderedWorkspaceId = state.currentWorkspaceId;
       main.innerHTML = renderCurrentPageMarkup();
+      if (maximizedRackCard && !main.querySelector(".layout-card.rack-card-maximized")) {
+        maximizedRackCard = null;
+        document.documentElement.classList.remove("rack-card-maximized");
+      }
       if (preserveLayoutScanner) {
         if (currentPage === "layouts") {
           document.querySelector(".layout-page-head")?.after(cameraDialog);
@@ -15490,6 +15548,12 @@
         event.preventDefault();
         cameraScanDialog.close();
       }
+      if (event.key === "Escape" && maximizedRackCard && !cameraScanDialog.open && !document.querySelector("dialog:modal")) {
+        event.preventDefault();
+        maximizedRackCard = null;
+        render();
+        return;
+      }
       if (event.key === "Escape" && isMobileDrawerEnabled()) setAndroidNavigationOpen(false);
     });
     window.addEventListener("focus", () => {
@@ -15499,6 +15563,29 @@
       if (document.visibilityState === "visible" && currentPage === "about-info") void refreshAndroidDownloadLink();
     });
     document.querySelectorAll("[data-logout]").forEach((button) => button.addEventListener("click", requestSignOut));
+    document.addEventListener("dblclick", (event) => {
+      if (!(event.target instanceof Element)) return;
+      const header = event.target.closest(".layout-card-head");
+      if (!header || event.target.closest("input, button, select, textarea, a, [contenteditable='true']")) return;
+      const card = header.closest(".layout-card[data-layout-card], .layout-card[data-recorded-layout]");
+      if (!card) return;
+      const type = card.hasAttribute("data-layout-card") ? "workspace" : "recorded";
+      if (type === "workspace" && currentPage !== "layouts") return;
+      if (type === "recorded" && (currentPage !== "recorded-archive" || selectedRecordedSheet !== "layouts")) return;
+      const layout = type === "workspace" ? card.dataset.layoutCard : card.dataset.recordedLayout;
+      maximizedRackCard = isRackCardMaximized(type, layout)
+        ? null
+        : type === "workspace"
+          ? { type, layout, workspaceId: state.currentWorkspaceId }
+          : { type, layout, sessionId: selectedRecordedSessionId };
+      render();
+    });
+    document.addEventListener("click", (event) => {
+      if (!(event.target instanceof Element) || !event.target.closest("[data-restore-rack-card]")) return;
+      event.preventDefault();
+      maximizedRackCard = null;
+      render();
+    });
     document.addEventListener("click", (event) => {
       const rackLink = event.target.closest("[data-open-rack]");
       if (rackLink) {
